@@ -375,6 +375,8 @@ function sha256(str) {
 const clone = (o) => JSON.parse(JSON.stringify(o || {}));
 function readDraft() { try { const s = localStorage.getItem(DRAFT); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
 function writeDraft(o) { try { localStorage.setItem(DRAFT, JSON.stringify(o)); return true; } catch (e) { return false; } }
+/* Usa el borrador solo si tiene cambios sin guardar o es más nuevo que lo publicado. */
+function pickDraft() { const d = readDraft(); if (d && (d._dirty || String(d.actualizado || '') > String(pub.actualizado || ''))) return d; return null; }
 const isEditor = () => { try { return sessionStorage.getItem('juma-ed') === '1'; } catch (e) { return false; } };
 
 let dr = {}, tab = 'enc', fy = 0, edErr = '', edOk = '', edBusy = false, draftWarn = false;
@@ -411,17 +413,19 @@ function cleanContent(src) {
   c.actividades = (c.actividades || []).filter((a) => a && String(a.t || '').trim());
   c.posts = (c.posts || []).filter((p) => p && (String(p.t || '').trim() || String(p.x || '').trim()));
   c.galeria = (c.galeria || []).filter((g) => g && g.url);
+  delete c._dirty;
   return c;
 }
 let previewTimer = 0;
 function touch() {
   edOk = '';
   clearTimeout(previewTimer);
+  dr._dirty = true;
   previewTimer = setTimeout(() => { draftWarn = !writeDraft(dr); cfg = cleanContent(dr); renderAll(); }, 350);
 }
 function showFab() { $('#fab-edit').classList.remove('hide'); }
 function openEditor() {
-  dr = readDraft() || clone(pub);
+  dr = clone(pickDraft() || pub);
   tab = 'enc'; fy = 0; edErr = ''; edOk = ''; draftWarn = false;
   openModal(editorHtml());
 }
@@ -463,9 +467,9 @@ modalRoot.addEventListener('click', (e) => {
   }
   if (q('[data-save]')) {
     const c = cleanContent(dr); c.actualizado = new Date().toISOString();
-    dr = c; draftWarn = !writeDraft(dr); cfg = clone(c); renderAll();
+    dr = c; draftWarn = !writeDraft(Object.assign({}, c, { _dirty: false })); cfg = clone(c); renderAll();
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(c, null, 1)], { type: 'application/json' })); a.download = 'contenido.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    edOk = '<b>Listo: se descargó contenido.json.</b> Para que todos vean los cambios, súbelo a GitHub: entra a <b>github.com/gabrielg739-prog/juma</b>, toca <b>Add file → Upload files</b>, arrastra <b>contenido.json</b> y pulsa <b>Commit changes</b>. En unos minutos aparece en la página.';
+    edOk = '<b>Listo: se descargó contenido.json.</b> Para que todos vean los cambios, súbelo a GitHub: entra a <b>github.com/gabrielg739-prog/juma</b>, toca <b>Add file → Upload files</b>, arrastra <b>contenido.json</b> y pulsa <b>Commit changes</b>. En unos minutos aparece en la página.<br><br>Si tu computadora lo guardó como <b>contenido (1).json</b>, <b>contenido (2).json</b>, etc., súbelo así mismo: la página toma siempre el más reciente.';
     repaintEd();
   }
 });
@@ -487,7 +491,7 @@ modalRoot.addEventListener('submit', (e) => {
   const v = $('#pw-in').value;
   if (sha256(normPass(v)) === PASS_HASH) {
     try { sessionStorage.setItem('juma-ed', '1'); } catch (x) {}
-    showFab(); const d = readDraft(); if (d) { cfg = cleanContent(d); renderAll(); }
+    showFab(); const d = pickDraft(); if (d) { cfg = cleanContent(d); renderAll(); }
     openEditor();
   } else { $('#pw-msg').textContent = 'Clave incorrecta.'; $('#pw-in').select(); }
 });
@@ -502,12 +506,17 @@ document.addEventListener('click', (e) => {
 
 /* ===================== arranque ===================== */
 async function loadContenido() {
-  try {
-    const r = await fetch('contenido.json?t=' + Date.now(), { cache: 'no-store' });
-    if (r.ok) pub = await r.json();
-  } catch (e) {}
+  /* Si la computadora guardó el archivo como «contenido (1).json», «contenido (2).json»…,
+     también se lee: gana el que tenga la fecha de guardado más reciente. */
+  const names = ['contenido.json'].concat([1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => 'contenido%20(' + n + ').json'));
+  const got = await Promise.all(names.map(async (n) => {
+    try { const r = await fetch(n + '?t=' + Date.now(), { cache: 'no-store' }); return r.ok ? await r.json() : null; } catch (e) { return null; }
+  }));
+  let best = got[0] || null;
+  got.forEach((c) => { if (c && String(c.actualizado || '') > String((best && best.actualizado) || '')) best = c; });
+  if (best) pub = best;
   cfg = clone(pub);
-  if (isEditor()) { showFab(); const d = readDraft(); if (d) cfg = cleanContent(d); }
+  if (isEditor()) { showFab(); const d = pickDraft(); if (d) cfg = cleanContent(d); }
   renderAll();
 }
 (function boot() {
