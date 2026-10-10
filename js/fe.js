@@ -228,6 +228,42 @@ const css = `
 .mp-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px!important}
 .mp-web{display:inline-flex;align-items:center;text-decoration:none;background:var(--cloth);color:#fff!important;border-color:var(--cloth)}
 .mp-map .pc.mc{stroke:#fff;stroke-width:.9;stroke-dasharray:2 1.5}
+/* ---------- videos ---------- */
+.vclip{display:block;width:100%;height:100%;object-fit:cover;background:#0A1F4D}
+.vover{position:absolute;inset:0;opacity:0;transition:opacity .6s ease}
+.vover.on{opacity:1}
+.vbtn{position:absolute;top:12px;right:12px;z-index:3;width:42px;height:42px;padding:0;border:0;border-radius:50%;background:rgba(6,21,54,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);cursor:pointer;display:grid;place-items:center;visibility:hidden;opacity:0;transition:opacity .2s ease,visibility .2s,transform .12s ease}
+.vlive > .vbtn{visibility:visible;opacity:1}
+.vbtn:active{transform:scale(.94)}
+.vbtn:focus-visible{outline:2px solid #8EC9FF;outline-offset:2px}
+.vbtn span{display:block;width:13px;height:15px;box-sizing:border-box;border-left:4px solid #fff;border-right:4px solid #fff}
+.vbtn[aria-pressed="true"] span{width:0;height:0;border-right:0;border-left:13px solid #fff;border-top:8px solid transparent;border-bottom:8px solid transparent;margin-left:4px}
+.vtag{position:absolute;left:14px;bottom:14px;z-index:2;padding:7px 13px;border-radius:999px;background:rgba(6,21,54,.62);color:#fff;font-size:13.5px;font-weight:700;opacity:0;transition:opacity .4s ease}
+.vlive > .vtag{opacity:1}
+.vive{background:var(--paper);overflow:hidden}
+.vive-head{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:20px 64px;align-items:end}
+.vive-head .h-display{color:var(--cloth)}
+.reels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(14px,2.6vw,36px);max-width:1040px;margin:clamp(48px,6vw,84px) auto 0}
+.reel{position:relative;margin:0;aspect-ratio:9/16;border-radius:22px;overflow:hidden;background:#0A1F4D;box-shadow:0 34px 60px -30px rgba(6,21,54,.6);will-change:transform}
+.reel::before{content:"";position:absolute;top:0;left:22px;z-index:2;width:46px;height:6px;border-radius:0 0 4px 4px;background:var(--c2)}
+.reel:nth-child(2)::before{background:var(--c3)}.reel:nth-child(3)::before{background:var(--c4)}
+.reel figcaption{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:72px 18px 18px;background:linear-gradient(0deg,rgba(6,21,54,.9),rgba(6,21,54,0));color:#fff;pointer-events:none}
+.reel figcaption b{display:block;font:800 clamp(26px,2.5vw,34px)/1 var(--display);text-transform:uppercase;letter-spacing:.01em}
+.reel figcaption span{display:block;margin-top:6px;font-size:14.5px;line-height:1.35;color:#DCE7F8}
+.vsticker{position:relative;display:block;width:clamp(150px,13vw,178px);margin:-56px 6px 0 auto;padding:8px 8px 0;background:#fff;border-radius:14px;box-shadow:0 26px 50px -18px rgba(0,0,0,.6);transform:rotate(4deg);transition:transform .35s cubic-bezier(.23,1,.32,1)}
+.vsticker .vclip{height:auto;aspect-ratio:9/16;border-radius:9px}
+.vsticker .vbtn{top:16px;right:16px;width:36px;height:36px}
+.vsticker figcaption{padding:9px 4px 11px;font-size:13.5px;font-weight:700;line-height:1.25;color:var(--ink);text-align:center}
+@media (hover:hover) and (pointer:fine){.vsticker:hover{transform:rotate(1deg) scale(1.03)}}
+.vbg{z-index:0}
+@media (max-width:860px){.vsticker{width:min(62%,232px);margin:30px auto 0;transform:rotate(-3deg)}}
+@media (max-width:760px){
+.vive-head{grid-template-columns:minmax(0,1fr)}
+.reels{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;margin-left:calc(-1 * clamp(16px,4vw,40px));margin-right:calc(-1 * clamp(16px,4vw,40px));padding:0 clamp(16px,4vw,40px) 6px;scroll-padding:0 clamp(16px,4vw,40px)}
+.reels::-webkit-scrollbar{display:none}
+.reel{flex:0 0 76%;scroll-snap-align:center}
+}
+@media (prefers-reduced-motion:reduce){.vover{transition:none}.reel{will-change:auto}}
 .net-off{position:fixed;top:max(10px,env(safe-area-inset-top));left:50%;z-index:80;max-width:calc(100vw - 32px);padding:10px 18px;border-radius:999px;background:#0A1F4D;color:#fff;font-family:var(--body);font-size:14px;line-height:1.3;white-space:nowrap;box-shadow:0 12px 30px -10px rgba(6,21,54,.6);border:1px solid rgba(142,201,255,.45);transform:translate(-50%,-160%);opacity:0;transition:transform .28s cubic-bezier(.23,1,.32,1),opacity .2s ease;pointer-events:none;text-align:center}
 .net-off b{color:#F5C518}
 .net-off.on{transform:translate(-50%,0);opacity:1}
@@ -349,10 +385,53 @@ async function mapa() {
   } catch (e) { $('#mp-svg').innerHTML = '<p style="color:#fff;padding:20px">No se pudo cargar el mapa.</p>'; }
 }
 
+/* ---------- videos: solo se cargan y suenan (sin sonido) cuando están en pantalla ---------- */
+function videos() {
+  const vs = Array.from(document.querySelectorAll('video.vclip[data-src]')); if (!vs.length) return;
+  const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ahorro = !!(navigator.connection && navigator.connection.saveData);
+  const parado = new WeakSet();
+  const btnOf = (v) => v.parentElement.querySelector('.vbtn');
+  const marcar = (v, play) => { const b = btnOf(v); if (b) { b.setAttribute('aria-pressed', play ? 'false' : 'true'); b.setAttribute('aria-label', play ? 'Pausar video' : 'Reproducir video'); } };
+  const cargar = (v) => { if (v.getAttribute('src')) return true; if (v.dataset.media && !matchMedia(v.dataset.media).matches) return false; v.src = v.dataset.src; return true; };
+  const tocar = (v) => { if (parado.has(v) || !cargar(v)) return; const p = v.play(); if (p) p.catch(() => {}); };
+  vs.forEach((v) => {
+    v.muted = true; v.defaultMuted = true;
+    v.addEventListener('playing', () => { v.classList.add('on'); v.parentElement.classList.add('vlive'); marcar(v, true); });
+    v.addEventListener('pause', () => marcar(v, false));
+  });
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('.vbtn'); if (!b) return; const v = b.parentElement.querySelector('video.vclip'); if (!v) return;
+    if (v.paused) { parado.delete(v); tocar(v); } else { parado.add(v); v.pause(); }
+  });
+  if (quieto || ahorro) { vs.forEach((v) => { if (v.poster) { v.parentElement.classList.add('vlive'); marcar(v, false); parado.add(v); } }); return; }
+  const cerca = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) { cargar(en.target); cerca.unobserve(en.target); } }), { rootMargin: '360px 0px' });
+  const vista = new IntersectionObserver((es) => es.forEach((en) => { const v = en.target; if (en.isIntersecting && en.intersectionRatio >= 0.5) tocar(v); else if (!v.paused) v.pause(); }), { threshold: [0, 0.5, 0.8] });
+  vs.forEach((v) => { cerca.observe(v); vista.observe(v); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) vs.forEach((v) => { if (!v.paused) v.pause(); }); });
+}
+/* abanico de los videos al desplazarse (solo en pantallas grandes) */
+function reelsFan() {
+  const box = document.querySelector('[data-reels]'); if (!box) return;
+  const cards = Array.from(box.children); const mq = matchMedia('(min-width: 761px) and (prefers-reduced-motion: no-preference)');
+  let vis = false, raf = 0;
+  const tick = () => {
+    raf = 0;
+    if (!mq.matches) { cards.forEach((c) => { c.style.transform = ''; }); return; }
+    const r = box.getBoundingClientRect(); const vh = window.innerHeight || 800;
+    const p = Math.max(-1, Math.min(1, (r.top + r.height / 2 - vh / 2) / vh));
+    cards.forEach((c, i) => { const o = i - 1; c.style.transform = `translate3d(${(o * p * -22).toFixed(1)}px, ${((o === 0 ? -1 : 1) * p * 52).toFixed(1)}px, 0) rotate(${(o * p * 7).toFixed(2)}deg)`; });
+  };
+  const req = () => { if (vis && !raf) raf = requestAnimationFrame(tick); };
+  new IntersectionObserver((es) => { vis = es[0].isIntersecting; req(); }, { rootMargin: '120px 0px' }).observe(box);
+  window.addEventListener('scroll', req, { passive: true }); window.addEventListener('resize', req);
+  if (mq.addEventListener) mq.addEventListener('change', () => { vis = true; tick(); });
+}
+
 /* ---------- arranque ---------- */
 (function init() {
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
-  render(); mapa();
+  render(); mapa(); videos(); reelsFan();
   /* aviso de "sin internet" */
   const net = document.createElement('div'); net.className = 'net-off'; net.setAttribute('role', 'status');
   net.innerHTML = '<b>Sin internet</b> · Viendo lo último guardado'; (document.getElementById('root') || document.body).appendChild(net);

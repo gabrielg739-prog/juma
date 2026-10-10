@@ -14,7 +14,30 @@
   }
  ],
  "posts": [],
- "galeria": [],
- "actualizado": "2026-10-10T15:31:56.097Z",
- "testimonios": []
+ "galeria": [
+  {
+   "url": "img/subidas/convivencia-2026-1.jpg",
+   "cap": "Alegría en el camino"
+  },
+  {
+   "url": "img/subidas/convivencia-2026-2.jpg",
+   "cap": "Familia Consolata · JUMA Duaca"
+  },
+  {
+   "url": "img/subidas/convivencia-2026-3.jpg",
+   "cap": "Con la hermana, frente a la imagen adornada de flores"
+  },
+  {
+   "url": "img/subidas/convivencia-2026-4.jpg",
+   "cap": "Todos juntos con la camisa de San José Allamano"
+  }
+ ],
+ "actualizado": "2026-10-10T15:46:56.000Z",
+ "testimonios": [],
+ "orden": [
+  "img/subidas/convivencia-2026-1.jpg",
+  "img/subidas/convivencia-2026-2.jpg",
+  "img/subidas/convivencia-2026-3.jpg",
+  "img/subidas/convivencia-2026-4.jpg"
+ ]
 }
