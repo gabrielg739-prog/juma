@@ -1,13 +1,253 @@
 {
  "whatsapp": "0412-054-5307, 0412-566-7767",
- "temas": {
-  "2026-10-11": "Actividad Recreativa en el Caserío \"Licua\" ",
-  "2026-10-18": "Celebración de Canonización de Allamano",
-  "2026-10-25": "Visita y animación Caserío \"Licua\" ",
-  "2026-11-01": "Domingo Familiar en el Centro de Animación Misionera en Barquisimeto"
- },
- "actividades": [],
- "posts": [],
- "galeria": [],
- "actualizado": "2026-10-10T10:11:40.561Z"
+ "galeria": [
+  {
+   "url": "img/galeria/juma-01.jpg",
+   "cap": "Proclamando la Palabra en la capilla"
+  },
+  {
+   "url": "img/galeria/juma-02.jpg",
+   "cap": "Visita a una familia"
+  },
+  {
+   "url": "img/galeria/juma-03.jpg",
+   "cap": "Junto a la capillita del camino"
+  },
+  {
+   "url": "img/galeria/juma-04.jpg",
+   "cap": "Capilla de la comunidad"
+  },
+  {
+   "url": "img/galeria/juma-05.jpg",
+   "cap": "Lectura en la capilla"
+  },
+  {
+   "url": "img/galeria/juma-06.jpg",
+   "cap": "Parque La Aparición"
+  },
+  {
+   "url": "img/galeria/juma-07.jpg",
+   "cap": "Peregrinación al Santuario de Coromoto"
+  },
+  {
+   "url": "img/galeria/juma-08.jpg",
+   "cap": "Frente a la capilla"
+  },
+  {
+   "url": "img/galeria/juma-09.jpg",
+   "cap": "En el Santuario de Coromoto"
+  },
+  {
+   "url": "img/galeria/juma-10.jpg",
+   "cap": "Con la comunidad en la capilla"
+  },
+  {
+   "url": "img/galeria/juma-11.jpg",
+   "cap": "Misioneros en la capilla"
+  },
+  {
+   "url": "img/galeria/juma-12.jpg",
+   "cap": "Compartiendo en un hogar de la comunidad"
+  },
+  {
+   "url": "img/galeria/juma-13.jpg",
+   "cap": "Ante la Virgen de Coromoto"
+  },
+  {
+   "url": "img/galeria/juma-14.jpg",
+   "cap": "Junto al monumento de la Virgen de Coromoto"
+  },
+  {
+   "url": "img/galeria/juma-15.jpg",
+   "cap": "Grupo de JUMA en el monumento de Coromoto"
+  },
+  {
+   "url": "img/galeria/juma-16.jpg",
+   "cap": "El pesebre"
+  },
+  {
+   "url": "img/galeria/juma-17.jpg",
+   "cap": "El Papa entre los peregrinos"
+  },
+  {
+   "url": "img/galeria/juma-18.jpg",
+   "cap": "Peregrinos en la Jornada Mundial de la Juventud"
+  },
+  {
+   "url": "img/galeria/juma-19.jpg",
+   "cap": "Encuentro de jóvenes peregrinos"
+  },
+  {
+   "url": "img/galeria/juma-20.jpg",
+   "cap": "De camino a la misión"
+  },
+  {
+   "url": "img/galeria/juma-21.jpg",
+   "cap": "Venezuela y Colombia, una misma fe"
+  },
+  {
+   "url": "img/galeria/juma-22.jpg",
+   "cap": "Con los misioneros"
+  },
+  {
+   "url": "img/galeria/juma-23.jpg",
+   "cap": "Peregrinos de muchos países"
+  },
+  {
+   "url": "img/galeria/juma-24.jpg",
+   "cap": "Encuentro en la sala de los vitrales"
+  },
+  {
+   "url": "img/galeria/juma-25.jpg",
+   "cap": "Banderas de Venezuela y Argentina"
+  },
+  {
+   "url": "img/galeria/juma-26.jpg",
+   "cap": "Oración en la sala de los vitrales"
+  },
+  {
+   "url": "img/galeria/juma-27.jpg",
+   "cap": "Reunidos en círculo"
+  },
+  {
+   "url": "img/galeria/juma-28.jpg",
+   "cap": "Foto de grupo con el padre"
+  },
+  {
+   "url": "img/galeria/juma-29.jpg",
+   "cap": "Dinámica en el patio"
+  },
+  {
+   "url": "img/galeria/juma-30.jpg",
+   "cap": "Alegría juvenil"
+  },
+  {
+   "url": "img/galeria/juma-31.jpg",
+   "cap": "Taller en el aula"
+  },
+  {
+   "url": "img/galeria/juma-32.jpg",
+   "cap": "En la capilla"
+  },
+  {
+   "url": "img/galeria/juma-33.jpg",
+   "cap": "Presentación en el templo"
+  },
+  {
+   "url": "img/galeria/juma-34.jpg",
+   "cap": "Representando a la Virgen"
+  },
+  {
+   "url": "img/galeria/juma-35.jpg",
+   "cap": "Misión con la comunidad"
+  },
+  {
+   "url": "img/galeria/juma-36.jpg",
+   "cap": "Encuentro con las familias"
+  },
+  {
+   "url": "img/galeria/juma-37.jpg",
+   "cap": "Misa en la comunidad"
+  },
+  {
+   "url": "img/galeria/juma-38.jpg",
+   "cap": "Trabajo en grupo"
+  },
+  {
+   "url": "img/galeria/juma-39.jpg",
+   "cap": "Misioneros en camino"
+  },
+  {
+   "url": "img/galeria/juma-40.jpg",
+   "cap": "Formación en el aula"
+  },
+  {
+   "url": "img/galeria/juma-41.jpg",
+   "cap": "Charla de formación"
+  },
+  {
+   "url": "img/galeria/juma-42.jpg",
+   "cap": "Escuchando la Palabra"
+  },
+  {
+   "url": "img/galeria/juma-43.jpg",
+   "cap": "Llegando a la comunidad"
+  },
+  {
+   "url": "img/galeria/juma-44.jpg",
+   "cap": "Jóvenes de la misión"
+  },
+  {
+   "url": "img/galeria/juma-45.jpg",
+   "cap": "Bajo la sombra del árbol"
+  },
+  {
+   "url": "img/galeria/juma-46.jpg",
+   "cap": "Con los niños de la comunidad"
+  },
+  {
+   "url": "img/galeria/juma-47.jpg",
+   "cap": "Visitando los comercios"
+  },
+  {
+   "url": "img/galeria/juma-48.jpg",
+   "cap": "Jueves Santo"
+  },
+  {
+   "url": "img/galeria/juma-49.jpg",
+   "cap": "Misión en la calle"
+  },
+  {
+   "url": "img/galeria/juma-50.jpg",
+   "cap": "Recorriendo las calles"
+  },
+  {
+   "url": "img/galeria/juma-51.jpg",
+   "cap": "Dinámica con la cruz"
+  },
+  {
+   "url": "img/galeria/juma-52.jpg",
+   "cap": "Con la cruz por las calles"
+  },
+  {
+   "url": "img/galeria/juma-53.jpg",
+   "cap": "Entregando invitaciones"
+  },
+  {
+   "url": "img/galeria/juma-54.jpg",
+   "cap": "Casa por casa"
+  },
+  {
+   "url": "img/galeria/juma-55.jpg",
+   "cap": "Conversando con los vecinos"
+  },
+  {
+   "url": "img/galeria/juma-56.jpg",
+   "cap": "Formación en grupo"
+  },
+  {
+   "url": "img/galeria/juma-57.jpg",
+   "cap": "Fraternidad"
+  },
+  {
+   "url": "img/galeria/juma-58.jpg",
+   "cap": "Dinámica en círculo"
+  },
+  {
+   "url": "img/galeria/juma-59.jpg",
+   "cap": "Compartiendo"
+  },
+  {
+   "url": "img/galeria/juma-60.jpg",
+   "cap": "Trabajo en grupos"
+  },
+  {
+   "url": "img/galeria/juma-61.jpg",
+   "cap": "Caminata misionera"
+  },
+  {
+   "url": "img/galeria/juma-62.jpg",
+   "cap": "Momento de reflexión"
+  }
+ ]
 }
