@@ -1,0 +1,319 @@
+{
+ "oraciones": [
+  {
+   "id": "senal",
+   "t": "La señal de la cruz",
+   "k": [
+    "senal de la cruz",
+    "persignarse",
+    "santiguarse"
+   ],
+   "x": [
+    "Por la señal de la santa cruz, de nuestros enemigos líbranos, Señor, Dios nuestro.",
+    "En el nombre del Padre, y del Hijo, y del Espíritu Santo. Amén."
+   ]
+  },
+  {
+   "id": "padre",
+   "t": "Padre Nuestro",
+   "k": [
+    "padre nuestro",
+    "padrenuestro"
+   ],
+   "x": [
+    "Padre nuestro, que estás en el cielo, santificado sea tu Nombre; venga a nosotros tu reino; hágase tu voluntad en la tierra como en el cielo.",
+    "Danos hoy nuestro pan de cada día; perdona nuestras ofensas, como también nosotros perdonamos a los que nos ofenden; no nos dejes caer en la tentación, y líbranos del mal. Amén."
+   ]
+  },
+  {
+   "id": "ave",
+   "t": "Ave María",
+   "k": [
+    "ave maria",
+    "avemaria",
+    "dios te salve maria"
+   ],
+   "x": [
+    "Dios te salve, María, llena eres de gracia, el Señor es contigo. Bendita tú eres entre todas las mujeres, y bendito es el fruto de tu vientre, Jesús.",
+    "Santa María, Madre de Dios, ruega por nosotros, pecadores, ahora y en la hora de nuestra muerte. Amén."
+   ]
+  },
+  {
+   "id": "gloria",
+   "t": "Gloria",
+   "k": [
+    "gloria al padre",
+    "oracion del gloria"
+   ],
+   "x": [
+    "Gloria al Padre, y al Hijo, y al Espíritu Santo.",
+    "Como era en el principio, ahora y siempre, por los siglos de los siglos. Amén."
+   ]
+  },
+  {
+   "id": "angel",
+   "t": "Ángel de la guarda",
+   "k": [
+    "angel de la guarda",
+    "angel de mi guarda"
+   ],
+   "x": [
+    "Ángel de mi guarda, dulce compañía, no me desampares ni de noche ni de día.",
+    "No me dejes solo, que me perdería. Amén."
+   ]
+  },
+  {
+   "id": "fatima",
+   "t": "Oh Jesús mío (jaculatoria de Fátima)",
+   "k": [
+    "oh jesus mio",
+    "jaculatoria",
+    "fatima"
+   ],
+   "x": [
+    "Oh Jesús mío, perdona nuestros pecados, líbranos del fuego del infierno, lleva al cielo a todas las almas, especialmente a las más necesitadas de tu misericordia."
+   ]
+  },
+  {
+   "id": "alimentos",
+   "t": "Bendición de los alimentos",
+   "k": [
+    "bendicion de los alimentos",
+    "bendecir la mesa",
+    "bendecir los alimentos",
+    "antes de comer"
+   ],
+   "x": [
+    "Bendícenos, Señor, y bendice estos alimentos que por tu bondad vamos a recibir. Por Cristo, nuestro Señor. Amén."
+   ]
+  },
+  {
+   "id": "credo",
+   "t": "Credo de los Apóstoles",
+   "k": [
+    "credo",
+    "creo en dios"
+   ],
+   "x": [
+    "Creo en Dios, Padre todopoderoso, Creador del cielo y de la tierra.",
+    "Creo en Jesucristo, su único Hijo, nuestro Señor, que fue concebido por obra y gracia del Espíritu Santo, nació de santa María Virgen, padeció bajo el poder de Poncio Pilato, fue crucificado, muerto y sepultado, descendió a los infiernos, al tercer día resucitó de entre los muertos, subió a los cielos y está sentado a la derecha de Dios, Padre todopoderoso. Desde allí ha de venir a juzgar a vivos y muertos.",
+    "Creo en el Espíritu Santo, la santa Iglesia católica, la comunión de los santos, el perdón de los pecados, la resurrección de la carne y la vida eterna. Amén."
+   ]
+  },
+  {
+   "id": "salve",
+   "t": "La Salve",
+   "k": [
+    "salve",
+    "dios te salve reina"
+   ],
+   "x": [
+    "Dios te salve, Reina y Madre de misericordia, vida, dulzura y esperanza nuestra; Dios te salve. A ti llamamos los desterrados hijos de Eva; a ti suspiramos, gimiendo y llorando, en este valle de lágrimas.",
+    "Ea, pues, Señora, abogada nuestra, vuelve a nosotros esos tus ojos misericordiosos; y después de este destierro muéstranos a Jesús, fruto bendito de tu vientre. ¡Oh clementísima, oh piadosa, oh dulce Virgen María!",
+    "Ruega por nosotros, santa Madre de Dios, para que seamos dignos de alcanzar las promesas de nuestro Señor Jesucristo. Amén."
+   ]
+  },
+  {
+   "id": "confieso",
+   "t": "Yo confieso",
+   "k": [
+    "yo confieso",
+    "yo pecador",
+    "confiteor"
+   ],
+   "x": [
+    "Yo confieso ante Dios todopoderoso y ante ustedes, hermanos, que he pecado mucho de pensamiento, palabra, obra y omisión. Por mi culpa, por mi culpa, por mi gran culpa.",
+    "Por eso ruego a santa María, siempre Virgen, a los ángeles, a los santos y a ustedes, hermanos, que intercedan por mí ante Dios, nuestro Señor."
+   ]
+  },
+  {
+   "id": "contricion",
+   "t": "Acto de contrición",
+   "k": [
+    "acto de contricion",
+    "senor mio jesucristo",
+    "contricion"
+   ],
+   "x": [
+    "Señor mío Jesucristo, Dios y Hombre verdadero, Creador, Padre y Redentor mío; por ser tú quien eres, bondad infinita, y porque te amo sobre todas las cosas, me pesa de todo corazón haberte ofendido.",
+    "Propongo firmemente, con tu gracia, nunca más pecar, confesarme y cumplir la penitencia que me fuere impuesta. Amén."
+   ]
+  },
+  {
+   "id": "espiritu",
+   "t": "Ven, Espíritu Santo",
+   "k": [
+    "ven espiritu santo",
+    "espiritu santo"
+   ],
+   "x": [
+    "Ven, Espíritu Santo, llena los corazones de tus fieles y enciende en ellos el fuego de tu amor.",
+    "Envía tu Espíritu y todo será creado, y renovarás la faz de la tierra. Amén."
+   ]
+  },
+  {
+   "id": "pureza",
+   "t": "Bendita sea tu pureza",
+   "k": [
+    "bendita sea tu pureza"
+   ],
+   "x": [
+    "Bendita sea tu pureza y eternamente lo sea, pues todo un Dios se recrea en tan graciosa belleza.",
+    "A ti, celestial princesa, Virgen sagrada María, yo te ofrezco en este día alma, vida y corazón. Mírame con compasión, no me dejes, Madre mía. Amén."
+   ]
+  },
+  {
+   "id": "final",
+   "t": "Oración final del rosario",
+   "k": [
+    "oracion final del rosario",
+    "al terminar el rosario"
+   ],
+   "x": [
+    "Ruega por nosotros, santa Madre de Dios. Para que seamos dignos de alcanzar las promesas de nuestro Señor Jesucristo.",
+    "Oremos: Oh Dios, cuyo Hijo único, con su vida, muerte y resurrección, nos alcanzó la vida eterna; concédenos que, meditando estos misterios del santo rosario de la Virgen María, imitemos lo que contienen y alcancemos lo que prometen. Por Cristo, nuestro Señor. Amén."
+   ]
+  },
+  {
+   "id": "letanias",
+   "t": "Letanías a la Virgen (resumen)",
+   "k": [
+    "letanias",
+    "letania"
+   ],
+   "x": [
+    "Las letanías se rezan al final del rosario. Quien guía dice cada invocación y todos responden: «Ruega por nosotros».",
+    "Algunas invocaciones: Santa María · Santa Madre de Dios · Madre de la Iglesia · Madre de la misericordia · Madre de la esperanza · Madre del buen consejo · Virgen fiel · Causa de nuestra alegría · Estrella de la mañana · Salud de los enfermos · Refugio de los pecadores · Consuelo de los migrantes · Consoladora de los afligidos · Auxilio de los cristianos · Reina de los apóstoles · Reina de los mártires · Reina del santo rosario · Reina de la familia · Reina de la paz.",
+    "«Consoladora de los afligidos» es justamente lo que significa Consolata, nuestra patrona."
+   ]
+  }
+ ],
+ "catequesis": [
+  {
+   "id": "mand",
+   "t": "Los 10 mandamientos",
+   "k": [
+    "mandamientos",
+    "10 mandamientos",
+    "diez mandamientos"
+   ],
+   "l": [
+    "Amarás a Dios sobre todas las cosas.",
+    "No tomarás el nombre de Dios en vano.",
+    "Santificarás las fiestas.",
+    "Honrarás a tu padre y a tu madre.",
+    "No matarás.",
+    "No cometerás actos impuros.",
+    "No robarás.",
+    "No dirás falso testimonio ni mentirás.",
+    "No consentirás pensamientos ni deseos impuros.",
+    "No codiciarás los bienes ajenos."
+   ],
+   "x": [
+    "Se resumen en dos: amar a Dios sobre todas las cosas y al prójimo como a ti mismo."
+   ]
+  },
+  {
+   "id": "mandig",
+   "t": "Los 5 mandamientos de la Iglesia",
+   "k": [
+    "mandamientos de la iglesia"
+   ],
+   "l": [
+    "Oír misa entera los domingos y fiestas de guardar.",
+    "Confesar los pecados mortales al menos una vez al año.",
+    "Comulgar por Pascua.",
+    "Ayunar y abstenerse de comer carne cuando lo manda la Iglesia.",
+    "Ayudar a la Iglesia en sus necesidades."
+   ]
+  },
+  {
+   "id": "sacr",
+   "t": "Los 7 sacramentos",
+   "k": [
+    "sacramentos"
+   ],
+   "l": [
+    "Bautismo",
+    "Confirmación",
+    "Eucaristía",
+    "Penitencia o Reconciliación",
+    "Unción de los enfermos",
+    "Orden sacerdotal",
+    "Matrimonio"
+   ]
+  },
+  {
+   "id": "obras",
+   "t": "Las 14 obras de misericordia",
+   "k": [
+    "obras de misericordia"
+   ],
+   "x": [
+    "Corporales:"
+   ],
+   "l": [
+    "Visitar a los enfermos.",
+    "Dar de comer al hambriento.",
+    "Dar de beber al sediento.",
+    "Dar posada al peregrino.",
+    "Vestir al desnudo.",
+    "Visitar a los presos.",
+    "Enterrar a los difuntos.",
+    "Espirituales: enseñar al que no sabe.",
+    "Dar buen consejo al que lo necesita.",
+    "Corregir al que se equivoca.",
+    "Perdonar las injurias.",
+    "Consolar al triste.",
+    "Sufrir con paciencia los defectos de los demás.",
+    "Rezar a Dios por los vivos y por los difuntos."
+   ]
+  },
+  {
+   "id": "virt",
+   "t": "Las virtudes",
+   "k": [
+    "virtudes",
+    "virtudes teologales",
+    "virtudes cardinales"
+   ],
+   "x": [
+    "Teologales: fe, esperanza y caridad.",
+    "Cardinales: prudencia, justicia, fortaleza y templanza."
+   ]
+  },
+  {
+   "id": "peca",
+   "t": "Los pecados capitales y sus virtudes contrarias",
+   "k": [
+    "pecados capitales"
+   ],
+   "l": [
+    "Soberbia → humildad",
+    "Avaricia → generosidad",
+    "Lujuria → castidad",
+    "Ira → paciencia",
+    "Gula → templanza",
+    "Envidia → caridad",
+    "Pereza → diligencia"
+   ]
+  },
+  {
+   "id": "dones",
+   "t": "Los dones del Espíritu Santo",
+   "k": [
+    "dones del espiritu santo",
+    "dones"
+   ],
+   "l": [
+    "Sabiduría",
+    "Entendimiento",
+    "Consejo",
+    "Fortaleza",
+    "Ciencia",
+    "Piedad",
+    "Temor de Dios"
+   ]
+  }
+ ]
+}

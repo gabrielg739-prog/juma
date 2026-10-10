@@ -1,5 +1,5 @@
 /* Service worker: modo sin conexión básico + avisos en segundo plano */
-const CACHE = 'juma-v7';
+const CACHE = 'juma-v8';
 try {
   importScripts('js/firebase-config.js');
   const c = self.JUMA_FIREBASE || {};
