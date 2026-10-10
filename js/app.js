@@ -376,7 +376,7 @@ document.addEventListener('click', async (e) => {
 /* ===================== editor: clave maestra + contenido.json ===================== */
 /* Nadie más ve el editor. Los cambios se guardan como borrador en este navegador y se publican
    subiendo el archivo contenido.json al repositorio de GitHub. */
-const PASS_HASH = '5ed8941a80b783e1e633091bba42b4e7e67f52ec106f71e7e297a79bb71c4d6d';
+const PASS_HASH = '3e59691dec3e065c5739943a603c5c121329d499cc48c77ae62da74d312d82eb';
 const DRAFT = 'juma-borrador';
 const normPass = (t) => String(t || '').trim().toLowerCase().replace(/\s+/g, ' ');
 function sha256(str) {
