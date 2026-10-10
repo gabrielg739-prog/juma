@@ -45,7 +45,7 @@ const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto'
 /* ===================== pintar contenido editable ===================== */
 let yearSel = 0;
 function renderAll() {
-  renderAviso(); renderDomingos(); renderActs(); renderFormacion(); renderPosts(); renderGalExtra(); renderGalFija();
+  renderAviso(); renderDomingos(); renderActs(); renderFormacion(); renderPosts(); renderGalExtra(); renderGalFija(); renderGalOrden();
 }
 function renderAviso() {
   const el = $('#aviso'); const t = String(cfg.aviso || '').trim();
@@ -126,7 +126,22 @@ function renderGalFija() {
   });
 }
 function renderGalExtra() {
-  $('#gal-extra').innerHTML = (cfg.galeria || []).filter((g) => g && g.url).map((g) => `<figure class="gal g5"><img class="photo" loading="lazy" src="${esc(g.url)}" alt="${esc(g.cap || 'Foto de JUMA')}"><figcaption>${esc(g.cap || '')}</figcaption></figure>`).join('');
+  const box = $('#galeria .gallery'); if (!box) return;
+  $$('figure[data-extra]', box).forEach((f) => f.remove());
+  (cfg.galeria || []).filter((g) => g && g.url).forEach((g) => {
+    const f = document.createElement('figure'); f.className = 'gal'; f.setAttribute('data-extra', '1');
+    f.innerHTML = `<img class="photo" loading="lazy" src="${esc(g.url)}" alt="${esc(g.cap || 'Foto de JUMA')}"><figcaption>${esc(g.cap || '')}</figcaption>`;
+    box.appendChild(f);
+  });
+}
+/* Orden de la galería: primero las fotos en el orden elegido en el editor, luego el resto en su orden original. */
+function galKey(f) { const im = f.querySelector('img'); return im ? im.getAttribute('src') : ''; }
+function renderGalOrden() {
+  const box = $('#galeria .gallery'); if (!box) return;
+  const figs = GAL_FIJA.map((g) => g.el).concat($$('figure[data-extra]', box));
+  const pos = new Map((cfg.orden || []).map((k, i) => [k, i]));
+  figs.map((f, i) => ({ f, i, p: pos.has(galKey(f)) ? pos.get(galKey(f)) : 1e6 + i }))
+    .sort((a, b) => a.p - b.p).forEach((x) => box.appendChild(x.f));
 }
 
 /* ===================== desenrollar al entrar en pantalla ===================== */
@@ -437,7 +452,7 @@ const tabs = [['enc', 'Domingos'], ['dat', 'Hora, lugar y WhatsApp'], ['act', 'A
 function editorBody() {
   setters.clear(); uid = 0;
   if (tab === 'enc') return '<p class="ehint">Escribe el tema de cada domingo o marca que no habrá reunión. Las fechas se calculan solas.</p>' + domingos().map((x) => `<div class="erow">${fld('Domingo ' + x.dia + ' de ' + x.mes, (dr.temas || {})[x.key] || '', (v) => { dr.temas = dr.temas || {}; dr.temas[x.key] = v; }, { ph: 'Tema del encuentro (opcional)' })}${chk('No habrá reunión', !!(dr.sinReunion || {})[x.key], (v) => { dr.sinReunion = dr.sinReunion || {}; dr.sinReunion[x.key] = v; })}</div>`).join('');
-  if (tab === 'dat') return '<p class="ehint">La hora y el lugar aparecen en la sección de domingos. El aviso se muestra como una franja azul arriba de toda la página; déjalo vacío para quitarlo.</p><div style="display:flex;flex-wrap:wrap;gap:18px">' + fld('Hora de la reunión', dr.hora || '', (v) => { dr.hora = v; }, { w: 1, ph: 'Ej.: 3:00 p. m.' }) + fld('Lugar de la reunión', dr.lugar || '', (v) => { dr.lugar = v; }, { w: 1, ph: 'Ej.: Salón parroquial' }) + fld('Números de WhatsApp que reciben las planillas (separados por coma)', dr.whatsapp != null ? dr.whatsapp : '0412-054-5307, 0412-566-7767', (v) => { dr.whatsapp = v; }, { w: 1, ph: '0412-054-5307, 0412-566-7767' }) + fld('Aviso en la parte de arriba de la página', dr.aviso || '', (v) => { dr.aviso = v; }, { w: 1, ph: 'Ej.: Este domingo la reunión será en el templo' }) + '</div>';
+  if (tab === 'dat') return '<p class="ehint">La hora y el lugar aparecen en la sección de domingos. El aviso se muestra como una franja azul arriba de toda la página; déjalo vacío para quitarlo.</p><div style="display:flex;flex-wrap:wrap;gap:18px">' + fld('Hora de la reunión', dr.hora || '', (v) => { dr.hora = v; }, { w: 1, ph: 'Ej.: 3:00 p. m.' }) + fld('Lugar de la reunión', dr.lugar || '', (v) => { dr.lugar = v; }, { w: 1, ph: 'Ej.: Salón parroquial' }) + '<div class="w" style="flex:1 1 100%"><b style="font-size:15px">Números de WhatsApp que reciben las planillas</b><p class="ehint" style="margin:4px 0 0">Escríbelos como los marcas en Venezuela, por ejemplo 0412-054-5307. Deja vacío el que no uses.</p></div>' + waFields() + fld('Aviso en la parte de arriba de la página', dr.aviso || '', (v) => { dr.aviso = v; }, { w: 1, ph: 'Ej.: Este domingo la reunión será en el templo' }) + '</div>';
   if (tab === 'act') { let h = '<p class="ehint">Retiros, campamentos, misiones, jornadas… Las filas vacías no se muestran.</p>'; for (let i = 0; i < 6; i++) { const g = (k) => ((dr.actividades || [])[i] || {})[k] || ''; const s = (k) => (v) => { dr.actividades = dr.actividades || []; dr.actividades[i] = Object.assign({ t: '', f: '', d: '' }, dr.actividades[i], { [k]: v }); }; h += `<div class="erow">${fld('Actividad', g('t'), s('t'))}${fld('Fecha', g('f'), s('f'), { ph: 'Sábado 24 de octubre' })}${fld('Detalle', g('d'), s('d'), { w: 1 })}</div>`; } return h; }
   if (tab === 'for') {
     const fo = (dr.formacion || {})[String(fy)] || {}; const y = YEARS[fy];
@@ -446,11 +461,17 @@ function editorBody() {
   }
   if (tab === 'nov') return `<p class="ehint">Publica novedades con texto y una foto, o con un enlace de YouTube para los videos. La más nueva aparece primero.</p><button type="button" class="btn btn-soft" data-newpost>Nueva entrada</button>${edBusy ? '<p class="ehint" style="margin-top:12px">Preparando la foto…</p>' : ''}` + (dr.posts || []).map((p, i) => `<div class="erow" style="flex-direction:column;align-items:stretch">${fld('Título', p.t || '', (v) => { dr.posts[i].t = v; }, { w: 1 })}${fld('Texto', p.x || '', (v) => { dr.posts[i].x = v; }, { w: 1, area: 1 })}${fld('Enlace de YouTube (opcional)', p.video || '', (v) => { dr.posts[i].video = v; }, { w: 1, ph: 'https://youtu.be/…' })}<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px"><label class="btn btn-soft btn-sm" style="cursor:pointer;position:relative">Elegir foto<input type="file" accept="image/*" data-up="foto" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0"></label>${p.foto ? `<img class="ethumb" src="${esc(p.foto)}" alt="">` : '<span style="font-size:14px;color:var(--muted)">Sin foto</span>'}<button type="button" class="btn btn-soft btn-sm" data-rmpost="${i}" style="margin-left:auto">Quitar entrada</button></div></div>`).join('');
   if (tab === 'fot') {
-    const ocultas = new Set(dr.ocultas || []); const pies = dr.pies || {};
-    const nuevas = (dr.galeria || []).map((g, i) => `<div class="erow"><img class="ethumb" src="${esc(g.url)}" alt="" loading="lazy">${fld('Pie de foto', g.cap || '', (v) => { dr.galeria[i].cap = v; })}<button type="button" class="btn btn-soft btn-sm" data-rmgal="${i}">Quitar</button></div>`).join('');
-    const fijas = GAL_FIJA.map((g, i) => { const off = ocultas.has(g.src); return `<div class="erow" style="${off ? 'opacity:.5' : ''}"><img class="ethumb" src="${esc(g.src)}" alt="" loading="lazy">${fld(off ? 'Oculta (no se ve en la página)' : 'Pie de foto', pies[g.src] != null ? pies[g.src] : g.cap, (v) => { dr.pies = dr.pies || {}; dr.pies[g.src] = v; })}<button type="button" class="btn btn-soft btn-sm" data-hidefija="${i}">${off ? 'Mostrar otra vez' : 'Quitar'}</button></div>`; }).join('');
-    return `<p class="ehint">Agrega fotos nuevas, cambia el pie de cualquier foto o quita las que no quieras. Las fotos que quitas no se borran: puedes volver a mostrarlas cuando quieras.</p><label class="btn btn-blue" style="cursor:pointer;position:relative">Agregar fotos nuevas<input type="file" accept="image/*" multiple data-up="gal" style="position:absolute;width:1px;height:1px;opacity:0"></label>${edBusy ? '<p class="ehint" style="margin-top:12px">Preparando las fotos…</p>' : ''}${nuevas ? `<h3 class="h-display" style="font-size:22px;margin:22px 0 4px">Fotos nuevas que agregaste</h3>${nuevas}` : ''}<h3 class="h-display" style="font-size:22px;margin:26px 0 4px">Fotos de la galería (${GAL_FIJA.length})</h3>${fijas}`;
+    const items = galItems(dr); const ocultas = new Set(dr.ocultas || []); const pies = dr.pies || {};
+    const rows = items.map((it, n) => {
+      const off = it.kind === 'fija' && ocultas.has(it.key);
+      const cap = it.kind === 'fija' ? (pies[it.key] != null ? pies[it.key] : it.cap) : it.cap;
+      const set = it.kind === 'fija' ? (v) => { dr.pies = dr.pies || {}; dr.pies[it.key] = v; } : (v) => { dr.galeria[it.idx].cap = v; };
+      const quitar = it.kind === 'fija' ? `<button type="button" class="btn btn-soft btn-sm" data-hidefija="${n}">${off ? 'Mostrar' : 'Quitar'}</button>` : `<button type="button" class="btn btn-soft btn-sm" data-rmgal="${it.idx}">Borrar</button>`;
+      return `<div class="erow" style="${off ? 'opacity:.5' : ''}"><div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:0 0 auto"><span style="font-weight:800;font-size:14px;color:var(--royal)">${n + 1}</span><button type="button" class="btn btn-soft btn-sm" data-mv="${n}" data-d="-1" aria-label="Subir" ${n === 0 ? 'disabled' : ''}>↑</button><button type="button" class="btn btn-soft btn-sm" data-mv="${n}" data-d="1" aria-label="Bajar" ${n === items.length - 1 ? 'disabled' : ''}>↓</button></div><img class="ethumb" src="${esc(it.src)}" alt="" loading="lazy">${fld(off ? 'Oculta (no se ve en la página)' : (it.kind === 'nueva' ? 'Foto nueva · pie de foto' : 'Pie de foto'), cap, set)}<div style="display:flex;flex-direction:column;gap:6px">${quitar}<button type="button" class="btn btn-soft btn-sm" data-top="${n}" ${n === 0 ? 'disabled' : ''}>Al inicio</button></div></div>`;
+    }).join('');
+    return `<p class="ehint">Agrega fotos, cambia su pie, quítalas o muévelas con las flechas ↑ ↓ (o «Al inicio»). El número es su lugar en la galería. Las fotos que quitas no se borran: puedes volver a mostrarlas.</p><label class="btn btn-blue" style="cursor:pointer;position:relative">Agregar fotos nuevas<input type="file" accept="image/*" multiple data-up="gal" style="position:absolute;width:1px;height:1px;opacity:0"></label>${edBusy ? '<p class="ehint" style="margin-top:12px">Preparando las fotos…</p>' : ''}<h3 class="h-display" style="font-size:22px;margin:22px 0 4px">Fotos de la galería (${items.length})</h3>${rows}`;
   }
+
   if (tab === 'pub') {
     const on = !!ghToken();
     return `<p class="ehint">${on ? '<b style="color:#17824A">✔ Conectado.</b> Al pulsar <b>Publicar</b>, los cambios se suben solos a tu GitHub y todos los ven en 1 o 2 minutos.' : '<b>Aún no está conectado.</b> Conéctalo una sola vez y el botón <b>Publicar</b> subirá los cambios solo, sin descargar archivos.'}</p>
@@ -468,6 +489,12 @@ ${ghMsg ? `<p class="ehint" role="status" style="margin-top:12px;font-weight:700
   }
   return '';
 }
+function waFields() {
+  const cur = String(dr.whatsapp != null ? dr.whatsapp : '0412-054-5307, 0412-566-7767').split(/[,;\n]+/).map((x) => x.trim());
+  let h = '';
+  for (let i = 0; i < 4; i++) h += fld('WhatsApp ' + (i + 1), cur[i] || '', (v) => { const a = String(dr.whatsapp != null ? dr.whatsapp : '0412-054-5307, 0412-566-7767').split(/[,;\n]+/).map((x) => x.trim()); while (a.length < 4) a.push(''); a[i] = v.trim(); dr.whatsapp = a.filter(Boolean).join(', '); }, { ph: i === 0 ? '0412-054-5307' : '' });
+  return h;
+}
 function editorHtml() {
   const ok = edOk ? `<div class="eok" role="status" style="line-height:1.55">${edOk}</div>` : '';
   const warn = draftWarn ? '<p class="ehint" style="color:#8A1C1C">El borrador es muy grande para guardarse en este navegador. No cierres la página sin descargar contenido.json.</p>' : '';
@@ -479,8 +506,16 @@ function cleanContent(src) {
   c.actividades = (c.actividades || []).filter((a) => a && String(a.t || '').trim());
   c.posts = (c.posts || []).filter((p) => p && (String(p.t || '').trim() || String(p.x || '').trim()));
   c.galeria = (c.galeria || []).filter((g) => g && g.url);
+  if (c.orden) { const ok = new Set(GAL_FIJA.map((g) => g.src).concat(c.galeria.map((g) => g.url))); c.orden = c.orden.filter((k) => ok.has(k)); }
   delete c._dirty;
   return c;
+}
+/* Lista de fotos de la galería en el orden actual: fijas + nuevas. */
+function galItems(d) {
+  const base = GAL_FIJA.map((g) => ({ key: g.src, src: g.src, cap: g.cap, kind: 'fija' }))
+    .concat((d.galeria || []).map((g, idx) => ({ key: g.url, src: g.url, cap: g.cap || '', kind: 'nueva', idx })));
+  const pos = new Map((d.orden || []).map((k, i) => [k, i]));
+  return base.map((x, i) => Object.assign(x, { p: pos.has(x.key) ? pos.get(x.key) : 1e6 + i })).sort((a, b) => a.p - b.p);
 }
 let previewTimer = 0;
 function touch() {
@@ -526,8 +561,13 @@ modalRoot.addEventListener('click', (e) => {
   if (q('[data-fy]')) { fy = +q('[data-fy]').dataset.fy; repaintEd(); return; }
   if (q('[data-newpost]')) { dr.posts = [{ id: String(Date.now()), t: '', x: '', fecha: new Date().toISOString(), foto: '', video: '' }].concat(dr.posts || []); touch(); repaintEd(); return; }
   if (q('[data-rmpost]')) { dr.posts.splice(+q('[data-rmpost]').dataset.rmpost, 1); touch(); repaintEd(); return; }
-  if (q('[data-hidefija]')) { const g = GAL_FIJA[+q('[data-hidefija]').dataset.hidefija]; const s = new Set(dr.ocultas || []); if (s.has(g.src)) s.delete(g.src); else s.add(g.src); dr.ocultas = Array.from(s); touch(); repaintEd(); return; }
-  if (q('[data-rmgal]')) { dr.galeria.splice(+q('[data-rmgal]').dataset.rmgal, 1); touch(); repaintEd(); return; }
+  if (q('[data-mv]') || q('[data-top]')) {
+    const b = q('[data-mv]') || q('[data-top]'); const keys = galItems(dr).map((x) => x.key); const n = +(b.dataset.mv != null ? b.dataset.mv : b.dataset.top);
+    const to = b.dataset.top != null ? 0 : n + (+b.dataset.d); if (to < 0 || to >= keys.length) return;
+    const [k] = keys.splice(n, 1); keys.splice(to, 0, k); dr.orden = keys; touch(); repaintEd(); return;
+  }
+  if (q('[data-hidefija]')) { const g = galItems(dr)[+q('[data-hidefija]').dataset.hidefija]; const s = new Set(dr.ocultas || []); if (s.has(g.src)) s.delete(g.src); else s.add(g.src); dr.ocultas = Array.from(s); touch(); repaintEd(); return; }
+  if (q('[data-rmgal]')) { const [g] = dr.galeria.splice(+q('[data-rmgal]').dataset.rmgal, 1); if (g && dr.orden) dr.orden = dr.orden.filter((k) => k !== g.url); touch(); repaintEd(); return; }
   if (q('[data-discard]')) {
     if (!confirm('¿Descartar el borrador y volver a lo que está publicado?')) return;
     try { localStorage.removeItem(DRAFT); } catch (x) {}
@@ -569,6 +609,7 @@ async function saveAll() {
     };
     for (const g of out.galeria || []) g.url = await upPhoto(g.url);
     for (const p of out.posts || []) if (p.foto) p.foto = await upPhoto(p.foto);
+    if (out.orden) out.orden = out.orden.map((k) => uploaded.get(k) || k);
     const cur = await ghGet('contenido.json');
     await ghPut('contenido.json', enc64(JSON.stringify(out, null, 1)), cur && cur.sha, 'Actualiza la página desde el editor');
     pub = clone(out); newestSeen = out.actualizado;
@@ -612,6 +653,131 @@ document.addEventListener('click', (e) => {
   const src = img.currentSrc || img.src;
   openModal(`<div class="overlay lightbox" role="dialog" aria-modal="true" aria-label="${esc(img.alt || 'Foto')}" data-close style="display:flex;align-items:center;justify-content:center;padding:58px 14px 14px;cursor:zoom-out"><img src="${esc(src)}" alt="${esc(img.alt || '')}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:10px"><button type="button" data-close style="position:fixed;top:12px;right:12px;min-height:44px;padding:0 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,.5);background:transparent;color:#fff;font-weight:700;font-size:15px">Cerrar ✕</button></div>`);
 });
+
+/* ===================== asistente de JUMA (con la imagen de San José Allamano) ===================== */
+/* Funciona dentro de la página, sin internet extra ni pagos: responde con la información de JUMA. */
+(function chatbot() {
+  const AV = 'img/allamano-avatar.png';
+  const css = `
+.jchat,.jchat-btn{font-family:var(--body,'Atkinson Hyperlegible','Segoe UI',system-ui,sans-serif)}
+.jchat *{font-family:inherit}
+.jchat-head b{font-family:var(--display,'Big Shoulders Display',sans-serif);font-size:20px;letter-spacing:.01em;text-transform:uppercase;line-height:1}
+.jchat-btn{position:fixed;left:16px;bottom:16px;z-index:41;display:flex;align-items:center;gap:10px;padding:6px 18px 6px 6px;border:0;border-radius:999px;background:#fff;color:var(--navy);font-weight:800;font-size:15px;box-shadow:0 14px 30px -10px rgba(6,21,54,.55);cursor:pointer;transition:transform 160ms cubic-bezier(0.23,1,0.32,1)}
+.jchat-btn:active{transform:scale(.97)}
+.jchat-btn img{width:48px;height:48px;border-radius:50%;display:block}
+.jchat-btn .dot{position:absolute;left:44px;top:6px;width:12px;height:12px;border-radius:50%;background:#17824A;border:2px solid #fff}
+.jchat{position:fixed;left:16px;bottom:16px;z-index:60;width:min(380px,calc(100vw - 32px));height:min(600px,calc(100dvh - 32px));display:flex;flex-direction:column;background:var(--paper,#F6F9FE);border-radius:20px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(6,21,54,.6);transform-origin:bottom left;animation:jchatIn 220ms cubic-bezier(0.23,1,0.32,1) both}
+@keyframes jchatIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+.jchat-head{display:flex;align-items:center;gap:12px;padding:12px 12px 12px 14px;background:var(--navy,#061536);color:#fff}
+.jchat-head img{width:46px;height:46px;border-radius:50%}
+.jchat-head b{display:block;font-size:16px}
+.jchat-head small{display:block;font-size:12.5px;color:#BFD3F2}
+.jchat-x{margin-left:auto;width:44px;height:44px;border-radius:10px;border:1.5px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-size:18px;cursor:pointer}
+.jchat-log{flex:1 1 auto;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
+.jmsg{display:flex;gap:8px;align-items:flex-end;max-width:92%}
+.jmsg img{width:30px;height:30px;border-radius:50%;flex:0 0 auto}
+.jmsg .b{padding:10px 13px;border-radius:16px 16px 16px 4px;background:#fff;color:var(--ink,#0A1B3F);font-size:15px;line-height:1.5;box-shadow:0 1px 2px rgba(6,21,54,.08)}
+.jmsg .b p{margin:0 0 6px}.jmsg .b p:last-child{margin:0}
+.jmsg .b a{color:var(--royal,#2452C8);font-weight:700}
+.jmsg.me{align-self:flex-end}
+.jmsg.me .b{background:var(--royal,#2452C8);color:#fff;border-radius:16px 16px 4px 16px}
+.jmsg .b .jbtn{display:inline-block;margin-top:8px;padding:9px 14px;border-radius:999px;background:var(--royal,#2452C8);color:#fff;font-weight:700;text-decoration:none;border:0;font-size:14px;cursor:pointer}
+.jtyping .b{display:flex;gap:4px;padding:14px}
+.jtyping i{width:7px;height:7px;border-radius:50%;background:#9DB3D6;animation:jdot 1s infinite}
+.jtyping i:nth-child(2){animation-delay:.15s}.jtyping i:nth-child(3){animation-delay:.3s}
+@keyframes jdot{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.jchips{display:flex;gap:8px;overflow-x:auto;padding:8px 14px;border-top:1px solid #E1E9F6;scrollbar-width:none}
+.jchips button{flex:0 0 auto;padding:8px 12px;border-radius:999px;border:1.5px solid #B9C8E4;background:#fff;color:var(--ink,#0A1B3F);font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.jchat form{display:flex;gap:8px;padding:10px 12px 12px;background:#fff;border-top:1px solid #E1E9F6}
+.jchat input{flex:1 1 auto;min-width:0;min-height:46px;padding:0 14px;border-radius:12px;border:1.5px solid #B9C8E4;font-size:16px;color:var(--ink,#0A1B3F)}
+.jchat form button{min-width:84px;min-height:46px;border:0;border-radius:12px;background:var(--royal,#2452C8);color:#fff;font-weight:800;font-size:15px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.jchat{animation:none}.jtyping i{animation:none;opacity:.6}}
+@media (max-width:520px){.jchat-btn span.t{display:none}.jchat-btn{padding:6px}}
+`;
+  const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+
+  const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9ñ\s]/g, ' ');
+  const has = (t, words) => words.some((w) => t.includes(w));
+  const P = (arr) => arr.filter(Boolean).map((x) => `<p>${x}</p>`).join('');
+  const txt = (el) => (el ? el.textContent.trim() : '');
+  const FRASES = [
+    '«No basta hacer el bien, hay que hacerlo bien.»',
+    '«Sed santos sin ruido.»',
+    '«Si tu corazón no arde de amor cuando haces misión, no te emocionas, permaneces indiferente, deberías cuestionarte si este carisma es para ti.»'
+  ];
+  const santo = (i) => { const d = $$('.patron-d')[i]; if (!d) return ''; const name = txt(d.querySelector('summary b')); const ps = $$('.pd-txt p', d).map((p) => p.innerHTML); return `<p><b>${esc(name)}</b></p>` + P(ps); };
+  const waLinks = () => waNums().map((n) => `<a href="https://wa.me/${n}" target="_blank" rel="noopener">${esc(waLabel(n))}</a>`).join(' o ');
+
+  function answer(q) {
+    const t = ' ' + norm(q) + ' ';
+    if (has(t, ['quien eres', 'eres allamano', 'eres real', 'eres un robot', 'eres una ia', 'como te llamas'])) return P(['Soy el asistente de JUMA. Llevo la imagen de San José Allamano, nuestro fundador, pero no soy él: solo te cuento lo que hacemos en JUMA Duaca.', 'Cuando te comparto una frase de Allamano, es una frase real suya.']);
+    if (has(t, [' hola ', 'buenas', 'buen dia', 'saludos', ' hey '])) return P(['¡Hola! Qué alegría que estés aquí. 😊', 'Pregúntame lo que quieras sobre JUMA: cuándo nos reunimos, cómo inscribirte, la formación o nuestros santos.']);
+    if (has(t, ['gracias', 'chao', 'adios', 'hasta luego', 'bendicion'])) return P(['¡A ti! Que Dios te bendiga y la Virgen Consolata te acompañe. Te esperamos el domingo. 💙']);
+    if (has(t, ['inscrib', 'planilla', 'formulario', 'unirme', 'unir ', 'entrar', 'participar', 'formar parte', 'ser parte', 'como me meto', 'registr'])) return P(['¡Qué bueno que quieras ser parte de JUMA!', 'Llena la planilla de inscripción aquí mismo. Al final la envías por WhatsApp a un coordinador con un toque.']) + '<button type="button" class="jbtn" data-open-form>Llenar la planilla</button>';
+    if (has(t, ['whatsapp', 'contacto', 'telefono', 'numero', 'llamar', 'escribir', 'instagram', 'tiktok', 'redes'])) return P([`Puedes escribirle a un coordinador por WhatsApp: ${waLinks()}.`, 'También estamos en <a href="https://www.instagram.com/juma_duaca/" target="_blank" rel="noopener">Instagram</a>, <a href="https://www.tiktok.com/@juma.duaca" target="_blank" rel="noopener">TikTok</a> y en nuestro <a href="https://whatsapp.com/channel/0029VaqbBJ972WTqOwLsLL0u" target="_blank" rel="noopener">canal de WhatsApp</a>.']);
+    const ys = YEARS.map((y) => norm(y.name).trim());
+    const yi = ys.findIndex((n) => t.includes(' ' + n + ' ') || t.includes(' ' + n));
+    if (yi >= 0) { const y = yearData(yi); return P([`<b>${esc(y.ord)} · ${esc(y.name)} (${esc(y.eje)})</b>`, `<b>${esc(y.title)}.</b> ${esc(y.text)}`, 'Algunos temas: ' + y.topics.slice(0, 5).map((x) => esc(x.t)).join(', ') + '.']); }
+    if (has(t, ['formacion', 'anos', 'continente', 'curso', 'temas', 'estudi', 'aprend'])) return P(['La formación dura <b>cinco años</b>, y cada año lleva el color y la franela de un continente:', YEARS.map((y) => `• <b>${esc(y.ord)}, ${esc(y.name)}:</b> ${esc(y.title)}`).join('<br>'), 'Pregúntame por un continente (por ejemplo «Asia») y te cuento más.']);
+    if (has(t, ['actividad', 'evento', 'retiro', 'campament', 'mision', 'proxim', 'calendario', 'agenda', 'fecha'])) {
+      const a = (cfg.actividades || []).filter((x) => x && x.t);
+      if (a.length) return P(['Estas son las próximas actividades:', a.map((x) => `• <b>${esc(x.t)}</b>${x.f ? ' — ' + esc(x.f) : ''}${x.d ? ': ' + esc(x.d) : ''}`).join('<br>'), 'Y además nos vemos todos los domingos.']);
+      return P(['Hacemos retiros, campamentos, misiones en caseríos y servicio social. Las fechas se anuncian en el canal de WhatsApp y en nuestras redes.']);
+    }
+    if (has(t, ['cuando', 'hora', 'dia ', 'domingo', 'reun', 'encuentro', 'donde', 'lugar', 'direccion', 'ubicacion', 'semana'])) {
+      const d = domingos(); const n = d[0];
+      return P([`Nos reunimos <b>todos los domingos</b>. Hora: <b>${esc(hora())}</b>. Lugar: <b>${esc(lugar())}</b>.`, n ? `El próximo es el <b>${n.dia} de ${n.mes}</b>: ${esc(n.tema)}.` : '', 'Cada encuentro tiene oración, formación y compartir. ¡Llega temprano y trae tu alegría!']);
+    }
+    if (has(t, ['frase', 'cita', 'consejo', 'mensaje', 'reflexion', 'palabra'])) return P(['Una frase de San José Allamano:', FRASES[Math.floor(Math.random() * FRASES.length)]]);
+    if (has(t, ['cafasso'])) return santo(2);
+    if (has(t, ['leonella', 'sgorbati', 'perdono', 'somalia'])) return santo(3);
+    if (has(t, ['irene', 'stefani', 'nyaatha', 'kenia'])) return santo(4);
+    if (has(t, ['allamano', 'fundador', 'jose'])) return santo(1);
+    if (has(t, ['virgen', 'consolata', 'maria', 'patrona', 'madre'])) return santo(0);
+    if (has(t, ['santo', 'santos', 'beata', 'beato'])) return P(['Nos acompañan María Consolata, San José Allamano, San José Cafasso, la beata Leonella Sgorbati y la beata Irene Stefani.', 'Pregúntame por cualquiera de ellos y te cuento su historia.']);
+    if (has(t, ['area', 'servir', 'coro', 'liturgia', 'logistica', 'ayudar', 'donde puedo'])) { const ar = $$('#areas .areas h3').map((h) => esc(txt(h))); return P(['Cada joven tiene un lugar donde servir. Nuestras áreas son:', ar.join(', ') + '.', 'Cada área tiene un encargado y un auxiliar.']); }
+    if (has(t, ['pilar', 'evangeliz', 'animacion', 'recreacion'])) return P(['Cuatro pilares sostienen cada mes: <b>formación</b>, <b>evangelización</b>, <b>animación</b> y <b>recreación y compartir</b>.']);
+    if (has(t, ['mision ', 'vision', 'objetivo', 'que buscan', 'proposito'])) return P(['<b>Nuestro objetivo:</b> promover en los jóvenes espacios de formación, evangelización y misión a través del carisma de los Misioneros de la Consolata.']);
+    if (has(t, ['edad', 'anos tengo', 'menor', 'mayor', 'puedo ir', 'quien puede'])) return P(['JUMA es para jóvenes. Si eres menor de edad, en la planilla te pedimos los datos de tu representante.', `Si tienes dudas sobre tu edad, escríbele a un coordinador: ${waLinks()}.`]);
+    if (has(t, ['juma', 'que es', 'quienes', 'movimiento', 'significa'])) return P(['<b>JUMA</b> significa <b>Juventud Misionera Allamaniana</b>. Somos el movimiento juvenil de los Misioneros de la Consolata en Duaca.', 'Cada domingo nos reunimos para orar, formarnos y salir a la misión. ¡Somos «misioneros en la cabeza, en la boca y en el corazón»!']);
+    return P(['Mmm, esa no me la sé todavía. 🙏', `Puedes preguntarle a un coordinador por WhatsApp: ${waLinks()}.`, 'O toca una de las preguntas de abajo.']);
+  }
+
+  const CHIPS = ['¿Qué es JUMA?', '¿Cuándo se reúnen?', '¿Cómo me inscribo?', 'Próximas actividades', 'Los 5 años de formación', '¿Quién fue Allamano?', 'Una frase de Allamano', 'Contacto'];
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'jchat-btn'; btn.setAttribute('aria-label', 'Abrir el asistente de JUMA');
+  btn.innerHTML = `<img src="${AV}" alt=""><i class="dot" aria-hidden="true"></i><span class="t">¿Te ayudo?</span>`;
+  document.body.appendChild(btn);
+  let box = null, log = null, first = true;
+
+  function add(html, me) {
+    const m = document.createElement('div'); m.className = 'jmsg' + (me ? ' me' : '');
+    m.innerHTML = (me ? '' : `<img src="${AV}" alt="">`) + `<div class="b">${html}</div>`;
+    log.appendChild(m); log.scrollTop = log.scrollHeight;
+  }
+  function reply(q) {
+    const ty = document.createElement('div'); ty.className = 'jmsg jtyping'; ty.innerHTML = `<img src="${AV}" alt=""><div class="b"><i></i><i></i><i></i></div>`;
+    log.appendChild(ty); log.scrollTop = log.scrollHeight;
+    setTimeout(() => { ty.remove(); add(answer(q)); }, reduced() ? 150 : 650);
+  }
+  function ask(q) { q = String(q || '').trim(); if (!q) return; add(esc(q), true); reply(q); }
+  function open() {
+    if (box) { box.style.display = ''; btn.style.display = 'none'; setTimeout(() => { try { box.querySelector('input').focus({ preventScroll: true }); } catch (e) {} }, 50); return; }
+    box = document.createElement('section'); box.className = 'jchat'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Asistente de JUMA');
+    box.innerHTML = `<div class="jchat-head"><img src="${AV}" alt=""><div><b>Asistente de JUMA</b><small>Con la imagen de San José Allamano</small></div><button type="button" class="jchat-x" aria-label="Cerrar">✕</button></div><div class="jchat-log" aria-live="polite"></div><div class="jchips">${CHIPS.map((c) => `<button type="button">${esc(c)}</button>`).join('')}</div><form><label for="jchat-in" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Escribe tu pregunta</label><input id="jchat-in" type="text" autocomplete="off" placeholder="Escribe tu pregunta…"><button type="submit">Enviar</button></form>`;
+    document.body.appendChild(box); btn.style.display = 'none';
+    log = box.querySelector('.jchat-log');
+    box.querySelector('.jchat-x').addEventListener('click', close);
+    box.querySelector('.jchips').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) ask(b.textContent); });
+    box.querySelector('form').addEventListener('submit', (e) => { e.preventDefault(); const i = box.querySelector('input'); ask(i.value); i.value = ''; });
+    box.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+    box.addEventListener('click', (e) => { if (e.target.closest('[data-open-form]')) close(); });
+    if (first) { first = false; add(P(['¡Hola! Soy el asistente de JUMA, con la imagen de San José Allamano. 😊', 'Te cuento sobre nuestros encuentros, la formación, los santos y cómo inscribirte. ¿Qué quieres saber?'])); }
+    setTimeout(() => { try { box.querySelector('input').focus({ preventScroll: true }); } catch (e) {} }, 50);
+  }
+  function close() { if (!box) return; box.style.display = 'none'; btn.style.display = ''; btn.focus(); }
+  btn.addEventListener('click', open);
+})();
 
 /* ===================== arranque ===================== */
 let newestSeen = '', oldFiles = [];
