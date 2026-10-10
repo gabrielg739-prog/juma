@@ -654,17 +654,17 @@ document.addEventListener('click', (e) => {
   openModal(`<div class="overlay lightbox" role="dialog" aria-modal="true" aria-label="${esc(img.alt || 'Foto')}" data-close style="display:flex;align-items:center;justify-content:center;padding:58px 14px 14px;cursor:zoom-out"><img src="${esc(src)}" alt="${esc(img.alt || '')}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:10px"><button type="button" data-close style="position:fixed;top:12px;right:12px;min-height:44px;padding:0 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,.5);background:transparent;color:#fff;font-weight:700;font-size:15px">Cerrar ✕</button></div>`);
 });
 
-/* ===================== asistente de JUMA (con la imagen de San José Allamano) ===================== */
+/* ===================== Joriel, el asistente de JUMA ===================== */
 /* Funciona dentro de la página, sin internet extra ni pagos: responde con la información de JUMA. */
 (function chatbot() {
-  const AV = 'img/allamano-avatar.png';
+  const AV = 'img/joriel-avatar.png'; const FULL = 'img/joriel.jpg';
   const css = `
 .jchat,.jchat-btn{font-family:var(--body,'Atkinson Hyperlegible','Segoe UI',system-ui,sans-serif)}
 .jchat *{font-family:inherit}
 .jchat-head b{font-family:var(--display,'Big Shoulders Display',sans-serif);font-size:20px;letter-spacing:.01em;text-transform:uppercase;line-height:1}
 .jchat-btn{position:fixed;left:16px;bottom:16px;z-index:41;display:flex;align-items:center;gap:10px;padding:6px 18px 6px 6px;border:0;border-radius:999px;background:#fff;color:var(--navy);font-weight:800;font-size:15px;box-shadow:0 14px 30px -10px rgba(6,21,54,.55);cursor:pointer;transition:transform 160ms cubic-bezier(0.23,1,0.32,1)}
 .jchat-btn:active{transform:scale(.97)}
-.jchat-btn img{width:48px;height:48px;border-radius:50%;display:block}
+.jchat-btn img{width:48px;height:48px;border-radius:50%;display:block;box-shadow:0 0 0 2px #8EC9FF}
 .jchat-btn .dot{position:absolute;left:44px;top:6px;width:12px;height:12px;border-radius:50%;background:#17824A;border:2px solid #fff}
 .jchat{position:fixed;left:16px;bottom:16px;z-index:60;width:min(380px,calc(100vw - 32px));height:min(600px,calc(100dvh - 32px));display:flex;flex-direction:column;background:var(--paper,#F6F9FE);border-radius:20px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(6,21,54,.6);transform-origin:bottom left;animation:jchatIn 220ms cubic-bezier(0.23,1,0.32,1) both}
 @keyframes jchatIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
@@ -691,7 +691,15 @@ document.addEventListener('click', (e) => {
 .jchat form{display:flex;gap:8px;padding:10px 12px 12px;background:#fff;border-top:1px solid #E1E9F6}
 .jchat input{flex:1 1 auto;min-width:0;min-height:46px;padding:0 14px;border-radius:12px;border:1.5px solid #B9C8E4;font-size:16px;color:var(--ink,#0A1B3F)}
 .jchat form button{min-width:84px;min-height:46px;border:0;border-radius:12px;background:var(--royal,#2452C8);color:#fff;font-weight:800;font-size:15px;cursor:pointer}
-@media (prefers-reduced-motion:reduce){.jchat{animation:none}.jtyping i{animation:none;opacity:.6}}
+.jhello{position:fixed;left:16px;bottom:76px;z-index:42;display:flex;align-items:flex-end;gap:6px;max-width:min(340px,calc(100vw - 32px));animation:jhelloIn 320ms cubic-bezier(0.23,1,0.32,1) both;transform-origin:bottom left}
+@keyframes jhelloIn{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}}
+.jhello-img{width:92px;flex:0 0 auto;border-radius:14px;cursor:pointer;filter:drop-shadow(0 10px 18px rgba(6,21,54,.35))}
+.jhello-b{position:relative;padding:14px 16px;background:#fff;border-radius:16px 16px 16px 4px;box-shadow:0 18px 40px -14px rgba(6,21,54,.55);font-family:var(--body,'Atkinson Hyperlegible','Segoe UI',system-ui,sans-serif);color:var(--ink,#0A1B3F)}
+.jhello-b b{display:block;font-size:16px;padding-right:26px}
+.jhello-b p{margin:6px 0 10px;font-size:14.5px;line-height:1.45}
+.jhello-go{min-height:40px;padding:0 14px;border:0;border-radius:999px;background:var(--royal,#2452C8);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
+.jhello-x{position:absolute;top:6px;right:6px;width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:#5A6B8C;font-size:15px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.jhello{animation:none}.jchat{animation:none}.jtyping i{animation:none;opacity:.6}}
 @media (max-width:520px){.jchat-btn span.t{display:none}.jchat-btn{padding:6px}}
 `;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
@@ -710,7 +718,7 @@ document.addEventListener('click', (e) => {
 
   function answer(q) {
     const t = ' ' + norm(q) + ' ';
-    if (has(t, ['quien eres', 'eres allamano', 'eres real', 'eres un robot', 'eres una ia', 'como te llamas'])) return P(['Soy el asistente de JUMA. Llevo la imagen de San José Allamano, nuestro fundador, pero no soy él: solo te cuento lo que hacemos en JUMA Duaca.', 'Cuando te comparto una frase de Allamano, es una frase real suya.']);
+    if (has(t, ['quien eres', 'eres real', 'eres un robot', 'eres una ia', 'como te llamas', 'tu nombre', 'joriel'])) return P(['¡Soy <b>Joriel</b>! Un joven misionero de JUMA y el asistente de esta página. 😄', 'Te cuento sobre nuestros encuentros, la formación, los santos y cómo inscribirte. Soy un asistente automático: si algo no lo sé, te paso con un coordinador.']);
     if (has(t, [' hola ', 'buenas', 'buen dia', 'saludos', ' hey '])) return P(['¡Hola! Qué alegría que estés aquí. 😊', 'Pregúntame lo que quieras sobre JUMA: cuándo nos reunimos, cómo inscribirte, la formación o nuestros santos.']);
     if (has(t, ['gracias', 'chao', 'adios', 'hasta luego', 'bendicion'])) return P(['¡A ti! Que Dios te bendiga y la Virgen Consolata te acompañe. Te esperamos el domingo. 💙']);
     if (has(t, ['inscrib', 'planilla', 'formulario', 'unirme', 'unir ', 'entrar', 'participar', 'formar parte', 'ser parte', 'como me meto', 'registr'])) return P(['¡Qué bueno que quieras ser parte de JUMA!', 'Llena la planilla de inscripción aquí mismo. Al final la envías por WhatsApp a un coordinador con un toque.']) + '<button type="button" class="jbtn" data-open-form>Llenar la planilla</button>';
@@ -745,8 +753,8 @@ document.addEventListener('click', (e) => {
 
   const CHIPS = ['¿Qué es JUMA?', '¿Cuándo se reúnen?', '¿Cómo me inscribo?', 'Próximas actividades', 'Los 5 años de formación', '¿Quién fue Allamano?', 'Una frase de Allamano', 'Contacto'];
   const btn = document.createElement('button');
-  btn.type = 'button'; btn.className = 'jchat-btn'; btn.setAttribute('aria-label', 'Abrir el asistente de JUMA');
-  btn.innerHTML = `<img src="${AV}" alt=""><i class="dot" aria-hidden="true"></i><span class="t">¿Te ayudo?</span>`;
+  btn.type = 'button'; btn.className = 'jchat-btn'; btn.setAttribute('aria-label', 'Hablar con Joriel, el asistente de JUMA');
+  btn.innerHTML = `<img src="${AV}" alt=""><i class="dot" aria-hidden="true"></i><span class="t">Joriel</span>`;
   document.body.appendChild(btn);
   let box = null, log = null, first = true;
 
@@ -763,8 +771,8 @@ document.addEventListener('click', (e) => {
   function ask(q) { q = String(q || '').trim(); if (!q) return; add(esc(q), true); reply(q); }
   function open() {
     if (box) { box.style.display = ''; btn.style.display = 'none'; setTimeout(() => { try { box.querySelector('input').focus({ preventScroll: true }); } catch (e) {} }, 50); return; }
-    box = document.createElement('section'); box.className = 'jchat'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Asistente de JUMA');
-    box.innerHTML = `<div class="jchat-head"><img src="${AV}" alt=""><div><b>Asistente de JUMA</b><small>Con la imagen de San José Allamano</small></div><button type="button" class="jchat-x" aria-label="Cerrar">✕</button></div><div class="jchat-log" aria-live="polite"></div><div class="jchips">${CHIPS.map((c) => `<button type="button">${esc(c)}</button>`).join('')}</div><form><label for="jchat-in" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Escribe tu pregunta</label><input id="jchat-in" type="text" autocomplete="off" placeholder="Escribe tu pregunta…"><button type="submit">Enviar</button></form>`;
+    box = document.createElement('section'); box.className = 'jchat'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Joriel, asistente de JUMA');
+    box.innerHTML = `<div class="jchat-head"><img src="${AV}" alt=""><div><b>Joriel</b><small>Asistente de JUMA · en línea</small></div><button type="button" class="jchat-x" aria-label="Cerrar">✕</button></div><div class="jchat-log" aria-live="polite"></div><div class="jchips">${CHIPS.map((c) => `<button type="button">${esc(c)}</button>`).join('')}</div><form><label for="jchat-in" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Escribe tu pregunta</label><input id="jchat-in" type="text" autocomplete="off" placeholder="Escribe tu pregunta…"><button type="submit">Enviar</button></form>`;
     document.body.appendChild(box); btn.style.display = 'none';
     log = box.querySelector('.jchat-log');
     box.querySelector('.jchat-x').addEventListener('click', close);
@@ -772,11 +780,26 @@ document.addEventListener('click', (e) => {
     box.querySelector('form').addEventListener('submit', (e) => { e.preventDefault(); const i = box.querySelector('input'); ask(i.value); i.value = ''; });
     box.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
     box.addEventListener('click', (e) => { if (e.target.closest('[data-open-form]')) close(); });
-    if (first) { first = false; add(P(['¡Hola! Soy el asistente de JUMA, con la imagen de San José Allamano. 😊', 'Te cuento sobre nuestros encuentros, la formación, los santos y cómo inscribirte. ¿Qué quieres saber?'])); }
+    if (first) { first = false; add(`<img src="${FULL}" alt="Joriel saludando" style="display:block;width:110px;margin:0 auto 6px">` + P(['¡Hola! Soy <b>Joriel</b>, joven misionero de JUMA Duaca. 👋', 'Te cuento cuándo nos reunimos, cómo inscribirte, cómo es la formación y quiénes son nuestros santos. ¿Qué quieres saber?'])); }
     setTimeout(() => { try { box.querySelector('input').focus({ preventScroll: true }); } catch (e) {} }, 50);
   }
   function close() { if (!box) return; box.style.display = 'none'; btn.style.display = ''; btn.focus(); }
-  btn.addEventListener('click', open);
+  btn.addEventListener('click', () => { hideHello(); open(); });
+
+  /* Saludo de presentación al abrir la página (una vez por visita). */
+  let hello = null;
+  function hideHello() { if (!hello) return; hello.remove(); hello = null; try { sessionStorage.setItem('juma-hola', '1'); } catch (e) {} }
+  function showHello() {
+    try { if (sessionStorage.getItem('juma-hola')) return; } catch (e) {}
+    if (box || hello || modalRoot.firstChild) return;
+    hello = document.createElement('div'); hello.className = 'jhello'; hello.setAttribute('role', 'status');
+    hello.innerHTML = `<img src="${FULL}" alt="" class="jhello-img"><div class="jhello-b"><button type="button" class="jhello-x" aria-label="Cerrar saludo">✕</button><b>¡Hola! Soy Joriel 👋</b><p>Bienvenido a JUMA Duaca. Si quieres saber cuándo nos reunimos o cómo unirte, pregúntame.</p><button type="button" class="jhello-go">Hablar con Joriel</button></div>`;
+    document.body.appendChild(hello);
+    hello.querySelector('.jhello-x').addEventListener('click', hideHello);
+    hello.querySelector('.jhello-go').addEventListener('click', () => { hideHello(); open(); });
+    hello.querySelector('.jhello-img').addEventListener('click', () => { hideHello(); open(); });
+  }
+  setTimeout(showHello, 1800);
 })();
 
 /* ===================== arranque ===================== */
