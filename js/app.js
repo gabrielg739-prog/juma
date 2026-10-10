@@ -45,7 +45,7 @@ const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto'
 /* ===================== pintar contenido editable ===================== */
 let yearSel = 0;
 function renderAll() {
-  renderAviso(); renderDomingos(); renderActs(); renderFormacion(); renderPosts(); renderGalExtra();
+  renderAviso(); renderDomingos(); renderActs(); renderFormacion(); renderPosts(); renderGalExtra(); renderGalFija();
 }
 function renderAviso() {
   const el = $('#aviso'); const t = String(cfg.aviso || '').trim();
@@ -112,6 +112,18 @@ function renderPosts() {
   $('#novedades').classList.toggle('hide', !list.length);
   $('#nav-nov').classList.toggle('hide', !list.length);
   $('#posts').innerHTML = list.map((p) => `<article class="post">${mediaHtml(p)}<div class="post-body"><time>${esc(fmtF(p.fecha))}</time><h3>${esc(p.t)}</h3><p>${esc(p.x)}</p></div></article>`).join('');
+}
+/* Fotos fijas de la galería: se pueden ocultar o cambiar su pie desde el editor. */
+const GAL_FIJA = Array.from(document.querySelectorAll('#galeria figure.gal')).filter((f) => !f.closest('#gal-extra')).map((f) => {
+  const im = f.querySelector('img'); const cap = f.querySelector('figcaption');
+  return { el: f, src: im ? im.getAttribute('src') : '', cap: cap ? cap.textContent : '', capEl: cap };
+});
+function renderGalFija() {
+  const ocultas = new Set(cfg.ocultas || []); const pies = cfg.pies || {};
+  GAL_FIJA.forEach((g) => {
+    g.el.style.display = ocultas.has(g.src) ? 'none' : '';
+    if (g.capEl) g.capEl.textContent = pies[g.src] != null && String(pies[g.src]).trim() ? pies[g.src] : g.cap;
+  });
 }
 function renderGalExtra() {
   $('#gal-extra').innerHTML = (cfg.galeria || []).filter((g) => g && g.url).map((g) => `<figure class="gal g5"><img class="photo" loading="lazy" src="${esc(g.url)}" alt="${esc(g.cap || 'Foto de JUMA')}"><figcaption>${esc(g.cap || '')}</figcaption></figure>`).join('');
@@ -379,6 +391,40 @@ function writeDraft(o) { try { localStorage.setItem(DRAFT, JSON.stringify(o)); r
 function pickDraft() { const d = readDraft(); if (d && (d._dirty || String(d.actualizado || '') > String(pub.actualizado || ''))) return d; return null; }
 const isEditor = () => { try { return sessionStorage.getItem('juma-ed') === '1'; } catch (e) { return false; } };
 
+/* ===================== publicar directo en GitHub ===================== */
+/* La llave (token) se guarda SOLO en este navegador; nunca va dentro del código de la página. */
+const GH = (() => {
+  let owner = 'gabrielg739-prog', repo = 'juma';
+  try { if (/\.github\.io$/.test(location.hostname)) { owner = location.hostname.split('.')[0]; const seg = location.pathname.split('/').filter(Boolean)[0]; if (seg) repo = seg; } } catch (e) {}
+  let api = 'https://api.github.com'; try { api = localStorage.getItem('juma-gh-api') || api; } catch (e) {}
+  return { owner, repo, branch: 'main', api };
+})();
+const ghToken = () => { try { return localStorage.getItem('juma-gh-token') || ''; } catch (e) { return ''; } };
+const enc64 = (str) => { const b = new TextEncoder().encode(str); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); };
+const dec64 = (b64) => { const bin = atob(String(b64 || '').replace(/\s/g, '')); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new TextDecoder().decode(u); };
+async function gh(path, opts = {}, token = ghToken()) {
+  const r = await fetch(GH.api + path, Object.assign({}, opts, { headers: Object.assign({ Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + token, 'X-GitHub-Api-Version': '2022-11-28' }, opts.body ? { 'Content-Type': 'application/json' } : {}) }));
+  let data = null; try { data = await r.json(); } catch (e) {}
+  return { ok: r.ok, status: r.status, data };
+}
+const ghPath = (f) => '/repos/' + GH.owner + '/' + GH.repo + '/contents/' + f.split('/').map(encodeURIComponent).join('/');
+async function ghGet(file) { const r = await gh(ghPath(file) + '?ref=' + GH.branch + '&t=' + Date.now()); return r.ok ? r.data : null; }
+async function ghPut(file, b64, sha, msg) {
+  const body = { message: msg, content: b64, branch: GH.branch }; if (sha) body.sha = sha;
+  const r = await gh(ghPath(file), { method: 'PUT', body: JSON.stringify(body) });
+  if (!r.ok) { const e = new Error('put'); e.status = r.status; throw e; }
+  return r.data;
+}
+async function ghDelete(file, sha) { return gh(ghPath(file), { method: 'DELETE', body: JSON.stringify({ message: 'Limpia ' + file, sha, branch: GH.branch }) }); }
+async function ghCheck(token) {
+  const r = await gh('/repos/' + GH.owner + '/' + GH.repo, {}, token);
+  if (!r.ok) return r.status === 401 ? 'La llave no es válida. Revisa que la copiaste completa.' : 'La llave no tiene acceso al repositorio ' + GH.repo + '.';
+  if (!(r.data && r.data.permissions && r.data.permissions.push)) return 'La llave puede leer pero no escribir. En GitHub, dale el permiso «Contents: Read and write».';
+  return '';
+}
+const uploaded = new Map(); // foto (data URL) -> ruta ya subida en esta sesión
+let ghState = '', ghMsg = '';
+
 let dr = {}, tab = 'enc', fy = 0, edErr = '', edOk = '', edBusy = false, draftWarn = false;
 const setters = new Map(); let uid = 0;
 function fld(label, val, set, o = {}) {
@@ -387,7 +433,7 @@ function fld(label, val, set, o = {}) {
   return `<div class="fld ${o.w ? 'w' : ''}">${label ? `<label for="${id}">${label}</label>` : ''}${tag}</div>`;
 }
 function chk(label, on, set) { const id = 'ed-' + (uid++); setters.set(id, set); return `<label style="display:flex;gap:10px;align-items:center;min-height:52px;font-size:15px;font-weight:700"><input type="checkbox" id="${id}" data-edc="${id}" ${on ? 'checked' : ''} style="width:22px;height:22px;margin:0">${label}</label>`; }
-const tabs = [['enc', 'Domingos'], ['dat', 'Hora, lugar y WhatsApp'], ['act', 'Actividades'], ['for', 'Formación'], ['nov', 'Novedades'], ['fot', 'Fotos']];
+const tabs = [['enc', 'Domingos'], ['dat', 'Hora, lugar y WhatsApp'], ['act', 'Actividades'], ['for', 'Formación'], ['nov', 'Novedades'], ['fot', 'Fotos'], ['pub', 'Conexión con GitHub']];
 function editorBody() {
   setters.clear(); uid = 0;
   if (tab === 'enc') return '<p class="ehint">Escribe el tema de cada domingo o marca que no habrá reunión. Las fechas se calculan solas.</p>' + domingos().map((x) => `<div class="erow">${fld('Domingo ' + x.dia + ' de ' + x.mes, (dr.temas || {})[x.key] || '', (v) => { dr.temas = dr.temas || {}; dr.temas[x.key] = v; }, { ph: 'Tema del encuentro (opcional)' })}${chk('No habrá reunión', !!(dr.sinReunion || {})[x.key], (v) => { dr.sinReunion = dr.sinReunion || {}; dr.sinReunion[x.key] = v; })}</div>`).join('');
@@ -399,13 +445,33 @@ function editorBody() {
     return `<p class="ehint">Elige el año y cambia su título, su texto o la lista de temas (un tema por línea).</p><div class="etabs">${YEARS.map((x, i) => `<button type="button" class="etab" data-fy="${i}" aria-pressed="${i === fy}">${x.name}</button>`).join('')}</div><div style="display:flex;flex-wrap:wrap;gap:18px">${fld('Título', fo.title != null ? fo.title : y.title, s('title'), { w: 1 })}${fld('Texto', fo.text != null ? fo.text : y.text, s('text'), { w: 1, area: 1 })}${fld('Temas (uno por línea)', fo.topicsText != null ? fo.topicsText : y.topics.map((t) => t.t).join('\n'), s('topicsText'), { w: 1, area: 1, rows: 10 })}</div>`;
   }
   if (tab === 'nov') return `<p class="ehint">Publica novedades con texto y una foto, o con un enlace de YouTube para los videos. La más nueva aparece primero.</p><button type="button" class="btn btn-soft" data-newpost>Nueva entrada</button>${edBusy ? '<p class="ehint" style="margin-top:12px">Preparando la foto…</p>' : ''}` + (dr.posts || []).map((p, i) => `<div class="erow" style="flex-direction:column;align-items:stretch">${fld('Título', p.t || '', (v) => { dr.posts[i].t = v; }, { w: 1 })}${fld('Texto', p.x || '', (v) => { dr.posts[i].x = v; }, { w: 1, area: 1 })}${fld('Enlace de YouTube (opcional)', p.video || '', (v) => { dr.posts[i].video = v; }, { w: 1, ph: 'https://youtu.be/…' })}<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px"><label class="btn btn-soft btn-sm" style="cursor:pointer;position:relative">Elegir foto<input type="file" accept="image/*" data-up="foto" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0"></label>${p.foto ? `<img class="ethumb" src="${esc(p.foto)}" alt="">` : '<span style="font-size:14px;color:var(--muted)">Sin foto</span>'}<button type="button" class="btn btn-soft btn-sm" data-rmpost="${i}" style="margin-left:auto">Quitar entrada</button></div></div>`).join('');
-  if (tab === 'fot') return `<p class="ehint">Las fotos que agregues aparecen al final de la galería. Se achican solas para que la página cargue rápido y quedan guardadas dentro de contenido.json.</p><label class="btn btn-soft" style="cursor:pointer;position:relative">Agregar fotos<input type="file" accept="image/*" multiple data-up="gal" style="position:absolute;width:1px;height:1px;opacity:0"></label>${edBusy ? '<p class="ehint" style="margin-top:12px">Preparando las fotos…</p>' : ''}` + (dr.galeria || []).map((g, i) => `<div class="erow"><img class="ethumb" src="${esc(g.url)}" alt="">${fld('Pie de foto', g.cap || '', (v) => { dr.galeria[i].cap = v; })}<button type="button" class="btn btn-soft btn-sm" data-rmgal="${i}">Quitar</button></div>`).join('');
+  if (tab === 'fot') {
+    const ocultas = new Set(dr.ocultas || []); const pies = dr.pies || {};
+    const nuevas = (dr.galeria || []).map((g, i) => `<div class="erow"><img class="ethumb" src="${esc(g.url)}" alt="" loading="lazy">${fld('Pie de foto', g.cap || '', (v) => { dr.galeria[i].cap = v; })}<button type="button" class="btn btn-soft btn-sm" data-rmgal="${i}">Quitar</button></div>`).join('');
+    const fijas = GAL_FIJA.map((g, i) => { const off = ocultas.has(g.src); return `<div class="erow" style="${off ? 'opacity:.5' : ''}"><img class="ethumb" src="${esc(g.src)}" alt="" loading="lazy">${fld(off ? 'Oculta (no se ve en la página)' : 'Pie de foto', pies[g.src] != null ? pies[g.src] : g.cap, (v) => { dr.pies = dr.pies || {}; dr.pies[g.src] = v; })}<button type="button" class="btn btn-soft btn-sm" data-hidefija="${i}">${off ? 'Mostrar otra vez' : 'Quitar'}</button></div>`; }).join('');
+    return `<p class="ehint">Agrega fotos nuevas, cambia el pie de cualquier foto o quita las que no quieras. Las fotos que quitas no se borran: puedes volver a mostrarlas cuando quieras.</p><label class="btn btn-blue" style="cursor:pointer;position:relative">Agregar fotos nuevas<input type="file" accept="image/*" multiple data-up="gal" style="position:absolute;width:1px;height:1px;opacity:0"></label>${edBusy ? '<p class="ehint" style="margin-top:12px">Preparando las fotos…</p>' : ''}${nuevas ? `<h3 class="h-display" style="font-size:22px;margin:22px 0 4px">Fotos nuevas que agregaste</h3>${nuevas}` : ''}<h3 class="h-display" style="font-size:22px;margin:26px 0 4px">Fotos de la galería (${GAL_FIJA.length})</h3>${fijas}`;
+  }
+  if (tab === 'pub') {
+    const on = !!ghToken();
+    return `<p class="ehint">${on ? '<b style="color:#17824A">✔ Conectado.</b> Al pulsar <b>Publicar</b>, los cambios se suben solos a tu GitHub y todos los ven en 1 o 2 minutos.' : '<b>Aún no está conectado.</b> Conéctalo una sola vez y el botón <b>Publicar</b> subirá los cambios solo, sin descargar archivos.'}</p>
+<ol class="ehint" style="padding-left:20px;line-height:1.7">
+<li>Abre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener"><b>este enlace</b></a> (con tu cuenta de GitHub abierta).</li>
+<li>En <b>Token name</b> escribe <b>juma</b>. En <b>Expiration</b> elige la fecha más lejana que te deje.</li>
+<li>En <b>Repository access</b> marca <b>Only select repositories</b> y elige <b>${esc(GH.repo)}</b>.</li>
+<li>En <b>Permissions</b> → <b>Repository permissions</b> → <b>Contents</b>, elige <b>Read and write</b>.</li>
+<li>Abajo pulsa <b>Generate token</b> y copia el código que empieza con <b>github_pat_</b>.</li>
+<li>Pégalo aquí y pulsa <b>Conectar</b>.</li></ol>
+<div class="fld w"><label for="gh-tok">Llave de GitHub</label><input id="gh-tok" type="password" autocomplete="off" placeholder="github_pat_…"></div>
+<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:14px"><button type="button" class="btn btn-blue" data-ghsave>${ghState === 'busy' ? 'Probando…' : 'Conectar'}</button>${on ? '<button type="button" class="btn btn-soft" data-ghdel>Desconectar este dispositivo</button>' : ''}</div>
+${ghMsg ? `<p class="ehint" role="status" style="margin-top:12px;font-weight:700">${esc(ghMsg)}</p>` : ''}
+<p class="ehint" style="margin-top:16px">La llave queda guardada solo en este dispositivo. Haz esto en cada teléfono o computadora desde donde quieras publicar.</p>`;
+  }
   return '';
 }
 function editorHtml() {
   const ok = edOk ? `<div class="eok" role="status" style="line-height:1.55">${edOk}</div>` : '';
   const warn = draftWarn ? '<p class="ehint" style="color:#8A1C1C">El borrador es muy grande para guardarse en este navegador. No cierres la página sin descargar contenido.json.</p>' : '';
-  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="ed-t" id="ed-ov"><div class="sheet">${sheetHead('Solo tú ves esto', 'Editar la página', 'ed-t')}<div style="padding:clamp(22px,4vw,40px)"><div class="etabs" role="group" aria-label="Qué quieres editar">${tabs.map(([k, t]) => `<button type="button" class="etab" data-tab="${k}" aria-pressed="${k === tab}">${t}</button>`).join('')}</div><div id="ed-body">${editorBody()}</div>${warn}${edErr ? `<p role="alert" style="margin:20px 0 0;padding:14px 18px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:15px;font-weight:700">${esc(edErr)}</p>` : ''}${ok}<div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:12px;margin-top:28px"><button type="button" class="btn btn-soft" data-discard>Descartar borrador</button><button type="button" class="btn btn-soft" data-close>Cerrar</button><button type="button" class="btn btn-blue" data-save>Guardar y descargar</button></div></div></div></div>`;
+  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="ed-t" id="ed-ov"><div class="sheet">${sheetHead('Solo tú ves esto', 'Editar la página', 'ed-t')}<div style="padding:clamp(22px,4vw,40px)"><div class="etabs" role="group" aria-label="Qué quieres editar">${tabs.map(([k, t]) => `<button type="button" class="etab" data-tab="${k}" aria-pressed="${k === tab}">${t}</button>`).join('')}</div><div id="ed-body">${editorBody()}</div>${warn}${edErr ? `<p role="alert" style="margin:20px 0 0;padding:14px 18px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:15px;font-weight:700">${esc(edErr)}</p>` : ''}${ok}<div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:12px;margin-top:28px"><button type="button" class="btn btn-soft" data-discard>Descartar borrador</button><button type="button" class="btn btn-soft" data-close>Cerrar</button><button type="button" class="btn btn-blue" data-save ${edBusy ? 'disabled' : ''}>${edBusy ? 'Publicando…' : (ghToken() ? 'Publicar' : 'Guardar y descargar')}</button></div></div></div></div>`;
 }
 function repaintEd() { const sc = $('#ed-ov'); const top = sc ? sc.scrollTop : 0; modalRoot.innerHTML = editorHtml(); const o = $('#ed-ov'); if (o) { o.style.animation = 'none'; $('.sheet', o).style.animation = 'none'; o.scrollTop = top; } }
 function cleanContent(src) {
@@ -424,7 +490,8 @@ function touch() {
   previewTimer = setTimeout(() => { draftWarn = !writeDraft(dr); cfg = cleanContent(dr); renderAll(); }, 350);
 }
 function showFab() { $('#fab-edit').classList.remove('hide'); }
-function openEditor() {
+async function openEditor() {
+  if (ghToken()) { try { const f = await ghGet('contenido.json'); if (f && f.content) { const c = JSON.parse(dec64(f.content)); if (String(c.actualizado || '') >= String(pub.actualizado || '')) pub = c; } } catch (e) {} }
   dr = clone(pickDraft() || pub);
   tab = 'enc'; fy = 0; edErr = ''; edOk = ''; draftWarn = false;
   openModal(editorHtml());
@@ -459,20 +526,62 @@ modalRoot.addEventListener('click', (e) => {
   if (q('[data-fy]')) { fy = +q('[data-fy]').dataset.fy; repaintEd(); return; }
   if (q('[data-newpost]')) { dr.posts = [{ id: String(Date.now()), t: '', x: '', fecha: new Date().toISOString(), foto: '', video: '' }].concat(dr.posts || []); touch(); repaintEd(); return; }
   if (q('[data-rmpost]')) { dr.posts.splice(+q('[data-rmpost]').dataset.rmpost, 1); touch(); repaintEd(); return; }
+  if (q('[data-hidefija]')) { const g = GAL_FIJA[+q('[data-hidefija]').dataset.hidefija]; const s = new Set(dr.ocultas || []); if (s.has(g.src)) s.delete(g.src); else s.add(g.src); dr.ocultas = Array.from(s); touch(); repaintEd(); return; }
   if (q('[data-rmgal]')) { dr.galeria.splice(+q('[data-rmgal]').dataset.rmgal, 1); touch(); repaintEd(); return; }
   if (q('[data-discard]')) {
     if (!confirm('¿Descartar el borrador y volver a lo que está publicado?')) return;
     try { localStorage.removeItem(DRAFT); } catch (x) {}
     dr = clone(pub); cfg = clone(pub); renderAll(); edOk = ''; repaintEd(); return;
   }
-  if (q('[data-save]')) {
-    const c = cleanContent(dr); c.actualizado = new Date().toISOString();
-    dr = c; draftWarn = !writeDraft(Object.assign({}, c, { _dirty: false })); cfg = clone(c); renderAll();
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(c, null, 1)], { type: 'application/json' })); a.download = 'contenido.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    edOk = '<b>Listo: se descargó contenido.json.</b> Para que todos vean los cambios, súbelo a GitHub: entra a <b>github.com/gabrielg739-prog/juma</b>, toca <b>Add file → Upload files</b>, arrastra <b>contenido.json</b> y pulsa <b>Commit changes</b>. En unos minutos aparece en la página.<br><br>Si tu computadora lo guardó como <b>contenido (1).json</b>, <b>contenido (2).json</b>, etc., súbelo así mismo: la página toma siempre el más reciente.';
-    repaintEd();
+  if (q('[data-ghsave]')) {
+    const v = ($('#gh-tok') || {}).value; const tok = String(v || '').trim();
+    if (!tok) { ghMsg = 'Pega la llave primero.'; repaintEd(); return; }
+    ghState = 'busy'; ghMsg = ''; repaintEd();
+    ghCheck(tok).then((err) => {
+      ghState = '';
+      if (err) ghMsg = err; else { try { localStorage.setItem('juma-gh-token', tok); } catch (x) {} ghMsg = 'Listo, quedó conectado. Ya puedes usar el botón Publicar.'; }
+      repaintEd();
+    }).catch(() => { ghState = ''; ghMsg = 'No se pudo comprobar la llave. Revisa tu conexión a internet.'; repaintEd(); });
+    return;
   }
+  if (q('[data-ghdel]')) { try { localStorage.removeItem('juma-gh-token'); } catch (x) {} ghMsg = 'Este dispositivo quedó desconectado.'; repaintEd(); return; }
+  if (q('[data-save]')) { if (!edBusy) saveAll(); return; }
 });
+
+async function saveAll() {
+  const local = cleanContent(dr);
+  local.actualizado = new Date(Math.max(Date.now(), (Date.parse(newestSeen) || 0) + 1000)).toISOString();
+  if (!ghToken()) {
+    dr = local; draftWarn = !writeDraft(Object.assign({}, local, { _dirty: false })); cfg = clone(local); renderAll();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(local, null, 1)], { type: 'application/json' })); a.download = 'contenido.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    edOk = '<b>Se descargó contenido.json.</b> Súbelo a GitHub con <b>Add file → Upload files → Commit changes</b> (aunque se llame «contenido (1).json»). <br><br>Para no tener que descargar nada, conecta tu GitHub en la pestaña <b>Conexión con GitHub</b>: así el botón publica solo.';
+    repaintEd(); return;
+  }
+  edBusy = true; edErr = ''; edOk = ''; repaintEd();
+  try {
+    const out = clone(local); let n = 0;
+    const upPhoto = async (url) => {
+      if (!/^data:image\//.test(url || '')) return url;
+      if (uploaded.has(url)) return uploaded.get(url);
+      const path = 'img/subidas/' + Date.now() + '-' + (++n) + '.jpg';
+      await ghPut(path, url.split(',')[1], null, 'Foto nueva desde el editor');
+      uploaded.set(url, path); return path;
+    };
+    for (const g of out.galeria || []) g.url = await upPhoto(g.url);
+    for (const p of out.posts || []) if (p.foto) p.foto = await upPhoto(p.foto);
+    const cur = await ghGet('contenido.json');
+    await ghPut('contenido.json', enc64(JSON.stringify(out, null, 1)), cur && cur.sha, 'Actualiza la página desde el editor');
+    pub = clone(out); newestSeen = out.actualizado;
+    dr = local; cfg = clone(local); renderAll();
+    try { localStorage.removeItem(DRAFT); } catch (x) {}
+    for (const f of oldFiles) { try { const o = await ghGet(f); if (o && o.sha) await ghDelete(f, o.sha); } catch (x) {} }
+    oldFiles = [];
+    edOk = '<b>¡Publicado!</b> En 1 o 2 minutos todos lo ven en la página y en la app. Si alguien la tenía abierta, que la cierre y la vuelva a abrir.';
+  } catch (x) {
+    edErr = x && (x.status === 401 || x.status === 403 || x.status === 404) ? 'GitHub no aceptó la llave. Revísala en la pestaña «Conexión con GitHub».' : 'No se pudo publicar. Revisa tu conexión a internet e intenta otra vez; tus cambios siguen guardados en este dispositivo.';
+  }
+  edBusy = false; repaintEd();
+}
 
 /* ===================== entrada secreta: 5 toques en María Consolata ===================== */
 let taps = [];
@@ -505,6 +614,7 @@ document.addEventListener('click', (e) => {
 });
 
 /* ===================== arranque ===================== */
+let newestSeen = '', oldFiles = [];
 async function loadContenido() {
   /* Si la computadora guardó el archivo como «contenido (1).json», «contenido (2).json»…,
      también se lee: gana el que tenga la fecha de guardado más reciente. */
@@ -515,6 +625,8 @@ async function loadContenido() {
   let best = got[0] || null;
   got.forEach((c) => { if (c && String(c.actualizado || '') > String((best && best.actualizado) || '')) best = c; });
   if (best) pub = best;
+  newestSeen = String((best && best.actualizado) || '');
+  oldFiles = names.slice(1).filter((n, i) => got[i + 1]).map((n) => decodeURIComponent(n));
   cfg = clone(pub);
   if (isEditor()) { showFab(); const d = pickDraft(); if (d) cfg = cleanContent(d); }
   renderAll();
