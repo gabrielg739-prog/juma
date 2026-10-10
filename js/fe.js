@@ -228,6 +228,10 @@ const css = `
 .mp-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px!important}
 .mp-web{display:inline-flex;align-items:center;text-decoration:none;background:var(--cloth);color:#fff!important;border-color:var(--cloth)}
 .mp-map .pc.mc{stroke:#fff;stroke-width:.9;stroke-dasharray:2 1.5}
+.net-off{position:fixed;top:max(10px,env(safe-area-inset-top));left:50%;z-index:80;max-width:calc(100vw - 32px);padding:10px 18px;border-radius:999px;background:#0A1F4D;color:#fff;font-family:var(--body);font-size:14px;line-height:1.3;white-space:nowrap;box-shadow:0 12px 30px -10px rgba(6,21,54,.6);border:1px solid rgba(142,201,255,.45);transform:translate(-50%,-160%);opacity:0;transition:transform .28s cubic-bezier(.23,1,.32,1),opacity .2s ease;pointer-events:none;text-align:center}
+.net-off b{color:#F5C518}
+.net-off.on{transform:translate(-50%,0);opacity:1}
+@media (prefers-reduced-motion:reduce){.net-off{transition:opacity .2s ease;transform:translate(-50%,0)}}
 .mp-map .pc.sel.sel{stroke:#8EC9FF;stroke-width:2;stroke-dasharray:none}
 @media (max-width:860px){.fe-two,.fe-rm,.mp-wrap{grid-template-columns:minmax(0,1fr)}}
 @media (prefers-reduced-motion:reduce){.fe-panel{animation:none}.mp-map .pin .pulse{animation:none;opacity:0}}
@@ -349,6 +353,11 @@ async function mapa() {
 (function init() {
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   render(); mapa();
+  /* aviso de "sin internet" */
+  const net = document.createElement('div'); net.className = 'net-off'; net.setAttribute('role', 'status');
+  net.innerHTML = '<b>Sin internet</b> · Viendo lo último guardado'; (document.getElementById('root') || document.body).appendChild(net);
+  const upd = () => net.classList.toggle('on', !navigator.onLine);
+  window.addEventListener('online', upd); window.addEventListener('offline', upd); upd();
   document.addEventListener('click', (e) => {
     const b = e.target.closest && e.target.closest('[data-fe]'); if (b) { tab = b.dataset.fe; render(); return; }
     const v = e.target.closest && e.target.closest('[data-ver]');
