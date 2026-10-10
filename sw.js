@@ -1,5 +1,5 @@
 /* Service worker: modo sin conexión básico + avisos en segundo plano */
-const CACHE = 'juma-v1';
+const CACHE = 'juma-v2';
 try {
   importScripts('js/firebase-config.js');
   const c = self.JUMA_FIREBASE || {};
@@ -12,7 +12,7 @@ self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((k) => Promise.all(k.filter((x) => x !== CACHE).map((x) => caches.delete(x)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
   const r = e.request; if (r.method !== 'GET' || new URL(r.url).origin !== location.origin) return;
-  if (r.mode === 'navigate' || /\.(js|css)$/.test(r.url)) {
+  if (r.mode === 'navigate' || /\.(js|css|json)(\?|$)/.test(r.url)) {
     e.respondWith(fetch(r).then((res) => { const cp = res.clone(); caches.open(CACHE).then((c) => c.put(r, cp)); return res; }).catch(() => caches.match(r).then((m) => m || caches.match('index.html'))));
   } else {
     e.respondWith(caches.match(r).then((m) => m || fetch(r).then((res) => { const cp = res.clone(); caches.open(CACHE).then((c) => c.put(r, cp)); return res; })));

@@ -9,8 +9,8 @@ const esc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</
 const pad2 = (n) => String(n).padStart(2, '0');
 const reduced = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
 
-let cfg = {};
-try { cfg = JSON.parse(localStorage.getItem('juma-cfg') || '{}'); } catch (e) {}
+let cfg = {};      // contenido publicado (contenido.json) o el borrador del editor
+let pub = {};      // contenido publicado tal como está en GitHub
 let fb = null;      // módulos de firebase
 let isAdmin = false;
 
@@ -35,7 +35,7 @@ const YEARS = [
 ];
 const FOTOS = [
   { foto: 'img/parque.jpg', pos: '30% 50%', alt: 'Grupo de JUMA reunido en el Parque La Aparición' },
-  { foto: 'img/capilla.jpg', pos: '50% 55%', alt: 'Sacerdote en oración ante el altar de una capilla' },
+  { foto: 'img/new-lectura-palabra.jpg', pos: '50% 40%', alt: 'Jóvenes de JUMA leyendo la Palabra en grupo' },
   { foto: 'img/cruz.jpg', pos: '40% 40%', alt: 'Joven de JUMA con la cruz misionera por las calles de Duaca' },
   { foto: 'img/circulo.jpg', pos: '70% 55%', alt: 'Misionero guiando una dinámica con jóvenes en círculo' },
   { foto: 'img/comunidad.jpg', pos: '28% 50%', alt: 'Misioneros de JUMA junto a niños y familias de una comunidad' }
@@ -194,12 +194,15 @@ function validate(st) {
   if (st === 4 && !form.consent) return 'Marca la casilla de confirmación para enviar.';
   return '';
 }
+const WA_DEFAULT = '584120545307,584125667767';
+function waNums() { return String(cfg.whatsapp || WA_DEFAULT).split(/[,;\n]+/).map((x) => x.replace(/\D/g, '')).map((x) => (x.startsWith('0') ? '58' + x.slice(1) : x)).filter((x) => x.length >= 10).slice(0, 4); }
+function waLabel(n) { const d = n.startsWith('58') ? '0' + n.slice(2) : n; return d.length === 11 ? d.slice(0, 4) + '-' + d.slice(4, 7) + '-' + d.slice(7) : d; }
 function planillaTexto() { return 'PLANILLA DE INSCRIPCIÓN · JUMA Duaca\n\n' + summaryRows().map((r) => r[0] + ': ' + r[1]).join('\n'); }
 function formHtml() {
   const st = form.step, d = form.d;
   if (form.done) {
-    const wa = String(cfg.whatsapp || CFG.whatsapp || '').replace(/\D/g, '');
-    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', 'Perfil de inscripción misionero', 'pl-t')}<div style="padding:clamp(28px,5vw,56px)"><h3 class="h-display h-lg">Tu planilla está lista, ${esc((d.nombres || '').trim().split(' ')[0] || 'bienvenido')}</h3><p class="body" style="margin-top:12px;max-width:54ch">${form.saved ? 'Ya recibimos tu inscripción. ' : ''}Gracias por querer ser parte de JUMA. Descárgala y entrégala a un coordinador el domingo${wa ? ', o envíanosla por WhatsApp' : ''}.</p><div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:28px"><button type="button" class="btn btn-blue" data-dl>Descargar mi planilla</button>${wa ? `<a class="btn btn-blue" target="_blank" rel="noopener" href="https://wa.me/${wa}?text=${encodeURIComponent(planillaTexto())}">Enviar por WhatsApp</a>` : ''}<button type="button" class="btn btn-soft" data-close>Cerrar</button></div></div></div></div>`;
+    const wa = waNums();
+    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', 'Perfil de inscripción misionero', 'pl-t')}<div style="padding:clamp(28px,5vw,56px)"><h3 class="h-display h-lg">Tu planilla está lista, ${esc((d.nombres || '').trim().split(' ')[0] || 'bienvenido')}</h3><p class="body" style="margin-top:12px;max-width:54ch">${form.saved ? 'Ya recibimos tu inscripción. ' : ''}Gracias por querer ser parte de JUMA. ${wa.length ? 'Envíala por WhatsApp a uno de nuestros coordinadores: se abrirá con tus datos ya escritos y solo tienes que pulsar enviar. También puedes descargarla y entregarla el domingo.' : 'Descárgala y entrégala a un coordinador el domingo.'}</p><div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:28px">${wa.map((n) => `<a class="btn btn-blue" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${encodeURIComponent(planillaTexto())}">Enviar por WhatsApp a ${esc(waLabel(n))}</a>`).join('')}<button type="button" class="btn btn-soft" data-dl>Descargar mi planilla</button><button type="button" class="btn btn-soft" data-close>Cerrar</button></div></div></div></div>`;
   }
   const names = ['Tus datos', 'Representante', 'Salud', 'Confirmar'];
   const prog = names.map((l, i) => `<div class="${i + 1 === st ? 'on' : (i + 1 < st ? 'ok' : '')}"><i aria-hidden="true"></i><span>${l}</span></div>`).join('');
@@ -337,8 +340,44 @@ document.addEventListener('click', async (e) => {
   if (e.target.id === 'lnk-admin') { e.preventDefault(); if (!fb) { alert('El administrador aún no está activado. Sigue el LEEME para conectar Firebase.'); return; } if (isAdmin) await fb.au.signOut(fb.auth); else openLogin(); }
 });
 
-/* ===================== editor ===================== */
-let dr = {}, tab = 'enc', fy = 0, edErr = '', edOk = false, edBusy = false, extra = { mens: [], insc: [] };
+/* ===================== editor: clave maestra + contenido.json ===================== */
+/* Nadie más ve el editor. Los cambios se guardan como borrador en este navegador y se publican
+   subiendo el archivo contenido.json al repositorio de GitHub. */
+const PASS_HASH = '5ed8941a80b783e1e633091bba42b4e7e67f52ec106f71e7e297a79bb71c4d6d';
+const DRAFT = 'juma-borrador';
+const normPass = (t) => String(t || '').trim().toLowerCase().replace(/\s+/g, ' ');
+function sha256(str) {
+  const K = [], H = []; let n = 0;
+  for (let c = 2; n < 64; c++) {
+    let prime = true; for (let d = 2; d * d <= c; d++) if (c % d === 0) { prime = false; break; }
+    if (!prime) continue;
+    if (n < 8) H[n] = (Math.pow(c, 1 / 2) * 4294967296) | 0;
+    K[n++] = (Math.pow(c, 1 / 3) * 4294967296) | 0;
+  }
+  const b = Array.from(new TextEncoder().encode(str)); const bits = b.length * 8;
+  b.push(0x80); while (b.length % 64 !== 56) b.push(0);
+  b.push(0, 0, 0, 0, (bits >>> 24) & 255, (bits >>> 16) & 255, (bits >>> 8) & 255, bits & 255);
+  const w = new Array(64); const r = (x, k) => (x >>> k) | (x << (32 - k));
+  for (let i = 0; i < b.length; i += 64) {
+    for (let j = 0; j < 16; j++) w[j] = (b[i + 4 * j] << 24) | (b[i + 4 * j + 1] << 16) | (b[i + 4 * j + 2] << 8) | b[i + 4 * j + 3];
+    for (let j = 16; j < 64; j++) { const s0 = r(w[j - 15], 7) ^ r(w[j - 15], 18) ^ (w[j - 15] >>> 3); const s1 = r(w[j - 2], 17) ^ r(w[j - 2], 19) ^ (w[j - 2] >>> 10); w[j] = (w[j - 16] + s0 + w[j - 7] + s1) | 0; }
+    let [a, bb, c, d, e, f, g, h] = H;
+    for (let j = 0; j < 64; j++) {
+      const t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[j] + w[j]) | 0;
+      const t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & bb) ^ (a & c) ^ (bb & c))) | 0;
+      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = bb; bb = a; a = (t1 + t2) | 0;
+    }
+    H[0] = (H[0] + a) | 0; H[1] = (H[1] + bb) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;
+    H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
+  }
+  return H.map((x) => (x >>> 0).toString(16).padStart(8, '0')).join('');
+}
+const clone = (o) => JSON.parse(JSON.stringify(o || {}));
+function readDraft() { try { const s = localStorage.getItem(DRAFT); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+function writeDraft(o) { try { localStorage.setItem(DRAFT, JSON.stringify(o)); return true; } catch (e) { return false; } }
+const isEditor = () => { try { return sessionStorage.getItem('juma-ed') === '1'; } catch (e) { return false; } };
+
+let dr = {}, tab = 'enc', fy = 0, edErr = '', edOk = '', edBusy = false, draftWarn = false;
 const setters = new Map(); let uid = 0;
 function fld(label, val, set, o = {}) {
   const id = 'ed-' + (uid++); setters.set(id, set);
@@ -346,106 +385,134 @@ function fld(label, val, set, o = {}) {
   return `<div class="fld ${o.w ? 'w' : ''}">${label ? `<label for="${id}">${label}</label>` : ''}${tag}</div>`;
 }
 function chk(label, on, set) { const id = 'ed-' + (uid++); setters.set(id, set); return `<label style="display:flex;gap:10px;align-items:center;min-height:52px;font-size:15px;font-weight:700"><input type="checkbox" id="${id}" data-edc="${id}" ${on ? 'checked' : ''} style="width:22px;height:22px;margin:0">${label}</label>`; }
-const tabs = [['enc', 'Domingos'], ['dat', 'Hora y lugar'], ['act', 'Actividades'], ['for', 'Formación'], ['nov', 'Novedades'], ['fot', 'Fotos'], ['men', 'Mensajes'], ['ins', 'Inscripciones'], ['avi', 'Avisos']];
+const tabs = [['enc', 'Domingos'], ['dat', 'Hora, lugar y WhatsApp'], ['act', 'Actividades'], ['for', 'Formación'], ['nov', 'Novedades'], ['fot', 'Fotos']];
 function editorBody() {
   setters.clear(); uid = 0;
   if (tab === 'enc') return '<p class="ehint">Escribe el tema de cada domingo o marca que no habrá reunión. Las fechas se calculan solas.</p>' + domingos().map((x) => `<div class="erow">${fld('Domingo ' + x.dia + ' de ' + x.mes, (dr.temas || {})[x.key] || '', (v) => { dr.temas = dr.temas || {}; dr.temas[x.key] = v; }, { ph: 'Tema del encuentro (opcional)' })}${chk('No habrá reunión', !!(dr.sinReunion || {})[x.key], (v) => { dr.sinReunion = dr.sinReunion || {}; dr.sinReunion[x.key] = v; })}</div>`).join('');
-  if (tab === 'dat') return '<p class="ehint">Estos datos aparecen en la sección de domingos. El aviso se muestra como una franja azul arriba de toda la página; déjalo vacío para quitarlo.</p><div style="display:flex;flex-wrap:wrap;gap:18px">' + fld('Hora de la reunión', dr.hora || '', (v) => { dr.hora = v; }, { w: 1, ph: 'Ej.: 3:00 p. m.' }) + fld('Lugar de la reunión', dr.lugar || '', (v) => { dr.lugar = v; }, { w: 1, ph: 'Ej.: Salón parroquial' }) + fld('WhatsApp para recibir planillas (con código de país, sin +)', dr.whatsapp || '', (v) => { dr.whatsapp = v; }, { w: 1, ph: 'Ej.: 584121234567' }) + fld('Aviso en la parte de arriba de la página', dr.aviso || '', (v) => { dr.aviso = v; }, { w: 1, ph: 'Ej.: Este domingo la reunión será en el templo' }) + '</div>';
+  if (tab === 'dat') return '<p class="ehint">La hora y el lugar aparecen en la sección de domingos. El aviso se muestra como una franja azul arriba de toda la página; déjalo vacío para quitarlo.</p><div style="display:flex;flex-wrap:wrap;gap:18px">' + fld('Hora de la reunión', dr.hora || '', (v) => { dr.hora = v; }, { w: 1, ph: 'Ej.: 3:00 p. m.' }) + fld('Lugar de la reunión', dr.lugar || '', (v) => { dr.lugar = v; }, { w: 1, ph: 'Ej.: Salón parroquial' }) + fld('Números de WhatsApp que reciben las planillas (separados por coma)', dr.whatsapp != null ? dr.whatsapp : '0412-054-5307, 0412-566-7767', (v) => { dr.whatsapp = v; }, { w: 1, ph: '0412-054-5307, 0412-566-7767' }) + fld('Aviso en la parte de arriba de la página', dr.aviso || '', (v) => { dr.aviso = v; }, { w: 1, ph: 'Ej.: Este domingo la reunión será en el templo' }) + '</div>';
   if (tab === 'act') { let h = '<p class="ehint">Retiros, campamentos, misiones, jornadas… Las filas vacías no se muestran.</p>'; for (let i = 0; i < 6; i++) { const g = (k) => ((dr.actividades || [])[i] || {})[k] || ''; const s = (k) => (v) => { dr.actividades = dr.actividades || []; dr.actividades[i] = Object.assign({ t: '', f: '', d: '' }, dr.actividades[i], { [k]: v }); }; h += `<div class="erow">${fld('Actividad', g('t'), s('t'))}${fld('Fecha', g('f'), s('f'), { ph: 'Sábado 24 de octubre' })}${fld('Detalle', g('d'), s('d'), { w: 1 })}</div>`; } return h; }
   if (tab === 'for') {
-    const fo = (dr.formacion || {})[String(fy)] || {}; const y = yearData(fy);
+    const fo = (dr.formacion || {})[String(fy)] || {}; const y = YEARS[fy];
     const s = (k) => (v) => { dr.formacion = dr.formacion || {}; dr.formacion[String(fy)] = Object.assign({}, dr.formacion[String(fy)], { [k]: v }); };
     return `<p class="ehint">Elige el año y cambia su título, su texto o la lista de temas (un tema por línea).</p><div class="etabs">${YEARS.map((x, i) => `<button type="button" class="etab" data-fy="${i}" aria-pressed="${i === fy}">${x.name}</button>`).join('')}</div><div style="display:flex;flex-wrap:wrap;gap:18px">${fld('Título', fo.title != null ? fo.title : y.title, s('title'), { w: 1 })}${fld('Texto', fo.text != null ? fo.text : y.text, s('text'), { w: 1, area: 1 })}${fld('Temas (uno por línea)', fo.topicsText != null ? fo.topicsText : y.topics.map((t) => t.t).join('\n'), s('topicsText'), { w: 1, area: 1, rows: 10 })}</div>`;
   }
-  if (tab === 'nov') return `<p class="ehint">Publica novedades con texto y una foto, un video corto o un enlace de YouTube. La más nueva aparece primero.</p><button type="button" class="btn btn-soft" data-newpost>Nueva entrada</button>${edBusy ? '<p class="ehint" style="margin-top:12px">Subiendo…</p>' : ''}` + (dr.posts || []).map((p, i) => `<div class="erow" style="flex-direction:column;align-items:stretch">${fld('Título', p.t || '', (v) => { dr.posts[i].t = v; }, { w: 1 })}${fld('Texto', p.x || '', (v) => { dr.posts[i].x = v; }, { w: 1, area: 1 })}${fld('Enlace de YouTube (opcional)', /youtu/.test(p.video || '') ? p.video : '', (v) => { dr.posts[i].video = v; if (v) dr.posts[i].foto = ''; }, { w: 1, ph: 'https://youtu.be/…' })}<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px"><label class="btn btn-soft btn-sm" style="cursor:pointer">Foto<input type="file" accept="image/*" data-up="foto" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0"></label><label class="btn btn-soft btn-sm" style="cursor:pointer">Video<input type="file" accept="video/*" data-up="video" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0"></label><span style="font-size:14px;color:var(--muted)">${p.video ? 'Video cargado' : (p.foto ? 'Foto cargada' : 'Sin foto ni video')}</span><button type="button" class="btn btn-soft btn-sm" data-rmpost="${i}" style="margin-left:auto">Quitar entrada</button></div></div>`).join('');
-  if (tab === 'fot') return `<p class="ehint">Las fotos que subas aparecen al final de la galería. Se ajustan solas para que la página cargue rápido.</p><label class="btn btn-soft" style="cursor:pointer">Subir una foto<input type="file" accept="image/*" data-up="gal" style="position:absolute;width:1px;height:1px;opacity:0"></label>${edBusy ? '<p class="ehint" style="margin-top:12px">Subiendo…</p>' : ''}` + (dr.galeria || []).map((g, i) => `<div class="erow"><img class="ethumb" src="${esc(g.url)}" alt="">${fld('Pie de foto', g.cap || '', (v) => { dr.galeria[i].cap = v; })}<button type="button" class="btn btn-soft btn-sm" data-rmgal="${i}">Quitar</button></div>`).join('');
-  if (tab === 'men') return '<p class="ehint">Los mensajes del público no se ven hasta que los apruebes.</p>' + (extra.mens.length ? extra.mens.map((m) => `<div class="pend"><p><b>${esc(m.nombre)}</b>: ${esc(m.texto)} ${m.aprobado ? '<em>(publicado)</em>' : ''}</p>${m.aprobado ? '' : `<button type="button" class="btn btn-blue btn-sm" data-ok="${m.id}">Aprobar</button>`}<button type="button" class="btn btn-soft btn-sm" data-delm="${m.id}">Borrar</button></div>`).join('') : '<p class="ehint">No hay mensajes todavía.</p>');
-  if (tab === 'ins') return `<p class="ehint">Inscripciones recibidas desde la página. Contienen datos personales y de salud: descárgalas y guárdalas con cuidado.</p><button type="button" class="btn btn-soft" data-csv>Descargar todo (CSV)</button>` + extra.insc.map((m) => `<div class="pend"><p><b>${esc(m.nombre)}</b> · ${esc(m.celular)}<br><span style="color:var(--muted)">${esc(m.fecha)}</span></p><button type="button" class="btn btn-soft btn-sm" data-seei="${m.id}">Ver</button><button type="button" class="btn btn-soft btn-sm" data-deli="${m.id}">Borrar</button></div>`).join('');
-  if (tab === 'avi') return `<p class="ehint">Escribe un aviso y se enviará como notificación a los dispositivos que activaron los avisos. Requiere haber desplegado la función de envío (ver LEEME). También puedes enviarlo desde Firebase Console → Messaging.</p><div style="display:flex;flex-wrap:wrap;gap:18px">${fld('Título', extra.avT || '', (v) => { extra.avT = v; }, { w: 1, ph: 'Reunión de este domingo' })}${fld('Mensaje', extra.avM || '', (v) => { extra.avM = v; }, { w: 1, area: 1, rows: 3 })}</div><button type="button" class="btn btn-blue" style="margin-top:18px" data-sendaviso>Enviar aviso</button>`;
+  if (tab === 'nov') return `<p class="ehint">Publica novedades con texto y una foto, o con un enlace de YouTube para los videos. La más nueva aparece primero.</p><button type="button" class="btn btn-soft" data-newpost>Nueva entrada</button>${edBusy ? '<p class="ehint" style="margin-top:12px">Preparando la foto…</p>' : ''}` + (dr.posts || []).map((p, i) => `<div class="erow" style="flex-direction:column;align-items:stretch">${fld('Título', p.t || '', (v) => { dr.posts[i].t = v; }, { w: 1 })}${fld('Texto', p.x || '', (v) => { dr.posts[i].x = v; }, { w: 1, area: 1 })}${fld('Enlace de YouTube (opcional)', p.video || '', (v) => { dr.posts[i].video = v; }, { w: 1, ph: 'https://youtu.be/…' })}<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px"><label class="btn btn-soft btn-sm" style="cursor:pointer;position:relative">Elegir foto<input type="file" accept="image/*" data-up="foto" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0"></label>${p.foto ? `<img class="ethumb" src="${esc(p.foto)}" alt="">` : '<span style="font-size:14px;color:var(--muted)">Sin foto</span>'}<button type="button" class="btn btn-soft btn-sm" data-rmpost="${i}" style="margin-left:auto">Quitar entrada</button></div></div>`).join('');
+  if (tab === 'fot') return `<p class="ehint">Las fotos que agregues aparecen al final de la galería. Se achican solas para que la página cargue rápido y quedan guardadas dentro de contenido.json.</p><label class="btn btn-soft" style="cursor:pointer;position:relative">Agregar fotos<input type="file" accept="image/*" multiple data-up="gal" style="position:absolute;width:1px;height:1px;opacity:0"></label>${edBusy ? '<p class="ehint" style="margin-top:12px">Preparando las fotos…</p>' : ''}` + (dr.galeria || []).map((g, i) => `<div class="erow"><img class="ethumb" src="${esc(g.url)}" alt="">${fld('Pie de foto', g.cap || '', (v) => { dr.galeria[i].cap = v; })}<button type="button" class="btn btn-soft btn-sm" data-rmgal="${i}">Quitar</button></div>`).join('');
   return '';
 }
 function editorHtml() {
-  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="ed-t" id="ed-ov"><div class="sheet">${sheetHead('Solo tú ves esto', 'Editar la página', 'ed-t')}<div style="padding:clamp(22px,4vw,40px)"><div class="etabs" role="group" aria-label="Qué quieres editar">${tabs.map(([k, t]) => `<button type="button" class="etab" data-tab="${k}" aria-pressed="${k === tab}">${t}</button>`).join('')}</div><div id="ed-body">${editorBody()}</div>${edErr ? `<p role="alert" style="margin:20px 0 0;padding:14px 18px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:15px;font-weight:700">${esc(edErr)}</p>` : ''}${edOk ? '<p class="eok" role="status">Guardado. Ya lo ven todos los visitantes.</p>' : ''}<div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:12px;margin-top:28px"><button type="button" class="btn btn-soft" data-close>Cerrar</button><button type="button" class="btn btn-blue" data-save>Guardar cambios</button></div></div></div></div>`;
+  const ok = edOk ? `<div class="eok" role="status" style="line-height:1.55">${edOk}</div>` : '';
+  const warn = draftWarn ? '<p class="ehint" style="color:#8A1C1C">El borrador es muy grande para guardarse en este navegador. No cierres la página sin descargar contenido.json.</p>' : '';
+  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="ed-t" id="ed-ov"><div class="sheet">${sheetHead('Solo tú ves esto', 'Editar la página', 'ed-t')}<div style="padding:clamp(22px,4vw,40px)"><div class="etabs" role="group" aria-label="Qué quieres editar">${tabs.map(([k, t]) => `<button type="button" class="etab" data-tab="${k}" aria-pressed="${k === tab}">${t}</button>`).join('')}</div><div id="ed-body">${editorBody()}</div>${warn}${edErr ? `<p role="alert" style="margin:20px 0 0;padding:14px 18px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:15px;font-weight:700">${esc(edErr)}</p>` : ''}${ok}<div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:12px;margin-top:28px"><button type="button" class="btn btn-soft" data-discard>Descartar borrador</button><button type="button" class="btn btn-soft" data-close>Cerrar</button><button type="button" class="btn btn-blue" data-save>Guardar y descargar</button></div></div></div></div>`;
 }
-function repaintEd(full) {
-  if (full) { const sc = $('#ed-ov'); const top = sc ? sc.scrollTop : 0; modalRoot.innerHTML = editorHtml(); const o = $('#ed-ov'); if (o) { o.style.animation = 'none'; $('.sheet', o).style.animation = 'none'; o.scrollTop = top; } }
-  else { $('#ed-body').innerHTML = editorBody(); }
+function repaintEd() { const sc = $('#ed-ov'); const top = sc ? sc.scrollTop : 0; modalRoot.innerHTML = editorHtml(); const o = $('#ed-ov'); if (o) { o.style.animation = 'none'; $('.sheet', o).style.animation = 'none'; o.scrollTop = top; } }
+function cleanContent(src) {
+  const c = clone(src);
+  c.actividades = (c.actividades || []).filter((a) => a && String(a.t || '').trim());
+  c.posts = (c.posts || []).filter((p) => p && (String(p.t || '').trim() || String(p.x || '').trim()));
+  c.galeria = (c.galeria || []).filter((g) => g && g.url);
+  return c;
 }
-async function loadExtra() {
-  try {
-    const m = await fb.getDocs(fb.query(fb.collection(fb.db, 'mensajes'), fb.orderBy('creado', 'desc'), fb.limit(60)));
-    extra.mens = m.docs.map((d) => Object.assign({ id: d.id }, d.data()));
-    const i = await fb.getDocs(fb.query(fb.collection(fb.db, 'inscripciones'), fb.orderBy('creado', 'desc'), fb.limit(300)));
-    extra.insc = i.docs.map((d) => { const x = d.data(); return Object.assign({ id: d.id, fecha: x.creado && x.creado.toDate ? x.creado.toDate().toLocaleString('es-VE') : '' }, x); });
-    if ($('#ed-ov')) repaintEd(true);
-  } catch (e) {}
+let previewTimer = 0;
+function touch() {
+  edOk = '';
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => { draftWarn = !writeDraft(dr); cfg = cleanContent(dr); renderAll(); }, 350);
 }
-$('#fab-edit').addEventListener('click', () => { dr = JSON.parse(JSON.stringify(cfg || {})); tab = 'enc'; fy = 0; edErr = ''; edOk = false; openModal(editorHtml()); loadExtra(); });
-async function shrink(file) {
-  try {
-    const bmp = await createImageBitmap(file); const k = Math.min(1, 1400 / Math.max(bmp.width, bmp.height));
-    const cv = document.createElement('canvas'); cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
-    cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
-    return (await new Promise((r) => cv.toBlob(r, 'image/jpeg', 0.8))) || file;
-  } catch (e) { return file; }
+function showFab() { $('#fab-edit').classList.remove('hide'); }
+function openEditor() {
+  dr = readDraft() || clone(pub);
+  tab = 'enc'; fy = 0; edErr = ''; edOk = ''; draftWarn = false;
+  openModal(editorHtml());
 }
-async function upload(blob, name) {
-  const r = fb.st.ref(fb.storage, 'media/' + Date.now() + '-' + name.replace(/[^\w.-]+/g, '_'));
-  await fb.st.uploadBytes(r, blob); return fb.st.getDownloadURL(r);
+$('#fab-edit').addEventListener('click', openEditor);
+async function shrinkToDataUrl(file) {
+  const bmp = await createImageBitmap(file); const k = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
+  const cv = document.createElement('canvas'); cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
+  cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
+  return cv.toDataURL('image/jpeg', 0.78);
 }
-modalRoot.addEventListener('input', (e) => { const id = e.target.dataset && e.target.dataset.ed; if (id && setters.has(id)) { setters.get(id)(e.target.value); edOk = false; } });
+modalRoot.addEventListener('input', (e) => { const id = e.target.dataset && e.target.dataset.ed; if (id && setters.has(id)) { setters.get(id)(e.target.value); touch(); } });
 modalRoot.addEventListener('change', async (e) => {
   const t = e.target; const c = t.dataset && t.dataset.edc;
-  if (c && setters.has(c)) { setters.get(c)(t.checked); return; }
-  const kind = t.dataset && t.dataset.up; if (!kind || !t.files || !t.files[0]) return;
-  const f = t.files[0]; const i = +t.dataset.i;
-  if (kind === 'video' && f.size > 50 * 1024 * 1024) { edErr = 'El video pesa más de 50 MB. Súbelo a YouTube y pega el enlace.'; repaintEd(true); return; }
-  edBusy = true; edErr = ''; repaintEd(true);
+  if (c && setters.has(c)) { setters.get(c)(t.checked); touch(); return; }
+  const kind = t.dataset && t.dataset.up; if (!kind || !t.files || !t.files.length) return;
+  const files = Array.from(t.files); const i = +t.dataset.i;
+  edBusy = true; edErr = ''; repaintEd();
   try {
-    const url = await upload(kind === 'video' ? f : await shrink(f), f.name);
-    if (kind === 'gal') { dr.galeria = (dr.galeria || []).concat([{ url, cap: '' }]); }
-    else if (kind === 'foto') { dr.posts[i].foto = url; dr.posts[i].video = ''; }
-    else { dr.posts[i].video = url; dr.posts[i].foto = ''; }
-  } catch (x) { edErr = 'No se pudo subir el archivo. Revisa que Storage esté activado en Firebase.'; }
-  edBusy = false; repaintEd(true);
+    for (const f of files) {
+      const url = await shrinkToDataUrl(f);
+      if (kind === 'gal') dr.galeria = (dr.galeria || []).concat([{ url, cap: '' }]);
+      else if (kind === 'foto') dr.posts[i].foto = url;
+    }
+  } catch (x) { edErr = 'No se pudo leer la foto. Prueba con otra imagen (JPG o PNG).'; }
+  edBusy = false; touch(); repaintEd();
 });
-modalRoot.addEventListener('click', async (e) => {
+modalRoot.addEventListener('click', (e) => {
   if (!$('#ed-t')) return; const t = e.target;
   const q = (s) => t.closest(s);
-  if (q('[data-tab]')) { tab = q('[data-tab]').dataset.tab; edErr = ''; repaintEd(true); return; }
-  if (q('[data-fy]')) { fy = +q('[data-fy]').dataset.fy; repaintEd(true); return; }
-  if (q('[data-newpost]')) { dr.posts = [{ id: String(Date.now()), t: '', x: '', fecha: new Date().toISOString(), foto: '', video: '' }].concat(dr.posts || []); repaintEd(true); return; }
-  if (q('[data-rmpost]')) { dr.posts.splice(+q('[data-rmpost]').dataset.rmpost, 1); repaintEd(true); return; }
-  if (q('[data-rmgal]')) { dr.galeria.splice(+q('[data-rmgal]').dataset.rmgal, 1); repaintEd(true); return; }
-  if (q('[data-ok]')) { try { await fb.updateDoc(fb.doc(fb.db, 'mensajes', q('[data-ok]').dataset.ok), { aprobado: true }); } catch (x) {} await loadExtra(); loadMuro(); return; }
-  if (q('[data-delm]')) { try { await fb.deleteDoc(fb.doc(fb.db, 'mensajes', q('[data-delm]').dataset.delm)); } catch (x) {} await loadExtra(); loadMuro(); return; }
-  if (q('[data-deli]')) { if (confirm('¿Borrar esta inscripción?')) { try { await fb.deleteDoc(fb.doc(fb.db, 'inscripciones', q('[data-deli]').dataset.deli)); } catch (x) {} await loadExtra(); } return; }
-  if (q('[data-seei]')) { const m = extra.insc.find((x) => x.id === q('[data-seei]').dataset.seei); if (m) alert(m.resumen || ''); return; }
-  if (q('[data-csv]')) {
-    const rows = extra.insc.map((m) => { const d = m.datos || {}; return [m.fecha, d.nombres, d.apellidos, d.nac, d.celular, d.correo, d.madre, d.padre, d.direccion, d.parroquia, d.repNombre, d.repCelular, d.sangre, d.enf === 'Sí' ? d.enfCual : 'No', d.med === 'Sí' ? d.medCual : 'No', d.alMed, d.alAli, d.alOtros, d.obs].map((x) => '"' + String(x || '').replace(/"/g, '""') + '"').join(','); });
-    const csv = '﻿"Fecha","Nombres","Apellidos","Nacimiento","Celular","Correo","Madre","Padre","Dirección","Parroquia","Representante","Cel. representante","Sangre","Enfermedad","Medicamento","Alergia med.","Alergia alim.","Otras alergias","Observaciones"\n' + rows.join('\n');
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'inscripciones-juma.csv'; a.click(); return;
-  }
-  if (q('[data-sendaviso]')) {
-    if (!extra.avT || !extra.avM) { edErr = 'Escribe el título y el mensaje del aviso.'; repaintEd(true); return; }
-    try { await fb.addDoc(fb.collection(fb.db, 'avisos'), { titulo: extra.avT, mensaje: extra.avM, creado: fb.serverTimestamp() }); edErr = ''; edOk = true; extra.avT = ''; extra.avM = ''; } catch (x) { edErr = 'No se pudo registrar el aviso.'; }
-    repaintEd(true); return;
+  if (q('[data-tab]')) { tab = q('[data-tab]').dataset.tab; edErr = ''; repaintEd(); return; }
+  if (q('[data-fy]')) { fy = +q('[data-fy]').dataset.fy; repaintEd(); return; }
+  if (q('[data-newpost]')) { dr.posts = [{ id: String(Date.now()), t: '', x: '', fecha: new Date().toISOString(), foto: '', video: '' }].concat(dr.posts || []); touch(); repaintEd(); return; }
+  if (q('[data-rmpost]')) { dr.posts.splice(+q('[data-rmpost]').dataset.rmpost, 1); touch(); repaintEd(); return; }
+  if (q('[data-rmgal]')) { dr.galeria.splice(+q('[data-rmgal]').dataset.rmgal, 1); touch(); repaintEd(); return; }
+  if (q('[data-discard]')) {
+    if (!confirm('¿Descartar el borrador y volver a lo que está publicado?')) return;
+    try { localStorage.removeItem(DRAFT); } catch (x) {}
+    dr = clone(pub); cfg = clone(pub); renderAll(); edOk = ''; repaintEd(); return;
   }
   if (q('[data-save]')) {
-    const c = JSON.parse(JSON.stringify(dr));
-    c.actividades = (c.actividades || []).filter((a) => a && String(a.t || '').trim());
-    c.posts = (c.posts || []).filter((p) => p && (String(p.t || '').trim() || String(p.x || '').trim()));
-    c.updatedAt = new Date().toISOString();
-    try { await fb.setDoc(fb.doc(fb.db, 'site', 'config'), c); dr = c; edOk = true; edErr = ''; } catch (x) { edOk = false; edErr = 'No se pudo guardar. Verifica que hayas entrado como administrador.'; }
-    repaintEd(true);
+    const c = cleanContent(dr); c.actualizado = new Date().toISOString();
+    dr = c; draftWarn = !writeDraft(dr); cfg = clone(c); renderAll();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(c, null, 1)], { type: 'application/json' })); a.download = 'contenido.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    edOk = '<b>Listo: se descargó contenido.json.</b> Para que todos vean los cambios, súbelo a GitHub: entra a <b>github.com/gabrielg739-prog/juma</b>, toca <b>Add file → Upload files</b>, arrastra <b>contenido.json</b> y pulsa <b>Commit changes</b>. En unos minutos aparece en la página.';
+    repaintEd();
   }
 });
 
+/* ===================== entrada secreta: 5 toques en María Consolata ===================== */
+let taps = [];
+document.addEventListener('click', (e) => {
+  const s = e.target.closest && e.target.closest('.patron-d summary'); if (!s) return;
+  const first = $$('.patron-d summary')[0]; if (s !== first) return;
+  const now = Date.now(); taps = taps.filter((x) => now - x < 3000); taps.push(now);
+  if (taps.length >= 5) { taps = []; e.preventDefault(); if (isEditor()) { showFab(); openEditor(); } else askPass(); }
+});
+function askPass() {
+  openModal(`<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pw-t"><div class="sheet" style="max-width:520px">${sheetHead('Solo para JUMA', 'Entrar a editar', 'pw-t')}<form id="pw-form" style="padding:clamp(22px,4vw,40px)"><div class="fld w"><label for="pw-in">Clave</label><input id="pw-in" type="password" autocomplete="current-password"></div><p id="pw-msg" role="alert" style="margin:14px 0 0;font-size:15px;font-weight:700;color:#8A1C1C"></p><div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:22px"><button type="submit" class="btn btn-blue">Entrar</button><button type="button" class="btn btn-soft" data-close>Cancelar</button></div></form></div></div>`);
+}
+modalRoot.addEventListener('submit', (e) => {
+  if (e.target.id !== 'pw-form') return;
+  e.preventDefault();
+  const v = $('#pw-in').value;
+  if (sha256(normPass(v)) === PASS_HASH) {
+    try { sessionStorage.setItem('juma-ed', '1'); } catch (x) {}
+    showFab(); const d = readDraft(); if (d) { cfg = cleanContent(d); renderAll(); }
+    openEditor();
+  } else { $('#pw-msg').textContent = 'Clave incorrecta.'; $('#pw-in').select(); }
+});
+
+/* ===================== ver foto completa ===================== */
+document.addEventListener('click', (e) => {
+  const img = e.target.closest && e.target.closest('.gal img, .tri img'); if (!img || modalRoot.firstChild) return;
+  e.preventDefault();
+  const src = img.currentSrc || img.src;
+  openModal(`<div class="overlay lightbox" role="dialog" aria-modal="true" aria-label="${esc(img.alt || 'Foto')}" data-close style="display:flex;align-items:center;justify-content:center;padding:58px 14px 14px;cursor:zoom-out"><img src="${esc(src)}" alt="${esc(img.alt || '')}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:10px"><button type="button" data-close style="position:fixed;top:12px;right:12px;min-height:44px;padding:0 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,.5);background:transparent;color:#fff;font-weight:700;font-size:15px">Cerrar ✕</button></div>`);
+});
+
 /* ===================== arranque ===================== */
+async function loadContenido() {
+  try {
+    const r = await fetch('contenido.json?t=' + Date.now(), { cache: 'no-store' });
+    if (r.ok) pub = await r.json();
+  } catch (e) {}
+  cfg = clone(pub);
+  if (isEditor()) { showFab(); const d = readDraft(); if (d) cfg = cleanContent(d); }
+  renderAll();
+}
 (function boot() {
-  const f = $('.foot-in'); const lk = document.createElement('a'); lk.href = '#'; lk.id = 'lnk-admin'; lk.textContent = 'Administrar'; lk.style.cssText = 'font-size:14px;padding:10px 0;color:var(--muted-lt)';
-  const c = $('.foot > div:last-child'); if (c) c.appendChild(document.createTextNode(' · ')), c.appendChild(lk);
   renderAll(); setupUnroll();
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+  loadContenido();
   initFirebase();
 })();

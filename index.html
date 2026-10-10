@@ -124,8 +124,9 @@ caret-color:var(--royal);accent-color:var(--royal);
 /* ===== quiénes somos ===== */
 .split{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:32px 64px;align-items:end}
 .mv{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));margin-top:clamp(56px,7vw,96px)}
-.mv-photo{position:relative;grid-column:1 / 9;grid-row:1;min-height:clamp(320px,38vw,540px);border-radius:16px;overflow:hidden}
-.mv-panel{position:relative;grid-column:7 / 13;grid-row:1;align-self:end;margin-bottom:-72px;padding:36px;padding:clamp(28px,3.4vw,44px);border-radius:16px;box-shadow:var(--shadow)}
+.mv{gap:24px}
+.mv-photo{position:relative;grid-column:1 / 8;grid-row:1;min-height:clamp(320px,36vw,520px);border-radius:16px;overflow:hidden}
+.mv-panel{position:relative;grid-column:8 / 13;grid-row:1;align-self:center;margin:0;padding:36px;padding:clamp(28px,3.4vw,44px);border-radius:16px;box-shadow:var(--shadow)}
 .mv-panel h3{margin:0;font-family:var(--display);font-weight:800;font-size:30px;text-transform:uppercase;letter-spacing:.01em;color:var(--sky)}
 .mv-panel p{margin:10px 0 0;font-size:17px;line-height:1.62;color:#E1EAF8}
 .mv-panel hr{margin:24px 0;border:0;height:1px;background:var(--line-dk)}
@@ -210,6 +211,43 @@ caret-color:var(--royal);accent-color:var(--royal);
 .patron b{display:block;font-family:var(--display);font-weight:800;font-size:24px;text-transform:uppercase;line-height:1}
 .patron span{display:block;margin-top:4px;font-size:14px;color:var(--muted)}
 
+.ident{align-items:center}
+.ident-txt .idlist li{font-size:clamp(19px,1.7vw,24px)}
+.quote-wide{margin:clamp(40px,5vw,64px) 0 0;padding:clamp(30px,4vw,52px) clamp(28px,5vw,64px)}
+.quote-wide p{font-size:clamp(22px,2.4vw,34px);line-height:1.4;font-weight:700;text-wrap:balance}
+.patrons-head{margin-top:clamp(44px,5vw,64px)}
+.patrons-head .body{margin-top:8px}
+.patrons{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));grid-auto-flow:dense;gap:16px;margin-top:22px}
+.patron-d{background:#fff;border-radius:16px;box-shadow:var(--shadow)}
+.patron-d[open]{grid-column:1 / -1}
+.patron-d summary{list-style:none;cursor:pointer;padding:14px 18px 14px 14px;border-radius:16px}
+.patron-d summary::-webkit-details-marker{display:none}
+.patron-d summary:focus-visible{outline:3px solid var(--royal);outline-offset:3px}
+.pd-ic{flex:0 0 auto;margin-left:auto;width:36px;height:36px;border-radius:50%;background:var(--mist);position:relative}
+.pd-ic::before,.pd-ic::after{content:"";position:absolute;left:50%;top:50%;width:14px;height:2px;border-radius:2px;background:var(--royal);transform:translate(-50%,-50%)}
+.pd-ic::after{transform:translate(-50%,-50%) rotate(90deg);transition:transform 220ms var(--ease-out)}
+details[open] > summary .pd-ic::after{transform:translate(-50%,-50%) rotate(0deg)}
+.pd-body{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:24px clamp(24px,4vw,48px);padding:10px clamp(18px,3vw,36px) clamp(24px,3vw,36px);animation:pdin 420ms var(--ease-out) both}
+.pd-big{width:100%;height:auto;max-height:480px;object-fit:contain;border-radius:12px;background:var(--mist)}
+.pd-txt h4{margin:0 0 12px;font-family:var(--display);font-weight:800;font-size:clamp(28px,3vw,40px);line-height:1;text-transform:uppercase;color:var(--cloth)}
+.pd-txt p{margin:0 0 12px;max-width:68ch;font-size:17px;line-height:1.65;color:var(--ink)}
+@keyframes pdin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@media (max-width:760px){.pd-body{grid-template-columns:minmax(0,1fr)}.pd-big{max-height:360px}}
+/* objetivo / lo que buscamos */
+.obj{margin-top:clamp(64px,8vw,104px);display:grid;gap:14px}
+.obj-d{background:#fff;border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.obj-d summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:18px;padding:clamp(18px,2.4vw,28px) clamp(20px,3vw,36px)}
+.obj-d summary::-webkit-details-marker{display:none}
+.obj-d summary:focus-visible{outline:3px solid var(--royal);outline-offset:-3px}
+.obj-n{font-family:var(--display);font-weight:800;font-size:20px;color:var(--sky);background:var(--cloth);border-radius:10px;padding:6px 10px;line-height:1}
+.obj-t{font-family:var(--display);font-weight:800;font-size:clamp(28px,3.4vw,46px);line-height:1;text-transform:uppercase;color:var(--royal)}
+.obj-d[open] .obj-t{color:var(--cloth)}
+.obj-in{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:24px clamp(24px,4vw,56px);align-items:center;padding:0 clamp(20px,3vw,36px) clamp(22px,3vw,36px);animation:pdin 440ms var(--ease-out) both}
+.obj-lead{margin:0;font-size:clamp(22px,2.3vw,32px);line-height:1.35;font-weight:700;color:var(--ink);text-wrap:balance}
+.obj-pic{position:relative;margin:0;min-height:clamp(240px,26vw,360px);border-radius:14px;overflow:hidden;background:var(--cloth)}
+.hairlist.one{grid-template-columns:minmax(0,1fr)}
+@media (max-width:760px){.obj-in{grid-template-columns:minmax(0,1fr)}.obj-pic{order:-1}}
+@media (prefers-reduced-motion:reduce){.pd-body,.obj-in{animation:none}}
 /* ===== camino de formación: cinco banderines ===== */
 .pennants-rod{margin:60px 6px 0}
 .pennants{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;padding:0 16px;overflow:hidden}
@@ -219,6 +257,8 @@ caret-color:var(--royal);accent-color:var(--royal);
 .pennant .ej{display:block;margin-top:6px;font-size:14px}
 .fpanel{margin:28px 16px 0;padding:40px;padding:clamp(26px,4vw,52px);border-radius:16px;background:var(--cloth);box-shadow:0 30px 60px -30px rgba(0,0,0,.6);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,340px);gap:32px clamp(28px,4vw,56px);align-items:start}
 .fphoto{position:relative;min-height:420px;border-radius:12px;overflow:hidden;background:var(--navy)}
+.fphoto .fp{opacity:0;transition:opacity 420ms var(--ease-out)}
+.fy0 .fp0,.fy1 .fp1,.fy2 .fp2,.fy3 .fp3,.fy4 .fp4{opacity:1}
 .fpanel h3{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(30px,3vw,44px);line-height:.98;text-transform:uppercase;text-wrap:balance}
 .fpanel > p{margin:16px 0 0;max-width:68ch;font-size:17px;line-height:1.65;color:#DCE7F8}
 .topics{list-style:none;margin:28px 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:40px}
@@ -233,15 +273,13 @@ caret-color:var(--royal);accent-color:var(--royal);
 .org{margin-top:40px;padding:28px 32px;border-radius:16px;background:var(--mist);display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:12px 48px;align-items:baseline}
 
 /* ===== galería ===== */
-.gallery{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:clamp(150px,16vw,230px);gap:14px;margin-top:56px}
+.gallery{columns:3 280px;column-gap:14px;margin-top:56px}
+.gallery .gal{display:block;break-inside:avoid;margin:0 0 14px}
+.gallery .gal .photo{position:static;height:auto;cursor:zoom-in}
 .gal{position:relative;margin:0;overflow:hidden;border-radius:14px;background:var(--cloth)}
 .gal img{transition:transform 700ms var(--ease-out)}
+.tri .photo{cursor:zoom-in}
 .gal figcaption{position:absolute;left:0;right:0;bottom:0;padding:40px 18px 14px;background:linear-gradient(0deg,rgba(6,21,54,.86),rgba(6,21,54,0));color:#fff;font-size:14.5px;font-weight:700}
-.g1{grid-column:span 4;grid-row:span 2}
-.g2{grid-column:span 2;grid-row:span 2}
-.g3{grid-column:span 3}
-.g4{grid-column:span 4}
-.g5{grid-column:span 2}
 
 /* ===== logo ===== */
 .logo-sec{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,6fr);gap:48px 72px;align-items:center}
@@ -331,7 +369,6 @@ caret-color:var(--royal);accent-color:var(--royal);
 @keyframes sheetOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(8px) scale(.98)}}
 [data-unroll]{transition:clip-path 950ms var(--ease-io)}
 [data-unroll="rect"]{clip-path:inset(0 0 0 0)}
-/* Las fotos nunca se ocultan: el reveal es solo decorativo */
 @media (prefers-reduced-motion:reduce){
 .hero,.hero .photo,.rise{animation:fade 300ms ease both}
 .sheet,.overlay.is-out .sheet{animation:fade 200ms ease both}
@@ -353,15 +390,16 @@ caret-color:var(--royal);accent-color:var(--royal);
 .fphoto{min-height:280px;order:-1}
 .split,.dom-head,.objetivo,.ident,.logo-sec,.org,.year,.meet{grid-template-columns:minmax(0,1fr)}
 .mv-photo{grid-column:1 / 13}
-.mv-panel{grid-column:1 / 13;grid-row:2;margin:-48px 14px 0}
+.mv-panel{grid-column:1 / 13;grid-row:2;margin:0}
+.mv-photo{min-height:0;aspect-ratio:4 / 3}
+.mv-photo .photo{object-position:50% 50% !important}
 .objetivo{margin-top:72px}
 .tags{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .standards{grid-template-columns:repeat(2,minmax(0,1fr))}
 .pennants{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}
 .pennant{flex:0 0 172px;scroll-snap-align:start}
-.gallery{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:200px}
-.g1,.g3,.g4,.g5{grid-column:span 2;grid-row:span 1}
-.g2{grid-column:span 2;grid-row:span 2}
+.gallery{columns:2 150px;column-gap:10px}
+.gallery .gal{margin-bottom:10px}
 }
 @media (max-width:640px){
 .brand-logo{width:56px;height:48px}
@@ -447,10 +485,6 @@ caret-color:var(--royal);accent-color:var(--royal);
 <div class="hero-chips rise" style="animation-delay: 720ms"><span>Domingos de encuentro</span><span>Formación de 5 años</span><span>Misión en Duaca</span></div>
 <nav class="hero-links rise" style="animation-delay: 800ms" aria-label="Redes de JUMA"><a href="https://www.instagram.com/juma_duaca/" target="_blank" rel="noopener">Instagram</a><a href="https://www.tiktok.com/@juma.duaca" target="_blank" rel="noopener">TikTok</a><a href="https://whatsapp.com/channel/0029VaqbBJ972WTqOwLsLL0u" target="_blank" rel="noopener">Canal de WhatsApp</a></nav>
 </div>
-<div class="hero-pics rise" style="animation-delay: 700ms" aria-hidden="false">
-<figure class="hpic"><img decoding="async" class="photo" src="img/cruz.jpg" alt="Joven de JUMA con la cruz misionera caminando por las calles de Duaca" style="object-position: 40% 40%"><figcaption>Salimos a la calle</figcaption></figure>
-<figure class="hpic"><img decoding="async" class="photo" src="img/retrato.jpg" alt="Misionero de JUMA con la franela de la Consolata y sombrero" style="object-position: 50% 30%"><figcaption>Misioneros con alegría</figcaption></figure>
-</div>
 </div>
 </div>
 </section>
@@ -480,27 +514,27 @@ caret-color:var(--royal);accent-color:var(--royal);
 </div>
 </div>
 
-<div class="objetivo">
-<h3 class="h-display h-md" style="color: var(--royal)">Nuestro objetivo</h3>
-<p>Promover en los jóvenes espacios de formación, evangelización y misión a través del carisma de los Misioneros de la Consolata.</p>
+<div class="obj">
+<details class="obj-d" name="objetivo" open>
+<summary><span class="obj-n">01</span><span class="obj-t">Nuestro objetivo</span><i class="pd-ic" aria-hidden="true"></i></summary>
+<div class="obj-in">
+<div class="obj-txt"><p class="obj-lead">Promover en los jóvenes espacios de formación, evangelización y misión a través del carisma de los Misioneros de la Consolata.</p></div>
+<figure class="obj-pic"><img loading="lazy" decoding="async" class="photo" src="img/new-fam-grupo-frente.jpg" alt="Jóvenes de JUMA frente a la iglesia" style="object-position: 50% 45%"></figure>
 </div>
-
-<div class="objetivo" style="margin-top: 56px">
-<h3 class="h-display h-md" style="color: var(--royal)">Lo que buscamos</h3>
-<ul class="hairlist">
-<li>Formar jóvenes para la evangelización y la misión.</li>
-<li>Desarrollar la formación humana y espiritual de cada miembro.</li>
-<li>Promover la evangelización en las opciones misioneras del carisma.</li>
-<li>Participar y apoyar las actividades juveniles de la Iglesia local.</li>
-<li>Acompañar a los jóvenes en las áreas de trabajo del movimiento.</li>
-<li>Realizar retiros, campamentos y misiones.</li>
-</ul>
+</details>
+<details class="obj-d" name="objetivo">
+<summary><span class="obj-n">02</span><span class="obj-t">Lo que buscamos</span><i class="pd-ic" aria-hidden="true"></i></summary>
+<div class="obj-in">
+<div class="obj-txt"><ul class="hairlist one"><li>Formar jóvenes para la evangelización y la misión.</li><li>Desarrollar la formación humana y espiritual de cada miembro.</li><li>Promover la evangelización en las opciones misioneras del carisma.</li><li>Participar y apoyar las actividades juveniles de la Iglesia local.</li><li>Acompañar a los jóvenes en las áreas de trabajo del movimiento.</li><li>Realizar retiros, campamentos y misiones.</li></ul></div>
+<figure class="obj-pic"><img loading="lazy" decoding="async" class="photo" src="img/new-equipo-acompanamiento.jpg" alt="Equipo de acompañamiento de JUMA" style="object-position: 50% 40%"></figure>
+</div>
+</details>
 </div>
 
 <div class="trio">
-<figure class="tri" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/volante.jpg" alt="Joven misionero entregando un volante a un vecino frente a un puesto de frutas" style="object-position: 40% 30%"><figcaption>Casa por casa, comercio por comercio: anunciamos con volantes y con una sonrisa.</figcaption></figure>
-<figure class="tri" data-unroll="rect" style="transition-delay: 90ms"><img loading="lazy" decoding="async" class="photo" src="img/calle.jpg" alt="Misionera de JUMA conversando con un vecino en la calle" style="object-position: 50% 40%"><figcaption>Escuchamos a la gente donde vive.</figcaption></figure>
-<figure class="tri" data-unroll="rect" style="transition-delay: 180ms"><img loading="lazy" decoding="async" class="photo" src="img/chicha.jpg" alt="Jóvenes de JUMA con su franela conversando con un vendedor ambulante de chicha" style="object-position: 50% 45%"><figcaption>La misión empieza en la esquina.</figcaption></figure>
+<figure class="tri" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/puente2.jpg" alt="Jóvenes de JUMA caminando juntos en un puente" style="object-position: 50% 50%"><figcaption>Caminamos juntos en cada comunidad.</figcaption></figure>
+<figure class="tri" data-unroll="rect" style="transition-delay: 90ms"><img loading="lazy" decoding="async" class="photo" src="img/suelo.jpg" alt="Jóvenes de JUMA en el campo, compartiendo entre amigos" style="object-position: 50% 50%"><figcaption>Nos reímos y compartimos.</figcaption></figure>
+<figure class="tri" data-unroll="rect" style="transition-delay: 180ms"><img loading="lazy" decoding="async" class="photo" src="img/risa.jpg" alt="Grupo de jóvenes de JUMA sonriendo juntos" style="object-position: 50% 40%"><figcaption>Juntos en la misión.</figcaption></figure>
 </div>
 
 </div>
@@ -546,7 +580,7 @@ caret-color:var(--royal);accent-color:var(--royal);
 </ol>
 </div>
 <div class="meet-photo" data-unroll="rect">
-<img loading="lazy" decoding="async" class="photo" src="img/vitral.jpg" alt="Jóvenes reunidos en la sala de los vitrales durante un encuentro con los misioneros">
+<img loading="lazy" decoding="async" class="photo" src="img/new-chicas-capilla.jpg" alt="Jóvenes de JUMA sonriendo juntos en la capilla durante un encuentro" style="object-position: 50% 40%">
 </div>
 </div>
 
@@ -581,7 +615,7 @@ caret-color:var(--royal);accent-color:var(--royal);
 <div class="rod standards-rod" aria-hidden="true"></div>
 <div class="standards">
 <article class="standard tail" data-unroll="tail">
-<img loading="lazy" decoding="async" class="photo" src="img/formacion.jpg" alt="Jóvenes de JUMA en una charla de formación" style="object-position: 45% 50%">
+<img loading="lazy" decoding="async" class="photo" src="img/new-charla-pasillo.jpg" alt="Persona dando formación a jóvenes en un pasillo" style="object-position: 50% 35%">
 <div class="standard-veil" aria-hidden="true"></div>
 <div class="bar" aria-hidden="true" style="background: var(--c1)"></div>
 <h3>Formación</h3>
@@ -595,7 +629,7 @@ caret-color:var(--royal);accent-color:var(--royal);
 <p>Llevamos la alegría del Evangelio con nuestro testimonio, sirviendo a los demás y mostrando el amor de Cristo.</p>
 </article>
 <article class="standard tail" data-unroll="tail" style="transition-delay: 180ms">
-<img loading="lazy" decoding="async" class="photo" src="img/liturgia.jpg" alt="Jóvenes con túnicas durante una celebración litúrgica en el templo" style="object-position: 30% 50%">
+<img loading="lazy" decoding="async" class="photo" src="img/new-grupo-presbiterio.jpg" alt="Jóvenes celebrando junto al presbiterio de la iglesia" style="object-position: 50% 30%">
 <div class="standard-veil" aria-hidden="true"></div>
 <div class="bar" aria-hidden="true" style="background: var(--c3)"></div>
 <h3>Animación</h3>
@@ -634,8 +668,8 @@ caret-color:var(--royal);accent-color:var(--royal);
 </div>
 </div>
 <div class="cphotos">
-<figure class="band" data-unroll="rect"><img decoding="async" class="photo" src="img/retrato.jpg" alt="Joven misionero con la franela de la Consolata y la imagen de San José Allamano" style="object-position: 50% 25%"><figcaption>La franela lleva a Allamano y a la Consolata.</figcaption></figure>
-<figure class="band" data-unroll="rect" style="transition-delay: 90ms"><img loading="lazy" decoding="async" class="photo" src="img/capilla.jpg" alt="Sacerdote arrodillado en oración ante el altar de una capilla en penumbra" style="object-position: 50% 55%"><figcaption>Todo empieza en la oración.</figcaption></figure>
+<figure class="band" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-cruces-misa.jpg" alt="Misionero de la Consolata entregando una cruz a un joven durante la misa" style="object-position: 50% 35%"><figcaption>Celebramos la fe con los misioneros.</figcaption></figure>
+<figure class="band" data-unroll="rect" style="transition-delay: 90ms"><img loading="lazy" decoding="async" class="photo" src="img/new-grupo-palmera.jpg" alt="Grupo de JUMA en la salida" style="object-position: 50% 50%"><figcaption>Salimos juntos, en comunidad.</figcaption></figure>
 <figure class="band" data-unroll="rect" style="transition-delay: 180ms"><img loading="lazy" decoding="async" class="photo" src="img/circulo.jpg" alt="Misionero guiando una dinámica con jóvenes sentados en círculo" style="object-position: 70% 55%"><figcaption>Los misioneros nos acompañan en la formación.</figcaption></figure>
 </div>
 </div>
@@ -654,7 +688,8 @@ caret-color:var(--royal);accent-color:var(--royal);
 
 <!-- ============ IDENTIDAD ============ -->
 <section id="identidad" class="sec" style="background: var(--mist)">
-<div class="wrap ident">
+<div class="wrap">
+<div class="ident">
 
 <div class="poster">
 <div class="rod" aria-hidden="true"></div>
@@ -663,23 +698,31 @@ caret-color:var(--royal);accent-color:var(--royal);
 </div>
 </div>
 
-<div>
+<div class="ident-txt">
 <h2 class="h-display h-xl">Un misionero de JUMA es…</h2>
 <ol class="idlist">
 <li>Una persona católica que vive los sacramentos.</li>
 <li>Alguien a quien Dios ha llamado a ser misionero en el mundo juvenil. Su corazón arde por la misión: la ama y vive en constante misión.</li>
 <li>Alguien que se reconoce por su profundo amor a María Santísima, bajo la advocación de la Consolata, y a nuestro fundador, San José Allamano.</li>
 </ol>
-<blockquote class="quote">
+</div>
+
+</div>
+<blockquote class="quote quote-wide">
 <p>“Si tu corazón no arde de amor cuando haces misión, no te emocionas, permaneces indiferente, deberías cuestionarte si este carisma es para ti.”</p>
 <footer>San José Allamano</footer>
 </blockquote>
+<div class="patrons-head">
+<h3 class="h-display h-md" style="color: var(--royal)">Nuestra madre, nuestro fundador y nuestros santos</h3>
+<p class="body">Toca cada uno para conocer su historia.</p>
+</div>
 <div class="patrons">
-<div class="patron"><img src="img/consolata.jpg" alt="Ícono de la Virgen Consolata con el Niño Jesús"><div><b>María Consolata</b><span>Nuestra madre y patrona</span></div></div>
-<div class="patron"><img src="img/allamano.jpg" alt="Ícono de San José Allamano con un pergamino que dice: No basta hacer el bien, hay que hacerlo bien"><div><b>San José Allamano</b><span>Fundador de los Misioneros de la Consolata</span></div></div>
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/consolata.jpg" alt="Ícono de la Virgen Consolata con el Niño Jesús"><div><b>María Consolata</b><span>Nuestra madre y patrona</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/consolata.jpg" alt="Ícono de la Virgen Consolata con el Niño Jesús"><div class="pd-txt"><p><b>Consolata</b> significa «la que consuela». Así llaman en Turín (Italia) a la Virgen María con el Niño que se venera en su santuario. De ella toman su nombre los Misioneros y las Misioneras de la Consolata, y por eso es la madre y patrona de JUMA.</p><p><b>El origen.</b> La devoción nace en la antigua iglesia de San Andrés, en Turín, adonde llegaron monjes benedictinos a comienzos del siglo X. Según la tradición, allí se halló una antigua imagen de la Virgen con el Niño, y un joven ciego que vino a buscarla recobró la vista. Desde entonces la devoción se extendió por toda la ciudad.</p><p><b>El cuadro.</b> La pintura que hoy se venera sobre el altar mayor es una copia de una imagen de la Virgen con el Niño de la iglesia de Santa María del Popolo, en Roma.</p><p><b>Patrona de Turín.</b> En 1706, durante el sitio francés de la ciudad, la gente se refugió en el santuario. Después de la liberación, la ciudad levantó pilares con su imagen y el Senado la confirmó como patrona de Turín. En 1714 se oficializó su fiesta, que se celebra cada <b>20 de junio</b>.</p><p><b>Con Allamano.</b> San José Allamano fue rector del santuario de la Consolata desde 1880. Bajo su mirada fundó en 1901 a los Misioneros y en 1910 a las Misioneras de la Consolata, para llevar el consuelo de María y el Evangelio a los pueblos que aún no lo conocen.</p></div></div></details>
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/allamano.jpg" alt="Ícono de San José Allamano"><div><b>San José Allamano</b><span>Fundador de los Misioneros de la Consolata</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/allamano.jpg" alt="Ícono de San José Allamano"><div class="pd-txt"><p>Nació el <b>21 de enero de 1851</b> en Castelnuovo, en el Piamonte (Italia). Su madre, María Cafasso, era hermana de San José Cafasso. De joven fue alumno de San Juan Bosco.</p><p>Fue ordenado sacerdote el 20 de septiembre de 1873. Desde <b>1880</b> fue rector del santuario de la Consolata, en Turín, donde formó a muchos sacerdotes y renovó el santuario.</p><p>El <b>29 de enero de 1901</b> fundó el Instituto de los Misioneros de la Consolata, y el 29 de enero de 1910, el de las Hermanas Misioneras de la Consolata, para anunciar el Evangelio a los pueblos que aún no lo conocen (la misión <i>ad gentes</i>).</p><p>Murió en Turín el 16 de febrero de 1926. Fue beatificado por San Juan Pablo II el 7 de octubre de 1990 y <b>canonizado por el papa Francisco el 20 de octubre de 2024</b>, por un milagro ocurrido en la Amazonía de Brasil.</p><p>Enseñaba la santidad de la vida diaria: «Sed santos sin ruido» y «No basta hacer el bien, hay que hacerlo bien».</p></div></div></details>
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-cafasso.jpg" alt="Pintura de San José Cafasso"><div><b>San José Cafasso</b><span>Tío de Allamano, guía de sacerdotes</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-cafasso.jpg" alt="Pintura de San José Cafasso"><div class="pd-txt"><p>Nació el <b>15 de enero de 1811</b> en Castelnuovo d’Asti, el mismo pueblo de San Juan Bosco y de San José Allamano, en el Piamonte (Italia). Su hermana fue la madre de San José Allamano.</p><p>Fue profesor y luego rector del Convictorio Eclesiástico de Turín, donde formó a muchos sacerdotes. Amaba profundamente la Eucaristía y la confesión.</p><p>Fue capellán de las cárceles de Turín. Acompañó a más de sesenta condenados a muerte hasta el último momento, por eso lo llamaron «el sacerdote de la horca».</p><p>Conoció a Juan Bosco en 1827. Fue su confesor y guía espiritual, lo ayudó en sus estudios y lo apoyó en su obra con los niños pobres y abandonados.</p><p>Murió en Turín el 23 de junio de 1860. Fue <b>canonizado por el papa Pío XII el 22 de junio de 1947</b>.</p></div></div></details>
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-leonella.jpg" alt="Pintura de la beata Leonella Sgorbati con un papel que dice Perdono"><div><b>Beata Leonella Sgorbati</b><span>Misionera de la Consolata, mártir del perdón</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-leonella.jpg" alt="Pintura de la beata Leonella Sgorbati con un papel que dice Perdono"><div class="pd-txt"><p>Se llamaba Rosa María Sgorbati. Nació el <b>9 de diciembre de 1940</b> en Gazzola (Piacenza, Italia). En 1963 entró en las Misioneras de la Consolata y tomó el nombre de Leonella. Estudió enfermería en Inglaterra.</p><p>Desde 1972 sirvió en Kenia como enfermera en los hospitales de Nyeri y Kiambu. Desde 1985 dirigió la formación en la escuela de enfermería de Nkubu, y desde 1993 fue superiora de su congregación en Kenia.</p><p>Después fue a Mogadiscio (Somalia), donde abrió en 2002 una escuela de enfermería en el hospital infantil. En 2006 se graduaron las primeras 34 enfermeras.</p><p>El <b>17 de septiembre de 2006</b> le dispararon por la espalda frente al hospital. También murió su guardaespaldas. Antes de morir dijo: <b>«Perdono, perdono, perdono»</b>.</p><p>Fue beatificada el <b>26 de mayo de 2018</b> en Piacenza (Italia).</p></div></div></details>
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-irene.jpg" alt="Foto de la beata Irene Stefani con hábito blanco"><div><b>Beata Irene Stefani</b><span>«Nyaatha», madre de la misericordia</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-irene.jpg" alt="Foto de la beata Irene Stefani con hábito blanco"><div class="pd-txt"><p>Se llamaba Aurelia Mercede Stefani. Nació en <b>agosto de 1891</b> en Anfo (Brescia, Italia). En 1911 entró en las Misioneras de la Consolata, fundadas por San José Allamano, y el 29 de enero de 1914 hizo sus votos con el nombre de Irene.</p><p>A fines de 1914 llegó a Kenia. Durante la Primera Guerra Mundial, hasta 1920, cuidó a los heridos y enfermos en hospitales militares de Kenia y Tanzania.</p><p>Desde 1920 vivió en Gikondi (Kenia): enseñaba, visitaba a las familias y cuidaba a los enfermos y a los pobres. La gente la llamó <b>«Nyaatha»</b>, que significa madre de la misericordia.</p><p>Murió el <b>31 de octubre de 1930</b> en Gikondi, contagiada de peste mientras cuidaba a un enfermo.</p><p>Fue beatificada el <b>23 de mayo de 2015</b> en Nyeri (Kenia).</p></div></div></details>
 </div>
-</div>
-
 </div>
 </section>
 
@@ -751,7 +794,7 @@ caret-color:var(--royal);accent-color:var(--royal);
 </div>
 <div class="gallery">
 <figure class="gal g1" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/grupo-iglesia.jpg" alt="Jóvenes de JUMA reunidos en el templo después de una celebración" style="object-position: 50% 30%"><figcaption>Juntos en el templo</figcaption></figure>
-<figure class="gal g2" data-unroll="rect" style="transition-delay: 90ms"><img decoding="async" class="photo" src="img/retrato.jpg" alt="Joven misionero con la franela de la Consolata en la calle" style="object-position: 50% 30%"><figcaption>Con la franela de la Consolata</figcaption></figure>
+<figure class="gal g2" data-unroll="rect" style="transition-delay: 90ms"><img loading="lazy" decoding="async" class="photo" src="img/retrato.jpg" alt="Joven misionero con la franela de la Consolata en la calle" style="object-position: 50% 30%"><figcaption>Con la franela de la Consolata</figcaption></figure>
 <figure class="gal g3" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/cena.jpg" alt="Representación de la Última Cena en el templo" style="object-position: 50% 55%"><figcaption>Jueves Santo: la Última Cena</figcaption></figure>
 <figure class="gal g3" data-unroll="rect" style="transition-delay: 90ms"><img loading="lazy" decoding="async" class="photo" src="img/liturgia.jpg" alt="Celebración litúrgica con túnicas en el templo" style="object-position: 30% 50%"><figcaption>Celebramos la liturgia</figcaption></figure>
 <figure class="gal g2" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/capilla.jpg" alt="Sacerdote en oración ante el altar en una capilla en penumbra" style="object-position: 50% 55%"><figcaption>Oración en silencio</figcaption></figure>
@@ -774,6 +817,20 @@ caret-color:var(--royal);accent-color:var(--royal);
 <figure class="gal g5" data-unroll="rect" style="transition-delay: 90ms"><img loading="lazy" decoding="async" class="photo" src="img/alegria.jpg" alt="Jóvenes celebrando con alegría durante una reunión" style="object-position: 50% 35%"><figcaption>Alegría de domingo</figcaption></figure>
 <figure class="gal g1" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/ladrillo.jpg" alt="Grupo de jóvenes de JUMA posando junto a un muro de ladrillo" style="object-position: 50% 45%"><figcaption>Amigos en la fe</figcaption></figure>
 <figure class="gal g2" data-unroll="rect" style="transition-delay: 90ms"><img loading="lazy" decoding="async" class="photo" src="img/selfie.jpg" alt="Selfie de un misionero con jóvenes de JUMA frente al templo" style="object-position: 60% 50%"><figcaption>Un selfie misionero</figcaption></figure>
+<figure class="gal g2" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-fam-grupo-frente.jpg" alt="Jóvenes de JUMA frente a la iglesia"><figcaption>Jóvenes de JUMA frente a la iglesia</figcaption></figure>
+<figure class="gal g3" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-chicas-capilla.jpg" alt="Compartir en la capilla"><figcaption>Compartir en la capilla</figcaption></figure>
+<figure class="gal g1" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-danza-capilla.jpg" alt="Dinámica y alegría en comunidad"><figcaption>Dinámica y alegría en comunidad</figcaption></figure>
+<figure class="gal g5" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-hermana-flores.jpg" alt="Hermana misionera en la celebración"><figcaption>Hermana misionera en la celebración</figcaption></figure>
+<figure class="gal g4" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-grupo-palmera.jpg" alt="Grupo de JUMA en la salida"><figcaption>Grupo de JUMA en la salida</figcaption></figure>
+<figure class="gal g3" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-charla-pasillo.jpg" alt="Escuchando una charla de formación"><figcaption>Escuchando una charla de formación</figcaption></figure>
+<figure class="gal g2" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-abrazo-sacerdotes.jpg" alt="Celebración con los sacerdotes"><figcaption>Celebración con los sacerdotes</figcaption></figure>
+<figure class="gal g3" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-lectura-palabra.jpg" alt="Leyendo la Palabra"><figcaption>Leyendo la Palabra</figcaption></figure>
+<figure class="gal g5" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-plaza-sombrero.jpg" alt="Encuentro en la plaza"><figcaption>Encuentro en la plaza</figcaption></figure>
+<figure class="gal g1" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-cruces-misa.jpg" alt="Celebración de la misa"><figcaption>Celebración de la misa</figcaption></figure>
+<figure class="gal g4" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-grupo-presbiterio.jpg" alt="Juntos en el templo"><figcaption>Juntos en el templo</figcaption></figure>
+<figure class="gal g2" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-abrazo-misa.jpg" alt="Abrazo de fraternidad"><figcaption>Abrazo de fraternidad</figcaption></figure>
+<figure class="gal g3" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-abrazo-verde.jpg" alt="Fraternidad entre misioneros"><figcaption>Fraternidad entre misioneros</figcaption></figure>
+<figure class="gal g5" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/new-equipo-acompanamiento.jpg" alt="Equipo de acompañamiento"><figcaption>Equipo de acompañamiento</figcaption></figure>
 <span id="gal-extra" style="display:contents"></span>
 </div>
 </div>

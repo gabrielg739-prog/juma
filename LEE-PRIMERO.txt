@@ -1,15 +1,23 @@
-SUBIR EL SITIO A GITHUB (computadora)
+SITIO WEB JUMA DUACA - COMO SUBIRLO Y EDITARLO
 
-1. Entra a github.com e inicia sesion.
-2. Boton + arriba a la derecha > New repository.
-   Nombre: juma   Visibilidad: Public   Marca "Add a README file" > Create repository.
-3. En el repositorio pulsa "Add file" > "Upload files".
-4. Arrastra TODO lo que hay dentro de esta carpeta (index.html, js, img, icons,
-   sw.js, manifest.webmanifest, robots.txt, sitemap.xml, este archivo y LEEME-firebase.txt).
-   NO arrastres la carpeta juma-github en si: su contenido debe quedar en la raiz.
-5. Pulsa "Commit changes".
-6. Ve a Settings > Pages. En Source elige "Deploy from a branch", rama main, carpeta / (root). Guarda.
-7. En unos minutos tu direccion sera https://TUUSUARIO.github.io/juma/
+SUBIR O ACTUALIZAR EL SITIO EN GITHUB (computadora)
+1. Entra a github.com/gabrielg739-prog/juma
+2. Toca "Add file" > "Upload files".
+3. Arrastra TODO lo que hay dentro de esta carpeta (index.html, contenido.json, js, img, icons,
+   sw.js, manifest.webmanifest, robots.txt, sitemap.xml y este archivo).
+   No arrastres la carpeta en si: su contenido debe quedar en la raiz.
+4. Pulsa "Commit changes". En unos minutos se ve en https://gabrielg739-prog.github.io/juma/
 
-Para notificaciones e inicio de sesion: abre js/firebase-config.js y cambia los valores REEMPLAZA
-por los de tu proyecto de Firebase. Los pasos estan en LEEME-firebase.txt.
+EDITAR LA PAGINA (sin cuenta, solo con tu clave)
+1. Abre tu pagina y baja hasta "Nuestra madre, nuestro fundador y nuestros santos".
+2. Toca 5 veces seguidas y rapido la tarjeta de "Maria Consolata".
+3. Escribe tu clave maestra y pulsa Entrar.
+4. Cambia lo que quieras: domingos, hora y lugar, WhatsApp, aviso, actividades,
+   formacion, novedades y fotos. Lo ves al instante solo en tu pantalla.
+5. Pulsa "Guardar y descargar": se descarga el archivo contenido.json.
+6. Sube SOLO ese archivo a GitHub: "Add file" > "Upload files" > arrastra contenido.json
+   > "Commit changes". En unos minutos todos ven los cambios.
+
+Tu borrador queda guardado en ese mismo navegador hasta que lo subas.
+Las planillas de inscripcion llegan por WhatsApp a 0412-054-5307 y 0412-566-7767
+(los numeros se cambian en el editor, pestana "Hora, lugar y WhatsApp").
