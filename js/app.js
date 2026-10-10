@@ -675,7 +675,8 @@ document.addEventListener('click', (e) => {
 .jchat-x{margin-left:auto;width:44px;height:44px;border-radius:10px;border:1.5px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-size:18px;cursor:pointer}
 .jchat-log{flex:1 1 auto;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
 .jmsg{display:flex;gap:8px;align-items:flex-end;max-width:92%}
-.jmsg img{width:30px;height:30px;border-radius:50%;flex:0 0 auto}
+.jmsg > img{width:30px;height:30px;border-radius:50%;flex:0 0 auto}
+.jmsg .b img.jfull{display:block;width:120px;height:auto;max-width:100%;margin:0 auto 8px;border-radius:12px}
 .jmsg .b{padding:10px 13px;border-radius:16px 16px 16px 4px;background:#fff;color:var(--ink,#0A1B3F);font-size:15px;line-height:1.5;box-shadow:0 1px 2px rgba(6,21,54,.08)}
 .jmsg .b p{margin:0 0 6px}.jmsg .b p:last-child{margin:0}
 .jmsg .b a{color:var(--royal,#2452C8);font-weight:700}
@@ -780,7 +781,7 @@ document.addEventListener('click', (e) => {
     box.querySelector('form').addEventListener('submit', (e) => { e.preventDefault(); const i = box.querySelector('input'); ask(i.value); i.value = ''; });
     box.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
     box.addEventListener('click', (e) => { if (e.target.closest('[data-open-form]')) close(); });
-    if (first) { first = false; add(`<img src="${FULL}" alt="Joriel saludando" style="display:block;width:110px;margin:0 auto 6px">` + P(['¡Hola! Soy <b>Joriel</b>, joven misionero de JUMA Duaca. 👋', 'Te cuento cuándo nos reunimos, cómo inscribirte, cómo es la formación y quiénes son nuestros santos. ¿Qué quieres saber?'])); }
+    if (first) { first = false; add(`<img class="jfull" src="${FULL}" alt="Joriel saludando">` + P(['¡Hola! Soy <b>Joriel</b>, joven misionero de JUMA Duaca. 👋', 'Te cuento cuándo nos reunimos, cómo inscribirte, cómo es la formación y quiénes son nuestros santos. ¿Qué quieres saber?'])); }
     setTimeout(() => { try { box.querySelector('input').focus({ preventScroll: true }); } catch (e) {} }, 50);
   }
   function close() { if (!box) return; box.style.display = 'none'; btn.style.display = ''; btn.focus(); }
