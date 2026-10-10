@@ -216,7 +216,19 @@ const css = `
 .mp-list div{padding:14px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14)}
 .mp-list b{display:flex;align-items:center;gap:8px;font-size:16px;color:#fff}
 .mp-list b i{width:14px;height:14px;border-radius:50%;border:1.5px solid #fff}
-.mp-list p{margin:8px 0 0;font-size:14.5px;line-height:1.6;color:#DCE7F8}
+.mp-list ul{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:4px}
+.mp-list li button{all:unset;box-sizing:border-box;width:100%;display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:9px;font-size:14.5px;line-height:1.3;color:#DCE7F8;cursor:pointer;transition:background-color .15s ease}
+.mp-list li button span{font-variant-numeric:tabular-nums;color:#8EC9FF;font-weight:700}
+.mp-list li button[aria-pressed="true"]{background:rgba(142,201,255,.22);color:#fff}
+.mp-list li button:focus-visible{outline:2px solid #8EC9FF;outline-offset:1px}
+@media (hover:hover) and (pointer:fine){.mp-list li button:hover{background:rgba(255,255,255,.1);color:#fff}}
+.mp-year{display:flex;align-items:baseline;gap:10px;margin-top:12px!important;padding:12px 14px;border-radius:12px;background:var(--mist)}
+.mp-year b{font:800 40px/1 var(--display);color:var(--cloth);font-variant-numeric:tabular-nums}
+.mp-year span{font-size:14px;color:var(--muted)}
+.mp-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px!important}
+.mp-web{display:inline-flex;align-items:center;text-decoration:none;background:var(--cloth);color:#fff!important;border-color:var(--cloth)}
+.mp-map .pc.mc{stroke:#fff;stroke-width:.9;stroke-dasharray:2 1.5}
+.mp-map .pc.sel.sel{stroke:#8EC9FF;stroke-width:2;stroke-dasharray:none}
 @media (max-width:860px){.fe-two,.fe-rm,.mp-wrap{grid-template-columns:minmax(0,1fr)}}
 @media (prefers-reduced-motion:reduce){.fe-panel{animation:none}.mp-map .pin .pulse{animation:none;opacity:0}}
 `;
@@ -263,23 +275,73 @@ function render() {
 
 /* ---------- mapa ---------- */
 const CONT = { af: ['África', '#17824A'], am: ['América', '#C8322D'], eu: ['Europa', '#FFFFFF'], as: ['Asia', '#F5C518'] };
+/* q: 'imc' = Misioneros de la Consolata · 'mc' = solo Misioneras de la Consolata. y: año de llegada (0 = por confirmar).
+   w: página web · t: tipo de página (p = del país, r = de la región, g = general, d = diócesis local, m = Misioneras) */
+const CAF = 'https://consolataafrica.org/en/tag/', CAM = 'https://www.consolataamerica.org/es/', MCW = 'https://www.missionariedellaconsolata.org/';
+const PAISES = {
+  ke: { n: 'Kenia', c: 'af', y: 1902, w: CAF + 'kenya/', t: 'r', x: 'Aquí nació la misión: Kenia fue el primer país al que san José Allamano envió a sus misioneros.' },
+  et: { n: 'Etiopía', c: 'af', y: 1913, w: CAF + 'ethiopia/', t: 'r' },
+  tz: { n: 'Tanzania', c: 'af', y: 1919, w: CAF + 'tanzania/', t: 'r' },
+  mz: { n: 'Mozambique', c: 'af', y: 1925, w: CAF + 'mozambique/', t: 'r' },
+  za: { n: 'Sudáfrica', c: 'af', y: 1948, w: CAF + 'south-africa/', t: 'r', x: 'La misión estable comenzó en 1971, en Volksrust.' },
+  cd: { n: 'R. D. del Congo', c: 'af', y: 1972, w: CAF + 'drc-congo/', t: 'r' },
+  ug: { n: 'Uganda', c: 'af', y: 1985, w: CAF + 'uganda/', t: 'r' },
+  ci: { n: 'Costa de Marfil', c: 'af', y: 1995, w: CAF + 'ivory-coast/', t: 'r' },
+  dj: { n: 'Yibuti', c: 'af', y: 2004, w: 'https://consolataafrica.org/en/', t: 'r' },
+  sz: { n: 'Esuatini', c: 'af', y: 2012, w: 'https://dioceseofmanzini.org/consolata-missionaries', t: 'd', x: 'Antes se llamaba Suazilandia.' },
+  ao: { n: 'Angola', c: 'af', y: 2014, w: CAF + 'angola/', t: 'r' },
+  mg: { n: 'Madagascar', c: 'af', y: 2018, w: CAF + 'madagascar/', t: 'r', x: 'La misión se abrió en 2018 y el primer grupo de misioneros llegó en 2019.' },
+  lr: { n: 'Liberia', c: 'af', y: 0, q: 'mc', w: MCW, t: 'm' },
+  gw: { n: 'Guinea-Bisáu', c: 'af', y: 0, q: 'mc', w: MCW, t: 'm' },
+  br: { n: 'Brasil', c: 'am', y: 1937, w: 'https://www.consolata.org.br/', t: 'p', x: 'Fue el primer país de América donde llegaron los misioneros.' },
+  ar: { n: 'Argentina', c: 'am', y: 1946, w: CAM, t: 'r' },
+  us: { n: 'Estados Unidos', c: 'am', y: 1946, w: 'https://www.consolata.us/', t: 'p' },
+  co: { n: 'Colombia', c: 'am', y: 1947, w: CAM, t: 'r' },
+  ca: { n: 'Canadá', c: 'am', y: 1947, w: 'https://www.consolata.qc.ca/', t: 'p' },
+  ve: { n: 'Venezuela', c: 'am', y: 1971, w: CAM, t: 'r', x: '¡Aquí estamos nosotros! JUMA Duaca es parte de esta familia misionera.' },
+  ec: { n: 'Ecuador', c: 'am', y: 1987, w: CAM, t: 'r' },
+  mx: { n: 'México', c: 'am', y: 2008, w: CAM, t: 'r' },
+  pe: { n: 'Perú', c: 'am', y: 2011, w: CAM, t: 'r' },
+  bo: { n: 'Bolivia', c: 'am', y: 1991, q: 'mc', w: CAM + 'misioneras-de-la-consolata-en-bolivia-consuelen-a-mi-pueblo-is40/', t: 'm', x: 'Las Misioneras llegaron a Poopó, en la diócesis de Oruro.' },
+  it: { n: 'Italia', c: 'eu', y: 1901, w: 'https://www.consolata.org/', t: 'g', x: 'San José Allamano fundó el Instituto en Turín. La casa general está en Roma.' },
+  gb: { n: 'Reino Unido', c: 'eu', y: 1936, w: 'https://www.consolata.org/', t: 'g' },
+  pt: { n: 'Portugal', c: 'eu', y: 1943, w: 'https://www.consolata.pt/', t: 'p' },
+  es: { n: 'España', c: 'eu', y: 1955, w: 'https://www.antenamisionera.org/', t: 'p' },
+  pl: { n: 'Polonia', c: 'eu', y: 2008, w: 'https://www.consolata.pl/', t: 'p' },
+  kr: { n: 'Corea del Sur', c: 'as', y: 1988, w: 'http://www.consolata.or.kr/', t: 'p' },
+  mn: { n: 'Mongolia', c: 'as', y: 2003, w: 'http://www.consolatamissionmongolia.net/it/', t: 'p' },
+  tw: { n: 'Taiwán', c: 'as', y: 2014, w: 'https://taiwan.consolata.org/', t: 'p' },
+  kz: { n: 'Kazajistán', c: 'as', y: 2020, q: 'mc', w: MCW + 'presenza-e-appartenenza-4-anni-in-kazakistan/', t: 'm' },
+  kg: { n: 'Kirguistán', c: 'as', y: 2020, q: 'mc', w: MCW + '2019/12/13/kirghizistan-santuario-alpino-in-asia/', t: 'm' }
+};
+const WEB = { p: (d) => `Página de la Consolata en ${d.n}`, r: (d) => `Página de la Consolata en ${CONT[d.c][0]}`, g: () => 'Sitio oficial de la Consolata', d: () => 'Página de la diócesis sobre la Consolata', m: () => 'Página de las Misioneras de la Consolata' };
+function paisInfo(k) {
+  const d = PAISES[k]; if (!d) return '';
+  const quien = d.q === 'mc' ? 'Misioneras de la Consolata' : 'Misioneros de la Consolata';
+  const desde = d.y ? `<p class="mp-year"><b>${d.y}</b><span>${d.y === 1901 ? 'fundación del Instituto' : `llegada de ${d.q === 'mc' ? 'las' : 'los'} ${quien}`}</span></p>` : `<p><b>${quien}</b> · año de llegada por confirmar</p>`;
+  return `<h3>${esc(d.n)}</h3><p><b>${CONT[d.c][0]}</b>${d.y && d.y !== 1901 ? ` · ${new Date().getFullYear() - d.y} años de presencia` : ''}</p>${desde}${d.q === 'mc' ? '<p>En este país sirven las <b>Misioneras de la Consolata</b>, la rama femenina fundada también por san José Allamano.</p>' : ''}${d.x ? `<p>${esc(d.x)}</p>` : ''}<p class="mp-links"><a class="fe-tab mp-web" href="${d.w}" target="_blank" rel="noopener">${esc(WEB[d.t](d))} ↗</a><button type="button" class="fe-tab" data-mpreset>Ver todos</button></p>`;
+}
 async function mapa() {
   const box = $('#mapa-app'); if (!box) return;
-  box.innerHTML = `<div class="mp-wrap"><div class="mp-map" id="mp-svg" aria-busy="true"></div><div class="mp-info" id="mp-info"><h3>Toca un país</h3><p>Los países de color son donde hay presencia de los Misioneros de la Consolata. El punto amarillo es Duaca: ¡aquí estamos nosotros!</p><div class="mp-stats"><div><b>28</b><span>países</span></div><div><b>4</b><span>continentes</span></div><div><b>1901</b><span>año de fundación</span></div><div><b>898</b><span>misioneros (2024)</span></div></div></div></div><div class="mp-list" id="mp-list"></div><p class="fe-note" style="color:#BFD3F2">Datos de referencia: Wikipedia y GCatholic (2024). La presencia de las comunidades puede cambiar con los años.</p>`;
+  const keys = Object.keys(PAISES);
+  box.innerHTML = `<div class="mp-wrap"><div class="mp-map" id="mp-svg" aria-busy="true"></div><div class="mp-info" id="mp-info" aria-live="polite"><h3>Toca un país</h3><p>Los países de color son donde están los Misioneros y las Misioneras de la Consolata. Toca uno para ver desde qué año están allí y su página web. El punto amarillo es Duaca: ¡aquí estamos nosotros!</p><div class="mp-stats"><div><b>${keys.length}</b><span>países</span></div><div><b>4</b><span>continentes</span></div><div><b>1901</b><span>año de fundación</span></div><div><b>898</b><span>misioneros (2024)</span></div></div></div></div><div class="mp-list" id="mp-list"></div><p class="fe-note" style="color:#BFD3F2">Los países con borde punteado tienen presencia de las Misioneras de la Consolata. Datos: Consolata América, Consolata Africa, sitios oficiales de la Consolata en cada país y GCatholic (2024). La presencia de las comunidades puede cambiar con los años.</p>`;
+  $('#mp-list').innerHTML = Object.keys(CONT).map((c) => { const ks = keys.filter((k) => PAISES[k].c === c).sort((a, b) => (PAISES[a].y || 9999) - (PAISES[b].y || 9999)); return `<div><b><i style="background:${CONT[c][1]}"></i>${CONT[c][0]} (${ks.length})</b><ul>${ks.map((k) => `<li><button type="button" data-mpk="${k}">${esc(PAISES[k].n)}<span>${PAISES[k].y || '—'}</span></button></li>`).join('')}</ul></div>`; }).join('');
+  let ps = [];
+  const sel = (k, scroll) => {
+    ps.forEach((x) => x.classList.toggle('sel', x.dataset.k === k));
+    document.querySelectorAll('[data-mpk]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.mpk === k));
+    $('#mp-info').innerHTML = paisInfo(k);
+    if (scroll && window.matchMedia('(max-width:860px)').matches) $('#mp-info').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+  $('#mp-list').addEventListener('click', (e) => { const b = e.target.closest('[data-mpk]'); if (b) sel(b.dataset.mpk, true); });
+  $('#mp-info').addEventListener('click', (e) => { if (e.target.closest('[data-mpreset]')) mapa(); });
   try {
-    const r = await fetch('img/mapa-consolata.svg'); const s = await r.text();
+    const r = await fetch('img/mapa-consolata.svg?v=2'); const s = await r.text();
     const m = $('#mp-svg'); m.innerHTML = s; m.removeAttribute('aria-busy');
-    const ps = Array.from(m.querySelectorAll('.pc'));
-    const by = {}; ps.forEach((p) => { const k = ['af', 'am', 'eu', 'as'].find((c) => p.classList.contains(c)); (by[k] = by[k] || []).push(p); p.setAttribute('tabindex', '0'); p.setAttribute('role', 'button'); p.setAttribute('aria-label', p.dataset.n); });
-    $('#mp-list').innerHTML = Object.keys(CONT).map((k) => `<div><b><i style="background:${CONT[k][1]}"></i>${CONT[k][0]} (${(by[k] || []).length})</b><p>${(by[k] || []).map((p) => esc(p.dataset.n)).sort().join(' · ')}</p></div>`).join('');
-    const sel = (p) => {
-      ps.forEach((x) => x.classList.remove('sel')); p.classList.add('sel');
-      const k = ['af', 'am', 'eu', 'as'].find((c) => p.classList.contains(c)); const y = +p.dataset.y;
-      $('#mp-info').innerHTML = `<h3>${esc(p.dataset.n)}</h3><p><b>${CONT[k][0]}</b>${y ? ` · presencia desde ${y}${y === 1901 ? ' (fundación en Turín)' : ''}` : ''}</p><p>Aquí los Misioneros de la Consolata anuncian el Evangelio y acompañan a las comunidades.</p><p style="margin-top:12px"><button type="button" class="fe-tab" data-mpreset>Ver todos los datos</button></p>`;
-    };
-    m.addEventListener('click', (e) => { const p = e.target.closest('.pc'); if (p) sel(p); });
-    m.addEventListener('keydown', (e) => { const p = e.target.closest('.pc'); if (p && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); sel(p); } });
-    $('#mp-info').addEventListener('click', (e) => { if (e.target.closest('[data-mpreset]')) mapa(); });
+    ps = Array.from(m.querySelectorAll('.pc'));
+    ps.forEach((p) => { const d = PAISES[p.dataset.k]; if (!d) return; p.setAttribute('tabindex', '0'); p.setAttribute('role', 'button'); p.setAttribute('aria-label', `${d.n}${d.y ? ', desde ' + d.y : ''}`); const t = document.createElementNS('http://www.w3.org/2000/svg', 'title'); t.textContent = `${d.n}${d.y ? ' · desde ' + d.y : ''}`; p.appendChild(t); });
+    m.addEventListener('click', (e) => { const p = e.target.closest('.pc'); if (p) sel(p.dataset.k, true); });
+    m.addEventListener('keydown', (e) => { const p = e.target.closest('.pc'); if (p && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); sel(p.dataset.k, true); } });
   } catch (e) { $('#mp-svg').innerHTML = '<p style="color:#fff;padding:20px">No se pudo cargar el mapa.</p>'; }
 }
 
@@ -294,7 +356,8 @@ async function mapa() {
   });
   fetch('oraciones.json?t=' + Date.now()).then((r) => r.json()).then((d) => { ORA = { oraciones: d.oraciones || [], catequesis: d.catequesis || [] }; if (tab !== 'hoy') render(); }).catch(() => {});
   window.JUMA_FE = {
-    liturgia, misteriosHoy, MISIONERO, CANTOS, MISA, COLORES,
+    liturgia, misteriosHoy, MISIONERO, CANTOS, MISA, COLORES, PAISES,
+    paisMapa: (k) => { const s = $('#mapa'); if (s) s.scrollIntoView({ behavior: 'smooth' }); setTimeout(() => { const b = document.querySelector(`[data-mpk="${k}"]`); if (b) b.click(); }, 450); },
     oracion: (t) => { const all = ORA.oraciones.concat(ORA.catequesis); return all.find((o) => (o.k || []).some((k) => t.includes(' ' + k + ' ') || t.includes(' ' + k))); },
     abrir: (k) => { tab = k; render(); const s = $('#fe'); if (s) s.scrollIntoView({ behavior: 'smooth' }); }
   };
