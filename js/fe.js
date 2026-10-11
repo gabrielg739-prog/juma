@@ -264,7 +264,55 @@ const css = `
 .reel{flex:0 0 76%;scroll-snap-align:center}
 }
 @media (prefers-reduced-motion:reduce){.vover{transition:none}.reel{will-change:auto}}
-.net-off{position:fixed;top:max(10px,env(safe-area-inset-top));left:50%;z-index:80;max-width:calc(100vw - 32px);padding:10px 18px;border-radius:999px;background:#0A1F4D;color:#fff;font-family:var(--body);font-size:14px;line-height:1.3;white-space:nowrap;box-shadow:0 12px 30px -10px rgba(6,21,54,.6);border:1px solid rgba(142,201,255,.45);transform:translate(-50%,-160%);opacity:0;transition:transform .28s cubic-bezier(.23,1,.32,1),opacity .2s ease;pointer-events:none;text-align:center}
+.vsnd{position:absolute;top:12px;left:12px;z-index:3;display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px 0 11px;border:0;border-radius:999px;background:rgba(6,21,54,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font:700 13.5px/1 var(--body);cursor:pointer;visibility:hidden;opacity:0;transition:opacity .2s ease,visibility .2s,background-color .2s ease,transform .12s ease}
+.vlive > .vsnd{visibility:visible;opacity:1}
+.vsnd:active{transform:scale(.95)}
+.vsnd:focus-visible{outline:2px solid #8EC9FF;outline-offset:2px}
+.vsnd svg{width:20px;height:20px;flex:0 0 auto;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.vsnd svg .spk{fill:#fff}
+.vsnd .w{display:none}
+.vsnd[aria-pressed="true"]{background:rgba(36,82,200,.88)}
+.vsnd[aria-pressed="true"] .w{display:inline}
+.vsnd[aria-pressed="true"] .x{display:none}
+.reel::before{left:auto;right:64px}
+.vsticker .vsnd{top:16px;left:16px;height:36px;padding:0 9px}
+.vsticker .vsnd span{display:none}
+.closing > .vsnd{top:auto;bottom:16px;left:auto;right:66px}
+.closing > .vbtn{top:auto;bottom:16px;right:16px}
+.hero-chips{gap:8px;margin-top:0}
+.hero-at{margin:26px 0 10px;color:#BFD3F2;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.hero-at span{display:none;font-weight:400;letter-spacing:0;text-transform:none}
+.hero-chips a{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 15px;border-radius:999px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:14px;font-weight:700;text-decoration:none;transition:background-color .18s ease,transform .12s ease}
+.hero-chips a::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--dot);box-shadow:0 0 0 2px rgba(255,255,255,.18)}
+.hero-chips a:active{transform:scale(.97)}
+.hero-chips a:focus-visible{outline:2px solid #8EC9FF;outline-offset:2px}
+@media (hover:hover) and (pointer:fine){.hero-chips a:hover{background:rgba(255,255,255,.26)}}
+.atbar{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;gap:12px;height:calc(60px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 16px 0 14px;background:rgba(255,255,255,.95);-webkit-backdrop-filter:saturate(1.4) blur(12px);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--line);box-shadow:0 12px 28px -20px rgba(6,21,54,.45);transform:translateY(-110%);visibility:hidden;transition:transform .3s cubic-bezier(.23,1,.32,1),visibility .3s;font-family:var(--body)}
+.atbar.on{transform:none;visibility:visible}
+.atbar-logo{flex:0 0 auto;display:block}
+.atbar-logo img{display:block;width:46px;height:38px;object-fit:contain}
+.atbar-rail{flex:1 1 auto;min-width:0;display:flex;gap:4px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;padding:0 18px 0 4px;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 10px,#000 calc(100% - 30px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 10px,#000 calc(100% - 30px),transparent)}
+.atbar-rail::-webkit-scrollbar{display:none}
+.atbar-rail a{flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;color:var(--ink);font-size:14.5px;font-weight:700;text-decoration:none;white-space:nowrap;transition:background-color .18s ease,color .18s ease}
+.atbar-rail a::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--dot)}
+.atbar-rail a.on{background:var(--cloth);color:#fff}
+.atbar-rail a:focus-visible{outline:2px solid var(--royal);outline-offset:-2px}
+@media (hover:hover) and (pointer:fine){.atbar-rail a:not(.on):hover{background:var(--mist)}}
+.atbar-cta{flex:0 0 auto}
+section[id]{scroll-margin-top:72px}
+@media (max-width:760px){
+.atbar{height:calc(54px + env(safe-area-inset-top));gap:4px;padding-left:6px;padding-right:0}
+.atbar-logo img{width:38px;height:32px}
+.atbar-cta{display:none}
+.atbar-rail a{min-height:38px;padding:0 12px;font-size:14px}
+.hero-chips a{min-height:38px;padding:0 13px;font-size:13.5px}
+.hero-at span{display:inline}
+.hero-chips{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);grid-auto-columns:max-content;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;padding:0 40px 4px 0;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
+.hero-chips::-webkit-scrollbar{display:none}
+section[id]{scroll-margin-top:62px}
+}
+@media (prefers-reduced-motion:reduce){.atbar{transition:none}}
+.net-off{position:fixed;top:calc(70px + env(safe-area-inset-top));left:50%;z-index:80;max-width:calc(100vw - 32px);padding:10px 18px;border-radius:999px;background:#0A1F4D;color:#fff;font-family:var(--body);font-size:14px;line-height:1.3;white-space:nowrap;box-shadow:0 12px 30px -10px rgba(6,21,54,.6);border:1px solid rgba(142,201,255,.45);transform:translate(-50%,-160%);opacity:0;transition:transform .28s cubic-bezier(.23,1,.32,1),opacity .2s ease;pointer-events:none;text-align:center}
 .net-off b{color:#F5C518}
 .net-off.on{transform:translate(-50%,0);opacity:1}
 @media (prefers-reduced-motion:reduce){.net-off{transition:opacity .2s ease;transform:translate(-50%,0)}}
@@ -385,31 +433,84 @@ async function mapa() {
   } catch (e) { $('#mp-svg').innerHTML = '<p style="color:#fff;padding:20px">No se pudo cargar el mapa.</p>'; }
 }
 
-/* ---------- videos: solo se cargan y suenan (sin sonido) cuando están en pantalla ---------- */
+/* ---------- videos: se cargan al acercarse, se reproducen en pantalla y se pausan al salir.
+   Empiezan sin sonido (los teléfonos no dejan otra cosa); con el botón de sonido se escucha
+   y, mientras el sonido esté activado, suena solo un video a la vez. ---------- */
 function videos() {
   const vs = Array.from(document.querySelectorAll('video.vclip[data-src]')); if (!vs.length) return;
   const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const ahorro = !!(navigator.connection && navigator.connection.saveData);
   const parado = new WeakSet();
-  const btnOf = (v) => v.parentElement.querySelector('.vbtn');
-  const marcar = (v, play) => { const b = btnOf(v); if (b) { b.setAttribute('aria-pressed', play ? 'false' : 'true'); b.setAttribute('aria-label', play ? 'Pausar video' : 'Reproducir video'); } };
+  let sonido = false, suena = null;
+  const box = (v) => v.parentElement;
+  const marcar = (v, play) => { const b = box(v).querySelector('.vbtn'); if (b) { b.setAttribute('aria-pressed', play ? 'false' : 'true'); b.setAttribute('aria-label', play ? 'Pausar video' : 'Reproducir video'); } };
+  const marcarSon = (v, on) => { const b = box(v).querySelector('.vsnd'); if (!b) return; b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', on ? 'Quitar sonido' : 'Activar sonido'); const t = b.querySelector('span'); if (t) t.textContent = on ? 'Sonido' : 'Activar sonido'; };
+  const callar = (v) => { v.muted = true; marcarSon(v, false); if (suena === v) suena = null; };
+  const sonar = (v) => { vs.forEach((x) => { if (x !== v && !x.muted) callar(x); }); v.muted = false; suena = v; marcarSon(v, true); };
   const cargar = (v) => { if (v.getAttribute('src')) return true; if (v.dataset.media && !matchMedia(v.dataset.media).matches) return false; v.src = v.dataset.src; return true; };
-  const tocar = (v) => { if (parado.has(v) || !cargar(v)) return; const p = v.play(); if (p) p.catch(() => {}); };
+  const reproducir = (v) => { const p = v.play(); if (p) p.catch(() => { if (!v.muted) { callar(v); const q = v.play(); if (q) q.catch(() => {}); } }); };
+  const pasar = () => { if (!sonido || suena) return; const w = vs.find((x) => !x.paused && x.muted); if (w) sonar(w); };
+  const tocar = (v) => { if (parado.has(v) || !cargar(v)) return; if (sonido && !suena) sonar(v); reproducir(v); };
   vs.forEach((v) => {
     v.muted = true; v.defaultMuted = true;
-    v.addEventListener('playing', () => { v.classList.add('on'); v.parentElement.classList.add('vlive'); marcar(v, true); });
-    v.addEventListener('pause', () => marcar(v, false));
+    v.addEventListener('playing', () => { v.classList.add('on'); box(v).classList.add('vlive'); marcar(v, true); });
+    v.addEventListener('pause', () => { marcar(v, false); if (suena === v) { callar(v); pasar(); } });
   });
   document.addEventListener('click', (e) => {
-    const b = e.target.closest('.vbtn'); if (!b) return; const v = b.parentElement.querySelector('video.vclip'); if (!v) return;
-    if (v.paused) { parado.delete(v); tocar(v); } else { parado.add(v); v.pause(); }
+    const s = e.target.closest('.vsnd');
+    if (s) { const v = box(s).querySelector('video.vclip'); if (!v) return;
+      if (!v.muted) { callar(v); sonido = false; return; }
+      sonido = true; parado.delete(v); if (!cargar(v)) return; sonar(v); reproducir(v); return; }
+    const b = e.target.closest('.vbtn'); if (!b) return; const v = box(b).querySelector('video.vclip'); if (!v) return;
+    if (v.paused) { parado.delete(v); tocar(v); } else { if (suena === v) sonido = false; parado.add(v); v.pause(); }
   });
-  if (quieto || ahorro) { vs.forEach((v) => { if (v.poster) { v.parentElement.classList.add('vlive'); marcar(v, false); parado.add(v); } }); return; }
+  if (quieto || ahorro) { vs.forEach((v) => { if (v.poster) { box(v).classList.add('vlive'); marcar(v, false); parado.add(v); } }); return; }
   const cerca = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) { cargar(en.target); cerca.unobserve(en.target); } }), { rootMargin: '360px 0px' });
-  const vista = new IntersectionObserver((es) => es.forEach((en) => { const v = en.target; if (en.isIntersecting && en.intersectionRatio >= 0.5) tocar(v); else if (!v.paused) v.pause(); }), { threshold: [0, 0.5, 0.8] });
+  const dentro = (en) => en.isIntersecting && en.intersectionRatio >= 0.5;
+  const vista = new IntersectionObserver((es) => {
+    es.filter((en) => !dentro(en)).forEach((en) => { const v = en.target; if (suena === v) callar(v); if (!v.paused) v.pause(); });
+    es.filter(dentro).forEach((en) => tocar(en.target));
+  }, { threshold: [0, 0.5, 0.8] });
   vs.forEach((v) => { cerca.observe(v); vista.observe(v); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) vs.forEach((v) => { if (!v.paused) v.pause(); }); });
 }
+/* ---------- atajos: subtítulos que llevan a cada parte de la página ---------- */
+const ATAJOS = [['quienes', 'Quiénes somos'], ['vive', 'Así se vive'], ['domingos', 'Domingos'], ['pilares', 'Pilares'], ['consolata', 'La Consolata'], ['mapa', 'Mapa'], ['identidad', 'Ser misionero'], ['formacion', 'Formación'], ['fe', 'Oración'], ['areas', 'Servicio'], ['novedades', 'Novedades'], ['testimonios', 'Testimonios'], ['galeria', 'Galería'], ['muro-sec', 'Escríbenos'], ['logo', 'Nuestro logo'], ['unete', 'Únete']];
+function atajos() {
+  const suave = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const lista = () => ATAJOS.filter(([id]) => { const s = document.getElementById(id); return s && !s.classList.contains('hide'); });
+  const chip = ([id, t], i) => `<a href="#${id}" data-at="${id}" style="--dot:var(--c${(i % 4) + 1})">${t}</a>`;
+  const hero = document.querySelector('.hero-chips');
+  const bar = document.createElement('nav'); bar.className = 'atbar'; bar.setAttribute('aria-label', 'Atajos de la página');
+  bar.innerHTML = '<a class="atbar-logo" href="#inicio" aria-label="Ir al inicio"><img src="img/logo.png" alt=""></a><div class="atbar-rail"></div><button type="button" class="btn btn-blue btn-sm atbar-cta" data-open-form>Quiero ser parte</button>';
+  (document.getElementById('root') || document.body).appendChild(bar);
+  const rail = bar.querySelector('.atbar-rail');
+  let actual = '';
+  const marcar = (mover) => {
+    rail.querySelectorAll('[data-at]').forEach((a) => {
+      const on = a.dataset.at === actual; a.classList.toggle('on', on);
+      if (on) { a.setAttribute('aria-current', 'location'); if (mover && bar.classList.contains('on')) rail.scrollTo({ left: Math.max(0, a.offsetLeft - (rail.clientWidth - a.offsetWidth) / 2), behavior: suave ? 'smooth' : 'auto' }); } else a.removeAttribute('aria-current');
+    });
+  };
+  const pintar = () => {
+    const l = lista();
+    if (hero) hero.innerHTML = l.map(chip).join('');
+    rail.innerHTML = l.map(chip).join(''); marcar(false);
+  };
+  if (hero) hero.insertAdjacentHTML('beforebegin', '<p class="hero-at rise" style="animation-delay: 700ms">Ir directo a <span>· desliza para ver más</span></p>');
+  pintar();
+  /* si aparecen Novedades o Testimonios, se agregan solos */
+  const mo = new MutationObserver(pintar);
+  ['novedades', 'testimonios'].forEach((id) => { const s = document.getElementById(id); if (s) mo.observe(s, { attributes: true, attributeFilter: ['class'] }); });
+  /* la barra aparece al pasar la portada */
+  const ini = document.getElementById('inicio');
+  if (ini) new IntersectionObserver((es) => { const ver = !es[0].isIntersecting; bar.classList.toggle('on', ver); if (ver) marcar(true); }).observe(ini);
+  else bar.classList.add('on');
+  /* resalta la parte de la página donde estás */
+  const spy = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting && en.target.id !== actual) { actual = en.target.id; marcar(true); } }), { rootMargin: '-38% 0px -58% 0px' });
+  ATAJOS.forEach(([id]) => { const s = document.getElementById(id); if (s) spy.observe(s); });
+}
+
 /* abanico de los videos al desplazarse (solo en pantallas grandes) */
 function reelsFan() {
   const box = document.querySelector('[data-reels]'); if (!box) return;
@@ -431,7 +532,7 @@ function reelsFan() {
 /* ---------- arranque ---------- */
 (function init() {
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
-  render(); mapa(); videos(); reelsFan();
+  render(); mapa(); videos(); reelsFan(); atajos();
   /* aviso de "sin internet" */
   const net = document.createElement('div'); net.className = 'net-off'; net.setAttribute('role', 'status');
   net.innerHTML = '<b>Sin internet</b> · Viendo lo último guardado'; (document.getElementById('root') || document.body).appendChild(net);
