@@ -1006,5 +1006,31 @@ details[open] > summary .pd-ic::after{transform:translate(-50%,-50%) rotate(0deg
 <script src="js/firebase-config.js"></script>
 <script type="module" src="js/app.js"></script>
 <script type="module" src="js/fe.js"></script>
+  <!-- Configuración principal de Firebase para JUMA -->
+<script type="module">
+  // 1. Importar el núcleo de Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+  
+  // 2. Importar los servicios de Base de Datos (ubicación/conteo) y Mensajería (notificaciones)
+  import { getDatabase } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
+  import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-messaging.js";
+
+  // 3. Tus credenciales de acceso de Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyC8-zbb-AGZmHHsdwo0B0K7mVQZDalwnlc",
+    authDomain: "juma-e4ab8.firebaseapp.com",
+    projectId: "juma-e4ab8",
+    storageBucket: "juma-e4ab8.firebasestorage.app",
+    messagingSenderId: "551880580074",
+    appId: "1:551880580074:web:618f067a7f3ddc9da1b093"
+  };
+
+  // 4. Inicializar la app y los servicios
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+  const messaging = getMessaging(app);
+
+  console.log("Firebase conectado correctamente a JUMA.");
+</script>
 </body>
 </html>
