@@ -1006,7 +1006,7 @@ details[open] > summary .pd-ic::after{transform:translate(-50%,-50%) rotate(0deg
 <script src="js/firebase-config.js"></script>
 <script type="module" src="js/app.js"></script>
 <script type="module" src="js/fe.js"></script>
-  <!-- Configuración principal de Firebase para JUMA -->
+<!-- Configuración principal de Firebase para JUMA -->
 <script type="module">
   // 1. Importar el núcleo de Firebase
   import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
@@ -1031,6 +1031,24 @@ details[open] > summary .pd-ic::after{transform:translate(-50%,-50%) rotate(0deg
   const messaging = getMessaging(app);
 
   console.log("Firebase conectado correctamente a JUMA.");
+
+  // 5. NUEVO CÓDIGO: Pedir permiso al usuario y obtener el Token
+  Notification.requestPermission().then((permission) => {
+    if (permission === 'granted') {
+      // Usamos la clave VAPID que acabas de generar
+      getToken(messaging, { vapidKey: "BKFma3IB__xJ2_iblTzJY47CUmmOMojX14ppC2FsC60F725qDYYJKgcCZ_gy-xwbPRlunrrrh4TZJb2ixKezEzA" }).then((currentToken) => {
+        if (currentToken) {
+          console.log("¡Éxito! El token de este dispositivo es:", currentToken);
+        } else {
+          console.log("No se pudo obtener el token.");
+        }
+      }).catch((err) => {
+        console.log("Error al obtener el token:", err);
+      });
+    } else {
+      console.log("El usuario no dio permiso para las notificaciones.");
+    }
+  });
 </script>
 </body>
 </html>
