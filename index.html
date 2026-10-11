@@ -1032,11 +1032,18 @@ details[open] > summary .pd-ic::after{transform:translate(-50%,-50%) rotate(0deg
 
   console.log("Firebase conectado correctamente a JUMA.");
 
-  // 5. NUEVO CÓDIGO: Pedir permiso al usuario y obtener el Token
+// 5. NUEVO CÓDIGO: Pedir permiso al usuario y obtener el Token
   Notification.requestPermission().then((permission) => {
     if (permission === 'granted') {
-      // Usamos la clave VAPID que acabas de generar
-      getToken(messaging, { vapidKey: "BKFma3IB__xJ2_iblTzJY47CUmmOMojX14ppC2FsC60F725qDYYJKgcCZ_gy-xwbPRlunrrrh4TZJb2ixKezEzA" }).then((currentToken) => {
+      // Le indicamos a Firebase la ruta exacta en GitHub Pages (/juma/)
+      navigator.serviceWorker.register('/juma/firebase-messaging-sw.js')
+      .then((registration) => {
+        return getToken(messaging, { 
+          vapidKey: "BKFma3IB__xJ2_iblTzJY47CUmmOMojX14ppC2FsC60F725qDYYJKgcCZ_gy-xwbPRlunrrrh4TZJb2ixKezEzA",
+          serviceWorkerRegistration: registration 
+        });
+      })
+      .then((currentToken) => {
         if (currentToken) {
           console.log("¡Éxito! El token de este dispositivo es:", currentToken);
         } else {
