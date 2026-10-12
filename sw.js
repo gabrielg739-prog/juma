@@ -1,5 +1,5 @@
 /* Service worker: funciona sin conexión + avisos en segundo plano */
-const CACHE = 'juma-v13';
+const CACHE = 'juma-v14';
 /* Lo esencial se guarda al instalar; las fotos se guardan a medida que se ven. */
 const CORE = ['./', 'index.html', 'js/app.js', 'js/fe.js', 'js/firebase-config.js', 'oraciones.json', 'contenido.json', 'manifest.webmanifest',
   'img/logo.png', 'img/hero-900.jpg', 'img/joriel-avatar.png', 'img/mapa-consolata.svg', 'icons/icon-192.png'];
@@ -10,7 +10,16 @@ try {
   const c = self.JUMA_FIREBASE || {};
   if (c.apiKey && !/REEMPLAZA/i.test(c.apiKey)) {
     importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js', 'https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
-    firebase.initializeApp(c); firebase.messaging();
+    firebase.initializeApp(c);
+    const messaging = firebase.messaging();
+    messaging.onBackgroundMessage((payload) => {
+      const n = (payload && payload.notification) || {};
+      self.registration.showNotification(n.title || 'JUMA Duaca', {
+        body: n.body || 'Nuevo aviso de JUMA Duaca',
+        icon: './icons/icon-192.png',
+        badge: './icons/icon-192.png'
+      });
+    });
   }
 } catch (e) {}
 self.addEventListener('install', (e) => {
