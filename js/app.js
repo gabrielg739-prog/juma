@@ -41,9 +41,12 @@ const FOTOS = [
   { foto: 'img/comunidad.jpg', pos: '28% 50%', alt: 'Misioneros de JUMA junto a niños y familias de una comunidad' }
 ];
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DIAS_SEM = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
 /* ===================== pintar contenido editable ===================== */
 let yearSel = 0;
+let showAllEnc = false;
+let showAllActs = false;
 function renderAll() {
   renderAviso(); renderDomingos(); renderActs(); renderFormacion(); renderPosts(); renderGalExtra(); renderGalFija(); renderGalOrden(); renderTes();
 }
@@ -53,26 +56,104 @@ function renderAviso() {
 }
 function hora() { return cfg.hora || 'Hora por confirmar'; }
 function lugar() { const l = cfg.lugar; return l ? l + (/duaca/i.test(l) ? '' : ', Duaca') : 'Lugar por confirmar, Duaca'; }
-function domingos() {
+function todayIso() { const n = new Date(); return n.getFullYear() + '-' + pad2(n.getMonth() + 1) + '-' + pad2(n.getDate()); }
+function max3MonthsIso() { const n = new Date(); n.setDate(n.getDate() + 92); return n.getFullYear() + '-' + pad2(n.getMonth() + 1) + '-' + pad2(n.getDate()); }
+
+/* Genera los domingos de los próximos 3 meses (13 semanas) */
+function domingos(count = 13, src = cfg) {
   const now = new Date(); const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const base = new Date(today.getTime()); base.setDate(base.getDate() + ((7 - base.getDay()) % 7));
-  return [0, 1, 2, 3].map((i) => {
+  const out = [];
+  for (let i = 0; i < count; i++) {
     const x = new Date(base.getFullYear(), base.getMonth(), base.getDate() + 7 * i);
     const key = x.getFullYear() + '-' + pad2(x.getMonth() + 1) + '-' + pad2(x.getDate());
     const isToday = x.getTime() === today.getTime();
-    const sin = (cfg.sinReunion || {})[key];
-    return { key, dia: x.getDate(), mes: MESES[x.getMonth()], first: i === 0, badge: isToday ? 'Hoy' : 'Este domingo',
-      tema: sin ? 'Sin reunión' : (String((cfg.temas || {})[key] || '').trim() || 'Encuentro JUMA') };
-  });
+    const sin = ((src && src.sinReunion) || {})[key];
+    const customTema = String(((src && src.temas) || {})[key] || '').trim();
+    out.push({
+      key,
+      dia: x.getDate(),
+      mes: MESES[x.getMonth()],
+      diaSem: 'Domingo',
+      isSunday: true,
+      isToday,
+      hasCustom: !!customTema || !!sin,
+      badge: isToday ? 'Hoy' : 'Domingo',
+      tema: sin ? 'Sin reunión' : (customTema || 'Encuentro JUMA')
+    });
+  }
+  return out;
 }
+
+/* Une los domingos + los días adicionales (lunes a sábado) en un rango de hasta 3 meses */
+function encuentrosProgramados(src = cfg) {
+  const hoyKey = todayIso();
+  const maxKey = max3MonthsIso();
+  const sun = domingos(13, src);
+  const extras = ((src && src.encuentrosExtra) || []).filter((e) => e && e.fecha && e.fecha >= hoyKey && e.fecha <= maxKey).map((e) => {
+    const dt = new Date(e.fecha + 'T00:00:00');
+    const diaSem = isNaN(dt.getTime()) ? 'Encuentro' : DIAS_SEM[dt.getDay()];
+    const isToday = e.fecha === hoyKey;
+    return {
+      key: e.fecha,
+      dia: isNaN(dt.getTime()) ? e.fecha.slice(-2) : dt.getDate(),
+      mes: isNaN(dt.getTime()) ? '' : MESES[dt.getMonth()],
+      diaSem,
+      isSunday: dt.getDay() === 0,
+      isToday,
+      isExtra: true,
+      hasCustom: true,
+      badge: isToday ? 'Hoy · ' + diaSem : diaSem,
+      tema: String(e.tema || '').trim() || ('Encuentro (' + diaSem + ')')
+    };
+  });
+  const byKey = new Map();
+  sun.forEach((s) => byKey.set(s.key, s));
+  extras.forEach((x) => byKey.set(x.key, x));
+  const list = Array.from(byKey.values()).sort((a, b) => a.key.localeCompare(b.key));
+  list.forEach((item, idx) => {
+    item.first = idx === 0;
+    if (idx === 0) item.badge = item.isToday ? 'Hoy' : (item.isSunday ? 'Este domingo' : 'Próximo · ' + item.diaSem);
+  });
+  return list;
+}
+
 function renderDomingos() {
   $('#f-hora').textContent = hora(); $('#f-lugar').textContent = lugar();
-  $('#tags').innerHTML = domingos().map((s) => `<li class="dtag"><i aria-hidden="true"></i><div class="dcard${s.first ? ' first' : ''}">${s.first ? `<span class="flag">${esc(s.badge)}</span>` : ''}<span class="d num">${s.dia}</span><span class="m">${s.mes}</span><span class="t">${esc(s.tema)}</span></div></li>`).join('');
+  const all = encuentrosProgramados(cfg);
+  const visible = showAllEnc ? all : all.slice(0, 4);
+  $('#tags').innerHTML = visible.map((s) => `<li class="dtag"><i aria-hidden="true"></i><div class="dcard${s.first ? ' first' : ''}"><span class="flag" style="${!s.first ? 'background:var(--mist);color:var(--royal)' : ''}">${esc(s.badge)}</span><span class="d num">${s.dia}</span><span class="m">${s.mes}</span><span class="t">${esc(s.tema)}</span></div></li>`).join('');
+  let moreBtn = $('#btn-more-enc');
+  if (all.length > 4) {
+    if (!moreBtn) {
+      moreBtn = document.createElement('div');
+      moreBtn.id = 'btn-more-enc';
+      moreBtn.style.cssText = 'margin-top:20px;text-align:center';
+      $('.cord-row').insertAdjacentElement('afterend', moreBtn);
+    }
+    moreBtn.innerHTML = `<button type="button" class="btn btn-outline btn-sm" data-toggle-enc>${showAllEnc ? 'Mostrar solo los 4 próximos encuentros' : `Ver programación de 3 meses (${all.length} fechas)`}</button>`;
+  } else if (moreBtn) {
+    moreBtn.remove();
+  }
 }
+
 function renderActs() {
   const a = (cfg.actividades || []).filter((x) => x && x.t);
   $('#acts-wrap').classList.toggle('hide', !a.length);
-  $('#acts').innerHTML = a.map((x) => `<li><b>${esc(x.t)}</b><span class="f">${esc(x.f || '')}</span><p>${esc(x.d || '')}</p></li>`).join('');
+  const visible = showAllActs ? a : a.slice(0, 4);
+  $('#acts').innerHTML = visible.map((x) => `<li><b>${esc(x.t)}</b><span class="f">${esc(x.f || '')}</span><p>${esc(x.d || '')}</p></li>`).join('');
+  let moreActBtn = $('#btn-more-acts');
+  if (a.length > 4) {
+    if (!moreActBtn) {
+      moreActBtn = document.createElement('div');
+      moreActBtn.id = 'btn-more-acts';
+      moreActBtn.style.cssText = 'margin-top:20px;text-align:center';
+      $('#acts').insertAdjacentElement('afterend', moreActBtn);
+    }
+    moreActBtn.innerHTML = `<button type="button" class="btn btn-outline btn-sm" data-toggle-acts>${showAllActs ? 'Mostrar solo 4 actividades' : `Ver todas las actividades (${a.length} en total)`}</button>`;
+  } else if (moreActBtn) {
+    moreActBtn.remove();
+  }
 }
 function yearData(i) {
   const y = Object.assign({}, YEARS[i], { foto: FOTOS[i].foto, pos: FOTOS[i].pos, alt: FOTOS[i].alt });
@@ -179,6 +260,7 @@ function openModal(html, onKey) {
 }
 function closeModal() {
   if (typeof form !== 'undefined' && form.sending) return;
+  if (typeof stopQrCamera === 'function') stopQrCamera();
   const ov = $('.overlay', modalRoot);
   const done = () => { modalRoot.innerHTML = ''; lock(false); modalKey = null; };
   if (!ov || reduced()) return done();
@@ -250,10 +332,53 @@ async function shrinkAvatarDataUrl(file) {
   return cv.toDataURL('image/jpeg', 0.78);
 }
 
-function downloadPlanillaHtml(src) {
+function sixMonthsAgoIso() {
+  const n = new Date(); n.setDate(n.getDate() - 183);
+  return n.getFullYear() + '-' + pad2(n.getMonth() + 1) + '-' + pad2(n.getDate());
+}
+function userRole(rec) {
+  if (!rec) return 'participante';
+  const em = String(rec.correo || (rec.datos && rec.datos.correo) || '').trim().toLowerCase();
+  if (em && isMasterEmail(em)) return 'coordinador';
+  const r = String(rec.rol || (rec.datos && rec.datos.rol) || '').trim().toLowerCase();
+  if (r === 'coordinador' || r === 'asesor' || r === 'participante') return r;
+  const cList = ((cfg && cfg.coordinadoresEmails) || []).map((x) => String(x).toLowerCase());
+  if (em && cList.includes(em)) return 'coordinador';
+  const aList = ((cfg && cfg.asesoresEmails) || []).map((x) => String(x).toLowerCase());
+  if (em && aList.includes(em)) return 'asesor';
+  return 'participante';
+}
+function roleLabel(rol) {
+  if (rol === 'coordinador') return 'Coordinador(a)';
+  if (rol === 'asesor') return 'Asesor(a)';
+  return 'Participante';
+}
+function roleBadgeHtml(rol) {
+  if (rol === 'coordinador') return '<span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12.5px;font-weight:800;background:#E8F1FF;color:#0C2D74;border:1px solid #2452C8">★ Coordinador(a)</span>';
+  if (rol === 'asesor') return '<span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12.5px;font-weight:800;background:#FFF3CD;color:#7A5200;border:1px solid #F5C518">◆ Asesor(a)</span>';
+  return '<span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12.5px;font-weight:800;background:#E4F5EA;color:#14532D;border:1px solid #17824A">● Participante</span>';
+}
+function qrPayloadFor(rec) {
+  const id = (rec && (rec.uid || rec.id)) || (currentUser && currentUser.uid) || ('juma-' + sha256(String((rec && rec.correo) || 'juma')).slice(0, 16));
+  return 'JUMA:' + id;
+}
+function qrImgUrl(payload, size = 260) {
+  return 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&margin=10&ecc=M&data=' + encodeURIComponent(payload);
+}
+function asistenciasUltimos6Meses(rec) {
+  const corte = sixMonthsAgoIso();
+  const arr = Array.isArray(rec && rec.asistencias) ? rec.asistencias : [];
+  return arr.filter((a) => a && a.fecha && String(a.fecha) >= corte).sort((a, b) => String(b.fecha || '').localeCompare(String(a.fecha || '')));
+}
+
+function downloadPlanillaHtml(src, recFull) {
   const d = src || form.d;
-  const fotoHtml = d.foto ? `<img src="${esc(d.foto)}" alt="Foto de perfil" style="width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid #2452C8;margin-bottom:12px;display:block">` : '';
-  const html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Planilla JUMA</title><style>body{font-family:Arial,sans-serif;max-width:720px;margin:32px auto;color:#0A1B3F}h1{color:#0C2D74;margin-bottom:4px}h2{font-size:14px;color:#3A4F75;margin-top:0;font-weight:normal}table{width:100%;border-collapse:collapse;margin-top:24px}td{padding:10px 8px;border-bottom:1px solid #D3DEF0;font-size:15px}td:first-child{width:38%;font-weight:bold;color:#2452C8}</style></head><body>' + fotoHtml + '<h1>Perfil de inscripción misionero</h1><h2>Instituto Misioneros de la Consolata Barquisimeto · Juventud Misionera Allamaniana Duaca</h2><table>' + summaryRows(d).map((r) => '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>').join('') + '</table></body></html>';
+  const rec = recFull || myProfile || { datos: d, correo: d.correo };
+  const qrData = qrPayloadFor(rec);
+  const qrSrc = qrImgUrl(qrData, 220);
+  const rolTxt = roleLabel(userRole(rec));
+  const fotoHtml = d.foto ? `<img src="${esc(d.foto)}" alt="Foto de perfil" style="width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid #2452C8;display:block">` : '';
+  const html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Planilla JUMA</title><style>body{font-family:Arial,sans-serif;max-width:720px;margin:32px auto;color:#0A1B3F;padding:0 16px}h1{color:#0C2D74;margin-bottom:4px}h2{font-size:14px;color:#3A4F75;margin-top:0;font-weight:normal}.top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding-bottom:16px;border-bottom:2px solid #2452C8}table{width:100%;border-collapse:collapse;margin-top:20px}td{padding:10px 8px;border-bottom:1px solid #D3DEF0;font-size:15px}td:first-child{width:38%;font-weight:bold;color:#2452C8}.qrbox{text-align:center;padding:10px;border:1.5px solid #D3DEF0;border-radius:12px}</style></head><body><div class="top"><div style="display:flex;align-items:center;gap:16px">' + fotoHtml + '<div><h1>Perfil de inscripción misionero</h1><h2>Instituto Misioneros de la Consolata Barquisimeto · JUMA Duaca</h2><p style="margin:6px 0 0;font-weight:bold;color:#2452C8">Rol: ' + esc(rolTxt) + '</p></div></div><div class="qrbox"><img src="' + esc(qrSrc) + '" alt="QR Asistencia" width="130" height="130"><div style="font-size:11px;color:#3A4F75;margin-top:4px">QR de Asistencia JUMA</div></div></div><table>' + summaryRows(d).map((r) => '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>').join('') + '</table></body></html>';
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' })); a.download = 'Planilla-JUMA-' + ((d.apellidos || d.nombres || 'inscripcion').trim().replace(/[^A-Za-z0-9]+/g, '-')) + '.html'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
@@ -261,7 +386,7 @@ function formHtml() {
   const st = form.step, d = form.d;
   if (form.done) {
     const wa = waNums();
-    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', 'Registro y planilla misionera', 'pl-t')}<div style="padding:clamp(28px,5vw,56px)"><div class="u-badge" style="background:#E4F5EA;color:#14532D;margin-bottom:12px">✔ Cuenta y planilla guardadas</div><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">${d.foto ? `<img src="${esc(d.foto)}" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--royal)">` : ''}<h3 class="h-display h-lg" style="margin:0">¡Bienvenido a JUMA, ${esc((d.nombres || '').trim().split(' ')[0] || 'misionero')}!</h3></div><p class="body" style="margin-top:12px;max-width:54ch">${form.saved ? 'Tu registro y tu planilla ya quedaron guardados en la nube de JUMA y tu sesión está iniciada en la app. ' : 'Tu planilla quedó guardada en este dispositivo. '}${wa.length ? 'También puedes enviarla por WhatsApp a un coordinador con un toque o ver tu carnet misionero.' : ''}</p><div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:28px"><button type="button" class="btn btn-blue" data-go-profile>Ver mi perfil misionero</button>${wa.map((n) => `<a class="btn btn-soft" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${encodeURIComponent(planillaTexto())}">Enviar por WhatsApp a ${esc(waLabel(n))}</a>`).join('')}<button type="button" class="btn btn-soft" data-dl>Descargar mi planilla</button><button type="button" class="btn btn-soft" data-close>Cerrar</button></div></div></div></div>`;
+    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', 'Registro y planilla misionera', 'pl-t')}<div style="padding:clamp(28px,5vw,56px)"><div class="u-badge" style="background:#E4F5EA;color:#14532D;margin-bottom:12px">✔ Cuenta y planilla guardadas</div><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">${d.foto ? `<img src="${esc(d.foto)}" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--royal)">` : ''}<h3 class="h-display h-lg" style="margin:0">¡Bienvenido a JUMA, ${esc((d.nombres || '').trim().split(' ')[0] || 'misionero')}!</h3></div><p class="body" style="margin-top:12px;max-width:54ch">${form.saved ? 'Tu registro, tu planilla y tu código QR personal ya quedaron guardados en la nube de JUMA y tu sesión está iniciada en la app. ' : 'Tu planilla quedó guardada en este dispositivo. '}${wa.length ? 'También puedes enviarla por WhatsApp a un coordinador con un toque o ver tu carnet con QR.' : ''}</p><div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:28px"><button type="button" class="btn btn-blue" data-go-profile>Ver mi perfil y código QR</button>${wa.map((n) => `<a class="btn btn-soft" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${encodeURIComponent(planillaTexto())}">Enviar por WhatsApp a ${esc(waLabel(n))}</a>`).join('')}<button type="button" class="btn btn-soft" data-dl>Descargar mi planilla</button><button type="button" class="btn btn-soft" data-close>Cerrar</button></div></div></div></div>`;
   }
   const names = ['Cuenta y datos', 'Representante', 'Salud', 'Confirmar'];
   const prog = names.map((l, i) => `<div class="${i + 1 === st ? 'on' : (i + 1 < st ? 'ok' : '')}"><i aria-hidden="true"></i><span>${l}</span></div>`).join('');
@@ -358,12 +483,19 @@ async function saveRegistration() {
   if (!uid) uid = 'juma-' + sha256(email || ((d.nombres || '') + (d.celular || ''))).slice(0, 20);
   if (!d.foto && currentUser && currentUser.photoURL) d.foto = currentUser.photoURL;
 
+  const prevRol = isMasterEmail(email)
+    ? 'coordinador'
+    : ((form.isUpdate && myProfile && myProfile.rol) ? myProfile.rol : 'participante');
+  const prevAsistencias = (myProfile && Array.isArray(myProfile.asistencias)) ? myProfile.asistencias : [];
+
   const rec = {
     id: uid,
     uid,
     correo: email,
     nombre: ((d.nombres || '') + ' ' + (d.apellidos || '')).trim(),
     foto: d.foto || '',
+    rol: prevRol || 'participante',
+    asistencias: prevAsistencias,
     celular: d.celular || '',
     edad: edadDe(d),
     esMenor: esMenor(d),
@@ -377,6 +509,10 @@ async function saveRegistration() {
   };
 
   myProfile = rec;
+  if (userRole(rec) === 'coordinador') {
+    isAdmin = true;
+    try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {}
+  }
   try {
     localStorage.setItem('juma-perfil-' + uid, JSON.stringify(rec));
     if (email) localStorage.setItem('juma-perfil-email-' + email, JSON.stringify(rec));
@@ -393,7 +529,6 @@ async function saveRegistration() {
       await withTimeout(savePromise, 4500);
       cloudSaved = true;
     } catch (e) {
-      // Si el internet está muy lento, Firestore igual lo termina de sincronizar en segundo plano
       cloudSaved = true;
     }
   }
@@ -413,13 +548,28 @@ async function loadUserProfile(user) {
   if (fb && fb.db) {
     try {
       const snap = await withTimeout(fb.getDoc(fb.doc(fb.db, 'inscripciones', uid)), 4000);
-      if (snap.exists()) { const data = snap.data(); myProfile = data; try { localStorage.setItem('juma-perfil-' + uid, JSON.stringify(data)); } catch (e) {} return data; }
+      if (snap.exists()) {
+        const data = Object.assign({ id: snap.id }, snap.data());
+        myProfile = data;
+        if (userRole(data) === 'coordinador') { isAdmin = true; try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {} }
+        try { localStorage.setItem('juma-perfil-' + uid, JSON.stringify(data)); } catch (e) {}
+        return data;
+      }
       if (email) {
         const q = fb.query(fb.collection(fb.db, 'inscripciones'), fb.where('correo', '==', email), fb.limit(1));
         const qs = await withTimeout(fb.getDocs(q), 4000);
-        if (!qs.empty) { const data = qs.docs[0].data(); myProfile = data; return data; }
+        if (!qs.empty) {
+          const data = Object.assign({ id: qs.docs[0].id }, qs.docs[0].data());
+          myProfile = data;
+          if (userRole(data) === 'coordinador') { isAdmin = true; try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {} }
+          return data;
+        }
       }
     } catch (e) {}
+  }
+  if (myProfile && userRole(myProfile) === 'coordinador') {
+    isAdmin = true;
+    try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {}
   }
   return myProfile || null;
 }
@@ -430,7 +580,8 @@ function updateAuthUI() {
   const footAuth = $('#lnk-perfil-foot');
   const fab = $('#fab-edit');
   const lAdmin = $('#lnk-admin');
-  const masterOn = isAdmin || isEditor();
+  const role = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : 'participante');
+  const masterOn = isAdmin || isEditor() || role === 'coordinador';
 
   if (fab) fab.classList.toggle('hide', !masterOn);
   if (lAdmin) lAdmin.textContent = masterOn ? 'Panel Maestro (Activo)' : 'Acceso Maestro';
@@ -538,6 +689,18 @@ modalRoot.addEventListener('click', async (e) => {
   if (e.target.closest('[data-dl]')) downloadPlanillaHtml(form.d);
 });
 document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-toggle-enc]')) {
+    e.preventDefault();
+    showAllEnc = !showAllEnc;
+    renderDomingos();
+    return;
+  }
+  if (e.target.closest('[data-toggle-acts]')) {
+    e.preventDefault();
+    showAllActs = !showAllActs;
+    renderActs();
+    return;
+  }
   if (e.target.closest('[data-open-form]')) {
     e.preventDefault();
     if (currentUser && myProfile) openAuthModal();
@@ -556,9 +719,17 @@ function isMasterEmail(email) {
   const adminEmails = String(CFG.adminEmail || 'jumaduaca@gmail.com').toLowerCase().split(/[,;\s]+/).filter(Boolean);
   return adminEmails.includes(String(email).trim().toLowerCase());
 }
+function isMasterAccount() {
+  if (currentUser && currentUser.email && isMasterEmail(currentUser.email)) return true;
+  if (myProfile && myProfile.correo && isMasterEmail(myProfile.correo)) return true;
+  try { if (localStorage.getItem('juma-master-device') === '1') return true; } catch (e) {}
+  return false;
+}
 
 function authModalHtml() {
-  const masterOn = isAdmin || isEditor();
+  const role = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : 'participante');
+  const masterOn = isAdmin || isEditor() || role === 'coordinador';
+  const trueMaster = isMasterAccount();
   if (currentUser || myProfile) {
     const d = (myProfile && myProfile.datos) || {};
     const nombre = (myProfile && myProfile.nombre) || (currentUser && currentUser.displayName) || (currentUser && currentUser.email) || 'Joven Misionero';
@@ -566,7 +737,11 @@ function authModalHtml() {
     const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
     const rows = d.nombres ? summaryRows(d) : [];
     const wa = waNums();
-    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="au-t"><div class="sheet" style="max-width:720px">${sheetHead('Juventud Misionera Allamaniana · Duaca', 'Mi perfil misionero', 'au-t')}<div style="padding:clamp(22px,4vw,40px)">
+    const qrPayload = qrPayloadFor(myProfile || { uid: currentUser && currentUser.uid, correo: email });
+    const qrUrl = qrImgUrl(qrPayload, 260);
+    const misAsistencias = asistenciasUltimos6Meses(myProfile);
+    const badgeTxt = trueMaster ? '★ Perfil Maestro · JUMA Duaca' : (role === 'coordinador' ? '★ Coordinador(a) · JUMA Duaca' : (role === 'asesor' ? '◆ Asesor(a) · JUMA Duaca' : '● Participante · JUMA Duaca'));
+    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="au-t"><div class="sheet" style="max-width:740px">${sheetHead('Juventud Misionera Allamaniana · Duaca', 'Mi perfil misionero', 'au-t')}<div style="padding:clamp(22px,4vw,40px)">
       <div class="u-card" style="display:flex;flex-wrap:wrap;align-items:center;gap:18px">
         <div class="ribbon" style="position:absolute;top:0;left:0;right:0"></div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:0 0 auto">
@@ -576,16 +751,30 @@ function authModalHtml() {
           <label style="font-size:12px;font-weight:700;color:var(--sky);cursor:pointer;text-decoration:underline"><span>📷 ${foto ? 'Cambiar foto' : 'Subir foto'}</span><input type="file" accept="image/*" id="au-avatar" style="display:none"></label>
         </div>
         <div style="flex:1 1 200px;min-width:0">
-          <span class="u-badge">${masterOn ? '★ Coordinación · JUMA Duaca' : '● Miembro Registrado · JUMA Duaca'}</span>
+          <span class="u-badge">${esc(badgeTxt)}</span>
           <b>${esc(nombre)}</b>
           <p style="margin:6px 0 0;font-size:15px;color:var(--muted-lt)">${esc(email)}${d.parroquia ? ' · ' + esc(d.parroquia) : ''}${d.sangre ? ' · Sangre ' + esc(d.sangre) : ''}</p>
         </div>
       </div>
-      ${masterOn ? `<div style="padding:16px 20px;margin-bottom:20px;border-radius:14px;background:#E8F1FF;border:1.5px solid var(--royal);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px"><div><b style="color:var(--navy);font-size:16px">Modo de edición y administración activo</b><p style="margin:4px 0 0;font-size:14px;color:var(--muted)">Puedes editar publicaciones, domingos, galería y ver todas las planillas registradas.</p></div><button type="button" class="btn btn-blue btn-sm" data-open-master-panel>Editar página y ver planillas</button></div>` : ''}
+      ${masterOn ? `<div style="padding:16px 20px;margin-bottom:20px;border-radius:14px;background:#E8F1FF;border:1.5px solid var(--royal);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px"><div><b style="color:var(--navy);font-size:16px">${trueMaster ? 'Panel Maestro activo' : 'Panel de Coordinación activo'}</b><p style="margin:4px 0 0;font-size:14px;color:var(--muted)">${trueMaster ? 'Puedes modificar toda la app, asignar roles (Coordinador, Asesor, Participante), editar la galería y escanear QR.' : 'Puedes ver los participantes, escanear códigos QR de asistencia y actualizar domingos, actividades y formación.'}</p></div><div style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="btn btn-blue btn-sm" data-open-qr-scanner>📷 Escanear QR</button><button type="button" class="btn btn-outline btn-sm" data-open-master-panel>Abrir Panel y Editor</button></div></div>` : ''}
+      <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:center;padding:18px 20px;margin-bottom:20px;border-radius:14px;background:#fff;border:1.5px solid var(--line)">
+        <div style="flex:0 0 auto;text-align:center;margin:0 auto">
+          <img src="${esc(qrUrl)}" alt="Mi código QR JUMA" width="150" height="150" style="display:block;border-radius:12px;border:2px solid var(--royal);padding:6px;background:#fff">
+        </div>
+        <div style="flex:1 1 220px">
+          <div style="margin-bottom:6px">${roleBadgeHtml(role)}</div>
+          <b style="display:block;font-size:17px;color:var(--ink)">Mi código QR de asistencia</b>
+          <p style="margin:4px 0 12px;font-size:14px;color:var(--muted);line-height:1.45">Muéstrale este código QR a cualquiera de los coordinadores en la formación o actividad del día para registrar tu asistencia.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            <span style="padding:6px 12px;border-radius:99px;background:var(--mist);color:var(--royal);font-size:13px;font-weight:800">📋 ${misAsistencias.length} asistencia${misAsistencias.length === 1 ? '' : 's'} (últimos 6 meses)</span>
+          </div>
+          ${misAsistencias.length ? `<details style="margin-top:10px"><summary style="cursor:pointer;font-size:13.5px;font-weight:700;color:var(--royal)">Ver mis formaciones y actividades asistidas</summary><ul style="margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink)">${misAsistencias.map((a) => `<li style="margin-bottom:4px"><b>${esc(a.titulo || 'Formación')}</b> — ${esc(a.fecha ? a.fecha.split('-').reverse().join('/') : '')} <span style="color:var(--muted)">(${esc(a.tipo || 'Formación')})</span></li>`).join('')}</ul></details>` : ''}
+        </div>
+      </div>
       ${rows.length ? `<h3 class="h-display h-md" style="margin-bottom:12px">Datos de mi planilla guardada</h3><dl style="margin:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px 20px">${rows.map((r) => `<div style="display:flex;flex-wrap:wrap;gap:4px 18px;padding:10px 0;border-bottom:1px solid var(--mist)"><dt style="flex:0 0 180px;font-size:14px;font-weight:700;color:var(--royal)">${esc(r[0])}</dt><dd style="margin:0;flex:1 1 180px;font-size:15px">${esc(r[1])}</dd></div>`).join('')}</dl>` : `<div style="padding:20px;border-radius:14px;background:var(--mist);margin-bottom:18px"><p class="body" style="margin:0">Tu cuenta está activa, pero aún no has llenado tu planilla misionera.</p></div>`}
       <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px">
         <button type="button" class="btn btn-blue" data-edit-my-form>${rows.length ? 'Actualizar mi planilla' : 'Completar mi planilla ahora'}</button>
-        ${rows.length ? `<button type="button" class="btn btn-soft" data-dl-profile>Descargar planilla</button>` : ''}
+        ${rows.length ? `<button type="button" class="btn btn-soft" data-dl-profile>Descargar planilla con QR</button>` : ''}
         ${rows.length && wa.length ? `<a class="btn btn-soft" target="_blank" rel="noopener" href="https://wa.me/${wa[0]}?text=${encodeURIComponent(planillaTexto(d))}">Enviar por WhatsApp</a>` : ''}
         <button type="button" class="btn btn-danger" data-logout style="margin-left:auto">Cerrar sesión</button>
       </div>
@@ -768,9 +957,11 @@ modalRoot.addEventListener('click', async (e) => {
   if (!$('#au-t')) return;
   if (e.target.closest('[data-go-register]')) { openForm(false); return; }
   if (e.target.closest('[data-edit-my-form]')) { openForm(true); return; }
-  if (e.target.closest('[data-dl-profile]')) { if (myProfile && myProfile.datos) downloadPlanillaHtml(myProfile.datos); return; }
+  if (e.target.closest('[data-dl-profile]')) { if (myProfile && myProfile.datos) downloadPlanillaHtml(myProfile.datos, myProfile); return; }
   if (e.target.closest('[data-open-master-panel]')) { openEditor(); return; }
+  if (e.target.closest('[data-open-qr-scanner]')) { tab = 'qr'; openEditor(); return; }
   if (e.target.closest('[data-logout]')) {
+    stopQrCamera();
     try { if (fb && fb.auth) await fb.au.signOut(fb.auth); } catch (x) {}
     try { sessionStorage.removeItem('juma-ed'); localStorage.removeItem('juma-master-device'); localStorage.removeItem('juma-ultimo-perfil'); } catch (x) {}
     currentUser = null; myProfile = null; isAdmin = false;
@@ -783,9 +974,9 @@ modalRoot.addEventListener('click', async (e) => {
       const cred = await fb.au.signInWithPopup(fb.auth, new fb.au.GoogleAuthProvider());
       currentUser = cred.user;
       await loadUserProfile(currentUser);
-      if (isMasterEmail(currentUser.email)) {
+      if (isMasterEmail(currentUser.email) || (myProfile && userRole(myProfile) === 'coordinador')) {
         isAdmin = true;
-        try { sessionStorage.setItem('juma-ed', '1'); localStorage.setItem('juma-master-device', '1'); } catch (x) {}
+        try { sessionStorage.setItem('juma-ed', '1'); if (isMasterEmail(currentUser.email)) localStorage.setItem('juma-master-device', '1'); } catch (x) {}
         authBusy = false; showFab(); updateAuthUI(); openEditor(); return;
       }
       if (myProfile) { try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile)); } catch (x) {} }
@@ -818,7 +1009,7 @@ modalRoot.addEventListener('submit', async (e) => {
     const masterMatch = isMasterEmail(em) && checkMasterPass(pw);
     if (masterMatch) {
       isAdmin = true;
-      myProfile = myProfile || { nombre: 'Coordinación JUMA', correo: em, datos: { nombres: 'Coordinación', apellidos: 'JUMA Duaca', correo: em } };
+      myProfile = myProfile || { nombre: 'Coordinación JUMA', correo: em, rol: 'coordinador', datos: { nombres: 'Coordinación', apellidos: 'JUMA Duaca', correo: em } };
       try {
         sessionStorage.setItem('juma-ed', '1');
         localStorage.setItem('juma-master-device', '1');
@@ -839,9 +1030,9 @@ modalRoot.addEventListener('submit', async (e) => {
         const cred = await withTimeout(fb.au.signInWithEmailAndPassword(fb.auth, em, pw), 6000);
         currentUser = cred.user;
         await loadUserProfile(currentUser);
-        if (isMasterEmail(em)) {
+        if (isMasterEmail(em) || (myProfile && userRole(myProfile) === 'coordinador')) {
           isAdmin = true;
-          try { sessionStorage.setItem('juma-ed', '1'); localStorage.setItem('juma-master-device', '1'); } catch (x) {}
+          try { sessionStorage.setItem('juma-ed', '1'); if (isMasterEmail(em)) localStorage.setItem('juma-master-device', '1'); } catch (x) {}
           authBusy = false; showFab(); updateAuthUI(); openEditor(); return;
         }
       } else {
@@ -856,6 +1047,7 @@ modalRoot.addEventListener('submit', async (e) => {
       const loc = localStorage.getItem('juma-perfil-email-' + em);
       if (loc) {
         myProfile = JSON.parse(loc);
+        if (userRole(myProfile) === 'coordinador') { isAdmin = true; try { sessionStorage.setItem('juma-ed', '1'); } catch (x) {} showFab(); }
         try { localStorage.setItem('juma-ultimo-perfil', loc); } catch (x) {}
         updateAuthUI(); repaintAuth(); return;
       }
@@ -889,13 +1081,17 @@ async function loadAdminData() {
 
 function exportInscripcionesCsv() {
   if (!allInscripciones.length) return;
-  const cols = ['Nombre completo', 'Fecha nacimiento', 'Edad', 'Menor de edad', 'Celular', 'Correo', 'Parroquia', 'Dirección', 'Ocupación', 'Madre', 'Padre', 'Representante', 'Cédula Rep.', 'Celular Rep.', 'Grupo sanguíneo', 'Enfermedad', 'Medicamento', 'Alergias', 'Observaciones', 'Fecha registro'];
+  const cols = ['Nombre completo', 'Rol', 'Asistencias (últimos 6 meses)', 'Formaciones/Actividades asistidas (6m)', 'Fecha nacimiento', 'Edad', 'Menor de edad', 'Celular', 'Correo', 'Parroquia', 'Dirección', 'Ocupación', 'Madre', 'Padre', 'Representante', 'Cédula Rep.', 'Celular Rep.', 'Grupo sanguíneo', 'Enfermedad', 'Medicamento', 'Alergias', 'Observaciones', 'Fecha registro'];
   const csvEsc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
   const lines = [cols.map(csvEsc).join(',')];
   allInscripciones.forEach((x) => {
     const d = x.datos || {};
+    const asis6 = asistenciasUltimos6Meses(x);
     lines.push([
       x.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim(),
+      roleLabel(userRole(x)),
+      asis6.length,
+      asis6.map((a) => `${a.fecha || ''}: ${a.titulo || ''} (${a.tipo || 'Formación'})`).join(' | '),
       d.nac || '',
       x.edad || edadDe(d),
       (x.esMenor || esMenor(d)) ? 'Sí' : 'No',
@@ -919,6 +1115,283 @@ function exportInscripcionesCsv() {
   });
   const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Inscritos-JUMA-Duaca.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+/* ===================== Gestión de Roles y Escáner QR de Asistencia ===================== */
+let qrDate = todayIso();
+let qrTema = '';
+let qrTipo = 'Formación';
+let qrStatusMsg = '';
+let qrStatusKind = 'ok';
+let qrStream = null;
+let qrScanTimer = 0;
+let qrCameraOn = false;
+let insRoleFilter = 'todos';
+
+function defaultTemaDelDia(fechaIso) {
+  const encs = encuentrosProgramados(dr && Object.keys(dr).length ? dr : cfg);
+  const matchEnc = encs.find((e) => e.key === fechaIso);
+  if (matchEnc && matchEnc.tema && matchEnc.tema !== 'Sin reunión') return matchEnc.tema;
+  const acts = ((dr && dr.actividades) || cfg.actividades || []).filter((a) => a && a.t);
+  if (acts.length && !matchEnc) return acts[0].t;
+  return matchEnc ? matchEnc.tema : 'Formación dominical JUMA';
+}
+
+async function cambiarRolInscrito(id, nuevoRol) {
+  if (!isMasterAccount()) {
+    edErr = 'Solo la Cuenta Maestra puede modificar quién es Coordinador, Asesor o Participante.';
+    repaintEd();
+    return;
+  }
+  const idx = allInscripciones.findIndex((x) => x && (x.id === id || x.uid === id));
+  if (idx < 0) return;
+  const rec = allInscripciones[idx];
+  rec.rol = nuevoRol;
+  rec.datos = rec.datos || {};
+  rec.datos.rol = nuevoRol;
+  rec.actualizado = new Date().toISOString();
+
+  const em = String(rec.correo || rec.datos.correo || '').trim().toLowerCase();
+  if (em) {
+    dr.coordinadoresEmails = Array.from(new Set((dr.coordinadoresEmails || cfg.coordinadoresEmails || []).map((x) => String(x).toLowerCase()).filter((x) => x !== em).concat(nuevoRol === 'coordinador' ? [em] : [])));
+    dr.asesoresEmails = Array.from(new Set((dr.asesoresEmails || cfg.asesoresEmails || []).map((x) => String(x).toLowerCase()).filter((x) => x !== em).concat(nuevoRol === 'asesor' ? [em] : [])));
+    cfg.coordinadoresEmails = dr.coordinadoresEmails;
+    cfg.asesoresEmails = dr.asesoresEmails;
+  }
+
+  if (myProfile && (myProfile.id === id || myProfile.uid === id || (em && myProfile.correo === em))) {
+    myProfile.rol = nuevoRol;
+    try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile)); } catch (e) {}
+  }
+
+  try {
+    const loc = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]');
+    const li = loc.findIndex((x) => x && (x.id === id || x.uid === id));
+    if (li >= 0) { loc[li].rol = nuevoRol; localStorage.setItem('juma-inscripciones-local', JSON.stringify(loc)); }
+  } catch (e) {}
+
+  if (fb && fb.db) {
+    try {
+      await withTimeout(fb.setDoc(fb.doc(fb.db, 'inscripciones', id), { rol: nuevoRol, datos: rec.datos, actualizado: rec.actualizado }, { merge: true }), 4000);
+      await withTimeout(fb.setDoc(fb.doc(fb.db, 'site', 'config'), { coordinadoresEmails: dr.coordinadoresEmails || [], asesoresEmails: dr.asesoresEmails || [] }, { merge: true }), 4000);
+    } catch (e) {}
+  }
+  edOk = `<b>✔ Rol actualizado por la Cuenta Maestra:</b> Ahora <b>${esc(rec.nombre || em)}</b> tiene el rol de <b>${esc(roleLabel(nuevoRol))}</b>.`;
+  repaintEd();
+}
+
+async function registrarAsistencia(targetIdOrQr, fecha, titulo, tipo) {
+  const cleanCode = String(targetIdOrQr || '').trim();
+  const uid = cleanCode.startsWith('JUMA:') ? cleanCode.slice(5).trim() : (cleanCode.startsWith('JUMA|') ? cleanCode.split('|')[1].trim() : cleanCode);
+  if (!uid) return { ok: false, msg: 'Código QR no reconocido como participante de JUMA.' };
+
+  let rec = allInscripciones.find((x) => x && (x.id === uid || x.uid === uid || String(x.correo || '').toLowerCase() === uid.toLowerCase()));
+  if (!rec && fb && fb.db) {
+    try {
+      const snap = await withTimeout(fb.getDoc(fb.doc(fb.db, 'inscripciones', uid)), 4000);
+      if (snap.exists()) {
+        rec = Object.assign({ id: snap.id }, snap.data());
+        allInscripciones.unshift(rec);
+      }
+    } catch (e) {}
+  }
+  if (!rec) return { ok: false, msg: 'No se encontró ningún participante registrado con este código QR (' + uid + ').' };
+
+  const f = fecha || qrDate || todayIso();
+  const tit = String(titulo || qrTema || defaultTemaDelDia(f) || 'Formación pautada').trim();
+  const tp = tipo || qrTipo || 'Formación';
+  const key = f + '__' + tit.toLowerCase();
+
+  rec.asistencias = Array.isArray(rec.asistencias) ? rec.asistencias : [];
+  const ya = rec.asistencias.find((a) => a && (a.key === key || (a.fecha === f && String(a.titulo || '').toLowerCase() === tit.toLowerCase())));
+  const coordNombre = (myProfile && myProfile.nombre) || (currentUser && currentUser.email) || 'Coordinador JUMA';
+
+  if (!ya) {
+    rec.asistencias.unshift({
+      key,
+      fecha: f,
+      titulo: tit,
+      tipo: tp,
+      por: coordNombre,
+      ts: new Date().toISOString()
+    });
+  }
+  rec.actualizado = new Date().toISOString();
+
+  if (myProfile && (myProfile.id === rec.id || myProfile.uid === rec.id)) {
+    myProfile.asistencias = rec.asistencias;
+    try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile)); } catch (e) {}
+  }
+  try {
+    const loc = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]');
+    const li = loc.findIndex((x) => x && (x.id === rec.id || x.uid === rec.id));
+    if (li >= 0) { loc[li].asistencias = rec.asistencias; localStorage.setItem('juma-inscripciones-local', JSON.stringify(loc)); }
+  } catch (e) {}
+
+  if (fb && fb.db) {
+    fb.setDoc(fb.doc(fb.db, 'inscripciones', rec.id || uid), { asistencias: rec.asistencias, actualizado: rec.actualizado }, { merge: true }).catch(() => {});
+  }
+
+  try { if (navigator.vibrate) navigator.vibrate(160); } catch (e) {}
+  const nom = rec.nombre || ((rec.datos && rec.datos.nombres) || '') + ' ' + ((rec.datos && rec.datos.apellidos) || '');
+  return {
+    ok: true,
+    already: !!ya,
+    rec,
+    msg: ya
+      ? `✔ ${nom} ya tenía registrada su asistencia en «${tit}» (${f.split('-').reverse().join('/')}).`
+      : `✅ ¡Asistencia registrada! ${nom} asistió a «${tit}» (${f.split('-').reverse().join('/')}).`
+  };
+}
+
+async function quitarAsistencia(id, keyOrIdx) {
+  const rec = allInscripciones.find((x) => x && (x.id === id || x.uid === id));
+  if (!rec || !Array.isArray(rec.asistencias)) return;
+  rec.asistencias = rec.asistencias.filter((a, i) => a && a.key !== keyOrIdx && String(i) !== String(keyOrIdx));
+  rec.actualizado = new Date().toISOString();
+  if (fb && fb.db) {
+    fb.setDoc(fb.doc(fb.db, 'inscripciones', rec.id), { asistencias: rec.asistencias, actualizado: rec.actualizado }, { merge: true }).catch(() => {});
+  }
+  repaintEd();
+}
+
+let jsQrPromise = null;
+function ensureJsQr() {
+  if (globalThis.jsQR) return Promise.resolve(globalThis.jsQR);
+  if (jsQrPromise) return jsQrPromise;
+  jsQrPromise = new Promise((resolve) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+    s.onload = () => resolve(globalThis.jsQR || null);
+    s.onerror = () => resolve(null);
+    document.head.appendChild(s);
+  });
+  return jsQrPromise;
+}
+
+function stopQrCamera() {
+  qrCameraOn = false;
+  if (qrScanTimer) { clearInterval(qrScanTimer); qrScanTimer = 0; }
+  if (qrStream) {
+    try { qrStream.getTracks().forEach((t) => t.stop()); } catch (e) {}
+    qrStream = null;
+  }
+}
+
+async function startQrCamera() {
+  stopQrCamera();
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    qrStatusKind = 'err';
+    qrStatusMsg = 'Tu navegador no permite abrir la cámara en directo. Usa el botón «Escanear tomando foto del QR».';
+    repaintEd();
+    return;
+  }
+  try {
+    qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 640 } }, audio: false });
+    qrCameraOn = true;
+    qrStatusKind = 'ok';
+    qrStatusMsg = '📷 Cámara activa: apunta al código QR del participante…';
+    repaintEd();
+    const video = $('#qr-video');
+    if (video) {
+      video.srcObject = qrStream;
+      await video.play().catch(() => {});
+    }
+    const jsQR = await ensureJsQr();
+    const detector = ('BarcodeDetector' in globalThis) ? new globalThis.BarcodeDetector({ formats: ['qr_code'] }) : null;
+    const cv = document.createElement('canvas');
+    const ctx = cv.getContext('2d', { willReadFrequently: true });
+    let lastCode = '';
+    let lastTime = 0;
+
+    qrScanTimer = setInterval(async () => {
+      const v = $('#qr-video');
+      if (!qrCameraOn || !v || v.readyState < 2) return;
+      let raw = '';
+      if (detector) {
+        try {
+          const codes = await detector.detect(v);
+          if (codes && codes.length && codes[0].rawValue) raw = codes[0].rawValue;
+        } catch (e) {}
+      }
+      if (!raw && jsQR && v.videoWidth > 0) {
+        cv.width = v.videoWidth;
+        cv.height = v.videoHeight;
+        ctx.drawImage(v, 0, 0, cv.width, cv.height);
+        const img = ctx.getImageData(0, 0, cv.width, cv.height);
+        const res = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+        if (res && res.data) raw = res.data;
+      }
+      if (raw && (raw !== lastCode || Date.now() - lastTime > 3500)) {
+        lastCode = raw;
+        lastTime = Date.now();
+        const r = await registrarAsistencia(raw, qrDate, qrTema || defaultTemaDelDia(qrDate), qrTipo);
+        qrStatusKind = r.ok ? 'ok' : 'err';
+        qrStatusMsg = r.msg;
+        const msgBox = $('#qr-status-box');
+        if (msgBox) {
+          msgBox.style.background = r.ok ? '#E4F5EA' : '#FCE8E7';
+          msgBox.style.color = r.ok ? '#14532D' : '#8A1C1C';
+          msgBox.style.borderColor = r.ok ? '#17824A' : '#C8322D';
+          msgBox.innerHTML = esc(r.msg);
+        }
+        repaintEd();
+        const vAfter = $('#qr-video');
+        if (vAfter && qrStream) { vAfter.srcObject = qrStream; vAfter.play().catch(() => {}); }
+      }
+    }, 260);
+  } catch (err) {
+    qrCameraOn = false;
+    qrStatusKind = 'err';
+    qrStatusMsg = 'No se pudo abrir la cámara (verifica el permiso de cámara o usa «Escanear tomando foto del QR»).';
+    repaintEd();
+  }
+}
+
+async function scanQrFromImageFile(file) {
+  if (!file) return;
+  qrStatusKind = 'ok';
+  qrStatusMsg = 'Leyendo código QR de la imagen…';
+  repaintEd();
+  try {
+    const bmp = await createImageBitmap(file);
+    let raw = '';
+    if ('BarcodeDetector' in globalThis) {
+      try {
+        const det = new globalThis.BarcodeDetector({ formats: ['qr_code'] });
+        const codes = await det.detect(bmp);
+        if (codes && codes.length && codes[0].rawValue) raw = codes[0].rawValue;
+      } catch (e) {}
+    }
+    if (!raw) {
+      const jsQR = await ensureJsQr();
+      if (jsQR) {
+        const cv = document.createElement('canvas');
+        const k = Math.min(1, 900 / Math.max(bmp.width, bmp.height));
+        cv.width = Math.round(bmp.width * k);
+        cv.height = Math.round(bmp.height * k);
+        const ctx = cv.getContext('2d');
+        ctx.drawImage(bmp, 0, 0, cv.width, cv.height);
+        const img = ctx.getImageData(0, 0, cv.width, cv.height);
+        const code = jsQR(img.data, img.width, img.height);
+        if (code && code.data) raw = code.data;
+      }
+    }
+    if (!raw) {
+      qrStatusKind = 'err';
+      qrStatusMsg = 'No se detectó ningún código QR en la foto. Acércate más al código QR e intenta de nuevo.';
+      repaintEd();
+      return;
+    }
+    const r = await registrarAsistencia(raw, qrDate, qrTema || defaultTemaDelDia(qrDate), qrTipo);
+    qrStatusKind = r.ok ? 'ok' : 'err';
+    qrStatusMsg = r.msg;
+    repaintEd();
+  } catch (e) {
+    qrStatusKind = 'err';
+    qrStatusMsg = 'No se pudo procesar la imagen del QR.';
+    repaintEd();
+  }
 }
 
 /* ===================== publicar directo en GitHub ===================== */
@@ -954,73 +1427,174 @@ async function ghCheck(token) {
 const uploaded = new Map();
 let ghState = '', ghMsg = '';
 
-let dr = {}, tab = 'ins', fy = 0, edErr = '', edOk = '', edBusy = false, draftWarn = false;
+let dr = {}, tab = 'ins', fy = 0, edErr = '', edOk = '', edBusy = false, draftWarn = false, showAllSunEd = false;
 const setters = new Map(); let uid = 0;
 function fld(label, val, set, o = {}) {
   const id = 'ed-' + (uid++); setters.set(id, set);
-  const tag = o.area ? `<textarea id="${id}" data-ed="${id}" rows="${o.rows || 4}">${esc(val)}</textarea>` : `<input id="${id}" data-ed="${id}" type="text" value="${esc(val)}" placeholder="${esc(o.ph || '')}">`;
+  const tag = o.area ? `<textarea id="${id}" data-ed="${id}" rows="${o.rows || 4}">${esc(val)}</textarea>` : `<input id="${id}" data-ed="${id}" type="${o.type || 'text'}" value="${esc(val)}" placeholder="${esc(o.ph || '')}">`;
   return `<div class="fld ${o.w ? 'w' : ''}">${label ? `<label for="${id}">${label}</label>` : ''}${tag}</div>`;
 }
 function chk(label, on, set) { const id = 'ed-' + (uid++); setters.set(id, set); return `<label style="display:flex;gap:10px;align-items:center;min-height:52px;font-size:15px;font-weight:700"><input type="checkbox" id="${id}" data-edc="${id}" ${on ? 'checked' : ''} style="width:22px;height:22px;margin:0">${label}</label>`; }
-const tabs = [['ins', 'Inscritos (' + allInscripciones.length + ')'], ['enc', 'Domingos'], ['dat', 'Hora, lugar y WhatsApp'], ['act', 'Actividades'], ['for', 'Formación'], ['nov', 'Novedades'], ['fot', 'Fotos'], ['tes', 'Testimonios'], ['mur', 'Muro'], ['apk', 'App sin URL'], ['pub', 'GitHub']];
 function getTabs() {
-  return [['ins', `Inscritos (${allInscripciones.length})`], ['enc', 'Domingos'], ['dat', 'Hora, lugar y WhatsApp'], ['act', 'Actividades'], ['for', 'Formación'], ['nov', 'Novedades'], ['fot', 'Fotos'], ['tes', 'Testimonios'], ['mur', `Muro (${allMensajes.filter((m) => !m.aprobado).length})`], ['apk', 'App sin URL'], ['pub', 'GitHub']];
+  const trueMaster = isMasterAccount();
+  const baseTabs = [
+    ['ins', trueMaster ? `Inscritos y Roles (${allInscripciones.length})` : `Inscritos (${allInscripciones.length})`],
+    ['qr', '📷 Asistencia QR'],
+    ['enc', 'Domingos y Días'],
+    ['dat', 'Hora, lugar y WhatsApp'],
+    ['act', 'Actividades'],
+    ['for', 'Formación'],
+    ['nov', 'Novedades']
+  ];
+  if (trueMaster) baseTabs.push(['fot', 'Fotos']);
+  baseTabs.push(['tes', 'Testimonios'], ['mur', `Muro (${allMensajes.filter((m) => !m.aprobado).length})`]);
+  if (trueMaster) baseTabs.push(['apk', 'App sin URL'], ['pub', 'GitHub']);
+  return baseTabs;
 }
 function editorBody() {
   setters.clear(); uid = 0;
+  const trueMaster = isMasterAccount();
+  if (!trueMaster && (tab === 'fot' || tab === 'apk' || tab === 'pub')) tab = 'ins';
+  if (tab !== 'qr' && qrCameraOn) stopQrCamera();
+
   if (tab === 'ins') {
     const q = insQuery.trim().toLowerCase();
-    const list = allInscripciones.filter((x) => !q || JSON.stringify(x).toLowerCase().includes(q));
+    const list = allInscripciones.filter((x) => {
+      if (insRoleFilter !== 'todos' && userRole(x) !== insRoleFilter) return false;
+      return !q || JSON.stringify(x).toLowerCase().includes(q);
+    });
+    const totalCoord = allInscripciones.filter((x) => userRole(x) === 'coordinador').length;
+    const totalAses = allInscripciones.filter((x) => userRole(x) === 'asesor').length;
+    const totalPart = allInscripciones.filter((x) => userRole(x) === 'participante').length;
     const menores = allInscripciones.filter((x) => x.esMenor || esMenor(x.datos || {})).length;
     const conSalud = allInscripciones.filter((x) => (x.datos && (x.datos.enf === 'Sí' || x.datos.med === 'Sí' || x.datos.alMed || x.datos.alAli || x.datos.alOtros))).length;
-    return `<p class="ehint">Aquí aparecen todos los jóvenes que se han registrado con su planilla en la app o en la web. Puedes buscar, ver su ficha médica y representante, escribirles por WhatsApp o descargar el listado en Excel (CSV).</p>
+    return `<p class="ehint">${trueMaster ? '<b>Cuenta Maestra:</b> Inicialmente todos los registrados entran como <b>Participantes</b>. Únicamente desde esta Cuenta Maestra puedes decidir y modificar quién es <b>Coordinador</b>, <b>Asesor</b> o <b>Participante</b>, además de ver las asistencias de los últimos 6 meses.' : '<b>Vista de Coordinador:</b> Aquí puedes ver el número de participantes, sus planillas, su código QR y las formaciones/actividades a las que asistieron en los últimos 6 meses. <i>(Solo la Cuenta Maestra puede cambiar roles o editar la galería de fotos)</i>.'}</p>
       <div class="stat-grid">
         <div class="stat-box"><b>${allInscripciones.length}</b><span>Total inscritos</span></div>
+        <div class="stat-box"><b>${totalCoord}</b><span>Coordinadores</span></div>
+        <div class="stat-box"><b>${totalAses}</b><span>Asesores</span></div>
+        <div class="stat-box"><b>${totalPart}</b><span>Participantes</span></div>
         <div class="stat-box"><b>${menores}</b><span>Menores de edad</span></div>
-        <div class="stat-box"><b>${conSalud}</b><span>Con alerta médica/alergia</span></div>
+        <div class="stat-box"><b>${conSalud}</b><span>Con alerta médica</span></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+        ${[['todos', 'Todos (' + allInscripciones.length + ')'], ['coordinador', '★ Coordinadores (' + totalCoord + ')'], ['asesor', '◆ Asesores (' + totalAses + ')'], ['participante', '● Participantes (' + totalPart + ')']].map(([k, lbl]) => `<button type="button" class="chip" data-filter-rol="${k}" aria-pressed="${insRoleFilter === k}" style="min-height:38px;padding:0 14px;font-size:13.5px">${lbl}</button>`).join('')}
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;align-items:center">
-        <input type="search" id="ins-search" value="${esc(insQuery)}" placeholder="Buscar por nombre, celular, correo o parroquia…" style="flex:1 1 240px;min-height:46px;padding:0 14px;border-radius:10px;border:1.5px solid #B9C8E4;font-size:15px">
-        <button type="button" class="btn btn-blue btn-sm" data-export-csv ${!allInscripciones.length ? 'disabled' : ''}>Descargar Excel (CSV)</button>
+        <input type="search" id="ins-search" value="${esc(insQuery)}" placeholder="Buscar por nombre, celular, correo, rol o parroquia…" style="flex:1 1 240px;min-height:46px;padding:0 14px;border-radius:10px;border:1.5px solid #B9C8E4;font-size:15px">
+        <button type="button" class="btn btn-blue btn-sm" data-go-qr-tab>📷 Escanear QR de asistencia</button>
+        <button type="button" class="btn btn-soft btn-sm" data-export-csv ${!allInscripciones.length ? 'disabled' : ''}>Descargar Excel (CSV)</button>
         <button type="button" class="btn btn-soft btn-sm" data-reload-ins>Actualizar lista</button>
       </div>
-      ${!list.length ? `<div style="padding:28px;text-align:center;background:#fff;border-radius:14px;border:1px solid var(--line)"><p class="body" style="margin:0">${allInscripciones.length ? 'No hay resultados para esa búsqueda.' : 'Aún no hay planillas registradas. Cuando un joven se registre en «Quiero ser parte», aparecerá aquí automáticamente.'}</p></div>` : list.map((x, idx) => {
+      ${!list.length ? `<div style="padding:28px;text-align:center;background:#fff;border-radius:14px;border:1px solid var(--line)"><p class="body" style="margin:0">${allInscripciones.length ? 'No hay resultados para ese filtro o búsqueda.' : 'Aún no hay planillas registradas. Cuando un joven se registre en «Quiero ser parte», aparecerá aquí automáticamente como Participante.'}</p></div>` : list.map((x, idx) => {
         const d = x.datos || {};
         const rows = summaryRows(d);
         const cel = String(x.celular || d.celular || '').replace(/\D/g, '');
         const waJoven = cel ? (cel.startsWith('0') ? '58' + cel.slice(1) : (cel.startsWith('58') ? cel : '58' + cel)) : '';
         const nom = x.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Sin nombre';
         const foto = x.foto || d.foto || '';
+        const rol = userRole(x);
+        const asis6 = asistenciasUltimos6Meses(x);
+        const qrData = qrPayloadFor(x);
         return `<div class="inscrito-card">
           <div class="inscrito-head">
             <div style="display:flex;align-items:center;gap:12px">
-              <div style="width:52px;height:52px;border-radius:50%;background:var(--mist);border:2px solid var(--royal);overflow:hidden;display:flex;align-items:center;justify-content:center;flex:0 0 auto">
+              <div style="width:54px;height:54px;border-radius:50%;background:var(--mist);border:2px solid var(--royal);overflow:hidden;display:flex;align-items:center;justify-content:center;flex:0 0 auto">
                 ${foto ? `<img src="${esc(foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:20px;color:var(--royal)">${esc(nom.charAt(0).toUpperCase())}</b>`}
               </div>
               <div>
-                <b style="font-size:18px;color:var(--ink)">${esc(nom)}</b>
-                <div style="font-size:13.5px;color:var(--muted);margin-top:2px">${esc(x.correo || d.correo || 'Sin correo')} · ${esc(x.celular || d.celular || 'Sin celular')}</div>
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:3px">
+                  <b style="font-size:18px;color:var(--ink)">${esc(nom)}</b>
+                  ${roleBadgeHtml(rol)}
+                </div>
+                <div style="font-size:13.5px;color:var(--muted)">${esc(x.correo || d.correo || 'Sin correo')} · ${esc(x.celular || d.celular || 'Sin celular')}</div>
               </div>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:8px">
               ${waJoven.length >= 10 ? `<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="https://wa.me/${waJoven}">WhatsApp</a>` : ''}
-              <button type="button" class="btn btn-soft btn-sm" data-dl-ins="${idx}">Planilla</button>
-              <button type="button" class="btn btn-danger btn-sm" data-rm-ins="${esc(x.id)}">Borrar</button>
+              <button type="button" class="btn btn-soft btn-sm" data-dl-ins="${idx}">Planilla + QR</button>
+              ${trueMaster ? `<button type="button" class="btn btn-danger btn-sm" data-rm-ins="${esc(x.id)}">Borrar</button>` : ''}
             </div>
           </div>
-          <div class="inscrito-meta">
+          ${trueMaster ? `<div style="margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--paper);border:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px">
+            <span style="font-size:13.5px;font-weight:700;color:var(--ink)">Asignar rol (exclusivo Cuenta Maestra):</span>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <button type="button" class="chip" data-set-rol="${esc(x.id)}" data-rol="participante" aria-pressed="${rol === 'participante'}" style="min-height:34px;padding:0 12px;font-size:13px">Participante</button>
+              <button type="button" class="chip" data-set-rol="${esc(x.id)}" data-rol="coordinador" aria-pressed="${rol === 'coordinador'}" style="min-height:34px;padding:0 12px;font-size:13px">★ Coordinador</button>
+              <button type="button" class="chip" data-set-rol="${esc(x.id)}" data-rol="asesor" aria-pressed="${rol === 'asesor'}" style="min-height:34px;padding:0 12px;font-size:13px">◆ Asesor</button>
+            </div>
+          </div>` : ''}
+          <div class="inscrito-meta" style="margin-top:10px">
+            <span style="background:#E8F1FF;color:#0C2D74;font-weight:800">📋 ${asis6.length} asistencia${asis6.length === 1 ? '' : 's'} (últimos 6 meses)</span>
             ${(x.edad || edadDe(d)) ? `<span>${esc(x.edad || edadDe(d))} años</span>` : ''}
             ${(x.esMenor || esMenor(d)) ? `<span style="background:#FFF3CD;color:#7A5200">Menor · Rep: ${esc(d.repNombre || 'Pendiente')}</span>` : ''}
             ${d.sangre ? `<span>Sangre: ${esc(d.sangre)}</span>` : ''}
             ${d.parroquia ? `<span>${esc(d.parroquia)}</span>` : ''}
             ${(d.enf === 'Sí' || d.alMed || d.alAli) ? `<span style="background:#FCE8E7;color:#8A1C1C">⚕ Atención médica</span>` : ''}
           </div>
-          <details style="margin-top:10px"><summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--royal)">Ver planilla completa (${rows.length} datos)</summary>
+          <details style="margin-top:10px"><summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--royal)">📅 Ver formaciones y actividades asistidas en los últimos 6 meses (${asis6.length}) y Código QR</summary>
+            <div style="margin-top:10px;padding:12px 14px;background:var(--paper);border-radius:10px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+              <div style="flex:0 0 auto;text-align:center;background:#fff;padding:10px;border-radius:10px;border:1px solid var(--line)">
+                <img src="${esc(qrImgUrl(qrData, 160))}" alt="QR de ${esc(nom)}" width="120" height="120" style="display:block;margin:0 auto">
+                <small style="display:block;margin-top:4px;font-size:11px;color:var(--muted)">${esc(qrData)}</small>
+                <button type="button" class="btn btn-blue btn-sm" data-mark-today="${esc(x.id)}" style="margin-top:6px;min-height:32px;padding:0 10px;font-size:12px">+ Marcar asistencia hoy</button>
+              </div>
+              <div style="flex:1 1 240px">
+                <b style="display:block;font-size:14px;color:var(--navy);margin-bottom:8px">Historial de los últimos 6 meses (desde ${sixMonthsAgoIso().split('-').reverse().join('/')}):</b>
+                ${!asis6.length ? `<p style="margin:0;font-size:13.5px;color:var(--muted)">Aún no tiene asistencias registradas en los últimos 6 meses.</p>` : `<ul style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.6">${asis6.map((a, aIdx) => `<li style="margin-bottom:6px"><b>${esc(a.titulo || 'Formación')}</b> <span style="display:inline-block;padding:1px 8px;border-radius:99px;background:#E8F1FF;color:var(--royal);font-size:11.5px;font-weight:700">${esc(a.tipo || 'Formación')}</span><br><span style="color:var(--muted);font-size:12.5px">Fecha: ${esc(a.fecha ? a.fecha.split('-').reverse().join('/') : '')}${a.por ? ' · Escaneado por: ' + esc(a.por) : ''}</span> <button type="button" data-rm-asis="${esc(x.id)}" data-akey="${esc(a.key || aIdx)}" style="margin-left:6px;border:0;background:transparent;color:#C8322D;font-weight:700;font-size:12px;cursor:pointer;text-decoration:underline">Quitar</button></li>`).join('')}</ul>`}
+              </div>
+            </div>
+          </details>
+          <details style="margin-top:8px"><summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--royal)">Ver planilla completa (${rows.length} datos)</summary>
             <dl style="margin:10px 0 0;padding:8px 14px;background:var(--paper);border-radius:10px">${rows.map((r) => `<div style="display:flex;flex-wrap:wrap;gap:4px 14px;padding:6px 0;border-bottom:1px solid var(--line)"><dt style="flex:0 0 170px;font-size:13px;font-weight:700;color:var(--royal)">${esc(r[0])}</dt><dd style="margin:0;flex:1 1 160px;font-size:14px">${esc(r[1])}</dd></div>`).join('')}</dl>
           </details>
         </div>`;
       }).join('')}`;
   }
+
+  if (tab === 'qr') {
+    const temaActual = qrTema || defaultTemaDelDia(qrDate);
+    const encOpciones = encuentrosProgramados(dr).slice(0, 8);
+    const actOpciones = (dr.actividades || []).filter((a) => a && a.t);
+    const asistieronHoy = allInscripciones.filter((x) => (x.asistencias || []).some((a) => a && a.fecha === qrDate && String(a.titulo || '').toLowerCase() === temaActual.toLowerCase()));
+    return `<p class="ehint"><b>Escáner de Asistencia por Código QR:</b> Elige la formación o actividad pautada del día y abre la cámara para escanear el código QR del participante. Quedará guardado en su historial de 6 meses.</p>
+      <div style="padding:18px;border-radius:14px;background:#fff;border:1.5px solid var(--line);margin-bottom:18px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;flex-wrap:wrap;gap:14px">
+          <div class="fld" style="flex:1 1 170px"><label for="qr-date-in">Fecha de la formación / actividad</label><input id="qr-date-in" type="date" value="${esc(qrDate)}" style="min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid #B9C8E4;font-size:15px"></div>
+          <div class="fld" style="flex:1 1 160px"><label for="qr-tipo-in">Tipo de encuentro</label>
+            <select id="qr-tipo-in" style="min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid #B9C8E4;font-size:15px;background:#fff">
+              ${['Formación', 'Encuentro dominical', 'Actividad especial', 'Misión / Evangelización', 'Retiro / Convivencia'].map((tp) => `<option value="${esc(tp)}" ${qrTipo === tp ? 'selected' : ''}>${esc(tp)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="fld" style="flex:2 1 240px"><label for="qr-tema-in">Nombre de la formación o actividad pautada</label><input id="qr-tema-in" type="text" value="${esc(temaActual)}" placeholder="Ej.: Formación biografía de Allamano"></div>
+        </div>
+        ${(encOpciones.length || actOpciones.length) ? `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span style="font-size:12.5px;font-weight:700;color:var(--muted)">Elegir rápido de lo programado:</span>${encOpciones.map((e) => `<button type="button" class="chip" data-pick-qr-enc="${esc(e.key)}" data-pick-qr-tema="${esc(e.tema)}" style="min-height:30px;padding:0 10px;font-size:12px">${esc(e.diaSem + ' ' + e.dia + ' ' + e.mes + ': ' + e.tema)}</button>`).join('')}${actOpciones.map((a) => `<button type="button" class="chip" data-pick-qr-act="${esc(a.t)}" style="min-height:30px;padding:0 10px;font-size:12px">★ ${esc(a.t)}</button>`).join('')}</div>` : ''}
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-top:6px">
+          ${!qrCameraOn ? `<button type="button" class="btn btn-blue" data-start-qr-cam>📷 Abrir cámara para escanear QR</button>` : `<button type="button" class="btn btn-danger" data-stop-qr-cam>⏹ Detener cámara</button>`}
+          <label class="btn btn-soft" style="cursor:pointer;margin:0"><span>📸 Escanear tomando foto del QR</span><input type="file" accept="image/*" capture="environment" id="qr-file-in" style="display:none"></label>
+        </div>
+        ${qrCameraOn ? `<div style="position:relative;max-width:420px;margin:8px auto 0;border-radius:16px;overflow:hidden;border:3px solid var(--royal);background:#000"><video id="qr-video" playsinline muted style="width:100%;display:block;max-height:360px;object-fit:cover"></video><div style="position:absolute;inset:18%;border:2.5px dashed rgba(142,201,255,.9);border-radius:14px;pointer-events:none"></div></div>` : ''}
+        ${qrStatusMsg ? `<div id="qr-status-box" role="status" style="padding:14px 16px;border-radius:12px;font-size:15px;font-weight:700;background:${qrStatusKind === 'ok' ? '#E4F5EA' : '#FCE8E7'};color:${qrStatusKind === 'ok' ? '#14532D' : '#8A1C1C'};border:1.5px solid ${qrStatusKind === 'ok' ? '#17824A' : '#C8322D'}">${esc(qrStatusMsg)}</div>` : ''}
+      </div>
+      <div style="padding:18px;border-radius:14px;background:#fff;border:1.5px solid var(--line)">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px">
+          <b style="font-size:16px;color:var(--navy)">Asistentes a «${esc(temaActual)}» (${esc(qrDate.split('-').reverse().join('/'))}): ${asistieronHoy.length} de ${allInscripciones.length}</b>
+          <span style="font-size:13px;color:var(--muted)">También puedes marcar asistencia tocando el botón de cada participante:</span>
+        </div>
+        ${!allInscripciones.length ? '<p class="ehint" style="margin:0">Aún no hay participantes inscritos.</p>' : `<div style="display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto">${allInscripciones.map((x) => {
+          const nom = x.nombre || (((x.datos && x.datos.nombres) || '') + ' ' + ((x.datos && x.datos.apellidos) || '')).trim() || 'Sin nombre';
+          const present = (x.asistencias || []).some((a) => a && a.fecha === qrDate && String(a.titulo || '').toLowerCase() === temaActual.toLowerCase());
+          return `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:10px;background:${present ? '#E4F5EA' : 'var(--paper)'};border:1px solid ${present ? '#17824A' : 'var(--line)'}">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:18px">${present ? '✅' : '⚪'}</span>
+              <div><b style="font-size:15px;color:var(--ink)">${esc(nom)}</b> <span style="font-size:12.5px;color:var(--muted)">(${esc(roleLabel(userRole(x)))})</span></div>
+            </div>
+            <button type="button" class="btn ${present ? 'btn-soft' : 'btn-blue'} btn-sm" data-toggle-asis="${esc(x.id)}" style="min-height:36px;padding:0 12px;font-size:13px">${present ? 'Asistió ✔ (Quitar)' : 'Marcar asistencia'}</button>
+          </div>`;
+        }).join('')}</div>`}
+      </div>`;
+  }
+
   if (tab === 'mur') {
     return `<p class="ehint">Aprueba o elimina los mensajes y peticiones de oración enviados en el muro de la página.</p>
       ${!allMensajes.length ? '<p class="body">No hay mensajes en el muro todavía.</p>' : allMensajes.map((m) => `<div class="pend"><p><b>${esc(m.nombre)}:</b> ${esc(m.texto)} <span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:700;background:${m.aprobado ? '#E4F5EA;color:#14532D' : '#FFF3CD;color:#7A5200'}">${m.aprobado ? 'Publicado' : 'Pendiente'}</span></p>${!m.aprobado ? `<button type="button" class="btn btn-blue btn-sm" data-aprob-msg="${esc(m.id)}">Aprobar</button>` : ''}<button type="button" class="btn btn-danger btn-sm" data-rm-msg="${esc(m.id)}">Borrar</button></div>`).join('')}`;
@@ -1037,9 +1611,47 @@ function editorBody() {
         </div>
       </div>`;
   }
-  if (tab === 'enc') return '<p class="ehint">Escribe el tema de cada domingo o marca que no habrá reunión. Las fechas se calculan solas.</p>' + domingos().map((x) => `<div class="erow">${fld('Domingo ' + x.dia + ' de ' + x.mes, (dr.temas || {})[x.key] || '', (v) => { dr.temas = dr.temas || {}; dr.temas[x.key] = v; }, { ph: 'Tema del encuentro (opcional)' })}${chk('No habrá reunión', !!(dr.sinReunion || {})[x.key], (v) => { dr.sinReunion = dr.sinReunion || {}; dr.sinReunion[x.key] = v; })}</div>`).join('');
+  if (tab === 'enc') {
+    const allSun = domingos(13, dr);
+    const visSun = showAllSunEd ? allSun : allSun.slice(0, 4);
+    const extras = (dr.encuentrosExtra || []).slice().sort((a, b) => String(a.fecha || '').localeCompare(String(b.fecha || '')));
+    return `<p class="ehint"><b>Calendario de Encuentros (hasta 3 meses):</b> La página muestra una <b>base de 4 encuentros</b> y permite desplegar el resto de los 3 meses. Aquí puedes programar los domingos y también <b>añadir días que no sean domingo (lunes a sábado)</b>.</p>
+      <div style="padding:18px;margin-bottom:20px;border-radius:14px;background:#fff;border:1.5px solid var(--royal)">
+        <b style="display:block;font-size:16px;color:var(--navy);margin-bottom:6px">📅 Añadir día que no sea domingo (Lunes a Sábado · máx. 3 meses)</b>
+        <p class="ehint" style="margin:0 0 12px">Úsalo para formaciones entre semana, sábados misioneros, convivencias o ensayos dentro de los próximos 3 meses.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+          <div class="fld" style="flex:1 1 160px"><label for="new-extra-date">Fecha (máx. 3 meses)</label><input id="new-extra-date" type="date" min="${todayIso()}" max="${max3MonthsIso()}" value="${todayIso()}" style="min-height:46px;padding:0 12px;border-radius:10px;border:1.5px solid #B9C8E4;font-size:15px"></div>
+          <div class="fld" style="flex:2 1 220px"><label for="new-extra-tema">Formación o actividad de ese día</label><input id="new-extra-tema" type="text" placeholder="Ej.: Sábado de formación / Misión / Ensayo"></div>
+          <button type="button" class="btn btn-blue btn-sm" data-add-extra-day style="min-height:46px">+ Añadir día</button>
+        </div>
+        ${extras.length ? `<div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">${extras.map((ex, i) => {
+          const dt = new Date(ex.fecha + 'T00:00:00');
+          const lbl = isNaN(dt.getTime()) ? ex.fecha : (DIAS_SEM[dt.getDay()] + ' ' + dt.getDate() + ' de ' + MESES[dt.getMonth()]);
+          return `<div class="erow" style="margin:0;padding:12px;background:var(--paper)">
+            ${fld(lbl + ' (' + ex.fecha.split('-').reverse().join('/') + ')', ex.tema || '', (v) => { dr.encuentrosExtra[i].tema = v; }, { ph: 'Tema o actividad del día' })}
+            <button type="button" class="btn btn-danger btn-sm" data-rm-extra-day="${esc(ex.fecha)}">Quitar día</button>
+          </div>`;
+        }).join('')}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px">
+        <b style="font-size:16px;color:var(--navy)">Domingos programados (${visSun.length} de ${allSun.length} domingos en 3 meses)</b>
+        <button type="button" class="btn btn-soft btn-sm" data-toggle-sun-ed>${showAllSunEd ? 'Mostrar solo los 4 domingos base' : 'Ver y editar los 13 domingos (3 meses)'}</button>
+      </div>
+      ` + visSun.map((x) => `<div class="erow">${fld('Domingo ' + x.dia + ' de ' + x.mes, (dr.temas || {})[x.key] || '', (v) => { dr.temas = dr.temas || {}; dr.temas[x.key] = v; }, { ph: 'Tema del encuentro (opcional)' })}${chk('No habrá reunión', !!(dr.sinReunion || {})[x.key], (v) => { dr.sinReunion = dr.sinReunion || {}; dr.sinReunion[x.key] = v; })}</div>`).join('');
+  }
   if (tab === 'dat') return '<p class="ehint">La hora y el lugar aparecen en la sección de domingos. El aviso se muestra como una franja azul arriba de toda la página; déjalo vacío para quitarlo.</p><div style="display:flex;flex-wrap:wrap;gap:18px">' + fld('Hora de la reunión', dr.hora || '', (v) => { dr.hora = v; }, { w: 1, ph: 'Ej.: 3:00 p. m.' }) + fld('Lugar de la reunión', dr.lugar || '', (v) => { dr.lugar = v; }, { w: 1, ph: 'Ej.: Salón parroquial' }) + '<div class="w" style="flex:1 1 100%"><b style="font-size:15px">Números de WhatsApp que reciben las planillas</b><p class="ehint" style="margin:4px 0 0">Escríbelos como los marcas en Venezuela, por ejemplo 0412-054-5307. Deja vacío el que no uses.</p></div>' + waFields() + fld('Aviso en la parte de arriba de la página', dr.aviso || '', (v) => { dr.aviso = v; }, { w: 1, ph: 'Ej.: Este domingo la reunión será en el templo' }) + '</div>';
-  if (tab === 'act') { let h = '<p class="ehint">Retiros, campamentos, misiones, jornadas… Las filas vacías no se muestran.</p>'; for (let i = 0; i < 6; i++) { const g = (k) => ((dr.actividades || [])[i] || {})[k] || ''; const s = (k) => (v) => { dr.actividades = dr.actividades || []; dr.actividades[i] = Object.assign({ t: '', f: '', d: '' }, dr.actividades[i], { [k]: v }); }; h += `<div class="erow">${fld('Actividad', g('t'), s('t'))}${fld('Fecha', g('f'), s('f'), { ph: 'Sábado 24 de octubre' })}${fld('Detalle', g('d'), s('d'), { w: 1 })}</div>`; } return h; }
+  if (tab === 'act') {
+    dr.actividades = Array.isArray(dr.actividades) ? dr.actividades : [];
+    while (dr.actividades.length < 4) dr.actividades.push({ t: '', f: '', d: '' });
+    let h = `<p class="ehint"><b>Actividades de los próximos 3 meses (base de 4 visibles en la página):</b> Agrega retiros, campamentos, misiones, jornadas o formaciones especiales de cualquier día de la semana (lunes a domingo) hasta por 3 meses. En la página principal se muestran las primeras 4 como base y un botón para desplegar las demás.</p>
+      <div style="margin-bottom:14px"><button type="button" class="btn btn-blue btn-sm" data-add-act>+ Añadir otra actividad (máx. 3 meses)</button></div>`;
+    dr.actividades.forEach((act, i) => {
+      const g = (k) => (dr.actividades[i] || {})[k] || '';
+      const s = (k) => (v) => { dr.actividades[i] = Object.assign({ t: '', f: '', d: '' }, dr.actividades[i], { [k]: v }); };
+      h += `<div class="erow">${fld('Actividad ' + (i + 1) + (i < 4 ? ' (Base)' : ' (3 meses)'), g('t'), s('t'), { ph: 'Ej.: Retiro espiritual / Misión' })}${fld('Día y fecha (cualquier día)', g('f'), s('f'), { ph: 'Ej.: Sábado 24 de octubre · 9:00 a. m.' })}${fld('Detalle', g('d'), s('d'), { w: 1 })}${dr.actividades.length > 4 ? `<button type="button" class="btn btn-danger btn-sm" data-rm-act="${i}">Quitar</button>` : ''}</div>`;
+    });
+    return h;
+  }
   if (tab === 'for') {
     const fo = (dr.formacion || {})[String(fy)] || {}; const y = YEARS[fy];
     const s = (k) => (v) => { dr.formacion = dr.formacion || {}; dr.formacion[String(fy)] = Object.assign({}, dr.formacion[String(fy)], { [k]: v }); };
@@ -1083,12 +1695,13 @@ function waFields() {
 function editorHtml() {
   const ok = edOk ? `<div class="eok" role="status" style="line-height:1.55">${edOk}</div>` : '';
   const warn = draftWarn ? '<p class="ehint" style="color:#8A1C1C">El borrador es muy grande para guardarse en este navegador. Pulsa Publicar cambios para guardarlo.</p>' : '';
-  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="ed-t" id="ed-ov"><div class="sheet" style="max-width:920px">${sheetHead('Acceso Maestro · Coordinación JUMA Duaca', 'Panel Maestro y Editor', 'ed-t')}<div style="padding:clamp(22px,4vw,40px)"><div class="etabs" role="group" aria-label="Secciones del panel maestro">${getTabs().map(([k, t]) => `<button type="button" class="etab" data-tab="${k}" aria-pressed="${k === tab}">${t}</button>`).join('')}</div><div id="ed-body">${editorBody()}</div>${warn}${edErr ? `<p role="alert" style="margin:20px 0 0;padding:14px 18px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:15px;font-weight:700">${esc(edErr)}</p>` : ''}${ok}<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-top:28px"><button type="button" class="btn btn-danger btn-sm" data-lock-master>Salir del Modo Maestro</button><div style="display:flex;flex-wrap:wrap;gap:10px"><button type="button" class="btn btn-soft" data-discard>Descartar borrador</button><button type="button" class="btn btn-soft" data-close>Cerrar</button><button type="button" class="btn btn-blue" data-save ${edBusy ? 'disabled' : ''}>${edBusy ? 'Publicando…' : 'Publicar cambios'}</button></div></div></div></div></div>`;
+  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="ed-t" id="ed-ov"><div class="sheet" style="max-width:940px">${sheetHead('Acceso Maestro y Coordinadores · JUMA Duaca', 'Panel Maestro y Editor', 'ed-t')}<div style="padding:clamp(22px,4vw,40px)"><div class="etabs" role="group" aria-label="Secciones del panel maestro">${getTabs().map(([k, t]) => `<button type="button" class="etab" data-tab="${k}" aria-pressed="${k === tab}">${t}</button>`).join('')}</div><div id="ed-body">${editorBody()}</div>${warn}${edErr ? `<p role="alert" style="margin:20px 0 0;padding:14px 18px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:15px;font-weight:700">${esc(edErr)}</p>` : ''}${ok}<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-top:28px"><button type="button" class="btn btn-danger btn-sm" data-lock-master>Salir del Modo Editor</button><div style="display:flex;flex-wrap:wrap;gap:10px"><button type="button" class="btn btn-soft" data-discard>Descartar borrador</button><button type="button" class="btn btn-soft" data-close>Cerrar</button><button type="button" class="btn btn-blue" data-save ${edBusy ? 'disabled' : ''}>${edBusy ? 'Publicando…' : 'Publicar cambios'}</button></div></div></div></div></div>`;
 }
 function repaintEd() { const sc = $('#ed-ov'); const top = sc ? sc.scrollTop : 0; modalRoot.innerHTML = editorHtml(); const o = $('#ed-ov'); if (o) { o.style.animation = 'none'; $('.sheet', o).style.animation = 'none'; o.scrollTop = top; } }
 function cleanContent(src) {
   const c = clone(src);
-  c.actividades = (c.actividades || []).filter((a) => a && String(a.t || '').trim());
+  c.actividades = (c.actividades || []).filter((a) => a && String(a.t || '').trim()).slice(0, 24);
+  c.encuentrosExtra = (c.encuentrosExtra || []).filter((e) => e && e.fecha && e.fecha <= max3MonthsIso());
   c.posts = (c.posts || []).filter((p) => p && (String(p.t || '').trim() || String(p.x || '').trim()));
   c.galeria = (c.galeria || []).filter((g) => g && g.url);
   c.testimonios = (c.testimonios || []).filter((x) => x && String(x.x || '').trim());
@@ -1114,6 +1727,7 @@ async function openEditor() {
   if (ghToken()) { try { const f = await ghGet('contenido.json'); if (f && f.content) { const c = JSON.parse(dec64(f.content)); if (String(c.actualizado || '') >= String(pub.actualizado || '')) pub = c; } } catch (e) {} }
   dr = clone(pickDraft() || cfg || pub);
   edErr = ''; edOk = ''; draftWarn = false;
+  if (!qrTema) qrTema = defaultTemaDelDia(qrDate);
   openModal(editorHtml());
   await loadAdminData();
   if ($('#ed-t')) repaintEd();
@@ -1127,10 +1741,14 @@ async function shrinkToDataUrl(file) {
 }
 modalRoot.addEventListener('input', (e) => {
   if (e.target.id === 'ins-search') { insQuery = e.target.value; const pos = e.target.selectionStart; repaintEd(); const inp = $('#ins-search'); if (inp) { inp.focus(); try { inp.setSelectionRange(pos, pos); } catch (x) {} } return; }
+  if (e.target.id === 'qr-tema-in') { qrTema = e.target.value; return; }
   const id = e.target.dataset && e.target.dataset.ed; if (id && setters.has(id)) { setters.get(id)(e.target.value); touch(); }
 });
 modalRoot.addEventListener('change', async (e) => {
   const t = e.target; const c = t.dataset && t.dataset.edc;
+  if (t.id === 'qr-date-in') { qrDate = t.value || todayIso(); qrTema = defaultTemaDelDia(qrDate); repaintEd(); return; }
+  if (t.id === 'qr-tipo-in') { qrTipo = t.value || 'Formación'; return; }
+  if (t.id === 'qr-file-in' && t.files && t.files[0]) { await scanQrFromImageFile(t.files[0]); return; }
   if (c && setters.has(c)) { setters.get(c)(t.checked); touch(); return; }
   const kind = t.dataset && t.dataset.up; if (!kind || !t.files || !t.files.length) return;
   const files = Array.from(t.files); const i = +t.dataset.i;
@@ -1149,14 +1767,87 @@ modalRoot.addEventListener('click', async (e) => {
   if (!$('#ed-t')) return; const t = e.target;
   const q = (s) => t.closest(s);
   if (q('[data-tab]')) { tab = q('[data-tab]').dataset.tab; edErr = ''; edOk = ''; repaintEd(); return; }
+  if (q('[data-go-qr-tab]')) { tab = 'qr'; edErr = ''; edOk = ''; repaintEd(); return; }
+  if (q('[data-filter-rol]')) { insRoleFilter = q('[data-filter-rol]').dataset.filterRol; repaintEd(); return; }
+  if (q('[data-set-rol]')) {
+    const b = q('[data-set-rol]');
+    await cambiarRolInscrito(b.dataset.setRol, b.dataset.rol);
+    return;
+  }
+  if (q('[data-start-qr-cam]')) { await startQrCamera(); return; }
+  if (q('[data-stop-qr-cam]')) { stopQrCamera(); qrStatusMsg = ''; repaintEd(); return; }
+  if (q('[data-pick-qr-enc]')) {
+    const b = q('[data-pick-qr-enc]');
+    qrDate = b.dataset.pickQrEnc || todayIso();
+    qrTema = b.dataset.pickQrTema || 'Formación JUMA';
+    qrTipo = 'Formación';
+    repaintEd(); return;
+  }
+  if (q('[data-pick-qr-act]')) {
+    qrTema = q('[data-pick-qr-act]').dataset.pickQrAct || 'Actividad JUMA';
+    qrTipo = 'Actividad especial';
+    repaintEd(); return;
+  }
+  if (q('[data-toggle-asis]')) {
+    const uidTarget = q('[data-toggle-asis]').dataset.toggleAsis;
+    const temaActual = qrTema || defaultTemaDelDia(qrDate);
+    const rec = allInscripciones.find((x) => x && (x.id === uidTarget || x.uid === uidTarget));
+    const present = rec && (rec.asistencias || []).some((a) => a && a.fecha === qrDate && String(a.titulo || '').toLowerCase() === temaActual.toLowerCase());
+    if (present) {
+      await quitarAsistencia(uidTarget, qrDate + '__' + temaActual.toLowerCase());
+      qrStatusKind = 'ok'; qrStatusMsg = 'Se quitó la asistencia de ' + (rec.nombre || 'participante') + '.';
+    } else {
+      const r = await registrarAsistencia('JUMA:' + uidTarget, qrDate, temaActual, qrTipo);
+      qrStatusKind = r.ok ? 'ok' : 'err'; qrStatusMsg = r.msg;
+    }
+    repaintEd(); return;
+  }
+  if (q('[data-mark-today]')) {
+    const uidTarget = q('[data-mark-today]').dataset.markToday;
+    const r = await registrarAsistencia('JUMA:' + uidTarget, todayIso(), defaultTemaDelDia(todayIso()), 'Formación');
+    edOk = esc(r.msg);
+    repaintEd(); return;
+  }
+  if (q('[data-rm-asis]')) {
+    const b = q('[data-rm-asis]');
+    await quitarAsistencia(b.dataset.rmAsis, b.dataset.akey);
+    return;
+  }
+  if (q('[data-toggle-sun-ed]')) { showAllSunEd = !showAllSunEd; repaintEd(); return; }
+  if (q('[data-add-extra-day]')) {
+    const fIn = ($('#new-extra-date') || {}).value || '';
+    const tIn = (($('#new-extra-tema') || {}).value || '').trim();
+    if (!fIn) { edErr = 'Selecciona la fecha del encuentro o actividad.'; repaintEd(); return; }
+    if (fIn < todayIso() || fIn > max3MonthsIso()) { edErr = 'La fecha debe estar dentro de un rango máximo de 3 meses a partir de hoy.'; repaintEd(); return; }
+    dr.encuentrosExtra = (dr.encuentrosExtra || []).filter((x) => x && x.fecha !== fIn);
+    dr.encuentrosExtra.push({ fecha: fIn, tema: tIn || 'Encuentro / Formación JUMA' });
+    edErr = ''; edOk = '✔ Día añadido al calendario de los próximos 3 meses. Pulsa «Publicar cambios» para guardarlo.';
+    touch(); repaintEd(); return;
+  }
+  if (q('[data-rm-extra-day]')) {
+    const fRm = q('[data-rm-extra-day]').dataset.rmExtraDay;
+    dr.encuentrosExtra = (dr.encuentrosExtra || []).filter((x) => x && x.fecha !== fRm);
+    touch(); repaintEd(); return;
+  }
+  if (q('[data-add-act]')) {
+    dr.actividades = Array.isArray(dr.actividades) ? dr.actividades : [];
+    if (dr.actividades.length >= 24) { edErr = 'Puedes programar hasta un máximo de 3 meses de actividades (24 actividades).'; repaintEd(); return; }
+    dr.actividades.push({ t: '', f: '', d: '' });
+    touch(); repaintEd(); return;
+  }
+  if (q('[data-rm-act]')) {
+    const idxRm = +q('[data-rm-act]').dataset.rmAct;
+    if (Array.isArray(dr.actividades)) dr.actividades.splice(idxRm, 1);
+    touch(); repaintEd(); return;
+  }
   if (q('[data-fy]')) { fy = +q('[data-fy]').dataset.fy; repaintEd(); return; }
   if (q('[data-export-csv]')) { exportInscripcionesCsv(); return; }
   if (q('[data-reload-ins]')) { await loadAdminData(); repaintEd(); return; }
   if (q('[data-dl-ins]')) {
     const qStr = insQuery.trim().toLowerCase();
-    const list = allInscripciones.filter((x) => !qStr || JSON.stringify(x).toLowerCase().includes(qStr));
+    const list = allInscripciones.filter((x) => (insRoleFilter === 'todos' || userRole(x) === insRoleFilter) && (!qStr || JSON.stringify(x).toLowerCase().includes(qStr)));
     const item = list[+q('[data-dl-ins]').dataset.dlIns];
-    if (item && item.datos) downloadPlanillaHtml(item.datos);
+    if (item && item.datos) downloadPlanillaHtml(item.datos, item);
     return;
   }
   if (q('[data-rm-ins]')) {
@@ -1203,6 +1894,7 @@ modalRoot.addEventListener('click', async (e) => {
     return;
   }
   if (q('[data-lock-master]')) {
+    stopQrCamera();
     try { sessionStorage.removeItem('juma-ed'); localStorage.removeItem('juma-master-device'); } catch (x) {}
     if (!isAdmin) $('#fab-edit').classList.add('hide');
     updateAuthUI(); closeModal(); return;
