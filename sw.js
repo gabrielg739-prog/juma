@@ -1,5 +1,5 @@
 /* Service worker: funciona sin conexión + avisos en segundo plano */
-const CACHE = 'juma-v14';
+const CACHE = 'juma-v16';
 /* Lo esencial se guarda al instalar; las fotos se guardan a medida que se ven. */
 const CORE = ['./', 'index.html', 'js/app.js', 'js/fe.js', 'js/firebase-config.js', 'oraciones.json', 'contenido.json', 'manifest.webmanifest',
   'img/logo.png', 'img/hero-900.jpg', 'img/joriel-avatar.png', 'img/mapa-consolata.svg', 'icons/icon-192.png'];

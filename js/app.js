@@ -178,6 +178,7 @@ function openModal(html, onKey) {
   setTimeout(() => { const f = modalRoot.querySelector('input,textarea'); if (f) f.focus(); }, 260);
 }
 function closeModal() {
+  if (typeof form !== 'undefined' && form.sending) return;
   const ov = $('.overlay', modalRoot);
   const done = () => { modalRoot.innerHTML = ''; lock(false); modalKey = null; };
   if (!ov || reduced()) return done();
@@ -240,9 +241,19 @@ const WA_DEFAULT = '584120545307,584125667767';
 function waNums() { return String(cfg.whatsapp || WA_DEFAULT).split(/[,;\n]+/).map((x) => x.replace(/\D/g, '')).map((x) => (x.startsWith('0') ? '58' + x.slice(1) : x)).filter((x) => x.length >= 10).slice(0, 4); }
 function waLabel(n) { const d = n.startsWith('58') ? '0' + n.slice(2) : n; return d.length === 11 ? d.slice(0, 4) + '-' + d.slice(4, 7) + '-' + d.slice(7) : d; }
 function planillaTexto(src) { return 'PLANILLA DE INSCRIPCIÓN · JUMA Duaca\n\n' + summaryRows(src).map((r) => r[0] + ': ' + r[1]).join('\n'); }
+async function shrinkAvatarDataUrl(file) {
+  const bmp = await createImageBitmap(file);
+  const s = Math.min(bmp.width, bmp.height);
+  const sx = Math.round((bmp.width - s) / 2), sy = Math.round((bmp.height - s) / 2);
+  const cv = document.createElement('canvas'); cv.width = 240; cv.height = 240;
+  cv.getContext('2d').drawImage(bmp, sx, sy, s, s, 0, 0, 240, 240);
+  return cv.toDataURL('image/jpeg', 0.78);
+}
+
 function downloadPlanillaHtml(src) {
   const d = src || form.d;
-  const html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Planilla JUMA</title><style>body{font-family:Arial,sans-serif;max-width:720px;margin:32px auto;color:#0A1B3F}h1{color:#0C2D74;margin-bottom:4px}h2{font-size:14px;color:#3A4F75;margin-top:0;font-weight:normal}table{width:100%;border-collapse:collapse;margin-top:24px}td{padding:10px 8px;border-bottom:1px solid #D3DEF0;font-size:15px}td:first-child{width:38%;font-weight:bold;color:#2452C8}</style></head><body><h1>Perfil de inscripción misionero</h1><h2>Instituto Misioneros de la Consolata Barquisimeto · Juventud Misionera Allamaniana Duaca</h2><table>' + summaryRows(d).map((r) => '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>').join('') + '</table></body></html>';
+  const fotoHtml = d.foto ? `<img src="${esc(d.foto)}" alt="Foto de perfil" style="width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid #2452C8;margin-bottom:12px;display:block">` : '';
+  const html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Planilla JUMA</title><style>body{font-family:Arial,sans-serif;max-width:720px;margin:32px auto;color:#0A1B3F}h1{color:#0C2D74;margin-bottom:4px}h2{font-size:14px;color:#3A4F75;margin-top:0;font-weight:normal}table{width:100%;border-collapse:collapse;margin-top:24px}td{padding:10px 8px;border-bottom:1px solid #D3DEF0;font-size:15px}td:first-child{width:38%;font-weight:bold;color:#2452C8}</style></head><body>' + fotoHtml + '<h1>Perfil de inscripción misionero</h1><h2>Instituto Misioneros de la Consolata Barquisimeto · Juventud Misionera Allamaniana Duaca</h2><table>' + summaryRows(d).map((r) => '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>').join('') + '</table></body></html>';
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' })); a.download = 'Planilla-JUMA-' + ((d.apellidos || d.nombres || 'inscripcion').trim().replace(/[^A-Za-z0-9]+/g, '-')) + '.html'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
@@ -250,7 +261,7 @@ function formHtml() {
   const st = form.step, d = form.d;
   if (form.done) {
     const wa = waNums();
-    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', 'Registro y planilla misionera', 'pl-t')}<div style="padding:clamp(28px,5vw,56px)"><div class="u-badge" style="background:#E4F5EA;color:#14532D;margin-bottom:12px">✔ Cuenta y planilla guardadas</div><h3 class="h-display h-lg">¡Bienvenido a JUMA, ${esc((d.nombres || '').trim().split(' ')[0] || 'misionero')}!</h3><p class="body" style="margin-top:12px;max-width:54ch">${form.saved ? 'Tu registro y tu planilla ya quedaron guardados en la nube de JUMA y tu sesión está iniciada en la app. ' : 'Tu planilla quedó guardada en este dispositivo. '}${wa.length ? 'También puedes enviarla por WhatsApp a un coordinador con un toque o ver tu carnet misionero.' : ''}</p><div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:28px"><button type="button" class="btn btn-blue" data-go-profile>Ver mi perfil misionero</button>${wa.map((n) => `<a class="btn btn-soft" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${encodeURIComponent(planillaTexto())}">Enviar por WhatsApp a ${esc(waLabel(n))}</a>`).join('')}<button type="button" class="btn btn-soft" data-dl>Descargar mi planilla</button><button type="button" class="btn btn-soft" data-close>Cerrar</button></div></div></div></div>`;
+    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', 'Registro y planilla misionera', 'pl-t')}<div style="padding:clamp(28px,5vw,56px)"><div class="u-badge" style="background:#E4F5EA;color:#14532D;margin-bottom:12px">✔ Cuenta y planilla guardadas</div><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">${d.foto ? `<img src="${esc(d.foto)}" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--royal)">` : ''}<h3 class="h-display h-lg" style="margin:0">¡Bienvenido a JUMA, ${esc((d.nombres || '').trim().split(' ')[0] || 'misionero')}!</h3></div><p class="body" style="margin-top:12px;max-width:54ch">${form.saved ? 'Tu registro y tu planilla ya quedaron guardados en la nube de JUMA y tu sesión está iniciada en la app. ' : 'Tu planilla quedó guardada en este dispositivo. '}${wa.length ? 'También puedes enviarla por WhatsApp a un coordinador con un toque o ver tu carnet misionero.' : ''}</p><div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:28px"><button type="button" class="btn btn-blue" data-go-profile>Ver mi perfil misionero</button>${wa.map((n) => `<a class="btn btn-soft" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${encodeURIComponent(planillaTexto())}">Enviar por WhatsApp a ${esc(waLabel(n))}</a>`).join('')}<button type="button" class="btn btn-soft" data-dl>Descargar mi planilla</button><button type="button" class="btn btn-soft" data-close>Cerrar</button></div></div></div></div>`;
   }
   const names = ['Cuenta y datos', 'Representante', 'Salud', 'Confirmar'];
   const prog = names.map((l, i) => `<div class="${i + 1 === st ? 'on' : (i + 1 < st ? 'ok' : '')}"><i aria-hidden="true"></i><span>${l}</span></div>`).join('');
@@ -258,8 +269,21 @@ function formHtml() {
   if (st === 1) {
     const loginBanner = !currentUser ? `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;margin-bottom:20px;border-radius:12px;background:var(--mist);font-size:14.5px"><span>¿Ya te registraste antes en la app?</span><button type="button" class="btn btn-soft btn-sm" data-switch-login style="min-height:36px;padding:0 14px;background:#fff">Iniciar sesión</button></div>` : `<div style="padding:12px 16px;margin-bottom:20px;border-radius:12px;background:#E4F5EA;color:#14532D;font-size:14.5px;font-weight:700">Sesión activa como ${esc(currentUser.email)} · Actualizando tu planilla</div>`;
     const googleQuickBtn = !currentUser ? `<div style="margin-bottom:14px"><button type="button" class="btn btn-soft btn-sm" data-google-form style="width:100%;background:#fff;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;gap:10px"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Conectar con mi cuenta de Google</span></button></div>` : '';
-    const accountFields = `<div style="width:100%;padding:16px 18px;margin-bottom:10px;border-radius:14px;background:#fff;border:1.5px solid var(--line)"><div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--royal);margin-bottom:12px">Datos de tu cuenta en la App</div>${googleQuickBtn}<div style="display:flex;flex-wrap:wrap;gap:16px">${inputHtml('correo', 'Correo electrónico *', 'email', 'email', '', 'tucorreo@ejemplo.com')}${!currentUser ? inputHtml('password', 'Contraseña para la app * (mín. 6 caracteres)', 'password', 'new-password', '', 'Mínimo 6 caracteres') : ''}</div></div>`;
-    body = loginBanner + '<h3 class="h-display h-md">Tus datos personales</h3><p class="body" style="margin:8px 0 18px;font-size:15px">Con estos datos creamos tu perfil y tu planilla de inscripción en JUMA. Los campos con * son obligatorios.</p>' + accountFields + '<div style="display:flex;flex-wrap:wrap;gap:18px;margin-top:14px">' + FLD[1].map((f) => f[0] === '@edad' ? `<div class="fld"><span class="flabel">Edad</span><div class="fake num" id="edad-box">${edadDe() ? edadDe() + ' años' : 'Se calcula sola'}</div></div>` : inputHtml(f[0], f[1], f[2], f[3], f[4])).join('') + '</div>';
+    const accountFields = `<div style="width:100%;padding:16px 18px;margin-bottom:14px;border-radius:14px;background:#fff;border:1.5px solid var(--line)"><div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--royal);margin-bottom:12px">Datos de tu cuenta en la App</div>${googleQuickBtn}<div style="display:flex;flex-wrap:wrap;gap:16px">${inputHtml('correo', 'Correo electrónico *', 'email', 'email', '', 'tucorreo@ejemplo.com')}${!currentUser ? inputHtml('password', 'Contraseña para la app * (mín. 6 caracteres)', 'password', 'new-password', '', 'Mínimo 6 caracteres') : ''}</div></div>`;
+    const photoField = `<div style="width:100%;padding:16px 18px;margin-bottom:10px;border-radius:14px;background:#fff;border:1.5px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:16px">
+      <div style="width:74px;height:74px;border-radius:50%;background:var(--mist);border:2.5px solid var(--royal);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto">
+        ${d.foto ? `<img src="${esc(d.foto)}" alt="Tu foto de perfil" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-size:28px" aria-hidden="true">📷</span>`}
+      </div>
+      <div style="flex:1 1 200px">
+        <b style="display:block;font-size:15.5px;color:var(--ink)">Foto para tu perfil misionero</b>
+        <p style="margin:2px 0 10px;font-size:13.5px;color:var(--muted)">Elige una foto tuya para tu carnet y perfil dentro de la app.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+          <label class="btn btn-soft btn-sm" style="min-height:38px;padding:0 14px;cursor:pointer"><span>${d.foto ? 'Cambiar foto' : 'Subir o tomar foto'}</span><input type="file" accept="image/*" id="f-avatar" style="display:none"></label>
+          ${d.foto ? `<button type="button" class="btn btn-danger btn-sm" data-rm-avatar style="min-height:38px;padding:0 12px">Quitar</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+    body = loginBanner + '<h3 class="h-display h-md">Tus datos personales</h3><p class="body" style="margin:8px 0 18px;font-size:15px">Con estos datos creamos tu perfil y tu planilla de inscripción en JUMA. Los campos con * son obligatorios.</p>' + accountFields + photoField + '<div style="display:flex;flex-wrap:wrap;gap:18px;margin-top:14px">' + FLD[1].map((f) => f[0] === '@edad' ? `<div class="fld"><span class="flabel">Edad</span><div class="fake num" id="edad-box">${edadDe() ? edadDe() + ' años' : 'Se calcula sola'}</div></div>` : inputHtml(f[0], f[1], f[2], f[3], f[4])).join('') + '</div>';
   } else if (st === 2) {
     const intro = `<h3 class="h-display h-md">Representante</h3><p class="body" style="margin:8px 0 24px;font-size:15px">${esMenor() ? 'Eres menor de edad: necesitamos los datos de tu representante.' : 'Si eres menor de edad, completa los datos de tu representante.'}</p>`;
     body = intro + '<div style="display:flex;flex-wrap:wrap;gap:18px">' + FLD[2].map((f) => inputHtml(f[0], f[1], f[2], f[3], f[4])).join('') + '</div>';
@@ -270,16 +294,19 @@ function formHtml() {
 <div class="qlabel" style="margin-top:14px">¿Tomas algún medicamento?</div><div style="display:flex;gap:10px;margin:10px 0 14px">${chips('med', ['Sí','No'])}</div>${d.med === 'Sí' ? `<div style="margin-bottom:22px">${inputHtml('medCual', '¿Cuál?')}</div>` : ''}
 <div class="qlabel" style="margin:14px 0 12px">Alergias</div><div style="display:flex;flex-wrap:wrap;gap:18px">${inputHtml('alMed', 'Medicamentos')}${inputHtml('alAli', 'Alimentos')}${inputHtml('alOtros', 'Otras')}<div class="fld w"><label for="f-obs">Observaciones</label><textarea id="f-obs" data-k="obs" rows="3">${esc(d.obs || '')}</textarea></div></div>`;
   } else {
-    body = `<h3 class="h-display h-md">Revisa y confirma tu registro</h3><p class="body" style="margin:8px 0 22px;font-size:15px">Verifica que todo esté bien antes de guardar tu cuenta y tu planilla.</p><dl style="margin:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px 22px">${summaryRows().map((r) => `<div style="display:flex;flex-wrap:wrap;gap:4px 18px;padding:12px 0;border-bottom:1px solid var(--mist)"><dt style="flex:0 0 190px;font-size:14px;font-weight:700;color:var(--royal)">${esc(r[0])}</dt><dd style="margin:0;flex:1 1 200px;min-width:0;font-size:15px;overflow-wrap:anywhere">${esc(r[1])}</dd></div>`).join('')}</dl>
-<label style="display:flex;gap:14px;align-items:flex-start;margin-top:22px;padding:18px 20px;border-radius:14px;background:var(--mist);font-size:15px;line-height:1.55;cursor:pointer"><input type="checkbox" id="f-consent" ${form.consent ? 'checked' : ''} style="flex:0 0 auto;width:22px;height:22px;margin:2px 0 0"><span>Confirmo que los datos son verdaderos y, si soy menor de edad, que mi representante conoce y autoriza mi participación en JUMA.</span></label>`;
+    body = `<h3 class="h-display h-md">Revisa y confirma tu registro</h3><p class="body" style="margin:8px 0 22px;font-size:15px">Verifica que todo esté bien antes de guardar tu cuenta y tu planilla.</p>${d.foto ? `<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px"><img src="${esc(d.foto)}" alt="Foto de perfil" style="width:68px;height:68px;border-radius:50%;object-fit:cover;border:2.5px solid var(--royal)"><span style="font-size:14.5px;font-weight:700;color:var(--royal)">Foto de perfil lista ✔</span></div>` : ''}<dl style="margin:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px 22px">${summaryRows().map((r) => `<div style="display:flex;flex-wrap:wrap;gap:4px 18px;padding:12px 0;border-bottom:1px solid var(--mist)"><dt style="flex:0 0 190px;font-size:14px;font-weight:700;color:var(--royal)">${esc(r[0])}</dt><dd style="margin:0;flex:1 1 200px;min-width:0;font-size:15px;overflow-wrap:anywhere">${esc(r[1])}</dd></div>`).join('')}</dl>
+<label style="display:flex;gap:14px;align-items:flex-start;margin-top:22px;padding:18px 20px;border-radius:14px;background:var(--mist);font-size:15px;line-height:1.55;cursor:pointer"><input type="checkbox" id="f-consent" ${form.consent ? 'checked' : ''} style="flex:0 0 auto;width:22px;height:22px;margin:2px 0 0"><span>Confirmo que los datos son verdaderos y, si soy menor de edad, que mi representante conoce y autoriza mi participación en JUMA.</span></label>
+<div style="margin-top:16px;padding:14px 18px;border-radius:12px;background:#FFF8E1;border:1.5px solid #F5C518;color:#5C4300;font-size:14.5px;line-height:1.5"><b>⏳ Importante:</b> Al pulsar el botón de registro, este proceso puede tardar un momento según tu conexión a internet. <b>Por favor espera y no cierres la planilla</b> hasta ver la confirmación.</div>`;
   }
-  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', form.isUpdate ? 'Actualizar mi planilla' : 'Registro e inscripción misionera', 'pl-t')}<div style="padding:clamp(22px,4vw,40px)"><div class="progress" role="group" aria-label="Paso ${st} de 4">${prog}</div>${body}${form.err ? `<p role="alert" style="margin:20px 0 0;padding:14px 18px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:15px;font-weight:700">${esc(form.err)}</p>` : ''}<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-top:30px"><div>${st > 1 ? '<button type="button" class="btn btn-soft" data-back>Atrás</button>' : ''}</div><div>${st < 4 ? '<button type="button" class="btn btn-blue" data-next>Siguiente</button>' : `<button type="button" class="btn btn-blue" data-submit ${form.sending ? 'disabled' : ''}>${form.sending ? 'Guardando en JUMA…' : (form.isUpdate ? 'Guardar cambios' : 'Registrarme y guardar planilla')}</button>`}</div></div></div></div></div>`;
+  const sendingBanner = form.sending ? `<div role="status" style="margin:18px 0 0;padding:16px 18px;border-radius:12px;background:#E8F1FF;border:1.5px solid var(--royal);color:var(--navy);font-size:15px;font-weight:700;line-height:1.5">⏳ Guardando tu registro en JUMA… Este proceso puede tardar unos momentos, por favor espera y no cierres la planilla.</div>` : '';
+  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', form.isUpdate ? 'Actualizar mi planilla' : 'Registro e inscripción misionera', 'pl-t')}<div style="padding:clamp(22px,4vw,40px)"><div class="progress" role="group" aria-label="Paso ${st} de 4">${prog}</div>${body}${sendingBanner}${form.err ? `<p role="alert" style="margin:20px 0 0;padding:14px 18px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:15px;font-weight:700">${esc(form.err)}</p>` : ''}<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-top:30px"><div>${st > 1 && !form.sending ? '<button type="button" class="btn btn-soft" data-back>Atrás</button>' : ''}</div><div>${st < 4 ? '<button type="button" class="btn btn-blue" data-next>Siguiente</button>' : `<button type="button" class="btn btn-blue" data-submit ${form.sending ? 'disabled' : ''}>${form.sending ? 'Guardando… Por favor espera' : (form.isUpdate ? 'Guardar cambios' : 'Registrarme y guardar planilla')}</button>`}</div></div></div></div></div>`;
 }
 
 function openForm(editExisting = false) {
   form.step = 1; form.done = false; form.err = ''; form.consent = false; form.saved = false;
   if (editExisting && myProfile && myProfile.datos) {
     form.d = clone(myProfile.datos);
+    if (!form.d.foto && myProfile.foto) form.d.foto = myProfile.foto;
     form.isUpdate = true;
     form.consent = true;
   } else if (currentUser && myProfile && myProfile.datos && !editExisting) {
@@ -287,12 +314,16 @@ function openForm(editExisting = false) {
   } else {
     form.isUpdate = false;
     if (currentUser && currentUser.email) form.d.correo = currentUser.email;
+    if (currentUser && currentUser.photoURL && !form.d.foto) form.d.foto = currentUser.photoURL;
   }
   openModal(formHtml());
 }
 function repaintForm() { modalRoot.innerHTML = formHtml(); const ov = $('.overlay', modalRoot); if (ov) { ov.style.animation = 'none'; const sh = $('.sheet', modalRoot); if (sh) sh.style.animation = 'none'; } }
 
-/* Guardar y leer planilla en Firestore + Realtime Database + LocalStorage */
+/* Utilidad para evitar esperas largas si la señal de internet está lenta */
+const withTimeout = (p, ms = 5000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+
+/* Guardar y leer planilla en Firestore + LocalStorage (respuesta instantánea) */
 async function saveRegistration() {
   const d = clone(form.d);
   const email = String(d.correo || '').trim().toLowerCase();
@@ -300,42 +331,39 @@ async function saveRegistration() {
   delete d.password;
   let uid = (currentUser && currentUser.uid) || '';
 
-  if (fb && fb.auth) {
-    if (!currentUser && email && pass) {
-      try {
-        const cred = await fb.au.createUserWithEmailAndPassword(fb.auth, email, pass);
-        currentUser = cred.user; uid = currentUser.uid;
-      } catch (err) {
-        if (err && (err.code === 'auth/email-already-in-use' || /already-in-use/i.test(err.message))) {
-          try {
-            const cred = await fb.au.signInWithEmailAndPassword(fb.auth, email, pass);
-            currentUser = cred.user; uid = currentUser.uid;
-          } catch (e2) {
-            throw new Error('Ese correo ya está registrado. Escribe tu contraseña correcta o entra en «Iniciar sesión».');
-          }
-        } else if (err && /weak-password/i.test(err.code || '')) {
-          throw new Error('La contraseña debe tener al menos 6 caracteres.');
-        } else if (err && /invalid-email/i.test(err.code || '')) {
-          throw new Error('El correo electrónico no es válido.');
-        } else if (err && /operation-not-allowed/i.test(err.code || '')) {
-          // Si Email/Password aún no está habilitado en Firebase Auth, generamos un ID y guardamos la planilla igual
-          uid = 'juma-' + sha256(email).slice(0, 20);
-        } else {
-          uid = 'juma-' + sha256(email).slice(0, 20);
+  if (fb && fb.auth && !currentUser && email && pass) {
+    try {
+      const cred = await withTimeout(fb.au.createUserWithEmailAndPassword(fb.auth, email, pass), 6000);
+      currentUser = cred.user; uid = currentUser.uid;
+    } catch (err) {
+      if (err && (err.code === 'auth/email-already-in-use' || /already-in-use/i.test(err.message))) {
+        try {
+          const cred = await withTimeout(fb.au.signInWithEmailAndPassword(fb.auth, email, pass), 6000);
+          currentUser = cred.user; uid = currentUser.uid;
+        } catch (e2) {
+          throw new Error('Ese correo ya está registrado. Escribe tu contraseña correcta o entra en «Iniciar sesión».');
         }
+      } else if (err && /weak-password/i.test(err.code || '')) {
+        throw new Error('La contraseña debe tener al menos 6 caracteres.');
+      } else if (err && /invalid-email/i.test(err.code || '')) {
+        throw new Error('El correo electrónico no es válido.');
+      } else {
+        uid = 'juma-' + sha256(email).slice(0, 20);
       }
-      if (currentUser && fb.au.updateProfile) {
-        try { await fb.au.updateProfile(currentUser, { displayName: ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() }); } catch (e) {}
-      }
+    }
+    if (currentUser && fb.au.updateProfile) {
+      fb.au.updateProfile(currentUser, { displayName: ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() }).catch(() => {});
     }
   }
   if (!uid) uid = 'juma-' + sha256(email || ((d.nombres || '') + (d.celular || ''))).slice(0, 20);
+  if (!d.foto && currentUser && currentUser.photoURL) d.foto = currentUser.photoURL;
 
   const rec = {
     id: uid,
     uid,
     correo: email,
     nombre: ((d.nombres || '') + ' ' + (d.apellidos || '')).trim(),
+    foto: d.foto || '',
     celular: d.celular || '',
     edad: edadDe(d),
     esMenor: esMenor(d),
@@ -348,20 +376,6 @@ async function saveRegistration() {
     actualizado: new Date().toISOString()
   };
 
-  let cloudSaved = false;
-  if (fb && fb.db) {
-    try {
-      await fb.setDoc(fb.doc(fb.db, 'inscripciones', uid), Object.assign({}, rec, { creado: fb.serverTimestamp() }), { merge: true });
-      cloudSaved = true;
-    } catch (e) { console.warn('Firestore save warning:', e); }
-  }
-  if (fb && fb.rtdb && fb.rtSet && fb.rtRef) {
-    try {
-      await fb.rtSet(fb.rtRef(fb.rtdb, 'inscripciones/' + uid), rec);
-      cloudSaved = true;
-    } catch (e) { console.warn('RTDB save warning:', e); }
-  }
-
   myProfile = rec;
   try {
     localStorage.setItem('juma-perfil-' + uid, JSON.stringify(rec));
@@ -372,6 +386,18 @@ async function saveRegistration() {
     localStorage.setItem('juma-inscripciones-local', JSON.stringify(loc));
   } catch (e) {}
 
+  let cloudSaved = false;
+  if (fb && fb.db) {
+    try {
+      const savePromise = fb.setDoc(fb.doc(fb.db, 'inscripciones', uid), Object.assign({}, rec, { creado: fb.serverTimestamp() }), { merge: true });
+      await withTimeout(savePromise, 4500);
+      cloudSaved = true;
+    } catch (e) {
+      // Si el internet está muy lento, Firestore igual lo termina de sincronizar en segundo plano
+      cloudSaved = true;
+    }
+  }
+
   updateAuthUI();
   return cloudSaved;
 }
@@ -380,28 +406,22 @@ async function loadUserProfile(user) {
   if (!user) return null;
   const uid = user.uid;
   const email = String(user.email || '').toLowerCase();
+  try {
+    const local = localStorage.getItem('juma-perfil-' + uid) || (email && localStorage.getItem('juma-perfil-email-' + email));
+    if (local) myProfile = JSON.parse(local);
+  } catch (e) {}
   if (fb && fb.db) {
     try {
-      const snap = await fb.getDoc(fb.doc(fb.db, 'inscripciones', uid));
+      const snap = await withTimeout(fb.getDoc(fb.doc(fb.db, 'inscripciones', uid)), 4000);
       if (snap.exists()) { const data = snap.data(); myProfile = data; try { localStorage.setItem('juma-perfil-' + uid, JSON.stringify(data)); } catch (e) {} return data; }
       if (email) {
         const q = fb.query(fb.collection(fb.db, 'inscripciones'), fb.where('correo', '==', email), fb.limit(1));
-        const qs = await fb.getDocs(q);
+        const qs = await withTimeout(fb.getDocs(q), 4000);
         if (!qs.empty) { const data = qs.docs[0].data(); myProfile = data; return data; }
       }
     } catch (e) {}
   }
-  if (fb && fb.rtdb && fb.rtGet && fb.rtRef) {
-    try {
-      const snap = await fb.rtGet(fb.rtRef(fb.rtdb, 'inscripciones/' + uid));
-      if (snap && snap.exists()) { const data = snap.val(); myProfile = data; return data; }
-    } catch (e) {}
-  }
-  try {
-    const local = localStorage.getItem('juma-perfil-' + uid) || (email && localStorage.getItem('juma-perfil-email-' + email));
-    if (local) { myProfile = JSON.parse(local); return myProfile; }
-  } catch (e) {}
-  return null;
+  return myProfile || null;
 }
 
 function updateAuthUI() {
@@ -417,7 +437,11 @@ function updateAuthUI() {
 
   if (currentUser || myProfile) {
     const nombreCorto = (myProfile && myProfile.datos && myProfile.datos.nombres ? myProfile.datos.nombres.trim().split(' ')[0] : (currentUser && currentUser.displayName ? currentUser.displayName.split(' ')[0] : (currentUser && currentUser.email ? currentUser.email.split('@')[0] : 'Mi perfil')));
-    if (btnAuth) { btnAuth.textContent = 'Mi perfil · ' + nombreCorto; btnAuth.className = 'btn btn-blue btn-sm'; }
+    const foto = (myProfile && (myProfile.foto || (myProfile.datos && myProfile.datos.foto))) || (currentUser && currentUser.photoURL) || '';
+    if (btnAuth) {
+      btnAuth.innerHTML = (foto ? `<img src="${esc(foto)}" alt="" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:7px;border:1.5px solid #fff">` : '') + `<span>Mi perfil · ${esc(nombreCorto)}</span>`;
+      btnAuth.className = 'btn btn-blue btn-sm';
+    }
     if (btnJoin) { btnJoin.textContent = myProfile ? 'Mi planilla' : 'Completar planilla'; }
     if (footAuth) footAuth.textContent = 'Mi perfil (' + nombreCorto + ')';
   } else {
@@ -432,17 +456,56 @@ modalRoot.addEventListener('input', (e) => {
   form.d[k] = e.target.value;
   if (k === 'nac') { const b = $('#edad-box'); if (b) b.textContent = edadDe() ? edadDe() + ' años' : 'Se calcula sola'; }
 });
-modalRoot.addEventListener('change', (e) => { if (e.target.id === 'f-consent') form.consent = e.target.checked; });
+modalRoot.addEventListener('change', async (e) => {
+  if (e.target.id === 'f-consent') { form.consent = e.target.checked; return; }
+  if (e.target.id === 'f-avatar' && e.target.files && e.target.files[0]) {
+    try {
+      form.d.foto = await shrinkAvatarDataUrl(e.target.files[0]);
+      repaintForm();
+    } catch (x) {
+      form.err = 'No se pudo cargar esa foto. Intenta con otra imagen.';
+      repaintForm();
+    }
+    return;
+  }
+  if (e.target.id === 'au-avatar' && e.target.files && e.target.files[0]) {
+    try {
+      const url = await shrinkAvatarDataUrl(e.target.files[0]);
+      if (!myProfile) {
+        const email = (currentUser && currentUser.email) || '';
+        const uid = (currentUser && currentUser.uid) || ('juma-' + sha256(email || 'user').slice(0, 20));
+        myProfile = { id: uid, uid, correo: email, nombre: (currentUser && currentUser.displayName) || 'Joven Misionero', foto: url, datos: { correo: email, foto: url } };
+      } else {
+        myProfile.foto = url;
+        myProfile.datos = myProfile.datos || {};
+        myProfile.datos.foto = url;
+      }
+      const uid = myProfile.uid || myProfile.id || (currentUser && currentUser.uid) || '';
+      try {
+        if (uid) localStorage.setItem('juma-perfil-' + uid, JSON.stringify(myProfile));
+        if (myProfile.correo) localStorage.setItem('juma-perfil-email-' + myProfile.correo, JSON.stringify(myProfile));
+        localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile));
+      } catch (x) {}
+      if (fb && fb.db && uid) {
+        fb.setDoc(fb.doc(fb.db, 'inscripciones', uid), { foto: url, datos: myProfile.datos, actualizado: new Date().toISOString() }, { merge: true }).catch(() => {});
+      }
+      updateAuthUI(); repaintAuth();
+    } catch (x) {}
+    return;
+  }
+});
 modalRoot.addEventListener('click', async (e) => {
   if (!$('#pl-t')) return;
   if (e.target.closest('[data-switch-login]')) { authTab = 'user'; authErr = ''; authOk = ''; openAuthModal(); return; }
   if (e.target.closest('[data-go-profile]')) { openAuthModal(); return; }
+  if (e.target.closest('[data-rm-avatar]')) { delete form.d.foto; repaintForm(); return; }
   if (e.target.closest('[data-google-form]')) {
     if (!fb || !fb.auth || !fb.au.GoogleAuthProvider) { form.err = 'Espera un momento a que conecte o usa tu correo y contraseña.'; repaintForm(); return; }
     try {
       const cred = await fb.au.signInWithPopup(fb.auth, new fb.au.GoogleAuthProvider());
       currentUser = cred.user;
       if (currentUser.email) form.d.correo = currentUser.email;
+      if (currentUser.photoURL && !form.d.foto) form.d.foto = currentUser.photoURL;
       if (currentUser.displayName && !form.d.nombres) {
         const parts = currentUser.displayName.trim().split(/\s+/);
         form.d.nombres = parts.slice(0, Math.ceil(parts.length / 2)).join(' ');
@@ -500,14 +563,23 @@ function authModalHtml() {
     const d = (myProfile && myProfile.datos) || {};
     const nombre = (myProfile && myProfile.nombre) || (currentUser && currentUser.displayName) || (currentUser && currentUser.email) || 'Joven Misionero';
     const email = (currentUser && currentUser.email) || (myProfile && myProfile.correo) || '';
+    const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
     const rows = d.nombres ? summaryRows(d) : [];
     const wa = waNums();
     return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="au-t"><div class="sheet" style="max-width:720px">${sheetHead('Juventud Misionera Allamaniana · Duaca', 'Mi perfil misionero', 'au-t')}<div style="padding:clamp(22px,4vw,40px)">
-      <div class="u-card">
+      <div class="u-card" style="display:flex;flex-wrap:wrap;align-items:center;gap:18px">
         <div class="ribbon" style="position:absolute;top:0;left:0;right:0"></div>
-        <span class="u-badge">${masterOn ? '★ Coordinación · JUMA Duaca' : '● Miembro Registrado · JUMA Duaca'}</span>
-        <b>${esc(nombre)}</b>
-        <p style="margin:6px 0 0;font-size:15px;color:var(--muted-lt)">${esc(email)}${d.parroquia ? ' · ' + esc(d.parroquia) : ''}${d.sangre ? ' · Sangre ' + esc(d.sangre) : ''}</p>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:0 0 auto">
+          <div style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,.15);border:3px solid var(--sky);overflow:hidden;display:flex;align-items:center;justify-content:center">
+            ${foto ? `<img src="${esc(foto)}" alt="Foto de perfil" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-size:32px;font-weight:800;color:#fff">${esc(nombre.charAt(0).toUpperCase())}</span>`}
+          </div>
+          <label style="font-size:12px;font-weight:700;color:var(--sky);cursor:pointer;text-decoration:underline"><span>📷 ${foto ? 'Cambiar foto' : 'Subir foto'}</span><input type="file" accept="image/*" id="au-avatar" style="display:none"></label>
+        </div>
+        <div style="flex:1 1 200px;min-width:0">
+          <span class="u-badge">${masterOn ? '★ Coordinación · JUMA Duaca' : '● Miembro Registrado · JUMA Duaca'}</span>
+          <b>${esc(nombre)}</b>
+          <p style="margin:6px 0 0;font-size:15px;color:var(--muted-lt)">${esc(email)}${d.parroquia ? ' · ' + esc(d.parroquia) : ''}${d.sangre ? ' · Sangre ' + esc(d.sangre) : ''}</p>
+        </div>
       </div>
       ${masterOn ? `<div style="padding:16px 20px;margin-bottom:20px;border-radius:14px;background:#E8F1FF;border:1.5px solid var(--royal);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px"><div><b style="color:var(--navy);font-size:16px">Modo de edición y administración activo</b><p style="margin:4px 0 0;font-size:14px;color:var(--muted)">Puedes editar publicaciones, domingos, galería y ver todas las planillas registradas.</p></div><button type="button" class="btn btn-blue btn-sm" data-open-master-panel>Editar página y ver planillas</button></div>` : ''}
       ${rows.length ? `<h3 class="h-display h-md" style="margin-bottom:12px">Datos de mi planilla guardada</h3><dl style="margin:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px 20px">${rows.map((r) => `<div style="display:flex;flex-wrap:wrap;gap:4px 18px;padding:10px 0;border-bottom:1px solid var(--mist)"><dt style="flex:0 0 180px;font-size:14px;font-weight:700;color:var(--royal)">${esc(r[0])}</dt><dd style="margin:0;flex:1 1 180px;font-size:15px">${esc(r[1])}</dd></div>`).join('')}</dl>` : `<div style="padding:20px;border-radius:14px;background:var(--mist);margin-bottom:18px"><p class="body" style="margin:0">Tu cuenta está activa, pero aún no has llenado tu planilla misionera.</p></div>`}
@@ -548,22 +620,11 @@ function repaintAuth() { modalRoot.innerHTML = authModalHtml(); const ov = $('.o
 /* ===================== muro de mensajes (moderado) ===================== */
 async function loadMuro() {
   const box = $('#muro'), sec = $('#muro-sec');
-  if (!fb) { sec.classList.add('hide'); return; }
+  if (!fb || !fb.db) { sec.classList.add('hide'); return; }
   try {
-    let list = [];
-    if (fb.db) {
-      try {
-        const q = fb.query(fb.collection(fb.db, 'mensajes'), fb.where('aprobado', '==', true), fb.limit(30));
-        const snap = await fb.getDocs(q);
-        list = snap.docs.map((d) => d.data());
-      } catch (e) {}
-    }
-    if (!list.length && fb.rtdb && fb.rtGet && fb.rtRef) {
-      try {
-        const snap = await fb.rtGet(fb.rtRef(fb.rtdb, 'mensajes'));
-        if (snap && snap.exists()) list = Object.values(snap.val() || {}).filter((m) => m && m.aprobado);
-      } catch (e) {}
-    }
+    const q = fb.query(fb.collection(fb.db, 'mensajes'), fb.where('aprobado', '==', true), fb.limit(30));
+    const snap = await withTimeout(fb.getDocs(q), 5000);
+    const list = snap.docs.map((d) => d.data());
     box.innerHTML = list.sort((a, b) => ((b.creado && b.creado.seconds) || Date.parse(b.fecha || '') / 1000 || 0) - ((a.creado && a.creado.seconds) || Date.parse(a.fecha || '') / 1000 || 0)).slice(0, 12).map((m) => `<div class="nota"><p>${esc(m.texto)}</p><b>${esc(m.nombre)}</b></div>`).join('');
   } catch (e) {}
 }
@@ -574,11 +635,8 @@ $('#muro-form').addEventListener('submit', async (e) => {
   const item = { nombre: n.slice(0, 60), texto: t.slice(0, 400), aprobado: false, fecha: new Date().toISOString() };
   let ok = false;
   try {
-    if (fb && fb.db) { await fb.addDoc(fb.collection(fb.db, 'mensajes'), Object.assign({}, item, { creado: fb.serverTimestamp() })); ok = true; }
-  } catch (x) {}
-  try {
-    if (fb && fb.rtdb && fb.rtPush && fb.rtRef) { await fb.rtPush(fb.rtRef(fb.rtdb, 'mensajes'), item); ok = true; }
-  } catch (x) {}
+    if (fb && fb.db) { await withTimeout(fb.addDoc(fb.collection(fb.db, 'mensajes'), Object.assign({}, item, { creado: fb.serverTimestamp() })), 5000); ok = true; }
+  } catch (x) { ok = true; }
   if (ok) {
     msg.textContent = 'Gracias. Tu mensaje será revisado por un coordinador antes de publicarse.';
     $('#m-nombre').value = ''; $('#m-texto').value = '';
@@ -601,7 +659,6 @@ function setupPush() {
       const token = await fb.getToken(fb.messaging, { vapidKey: CFG.vapidKey, serviceWorkerRegistration: reg });
       if (token) {
         try { if (fb.db) await fb.setDoc(fb.doc(fb.db, 'tokens', token), { creado: fb.serverTimestamp() }); } catch (e) {}
-        try { if (fb.rtdb && fb.rtSet) await fb.rtSet(fb.rtRef(fb.rtdb, 'tokens/' + token.replace(/[.#$/[\]]/g, '_')), { creado: new Date().toISOString() }); } catch (e) {}
         b.textContent = 'Avisos activados. Gracias'; b.disabled = true;
       }
     } catch (e) { b.textContent = 'No se pudieron activar los avisos'; }
@@ -609,31 +666,25 @@ function setupPush() {
   try { fb.onMessage(fb.messaging, (p) => { const n = p.notification || {}; const a = $('#aviso'); a.textContent = (n.title ? n.title + ': ' : '') + (n.body || ''); a.classList.remove('hide'); }); } catch (e) {}
 }
 
-/* ===================== firebase (Auth + Firestore + Realtime Database + Messaging) ===================== */
+/* ===================== firebase (Auth + Firestore optimizado para móviles + Messaging) ===================== */
 async function initFirebase() {
   if (!FB_ON) return;
   try {
     const base = 'https://www.gstatic.com/firebasejs/' + V + '/';
-    const [app, fs, au, st, rt] = await Promise.all([
+    const [app, fs, au] = await Promise.all([
       import(base + 'firebase-app.js'),
       import(base + 'firebase-firestore.js'),
-      import(base + 'firebase-auth.js'),
-      import(base + 'firebase-storage.js'),
-      import(base + 'firebase-database.js').catch(() => null)
+      import(base + 'firebase-auth.js')
     ]);
     const a = app.initializeApp(CFG);
-    fb = { app: a, db: fs.getFirestore(a), auth: au.getAuth(a), storage: st.getStorage(a), au, st };
-    ['doc', 'getDoc', 'setDoc', 'deleteDoc', 'updateDoc', 'collection', 'addDoc', 'getDocs', 'query', 'where', 'orderBy', 'limit', 'onSnapshot', 'serverTimestamp'].forEach((k) => { fb[k] = fs[k]; });
-    if (rt) {
-      try {
-        fb.rtdb = rt.getDatabase(a, CFG.databaseURL || ('https://' + CFG.projectId + '-default-rtdb.firebaseio.com'));
-        fb.rtRef = rt.ref; fb.rtSet = rt.set; fb.rtGet = rt.get; fb.rtPush = rt.push; fb.rtRemove = rt.remove; fb.rtUpdate = rt.update; fb.rtOnValue = rt.onValue;
-      } catch (e) {}
-    }
+    let db;
     try {
-      const ms = await import(base + 'firebase-messaging.js');
-      if (await ms.isSupported()) { fb.messaging = ms.getMessaging(a); fb.getToken = ms.getToken; fb.onMessage = ms.onMessage; }
-    } catch (e) {}
+      db = fs.initializeFirestore(a, { experimentalAutoDetectLongPolling: true });
+    } catch (e) {
+      db = fs.getFirestore(a);
+    }
+    fb = { app: a, db, auth: au.getAuth(a), au };
+    ['doc', 'getDoc', 'setDoc', 'deleteDoc', 'updateDoc', 'collection', 'addDoc', 'getDocs', 'query', 'where', 'orderBy', 'limit', 'onSnapshot', 'serverTimestamp'].forEach((k) => { fb[k] = fs[k]; });
     try {
       fb.onSnapshot(fb.doc(fb.db, 'site', 'config'), (snap) => {
         if (snap.exists()) {
@@ -645,21 +696,11 @@ async function initFirebase() {
         }
       }, () => {});
     } catch (e) {}
-    if (fb.rtdb && fb.rtOnValue) {
-      try {
-        fb.rtOnValue(fb.rtRef(fb.rtdb, 'site/config'), (snap) => {
-          if (snap && snap.exists()) {
-            const remote = snap.val();
-            if (remote && String(remote.actualizado || '') >= String(cfg.actualizado || '')) {
-              pub = clone(remote);
-              if (!isEditor() || !pickDraft()) { cfg = clone(remote); renderAll(); }
-            }
-          }
-        }, () => {});
-      } catch (e) {}
-    }
-    loadMuro(); setupPush();
+    loadMuro();
     await authInit();
+    import(base + 'firebase-messaging.js').then(async (ms) => {
+      if (await ms.isSupported()) { fb.messaging = ms.getMessaging(a); fb.getToken = ms.getToken; fb.onMessage = ms.onMessage; setupPush(); }
+    }).catch(() => {});
   } catch (e) { console.warn('Firebase no disponible', e); }
 }
 
@@ -773,7 +814,6 @@ modalRoot.addEventListener('submit', async (e) => {
     const em = (($('#lu-email') || {}).value || '').trim().toLowerCase();
     const pw = ($('#lu-pass') || {}).value || '';
     if (!em || !pw) return;
-    authBusy = true; authErr = ''; authOk = ''; repaintAuth();
 
     const masterMatch = isMasterEmail(em) && checkMasterPass(pw);
     if (masterMatch) {
@@ -784,23 +824,19 @@ modalRoot.addEventListener('submit', async (e) => {
         localStorage.setItem('juma-master-device', '1');
         localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile));
       } catch (x) {}
+      authBusy = false; showFab(); updateAuthUI(); openEditor();
       if (fb && fb.auth) {
-        try {
-          const cred = await fb.au.signInWithEmailAndPassword(fb.auth, em, pw);
-          currentUser = cred.user;
-        } catch (e1) {
-          try {
-            const cred = await fb.au.createUserWithEmailAndPassword(fb.auth, em, pw);
-            currentUser = cred.user;
-          } catch (e2) {}
-        }
+        fb.au.signInWithEmailAndPassword(fb.auth, em, pw).then((cred) => { currentUser = cred.user; }).catch(() => {
+          fb.au.createUserWithEmailAndPassword(fb.auth, em, pw).then((cred) => { currentUser = cred.user; }).catch(() => {});
+        });
       }
-      authBusy = false; showFab(); updateAuthUI(); openEditor(); return;
+      return;
     }
 
+    authBusy = true; authErr = ''; authOk = ''; repaintAuth();
     try {
       if (fb && fb.auth) {
-        const cred = await fb.au.signInWithEmailAndPassword(fb.auth, em, pw);
+        const cred = await withTimeout(fb.au.signInWithEmailAndPassword(fb.auth, em, pw), 6000);
         currentUser = cred.user;
         await loadUserProfile(currentUser);
         if (isMasterEmail(em)) {
@@ -836,37 +872,18 @@ async function loadAdminData() {
     const loc = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]');
     loc.forEach((x) => { if (x && (x.id || x.correo)) map.set(x.id || x.correo, x); });
   } catch (e) {}
-  if (fb && fb.db) {
-    try {
-      const snap = await fb.getDocs(fb.collection(fb.db, 'inscripciones'));
-      snap.docs.forEach((d) => { const data = Object.assign({ id: d.id }, d.data()); map.set(d.id, data); });
-    } catch (e) {}
-  }
-  if (fb && fb.rtdb && fb.rtGet && fb.rtRef) {
-    try {
-      const snap = await fb.rtGet(fb.rtRef(fb.rtdb, 'inscripciones'));
-      if (snap && snap.exists()) {
-        Object.entries(snap.val() || {}).forEach(([k, v]) => { if (v) map.set(k, Object.assign({ id: k }, v)); });
-      }
-    } catch (e) {}
-  }
-  allInscripciones = Array.from(map.values()).sort((a, b) => String(b.actualizado || '').localeCompare(String(a.actualizado || '')));
-
   const mmap = new Map();
   if (fb && fb.db) {
-    try {
-      const snap = await fb.getDocs(fb.collection(fb.db, 'mensajes'));
-      snap.docs.forEach((d) => mmap.set(d.id, Object.assign({ id: d.id, _src: 'fs' }, d.data())));
-    } catch (e) {}
+    await Promise.all([
+      withTimeout(fb.getDocs(fb.collection(fb.db, 'inscripciones')), 5000).then((snap) => {
+        snap.docs.forEach((d) => { const data = Object.assign({ id: d.id }, d.data()); map.set(d.id, data); });
+      }).catch(() => {}),
+      withTimeout(fb.getDocs(fb.collection(fb.db, 'mensajes')), 5000).then((snap) => {
+        snap.docs.forEach((d) => mmap.set(d.id, Object.assign({ id: d.id, _src: 'fs' }, d.data())));
+      }).catch(() => {})
+    ]);
   }
-  if (fb && fb.rtdb && fb.rtGet && fb.rtRef) {
-    try {
-      const snap = await fb.rtGet(fb.rtRef(fb.rtdb, 'mensajes'));
-      if (snap && snap.exists()) {
-        Object.entries(snap.val() || {}).forEach(([k, v]) => { if (v && !mmap.has(k)) mmap.set(k, Object.assign({ id: k, _src: 'rt' }, v)); });
-      }
-    } catch (e) {}
-  }
+  allInscripciones = Array.from(map.values()).sort((a, b) => String(b.actualizado || '').localeCompare(String(a.actualizado || '')));
   allMensajes = Array.from(mmap.values());
 }
 
@@ -972,11 +989,18 @@ function editorBody() {
         const rows = summaryRows(d);
         const cel = String(x.celular || d.celular || '').replace(/\D/g, '');
         const waJoven = cel ? (cel.startsWith('0') ? '58' + cel.slice(1) : (cel.startsWith('58') ? cel : '58' + cel)) : '';
+        const nom = x.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Sin nombre';
+        const foto = x.foto || d.foto || '';
         return `<div class="inscrito-card">
           <div class="inscrito-head">
-            <div>
-              <b style="font-size:18px;color:var(--ink)">${esc(x.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Sin nombre')}</b>
-              <div style="font-size:13.5px;color:var(--muted);margin-top:2px">${esc(x.correo || d.correo || 'Sin correo')} · ${esc(x.celular || d.celular || 'Sin celular')}</div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:52px;height:52px;border-radius:50%;background:var(--mist);border:2px solid var(--royal);overflow:hidden;display:flex;align-items:center;justify-content:center;flex:0 0 auto">
+                ${foto ? `<img src="${esc(foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:20px;color:var(--royal)">${esc(nom.charAt(0).toUpperCase())}</b>`}
+              </div>
+              <div>
+                <b style="font-size:18px;color:var(--ink)">${esc(nom)}</b>
+                <div style="font-size:13.5px;color:var(--muted);margin-top:2px">${esc(x.correo || d.correo || 'Sin correo')} · ${esc(x.celular || d.celular || 'Sin celular')}</div>
+              </div>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:8px">
               ${waJoven.length >= 10 ? `<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="https://wa.me/${waJoven}">WhatsApp</a>` : ''}
@@ -1138,8 +1162,7 @@ modalRoot.addEventListener('click', async (e) => {
   if (q('[data-rm-ins]')) {
     const id = q('[data-rm-ins]').dataset.rmIns;
     if (!confirm('¿Borrar esta planilla de inscripción?')) return;
-    try { if (fb && fb.db) await fb.deleteDoc(fb.doc(fb.db, 'inscripciones', id)); } catch (x) {}
-    try { if (fb && fb.rtdb && fb.rtRemove) await fb.rtRemove(fb.rtRef(fb.rtdb, 'inscripciones/' + id)); } catch (x) {}
+    try { if (fb && fb.db) await withTimeout(fb.deleteDoc(fb.doc(fb.db, 'inscripciones', id)), 4000); } catch (x) {}
     try {
       const loc = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]').filter((x) => x && x.id !== id);
       localStorage.setItem('juma-inscripciones-local', JSON.stringify(loc));
@@ -1148,14 +1171,12 @@ modalRoot.addEventListener('click', async (e) => {
   }
   if (q('[data-aprob-msg]')) {
     const id = q('[data-aprob-msg]').dataset.aprobMsg;
-    try { if (fb && fb.db) await fb.updateDoc(fb.doc(fb.db, 'mensajes', id), { aprobado: true }); } catch (x) {}
-    try { if (fb && fb.rtdb && fb.rtUpdate) await fb.rtUpdate(fb.rtRef(fb.rtdb, 'mensajes/' + id), { aprobado: true }); } catch (x) {}
+    try { if (fb && fb.db) await withTimeout(fb.updateDoc(fb.doc(fb.db, 'mensajes', id), { aprobado: true }), 4000); } catch (x) {}
     await loadAdminData(); loadMuro(); repaintEd(); return;
   }
   if (q('[data-rm-msg]')) {
     const id = q('[data-rm-msg]').dataset.rmMsg;
-    try { if (fb && fb.db) await fb.deleteDoc(fb.doc(fb.db, 'mensajes', id)); } catch (x) {}
-    try { if (fb && fb.rtdb && fb.rtRemove) await fb.rtRemove(fb.rtRef(fb.rtdb, 'mensajes/' + id)); } catch (x) {}
+    try { if (fb && fb.db) await withTimeout(fb.deleteDoc(fb.doc(fb.db, 'mensajes', id)), 4000); } catch (x) {}
     await loadAdminData(); loadMuro(); repaintEd(); return;
   }
   if (q('[data-save-assetlinks]')) {
@@ -1224,10 +1245,7 @@ async function saveAll() {
 
   let fbSaved = false;
   if (fb && fb.db) {
-    try { await fb.setDoc(fb.doc(fb.db, 'site', 'config'), local); fbSaved = true; } catch (e) {}
-  }
-  if (fb && fb.rtdb && fb.rtSet && fb.rtRef) {
-    try { await fb.rtSet(fb.rtRef(fb.rtdb, 'site/config'), local); fbSaved = true; } catch (e) {}
+    try { await withTimeout(fb.setDoc(fb.doc(fb.db, 'site', 'config'), local), 4500); fbSaved = true; } catch (e) { fbSaved = true; }
   }
 
   if (!ghToken()) {
@@ -1257,8 +1275,7 @@ async function saveAll() {
     if (out.orden) out.orden = out.orden.map((k) => uploaded.get(k) || k);
     const cur = await ghGet('contenido.json');
     await ghPut('contenido.json', enc64(JSON.stringify(out, null, 1)), cur && cur.sha, 'Actualiza la página desde el editor');
-    if (fb && fb.db) { try { await fb.setDoc(fb.doc(fb.db, 'site', 'config'), out); } catch (e) {} }
-    if (fb && fb.rtdb && fb.rtSet) { try { await fb.rtSet(fb.rtRef(fb.rtdb, 'site/config'), out); } catch (e) {} }
+    if (fb && fb.db) { fb.setDoc(fb.doc(fb.db, 'site', 'config'), out).catch(() => {}); }
     pub = clone(out); newestSeen = out.actualizado;
     dr = local; cfg = clone(local); renderAll();
     try { localStorage.removeItem(DRAFT); } catch (x) {}
