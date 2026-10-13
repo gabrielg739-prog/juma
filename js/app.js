@@ -310,7 +310,7 @@ function checkUpcomingReminders(forceBanner = false) {
     document.body.appendChild(banner);
   }
   const gUrl = googleCalUrl(target);
-  banner.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px"><b style="color:var(--sky);font-size:14px">🔔 Recordatorio JUMA · ${esc(labelWhen)}</b><button type="button" aria-label="Cerrar recordatorio" style="background:none;border:0;color:#fff;cursor:pointer;font-size:15px;line-height:1;padding:0 2px" onclick="this.closest('#juma-rem-banner').remove()">✕</button></div><p style="margin:5px 0 10px;color:#E8F1FF"><b>${esc(target.title)}</b><br><span style="font-size:12.5px;color:var(--muted-lt)">${esc(target.badge)} · ${esc(hora())} · ${esc(lugar())}</span></p><div style="display:flex;flex-wrap:wrap;gap:8px"><a class="btn btn-blue btn-sm" style="padding:6px 12px;font-size:12px" target="_blank" rel="noopener" href="${esc(gUrl)}">📅 Abrir en Google Calendar</a><button type="button" class="btn btn-outline btn-sm" style="padding:6px 12px;font-size:12px;color:#fff;border-color:rgba(255,255,255,.35)" data-dl-ics>📲 Guardar todo (.ics)</button></div>`;
+  banner.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px"><b style="color:var(--sky);font-size:14px">🔔 Recordatorio JUMA · ${esc(labelWhen)}</b><button type="button" aria-label="Cerrar recordatorio" style="background:none;border:0;color:#fff;cursor:pointer;font-size:15px;line-height:1;padding:0 2px" onclick="this.closest('#juma-rem-banner').remove()">✕</button></div><p style="margin:5px 0 10px;color:#E8F1FF"><b>${esc(target.title)}</b><br><span style="font-size:12.5px;color:var(--muted-lt)">${esc(target.badge)} · ${esc(hora())} · ${esc(lugar())}</span></p><div style="display:flex;flex-wrap:wrap;gap:8px"><a class="btn btn-blue btn-sm" style="padding:6px 12px;font-size:12px" target="_blank" rel="noopener" href="${esc(gUrl)}">📅 Abrir en Google Calendar</a><button type="button" class="btn btn-sm" style="padding:6px 12px;font-size:12px;background:rgba(255,255,255,0.15);color:#fff;border:1.5px solid rgba(255,255,255,0.4)" data-dl-ics>📲 Guardar todo (.ics)</button></div>`;
 }
 
 function canUseGoogleCalendar() {
@@ -946,7 +946,7 @@ function selfieBoxHtml(target) {
     <p style="margin:0 0 10px;font-size:13px;color:#CFE2FF">Ubica tu rostro en el círculo y pulsa «Capturar foto»</p>
     <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px">
       <button type="button" class="btn btn-white btn-sm" data-capture-selfie style="min-height:38px;padding:0 16px">📸 Capturar foto</button>
-      <button type="button" class="btn btn-outline btn-sm" data-flip-selfie="${esc(target)}" style="min-height:38px;padding:0 12px;background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.4)">🔄 Voltear cámara</button>
+      <button type="button" class="btn btn-sm" data-flip-selfie="${esc(target)}" style="min-height:38px;padding:0 12px;background:rgba(255,255,255,.16);color:#fff;border:1.5px solid rgba(255,255,255,.45)">🔄 Voltear cámara</button>
       <button type="button" class="btn btn-danger btn-sm" data-cancel-selfie style="min-height:38px;padding:0 12px">Cancelar</button>
     </div>
   </div>`;
@@ -1093,6 +1093,8 @@ function checkMandatoryPhotoGate() {
 /* ===================== Generador de Carnet Misionero y Mockup (Hombre / Mujer) ===================== */
 let carnetViewMode = 'carnet'; // 'carnet' | 'mockup'
 let carnetGenderOverride = ''; // '' | 'Hombre' | 'Mujer'
+const generatedMockups = new Set();
+const mockupGenderMap = new Map();
 
 function detectGender(rec) {
   const d = (rec && rec.datos) || {};
@@ -1134,8 +1136,7 @@ function getCarnetDisplayData(rec) {
   const foto = (rec && (rec.foto || d.foto)) || '';
   const qrPayload = qrPayloadFor(rec || {});
   const qrUrl = qrImgUrl(qrPayload, 260);
-  const sangre = d.sangre || rec?.sangre || '';
-  return { fullNom, shortNom: shortNom.toUpperCase(), rolUpper, cedulaTxt, subTxt, foto, qrPayload, qrUrl, gender, sangre };
+  return { fullNom, shortNom: shortNom.toUpperCase(), rolUpper, cedulaTxt, subTxt, foto, qrPayload, qrUrl, gender };
 }
 
 function carnetCardOnlyHtml(rec, compact = false) {
@@ -1152,7 +1153,7 @@ function carnetCardOnlyHtml(rec, compact = false) {
     <div class="j-carnet-info" style="${compact ? 'padding:3% 4% 1%;gap:0' : ''}">
       <span class="j-carnet-rol" style="${compact ? 'font-size:5.2px;letter-spacing:.08em' : ''}">${esc(info.rolUpper)}</span>
       <b class="j-carnet-nom" style="${compact ? 'font-size:9px;margin-top:1px' : ''}">${esc(info.shortNom)}</b>
-      <span class="j-carnet-ci" style="${compact ? 'font-size:6px;margin-top:1px' : ''}">${esc(info.subTxt)}${!compact && info.sangre ? ` · 🩸 ${esc(info.sangre)}` : ''}</span>
+      <span class="j-carnet-ci" style="${compact ? 'font-size:6px;margin-top:1px' : ''}">${esc(info.subTxt)}</span>
     </div>
     <div class="j-carnet-foot" style="${compact ? 'padding:7% 6% 5%;gap:5px;border-top-left-radius:50% 10px;border-top-right-radius:50% 10px' : ''}">
       <div class="j-carnet-qr" style="${compact ? 'width:26px;height:26px;padding:1.5px;border-radius:4px' : ''}">
@@ -1186,47 +1187,61 @@ function carnetMockupHtml(rec, forcedGender) {
 
 function carnetInteractiveSectionHtml(rec, contextKey = 'profile') {
   const info = getCarnetDisplayData(rec);
-  const g = carnetGenderOverride || info.gender;
-  const uid = (rec && (rec.id || rec.uid)) || 'me';
-  return `<div style="padding:20px;margin-bottom:20px;border-radius:16px;background:linear-gradient(180deg,#F2F7FF 0%,#FFFFFF 100%);border:1.5px solid var(--royal)">
-    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px">
-      <div>
-        <b style="display:block;font-size:18px;color:var(--navy)">🪪 Carnet Misionero Digital JUMA</b>
-        <p style="margin:2px 0 0;font-size:13.5px;color:var(--muted)">Incluye tu foto de perfil, rol, código QR de asistencia y vista previa en la franela oficial (${esc(g)}).</p>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
-        <button type="button" class="chip" data-carnet-view="carnet" aria-pressed="${carnetViewMode === 'carnet'}" style="min-height:36px;padding:0 12px;font-size:13px;border:2px solid ${carnetViewMode === 'carnet' ? '#2452C8' : '#B9C8E4'};background:${carnetViewMode === 'carnet' ? '#2452C8' : '#fff'};color:${carnetViewMode === 'carnet' ? '#fff' : '#0A1B3F'}">🪪 Solo Carnet</button>
-        <button type="button" class="chip" data-carnet-view="mockup" aria-pressed="${carnetViewMode === 'mockup'}" style="min-height:36px;padding:0 12px;font-size:13px;border:2px solid ${carnetViewMode === 'mockup' ? '#2452C8' : '#B9C8E4'};background:${carnetViewMode === 'mockup' ? '#2452C8' : '#fff'};color:${carnetViewMode === 'mockup' ? '#fff' : '#0A1B3F'}">👕 Ver Mockup (${esc(g)})</button>
-      </div>
+  const uid = String((rec && (rec.id || rec.uid)) || 'me');
+  const g = mockupGenderMap.get(uid) || carnetGenderOverride || info.gender;
+  const isMockupReady = generatedMockups.has(uid);
+
+  return `<div style="padding:22px;margin-bottom:20px;border-radius:18px;background:linear-gradient(180deg,#F2F7FF 0%,#FFFFFF 100%);border:2px solid var(--royal);box-shadow:0 10px 30px rgba(36,82,200,0.08)">
+    <div style="margin-bottom:14px">
+      <b style="display:block;font-size:18.5px;color:var(--navy)">🪪 Carnet Misionero Digital JUMA</b>
+      <p style="margin:4px 0 0;font-size:14px;color:var(--muted)">Tu carnet oficial con código QR y opción de generar el mockup realista en la franela misionera.</p>
     </div>
 
-    ${carnetViewMode === 'mockup' ? `<div style="display:flex;justify-content:center;gap:8px;margin-bottom:12px">
-      <button type="button" class="chip" data-carnet-gender="Hombre" aria-pressed="${g === 'Hombre'}" style="min-height:34px;padding:0 12px;font-size:12.5px;border:1.5px solid ${g === 'Hombre' ? '#2452C8' : '#B9C8E4'};background:${g === 'Hombre' ? '#E8F1FF' : '#fff'};color:#0A1B3F">👦 Mockup Hombre</button>
-      <button type="button" class="chip" data-carnet-gender="Mujer" aria-pressed="${g === 'Mujer'}" style="min-height:34px;padding:0 12px;font-size:12.5px;border:1.5px solid ${g === 'Mujer' ? '#2452C8' : '#B9C8E4'};background:${g === 'Mujer' ? '#E8F1FF' : '#fff'};color:#0A1B3F">👧 Mockup Mujer</button>
-    </div>` : ''}
-
-    <div style="padding:10px 0 16px">
-      ${carnetViewMode === 'mockup' ? carnetMockupHtml(rec, g) : carnetCardOnlyHtml(rec, false)}
+    <!-- 1. VISTA DEL CARNET -->
+    <div style="padding:10px 0 16px;text-align:center">
+      ${carnetCardOnlyHtml(rec, false)}
     </div>
 
-    ${contextKey === 'profile' ? `<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;padding:12px 14px;margin-bottom:14px;border-radius:12px;background:#fff;border:1px solid var(--line)">
-      <div class="fld" style="flex:1 1 160px">
-        <label for="au-quick-ci" style="font-size:12.5px">Cédula en el carnet (C.I.)</label>
-        <input id="au-quick-ci" type="text" value="${esc((rec && rec.datos && rec.datos.cedula) || '')}" placeholder="Ej.: 28.429.102" style="min-height:40px;font-size:14px">
-      </div>
-      <div class="fld" style="flex:1 1 150px">
-        <label for="au-quick-sexo" style="font-size:12.5px">Mockup predeterminado</label>
-        <select id="au-quick-sexo" style="min-height:40px;padding:0 10px;border-radius:10px;border:1.5px solid #B9C8E4;font-size:14px;background:#fff">
-          <option value="Hombre" ${info.gender === 'Hombre' ? 'selected' : ''}>👦 Hombre</option>
-          <option value="Mujer" ${info.gender === 'Mujer' ? 'selected' : ''}>👧 Mujer</option>
-        </select>
-      </div>
-      <button type="button" class="btn btn-soft btn-sm" data-save-quick-carnet style="min-height:40px">Actualizar datos del carnet</button>
-    </div>` : ''}
+    <div style="display:flex;justify-content:center;margin-bottom:20px">
+      <button type="button" class="btn btn-blue btn-sm" data-dl-carnet-png="${esc(uid)}" style="min-height:44px;font-size:14px;font-weight:800;padding:0 24px">
+        📥 Descargar Carnet (PNG HD)
+      </button>
+    </div>
 
-    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px">
-      <button type="button" class="btn btn-blue btn-sm" data-dl-carnet-png="${esc(uid)}">📥 Descargar Carnet (PNG HD)</button>
-      <button type="button" class="btn btn-outline btn-sm" data-dl-mockup-png="${esc(uid)}" data-gender="${esc(g)}" style="background:#fff">👕 Descargar Mockup (${esc(g)})</button>
+    <!-- 2. SECCIÓN DEL MOCKUP CON BOTÓN GENERAR -->
+    <div style="padding:18px;border-radius:16px;background:${isMockupReady ? '#FFFFFF' : '#EBF3FF'};border:${isMockupReady ? '2px solid var(--royal)' : '1.5px dashed var(--royal)'};text-align:center">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <div>
+          <b style="font-size:15.5px;color:var(--navy);display:block;text-align:left">👕 Mockup en Franela Oficial JUMA (${esc(g)})</b>
+          <span style="font-size:12.5px;color:var(--muted);display:block;text-align:left">${isMockupReady ? '¡Mockup generado con éxito! Revísalo abajo y descárgalo cuando quieras.' : 'Toca «Generar» para ver el diseño en pantalla primero sin tener que descargarlo.'}</span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="chip" data-toggle-mock-gender="${esc(uid)}:Hombre" aria-pressed="${g === 'Hombre'}" style="min-height:32px;padding:0 10px;font-size:12px;border:1.5px solid ${g === 'Hombre' ? '#2452C8' : '#B9C8E4'};background:${g === 'Hombre' ? '#2452C8' : '#fff'};color:${g === 'Hombre' ? '#fff' : '#0A1B3F'}">👦 Hombre</button>
+          <button type="button" class="chip" data-toggle-mock-gender="${esc(uid)}:Mujer" aria-pressed="${g === 'Mujer'}" style="min-height:32px;padding:0 10px;font-size:12px;border:1.5px solid ${g === 'Mujer' ? '#2452C8' : '#B9C8E4'};background:${g === 'Mujer' ? '#2452C8' : '#fff'};color:${g === 'Mujer' ? '#fff' : '#0A1B3F'}">👧 Mujer</button>
+        </div>
+      </div>
+
+      ${!isMockupReady ? `
+        <div style="padding:22px 14px;background:#fff;border-radius:12px;border:1px solid #D2E3FC;margin-bottom:6px">
+          <div style="font-size:42px;margin-bottom:6px">👕🪪</div>
+          <b style="font-size:15px;color:var(--navy);display:block">¿Quieres ver cómo queda en la franela oficial?</b>
+          <p style="font-size:13.5px;color:var(--muted);margin:4px 0 16px">Al darle a Generar, se muestra primero aquí en pantalla y luego podrás descargarlo.</p>
+          <button type="button" class="btn btn-blue" data-action-generate-mockup="${esc(uid)}" style="min-height:46px;font-size:14.5px;font-weight:800;padding:0 26px">
+            ✨ Generar Mockup (${esc(g)})
+          </button>
+        </div>
+      ` : `
+        <!-- SE MUESTRA EL MOCKUP EN PANTALLA PRIMERO -->
+        <div style="margin-bottom:16px;box-shadow:0 8px 24px rgba(6,21,54,0.12);border-radius:14px;overflow:hidden">
+          ${carnetMockupHtml(rec, g)}
+        </div>
+        <!-- SOLO ASI LUEGO DE MOSTRARSE APARECE LA OPCION DE DESCARGAR -->
+        <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px">
+          <button type="button" class="btn btn-blue" data-dl-mockup-png="${esc(uid)}" data-gender="${esc(g)}" style="min-height:46px;font-size:14.5px;font-weight:800;padding:0 26px">
+            📥 Descargar Mockup (${esc(g)}) (PNG HD)
+          </button>
+        </div>
+      `}
     </div>
   </div>`;
 }
@@ -1262,6 +1277,28 @@ function roundRectPath(ctx, x, y, w, h, r) {
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
+}
+
+function drawQrOnCanvas(ctx, payload, x, y, size) {
+  try {
+    if (typeof window !== 'undefined' && window.qrcode) {
+      const qr = window.qrcode(0, 'M');
+      qr.addData(payload);
+      qr.make();
+      const count = qr.getModuleCount();
+      const cellSize = size / count;
+      ctx.fillStyle = '#000000';
+      for (let r = 0; r < count; r++) {
+        for (let c = 0; c < count; c++) {
+          if (qr.isDark(r, c)) {
+            ctx.fillRect(Math.round(x + c * cellSize), Math.round(y + r * cellSize), Math.ceil(cellSize), Math.ceil(cellSize));
+          }
+        }
+      }
+      return true;
+    }
+  } catch (e) {}
+  return false;
 }
 
 async function renderCarnetToCanvas(rec) {
@@ -1365,12 +1402,6 @@ async function renderCarnetToCanvas(rec) {
   ctx.font = '700 41px "Segoe UI", Arial, sans-serif';
   ctx.fillText(info.subTxt, W / 2, 998);
 
-  if (info.sangre) {
-    ctx.font = '800 26px "Segoe UI", Arial, sans-serif';
-    ctx.fillStyle = '#0F439E';
-    ctx.fillText('GRUPO SANGUÍNEO: ' + info.sangre, W / 2, 1044);
-  }
-
   /* Onda azul real inferior */
   ctx.save();
   ctx.beginPath();
@@ -1397,7 +1428,9 @@ async function renderCarnetToCanvas(rec) {
   ctx.fill();
   ctx.restore();
 
-  if (qrImg) {
+  const qrMargin = 16;
+  const qrDrawn = drawQrOnCanvas(ctx, info.qrPayload, qrBoxX + qrMargin, qrBoxY + qrMargin, qrBoxS - qrMargin * 2);
+  if (!qrDrawn && qrImg) {
     ctx.drawImage(qrImg, qrBoxX + 14, qrBoxY + 14, qrBoxS - 28, qrBoxS - 28);
   }
 
@@ -1496,6 +1529,14 @@ function qrPayloadFor(rec) {
   return 'JUMA:' + id;
 }
 function qrImgUrl(payload, size = 260) {
+  try {
+    if (typeof window !== 'undefined' && window.qrcode) {
+      const qr = window.qrcode(0, 'M');
+      qr.addData(payload);
+      qr.make();
+      return qr.createDataURL(Math.max(3, Math.floor(size / 30)), 4);
+    }
+  } catch (e) {}
   return 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&margin=10&ecc=M&data=' + encodeURIComponent(payload);
 }
 function asistenciasUltimos6Meses(rec) {
@@ -2246,11 +2287,27 @@ async function initFirebase() {
       }
     } catch (e) {}
     loadMuro();
+    loadPublicInscripciones();
     await authInit();
     import(base + 'firebase-messaging.js').then(async (ms) => {
       if (await ms.isSupported()) { fb.messaging = ms.getMessaging(a); fb.getToken = ms.getToken; fb.onMessage = ms.onMessage; setupPush(); }
     }).catch(() => {});
   } catch (e) { console.warn('Firebase no disponible', e); }
+}
+
+async function loadPublicInscripciones() {
+  if (!fb || !fb.db) return;
+  try {
+    const snap = await withTimeout(fb.getDocs(fb.collection(fb.db, 'inscripciones')), 6000);
+    if (snap && !snap.empty) {
+      const arr = [];
+      snap.docs.forEach((d) => arr.push(Object.assign({ id: d.id }, d.data())));
+      if (arr.length) {
+        allInscripciones = arr;
+        try { localStorage.setItem('juma-inscripciones-local', JSON.stringify(arr)); } catch (e) {}
+      }
+    }
+  } catch (e) {}
 }
 
 /* ===================== autenticación y detección automática de cuenta maestra ===================== */
@@ -2930,7 +2987,7 @@ function stopBirthdayAudio() {
     } catch (e) {}
   }
   bdayAudioPlaying = false;
-  updateBdaySoundBtn();
+  updateBdayCornetaBtn();
 }
 
 function playBirthdayAudio() {
@@ -2949,10 +3006,10 @@ function playBirthdayAudio() {
   if (p && p.then) {
     p.then(() => {
       bdayAudioPlaying = true;
-      updateBdaySoundBtn();
+      updateBdayCornetaBtn();
     }).catch(() => {
       bdayAudioPlaying = false;
-      updateBdaySoundBtn();
+      updateBdayCornetaBtn();
     });
   }
 }
@@ -2970,30 +3027,26 @@ function toggleBirthdayAudio() {
       bdayAudioPlaying = true;
     }).catch(() => {});
   }
-  updateBdaySoundBtn();
+  updateBdayCornetaBtn();
 }
 
-function updateBdaySoundBtn() {
-  const btn = $('#cumple-sound-toggle');
+function updateBdayCornetaBtn() {
+  const btn = $('#cumple-snd-toggle');
   if (!btn) return;
-  if (bdayAudioPlaying && bdayAudio && !bdayAudio.paused) {
-    btn.innerHTML = '🔊 Música sonando en bucle (14s) · Toca para silenciar';
-    btn.style.background = 'rgba(245,197,24,0.32)';
-  } else {
-    btn.innerHTML = '▶️ Toca aquí para reproducir música de cumpleaños (14s en bucle) 🔊';
-    btn.style.background = 'rgba(255,255,255,0.2)';
-  }
+  const isPlaying = bdayAudioPlaying && bdayAudio && !bdayAudio.paused;
+  btn.setAttribute('aria-pressed', isPlaying ? 'true' : 'false');
+  btn.classList.toggle('is-playing', isPlaying);
 }
 
 function generateEmojiRain(container) {
   if (!container) return;
   const emojis = ['🎉', '🎂', '🎈', '✨', '🥳', '🎁', '🎊', '💙', '🍰', '🌟', '🧁', '🙌'];
-  const count = 30;
+  const count = 20;
   for (let i = 0; i < count; i++) {
     const el = document.createElement('span');
     el.className = 'falling-emoji';
     el.textContent = emojis[i % emojis.length];
-    const left = (i * 3.1 + Math.random() * 3) % 96;
+    const left = (i * 4.8 + Math.random() * 3) % 96;
     const duration = 3.6 + (i % 4) * 0.9;
     const delay = (i * 0.22) % 3.5;
     const size = 22 + (i % 5) * 4.5;
@@ -3005,11 +3058,19 @@ function generateEmojiRain(container) {
   }
 }
 
+function isGabrielGomez(rec) {
+  if (!rec) return false;
+  const em = String(rec.correo || (rec.datos && rec.datos.correo) || '').trim().toLowerCase();
+  if (em === 'gabrielg739@gmail.com') return true;
+  const nom = String(rec.nombre || ((rec.datos && ((rec.datos.nombres || '') + ' ' + (rec.datos.apellidos || ''))) || '')).trim().toLowerCase();
+  return /gabriel.*g[oó]mez/i.test(nom);
+}
+
 function showBirthdayCelebration(rec, isPreview = false) {
   if ($('#juma-cumple-modal')) return;
   const d = (rec && rec.datos) || {};
-  const nombre = (rec && rec.nombre) || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Misionero(a)';
-  const primerNombre = nombre.split(/\s+/)[0] || 'Misionero(a)';
+  const nombre = (rec && rec.nombre) || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Gabriel Gómez';
+  const primerNombre = nombre.split(/\s+/)[0] || 'Gabriel';
   const foto = (rec && rec.foto) || d.foto || '';
 
   const tmpl = (dr && dr.cumpleanosMensaje) || (cfg && cfg.cumpleanosMensaje) || DEFAULT_CUMPLE_MSG;
@@ -3025,24 +3086,39 @@ function showBirthdayCelebration(rec, isPreview = false) {
   modal.innerHTML = `
     <div class="cumple-rain-container" id="cumple-rain"></div>
     <div class="cumple-box">
+      <!-- Video de fondo de los jóvenes celebrando (sin audio, en bucle) -->
+      <video class="cumple-bg-vid" autoplay muted loop playsinline preload="auto" disablepictureinpicture disableremoteplayback aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:0.38;pointer-events:none">
+        <source src="video/v-salon.mp4?v=2" type="video/mp4">
+      </video>
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,21,54,0.78) 0%,rgba(10,35,92,0.84) 50%,rgba(6,21,54,0.94) 100%);z-index:1;pointer-events:none"></div>
+
+      <!-- Botón de Corneta para silenciar o activar música (animado al sonar) -->
+      <button type="button" class="cumple-snd-btn is-playing" id="cumple-snd-toggle" data-toggle-sound aria-label="Música de cumpleaños" aria-pressed="true" title="Toca para silenciar o activar música">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path class="spk" d="M3 9.5v5h4l5 4.5v-14L7 9.5H3z"/>
+          <path class="w" d="M15.5 8.8a4.5 4.5 0 0 1 0 6.4M18.3 6a8.5 8.5 0 0 1 0 12"/>
+          <path class="x" d="M16 9.5l5 5M21 9.5l-5 5"/>
+        </svg>
+      </button>
+
+      <!-- Botón X para cerrar celebración -->
       <button type="button" class="cumple-close-btn" data-close-cumple aria-label="Cerrar celebración">✕</button>
-      ${isPreview ? '<div style="display:inline-block;padding:4px 14px;border-radius:99px;background:#F5C518;color:#061536;font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;margin-bottom:14px">Vista Previa · Cuenta Maestra</div>' : ''}
-      <div class="cumple-avatar-wrap">
-        <span class="crown" aria-hidden="true">👑</span>
-        ${foto ? `<img src="${esc(foto)}" alt="${esc(nombre)}" class="cumple-avatar-img">` : `<div class="cumple-avatar-img" style="background:var(--royal);display:flex;align-items:center;justify-content:center;font-size:46px;font-weight:900;color:#fff">${esc(primerNombre.charAt(0).toUpperCase())}</div>`}
-      </div>
-      <h2 class="cumple-title">¡Feliz Cumpleaños!</h2>
-      <div class="cumple-name">${esc(nombre)} 🎉</div>
-      <div class="cumple-msg">${esc(msgFinal)}</div>
-      <div>
-        <button type="button" class="cumple-sound-btn" id="cumple-sound-toggle" data-toggle-sound>
-          🔊 Música sonando en bucle · Toca para silenciar
-        </button>
-      </div>
-      <div>
-        <button type="button" class="btn btn-white btn-sm" data-close-cumple style="min-height:46px;padding:0 26px;font-weight:800;border-radius:12px">
-          ¡Muchas gracias! Continuar a la App ✕
-        </button>
+
+      <!-- Contenido en primer plano sobre el fondo azul -->
+      <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;width:100%">
+        ${isPreview ? '<div style="display:inline-block;padding:4px 14px;border-radius:99px;background:#F5C518;color:#061536;font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;margin-bottom:12px">Vista Previa · Cuenta Maestra</div>' : ''}
+        <div class="cumple-avatar-wrap">
+          <span class="crown" aria-hidden="true">👑</span>
+          ${foto ? `<img src="${esc(foto)}" alt="${esc(nombre)}" class="cumple-avatar-img">` : `<div class="cumple-avatar-img" style="background:var(--royal);display:flex;align-items:center;justify-content:center;font-size:46px;font-weight:900;color:#fff">${esc(primerNombre.charAt(0).toUpperCase())}</div>`}
+        </div>
+        <h2 class="cumple-title">¡Feliz Cumpleaños!</h2>
+        <div class="cumple-name">${esc(nombre)} 🎉</div>
+        <p class="cumple-msg-direct">${esc(msgFinal)}</p>
+        <div>
+          <button type="button" class="cumple-btn-continuar" data-close-cumple>
+            Continuar a la App ✕
+          </button>
+        </div>
       </div>
     </div>
   `;
@@ -3052,6 +3128,15 @@ function showBirthdayCelebration(rec, isPreview = false) {
 
   // Reproducir sonido en bucle (cortado a 14s)
   playBirthdayAudio();
+
+  // Escucha pasiva para teléfonos si el navegador bloquea autoplay sin gesto previo
+  const mobileStart = () => {
+    if (!bdayAudioPlaying) playBirthdayAudio();
+    modal.removeEventListener('pointerdown', mobileStart);
+    modal.removeEventListener('touchstart', mobileStart);
+  };
+  modal.addEventListener('pointerdown', mobileStart, { passive: true });
+  modal.addEventListener('touchstart', mobileStart, { passive: true });
 
   const closeFn = () => {
     stopBirthdayAudio();
@@ -3064,60 +3149,9 @@ function showBirthdayCelebration(rec, isPreview = false) {
   if (sndBtn) sndBtn.addEventListener('click', toggleBirthdayAudio);
 }
 
-function showBirthdayReminderModal(celebrants) {
-  if (!celebrants || !celebrants.length) return;
-  if ($('#juma-cumple-modal') || $('#juma-cumple-remind-modal') || modalRoot.firstChild) return;
-  const hoyStr = todayIso();
-  const seenKey = 'juma-bday-remind-seen-' + hoyStr;
-  try {
-    if (sessionStorage.getItem(seenKey)) return;
-    sessionStorage.setItem(seenKey, '1');
-  } catch (e) {}
-
-  const modal = document.createElement('div');
-  modal.id = 'juma-cumple-remind-modal';
-  modal.className = 'cumple-overlay';
-  modal.setAttribute('role', 'dialog');
-  modal.setAttribute('aria-modal', 'true');
-  modal.setAttribute('aria-label', 'Cumpleaños de Hoy en JUMA Duaca');
-
-  modal.innerHTML = `
-    <div class="cumple-box" style="max-width:500px;border-color:var(--sky)">
-      <button type="button" class="cumple-close-btn" data-close-remind aria-label="Cerrar aviso">✕</button>
-      <div style="font-size:42px;margin-bottom:6px">🎂🎉</div>
-      <h3 style="font-family:var(--display);font-size:25px;text-transform:uppercase;color:var(--sky);margin:0 0 6px">¡Hoy estamos de cumpleaños!</h3>
-      <p style="margin:0 0 16px;font-size:14.5px;color:#DCE7F8">En nuestra familia misionera de JUMA Duaca estamos de fiesta hoy:</p>
-      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;max-height:55vh;overflow-y:auto">
-        ${celebrants.map((c) => `
-          <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.1);padding:12px 14px;border-radius:14px;border:1.5px solid rgba(255,255,255,0.25);text-align:left">
-            <div style="width:48px;height:48px;border-radius:50%;overflow:hidden;border:2.5px solid #F5C518;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:var(--royal)">
-              ${c.foto ? `<img src="${esc(c.foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:19px;color:#fff">${esc(c.nombre.charAt(0).toUpperCase())}</b>`}
-            </div>
-            <div style="min-width:0;flex:1">
-              <b style="font-size:15.5px;color:#fff;display:block">${esc(c.nombre)}</b>
-              <span style="font-size:13px;color:#DCE7F8">¡Está cumpliendo años hoy! No olvides felicitarla/o.</span>
-            </div>
-            ${c.waUrl ? `<a href="${esc(c.waUrl)}" target="_blank" rel="noopener" class="btn btn-white btn-sm" style="min-height:36px;padding:0 12px;font-size:12.5px;flex:0 0 auto;font-weight:800">📲 Felicitar</a>` : ''}
-          </div>
-        `).join('')}
-      </div>
-      <button type="button" class="btn btn-white btn-sm" data-close-remind style="width:100%;min-height:44px;font-weight:800;border-radius:12px">
-        Entendido ✕
-      </button>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-  const closeFn = () => {
-    modal.classList.add('is-out');
-    setTimeout(() => modal.remove(), 200);
-  };
-  modal.querySelectorAll('[data-close-remind]').forEach((b) => b.addEventListener('click', closeFn));
-}
-
 function checkBirthdayCelebration(forcePreview = false, previewRecord = null) {
   if (forcePreview) {
-    showBirthdayCelebration(previewRecord || (myProfile && myProfile.nombre ? myProfile : { nombre: 'Misionero JUMA', foto: 'img/new-chicas-capilla.jpg' }), true);
+    showBirthdayCelebration(previewRecord || (myProfile && myProfile.nombre ? myProfile : { nombre: 'Gabriel Gómez', foto: 'img/new-chicas-capilla.jpg' }), true);
     return;
   }
   // No interrumpir si la puerta obligatoria de foto de perfil está activa
@@ -3127,17 +3161,11 @@ function checkBirthdayCelebration(forcePreview = false, previewRecord = null) {
   const reg = getRegisteredUserRecord();
   if (!reg) return;
 
-  // Si hoy es el cumpleaños del usuario actual
-  if (isUserBirthdayToday(reg)) {
+  // La animación a pantalla completa solo se activa para la Cuenta Maestra y el Coordinador Gabriel Gómez cuando es su cumpleaños
+  const canCelebrate = isMasterAccount() || isGabrielGomez(reg);
+  if (canCelebrate && isUserBirthdayToday(reg)) {
     showBirthdayCelebration(reg, false);
     return;
-  }
-
-  // Si no es su cumpleaños, verificar si algún otro miembro registrado cumple hoy
-  const bdayList = getCumpleanosList(cfg);
-  const celebrants = bdayList.filter((c) => c.esHoy);
-  if (celebrants.length > 0) {
-    showBirthdayReminderModal(celebrants);
   }
 }
 
@@ -3278,21 +3306,8 @@ function editorBody() {
             ${(d.enf === 'Sí' || d.alMed || d.alAli) ? `<span style="background:#FCE8E7;color:#8A1C1C">⚕ Atención médica</span>` : ''}
           </div>
           <details style="margin-top:10px"><summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--royal)">🪪 Ver Carnet Misionero y Mockup (${esc(detectGender(x))}) de ${esc(nom)}</summary>
-            <div style="margin-top:10px;padding:14px;background:#F2F7FF;border-radius:12px;border:1px solid #B9C8E4">
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;align-items:center">
-                <div>
-                  <b style="display:block;text-align:center;font-size:13px;color:var(--navy);margin-bottom:8px">🪪 Diseño del Carnet</b>
-                  ${carnetCardOnlyHtml(x, false)}
-                </div>
-                <div>
-                  <b style="display:block;text-align:center;font-size:13px;color:var(--navy);margin-bottom:8px">👕 Mockup (${esc(detectGender(x))})</b>
-                  ${carnetMockupHtml(x, detectGender(x))}
-                </div>
-              </div>
-              <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:14px">
-                <button type="button" class="btn btn-blue btn-sm" data-dl-carnet-png="${esc(x.id || x.uid)}">📥 Descargar Carnet (PNG HD)</button>
-                <button type="button" class="btn btn-outline btn-sm" data-dl-mockup-png="${esc(x.id || x.uid)}" data-gender="${esc(detectGender(x))}" style="background:#fff">👕 Descargar Mockup (${esc(detectGender(x))})</button>
-              </div>
+            <div style="margin-top:10px">
+              ${carnetInteractiveSectionHtml(x, 'admin')}
             </div>
           </details>
           <details style="margin-top:8px"><summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--royal)">📅 Ver formaciones y actividades asistidas en los últimos 6 meses (${asis6.length}) y Código QR</summary>
@@ -3399,7 +3414,7 @@ function editorBody() {
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px">
               ${c.waUrl ? `<a class="btn btn-white btn-sm" style="min-height:32px;padding:0 10px;font-size:12px" target="_blank" rel="noopener" href="${esc(c.waUrl)}">📲 Felicitar por WhatsApp</a>` : ''}
-              <a class="btn btn-outline btn-sm" style="min-height:32px;padding:0 10px;font-size:12px;color:#fff;border-color:rgba(255,255,255,.45)" target="_blank" rel="noopener" href="${esc(c.gcalUrl)}">📅 Recordar en Google</a>
+              <a class="btn btn-sm" style="min-height:32px;padding:0 10px;font-size:12px;background:rgba(255,255,255,0.15);color:#fff;border:1.5px solid rgba(255,255,255,0.4)" target="_blank" rel="noopener" href="${esc(c.gcalUrl)}">📅 Recordar en Google</a>
             </div>
           </div>`).join('')}
         </div>`}
@@ -4190,10 +4205,10 @@ document.addEventListener('click', (e) => {
           'Hoy el cielo y toda la familia de JUMA Duaca celebramos tu vida. Que Dios y Nuestra Madre la Virgen Consolata te colmen de bendiciones, salud y santidad en tu caminar misionero. ¡Te mando un fuerte abrazo! 🎈🎁✨',
           '¿En qué te puedo ayudar hoy en tu día especial?'
         ];
-      } else if (reg && bdayList.length > 0) {
+      } else if (bdayList.length > 0) {
         const nombresHoy = bdayList.map((c) => c.nombre).join(', ');
         jMsg = [
-          `¡Hola, <b>${esc(primerNom || 'misionero(a)')}</b>! Soy <b>Joriel</b> 👋.`,
+          `¡Hola${primerNom ? ', <b>' + esc(primerNom) + '</b>' : ''}! Soy <b>Joriel</b> 👋.`,
           `Hoy tenemos una gran fiesta misionera en JUMA: ¡<b>${esc(nombresHoy)}</b> está de cumpleaños hoy! 🎂🎈 No olvides felicitarla/o.`,
           'Te cuento sobre nuestros encuentros, formación, oraciones y cómo participar. ¿Qué quieres saber?'
         ];
@@ -4229,10 +4244,10 @@ document.addEventListener('click', (e) => {
       bTitle = `🎉 ¡Feliz cumpleaños, ${esc(primerNom || 'misionero(a)')}! 🎂`;
       bText = '¡Soy Joriel! Hoy es tu día especial y toda la familia JUMA Duaca celebramos tu vida. ¡Que Dios te bendiga siempre! 🙏✨';
       bBtn = 'Hablar con Joriel';
-    } else if (reg && bdayList.length > 0) {
-      const nomCumple = bdayList[0].nombre;
-      bTitle = `¡Hola, ${esc(primerNom || 'misionero(a)')}! Soy Joriel 👋`;
-      bText = `🎉 ¡Hoy está de cumpleaños ${esc(nomCumple)}! 🎂 No olvides felicitarla/o en este día tan especial.`;
+    } else if (bdayList.length > 0) {
+      const nomCumple = bdayList.map((c) => c.nombre).join(', ');
+      bTitle = primerNom ? `¡Hola, ${esc(primerNom)}! Soy Joriel 👋` : '¡Hola! Soy Joriel 👋';
+      bText = `🎉 ¡Hoy está de cumpleaños ${esc(nomCumple)}! 🎂🎈 No olvides felicitarla/o en este día tan especial.`;
     }
 
     hello = document.createElement('div'); hello.className = 'jhello'; hello.setAttribute('role', 'status');
@@ -4268,6 +4283,10 @@ async function loadContenido() {
   try {
     const last = localStorage.getItem('juma-ultimo-perfil');
     if (last) myProfile = JSON.parse(last);
+    const locIns = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]');
+    if (locIns && locIns.length && (!allInscripciones || !allInscripciones.length)) {
+      allInscripciones = locIns;
+    }
   } catch (e) {}
   renderAll(); setupUnroll(); updateAuthUI();
   setTimeout(() => checkMandatoryPhotoGate(), 300);

@@ -1,7 +1,7 @@
 /* Service worker: funciona sin conexión + avisos en segundo plano */
-const CACHE = 'juma-v35';
+const CACHE = 'juma-v36';
 /* Lo esencial se guarda al instalar; las fotos se guardan a medida que se ven. */
-const CORE = ['./', 'index.html', 'js/app.js', 'js/fe.js', 'js/firebase-config.js', 'oraciones.json', 'contenido.json', 'manifest.webmanifest',
+const CORE = ['./', 'index.html', 'js/app.js', 'js/fe.js', 'js/firebase-config.js', 'js/qrcode.min.js', 'oraciones.json', 'contenido.json', 'manifest.webmanifest',
   'img/logo.png', 'img/mockup-hombre.jpg', 'img/mockup-mujer.jpg', 'img/hero-900.jpg', 'img/ourem.jpg', 'img/new-chicas-capilla.jpg', 'img/joriel-avatar.png', 'img/mapa-consolata.svg', 'icons/icon-192.png', 'audio/cumpleanos.mp3'];
 /* Fuentes de letra, códigos QR e imágenes de las oraciones (otros sitios) que también se guardan al verlas */
 const EXTERNOS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'commons.wikimedia.org', 'upload.wikimedia.org', 'api.qrserver.com', 'cdn.jsdelivr.net'];
