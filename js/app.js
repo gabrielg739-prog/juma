@@ -1705,6 +1705,7 @@ async function loadUserProfile(user) {
           localStorage.setItem('juma-ultimo-perfil', JSON.stringify(data));
         } catch (e) {}
         checkMandatoryPhotoGate();
+        setTimeout(() => checkBirthdayCelebration(), 500);
         return data;
       }
       if (email) {
@@ -1716,6 +1717,7 @@ async function loadUserProfile(user) {
           if (userRole(data) === 'coordinador') { isAdmin = true; try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {} }
           try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(data)); } catch (e) {}
           checkMandatoryPhotoGate();
+          setTimeout(() => checkBirthdayCelebration(), 500);
           return data;
         }
       }
@@ -1726,6 +1728,7 @@ async function loadUserProfile(user) {
     try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {}
   }
   checkMandatoryPhotoGate();
+  setTimeout(() => checkBirthdayCelebration(), 500);
   return myProfile || null;
 }
 
@@ -2886,6 +2889,258 @@ function getCumpleanosList(src = dr) {
   return out;
 }
 
+/* ===================== Animación, Audio en bucle y Avisos de Cumpleaños ===================== */
+const DEFAULT_CUMPLE_MSG = '🎉🎂 ¡Feliz cumpleaños, {nombre}! Que Dios y Nuestra Madre la Virgen Consolata te bendigan siempre en tu camino misionero. ¡Un gran abrazo de parte de toda tu familia de JUMA Duaca! 💙✨';
+
+function getRegisteredUserRecord() {
+  if (myProfile && (myProfile.id || myProfile.uid || myProfile.correo || (myProfile.datos && (myProfile.datos.correo || myProfile.datos.nombres)))) {
+    return myProfile;
+  }
+  if (currentUser && currentUser.email) {
+    const emTarget = currentUser.email.toLowerCase();
+    const match = allInscripciones.find((x) => {
+      const em = (x.correo || (x.datos && x.datos.correo) || '').trim().toLowerCase();
+      return em && em === emTarget;
+    });
+    if (match) return match;
+  }
+  return null;
+}
+
+function isUserBirthdayToday(rec) {
+  if (!rec) return false;
+  const d = rec.datos || {};
+  const nac = String(d.nac || rec.nac || '').trim();
+  const m = nac.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return false;
+  const now = new Date();
+  const mes = parseInt(m[2], 10) - 1;
+  const dia = parseInt(m[3], 10);
+  return now.getMonth() === mes && now.getDate() === dia;
+}
+
+let bdayAudio = null;
+let bdayAudioPlaying = false;
+
+function stopBirthdayAudio() {
+  if (bdayAudio) {
+    try {
+      bdayAudio.pause();
+      bdayAudio.currentTime = 0;
+    } catch (e) {}
+  }
+  bdayAudioPlaying = false;
+  updateBdaySoundBtn();
+}
+
+function playBirthdayAudio() {
+  if (!bdayAudio) {
+    bdayAudio = new Audio('audio/cumpleanos.mp3');
+    bdayAudio.loop = true;
+    bdayAudio.addEventListener('timeupdate', () => {
+      /* Bucle estricto hasta el segundo 14 */
+      if (bdayAudio && bdayAudio.currentTime >= 14.0) {
+        bdayAudio.currentTime = 0;
+      }
+    });
+  }
+  bdayAudio.currentTime = 0;
+  const p = bdayAudio.play();
+  if (p && p.then) {
+    p.then(() => {
+      bdayAudioPlaying = true;
+      updateBdaySoundBtn();
+    }).catch(() => {
+      bdayAudioPlaying = false;
+      updateBdaySoundBtn();
+    });
+  }
+}
+
+function toggleBirthdayAudio() {
+  if (!bdayAudio) {
+    playBirthdayAudio();
+    return;
+  }
+  if (bdayAudioPlaying && !bdayAudio.paused) {
+    bdayAudio.pause();
+    bdayAudioPlaying = false;
+  } else {
+    bdayAudio.play().then(() => {
+      bdayAudioPlaying = true;
+    }).catch(() => {});
+  }
+  updateBdaySoundBtn();
+}
+
+function updateBdaySoundBtn() {
+  const btn = $('#cumple-sound-toggle');
+  if (!btn) return;
+  if (bdayAudioPlaying && bdayAudio && !bdayAudio.paused) {
+    btn.innerHTML = '🔊 Música sonando en bucle (14s) · Toca para silenciar';
+    btn.style.background = 'rgba(245,197,24,0.32)';
+  } else {
+    btn.innerHTML = '▶️ Toca aquí para reproducir música de cumpleaños (14s en bucle) 🔊';
+    btn.style.background = 'rgba(255,255,255,0.2)';
+  }
+}
+
+function generateEmojiRain(container) {
+  if (!container) return;
+  const emojis = ['🎉', '🎂', '🎈', '✨', '🥳', '🎁', '🎊', '💙', '🍰', '🌟', '🧁', '🙌'];
+  const count = 30;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('span');
+    el.className = 'falling-emoji';
+    el.textContent = emojis[i % emojis.length];
+    const left = (i * 3.1 + Math.random() * 3) % 96;
+    const duration = 3.6 + (i % 4) * 0.9;
+    const delay = (i * 0.22) % 3.5;
+    const size = 22 + (i % 5) * 4.5;
+    el.style.left = left.toFixed(1) + '%';
+    el.style.fontSize = size.toFixed(0) + 'px';
+    el.style.animationDuration = duration.toFixed(1) + 's, ' + (2.5 + (i % 3) * 0.8).toFixed(1) + 's';
+    el.style.animationDelay = delay.toFixed(2) + 's, ' + delay.toFixed(2) + 's';
+    container.appendChild(el);
+  }
+}
+
+function showBirthdayCelebration(rec, isPreview = false) {
+  if ($('#juma-cumple-modal')) return;
+  const d = (rec && rec.datos) || {};
+  const nombre = (rec && rec.nombre) || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Misionero(a)';
+  const primerNombre = nombre.split(/\s+/)[0] || 'Misionero(a)';
+  const foto = (rec && rec.foto) || d.foto || '';
+
+  const tmpl = (dr && dr.cumpleanosMensaje) || (cfg && cfg.cumpleanosMensaje) || DEFAULT_CUMPLE_MSG;
+  const msgFinal = tmpl.replace(/\{nombre\}/gi, primerNombre);
+
+  const modal = document.createElement('div');
+  modal.id = 'juma-cumple-modal';
+  modal.className = 'cumple-overlay';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-label', 'Celebración de Cumpleaños');
+
+  modal.innerHTML = `
+    <div class="cumple-rain-container" id="cumple-rain"></div>
+    <div class="cumple-box">
+      <button type="button" class="cumple-close-btn" data-close-cumple aria-label="Cerrar celebración">✕</button>
+      ${isPreview ? '<div style="display:inline-block;padding:4px 14px;border-radius:99px;background:#F5C518;color:#061536;font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;margin-bottom:14px">Vista Previa · Cuenta Maestra</div>' : ''}
+      <div class="cumple-avatar-wrap">
+        <span class="crown" aria-hidden="true">👑</span>
+        ${foto ? `<img src="${esc(foto)}" alt="${esc(nombre)}" class="cumple-avatar-img">` : `<div class="cumple-avatar-img" style="background:var(--royal);display:flex;align-items:center;justify-content:center;font-size:46px;font-weight:900;color:#fff">${esc(primerNombre.charAt(0).toUpperCase())}</div>`}
+      </div>
+      <h2 class="cumple-title">¡Feliz Cumpleaños!</h2>
+      <div class="cumple-name">${esc(nombre)} 🎉</div>
+      <div class="cumple-msg">${esc(msgFinal)}</div>
+      <div>
+        <button type="button" class="cumple-sound-btn" id="cumple-sound-toggle" data-toggle-sound>
+          🔊 Música sonando en bucle · Toca para silenciar
+        </button>
+      </div>
+      <div>
+        <button type="button" class="btn btn-white btn-sm" data-close-cumple style="min-height:46px;padding:0 26px;font-weight:800;border-radius:12px">
+          ¡Muchas gracias! Continuar a la App ✕
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  generateEmojiRain(modal.querySelector('#cumple-rain'));
+
+  // Reproducir sonido en bucle (cortado a 14s)
+  playBirthdayAudio();
+
+  const closeFn = () => {
+    stopBirthdayAudio();
+    modal.classList.add('is-out');
+    setTimeout(() => modal.remove(), 200);
+  };
+
+  modal.querySelectorAll('[data-close-cumple]').forEach((b) => b.addEventListener('click', closeFn));
+  const sndBtn = modal.querySelector('[data-toggle-sound]');
+  if (sndBtn) sndBtn.addEventListener('click', toggleBirthdayAudio);
+}
+
+function showBirthdayReminderModal(celebrants) {
+  if (!celebrants || !celebrants.length) return;
+  if ($('#juma-cumple-modal') || $('#juma-cumple-remind-modal') || modalRoot.firstChild) return;
+  const hoyStr = todayIso();
+  const seenKey = 'juma-bday-remind-seen-' + hoyStr;
+  try {
+    if (sessionStorage.getItem(seenKey)) return;
+    sessionStorage.setItem(seenKey, '1');
+  } catch (e) {}
+
+  const modal = document.createElement('div');
+  modal.id = 'juma-cumple-remind-modal';
+  modal.className = 'cumple-overlay';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-label', 'Cumpleaños de Hoy en JUMA Duaca');
+
+  modal.innerHTML = `
+    <div class="cumple-box" style="max-width:500px;border-color:var(--sky)">
+      <button type="button" class="cumple-close-btn" data-close-remind aria-label="Cerrar aviso">✕</button>
+      <div style="font-size:42px;margin-bottom:6px">🎂🎉</div>
+      <h3 style="font-family:var(--display);font-size:25px;text-transform:uppercase;color:var(--sky);margin:0 0 6px">¡Hoy estamos de cumpleaños!</h3>
+      <p style="margin:0 0 16px;font-size:14.5px;color:#DCE7F8">En nuestra familia misionera de JUMA Duaca estamos de fiesta hoy:</p>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;max-height:55vh;overflow-y:auto">
+        ${celebrants.map((c) => `
+          <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.1);padding:12px 14px;border-radius:14px;border:1.5px solid rgba(255,255,255,0.25);text-align:left">
+            <div style="width:48px;height:48px;border-radius:50%;overflow:hidden;border:2.5px solid #F5C518;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:var(--royal)">
+              ${c.foto ? `<img src="${esc(c.foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:19px;color:#fff">${esc(c.nombre.charAt(0).toUpperCase())}</b>`}
+            </div>
+            <div style="min-width:0;flex:1">
+              <b style="font-size:15.5px;color:#fff;display:block">${esc(c.nombre)}</b>
+              <span style="font-size:13px;color:#DCE7F8">¡Está cumpliendo años hoy! No olvides felicitarla/o.</span>
+            </div>
+            ${c.waUrl ? `<a href="${esc(c.waUrl)}" target="_blank" rel="noopener" class="btn btn-white btn-sm" style="min-height:36px;padding:0 12px;font-size:12.5px;flex:0 0 auto;font-weight:800">📲 Felicitar</a>` : ''}
+          </div>
+        `).join('')}
+      </div>
+      <button type="button" class="btn btn-white btn-sm" data-close-remind style="width:100%;min-height:44px;font-weight:800;border-radius:12px">
+        Entendido ✕
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  const closeFn = () => {
+    modal.classList.add('is-out');
+    setTimeout(() => modal.remove(), 200);
+  };
+  modal.querySelectorAll('[data-close-remind]').forEach((b) => b.addEventListener('click', closeFn));
+}
+
+function checkBirthdayCelebration(forcePreview = false, previewRecord = null) {
+  if (forcePreview) {
+    showBirthdayCelebration(previewRecord || (myProfile && myProfile.nombre ? myProfile : { nombre: 'Misionero JUMA', foto: 'img/new-chicas-capilla.jpg' }), true);
+    return;
+  }
+  // No interrumpir si la puerta obligatoria de foto de perfil está activa
+  if (needsMandatoryPhoto(myProfile)) return;
+
+  // Solo para usuarios registrados
+  const reg = getRegisteredUserRecord();
+  if (!reg) return;
+
+  // Si hoy es el cumpleaños del usuario actual
+  if (isUserBirthdayToday(reg)) {
+    showBirthdayCelebration(reg, false);
+    return;
+  }
+
+  // Si no es su cumpleaños, verificar si algún otro miembro registrado cumple hoy
+  const bdayList = getCumpleanosList(cfg);
+  const celebrants = bdayList.filter((c) => c.esHoy);
+  if (celebrants.length > 0) {
+    showBirthdayReminderModal(celebrants);
+  }
+}
+
 function getTabs() {
   const trueMaster = isMasterAccount();
   const hoyCumpleCount = getCumpleanosList().filter((c) => c.esHoy).length;
@@ -3112,6 +3367,22 @@ function editorBody() {
     const monthsToShow = cumpleMesFilter === 'todos' ? monthOrder : [parseInt(cumpleMesFilter, 10)];
 
     return `<p class="ehint"><b>🎂 Calendario Privado de Cumpleaños (Exclusivo Coordinadores y Cuenta Maestra):</b> Este calendario toma automáticamente las fechas de nacimiento de todas las planillas registradas en la App y te avisa quién cumple años hoy o próximamente para felicitarlo por WhatsApp o agendar recordatorio.</p>
+      <div style="padding:18px 20px;border-radius:16px;background:#fff;border:2px solid var(--royal);margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+          <div>
+            <b style="font-size:16.5px;color:var(--navy);display:block">🎉 Animación y Mensaje de Felicitación</b>
+            <span style="font-size:13px;color:var(--muted)">Canción en bucle (14s), lluvia de emojis y foto de perfil en el día del cumpleaños.</span>
+          </div>
+          <button type="button" class="btn btn-blue btn-sm" data-test-cumple-anim style="min-height:40px;padding:0 16px;font-size:13px;font-weight:800">
+            🎉 Probar animación de cumpleaños (Música + Emojis + Foto)
+          </button>
+        </div>
+        <div class="fld w" style="margin-bottom:10px">
+          <label for="cumple-msg-custom">Mensaje de felicitación para el cumpleañero (puedes usar <code>{nombre}</code>):</label>
+          <textarea id="cumple-msg-custom" rows="2" style="font-size:14px;line-height:1.5">${esc(dr.cumpleanosMensaje || cfg.cumpleanosMensaje || DEFAULT_CUMPLE_MSG)}</textarea>
+        </div>
+        <button type="button" class="btn btn-soft btn-sm" data-save-cumple-msg style="min-height:36px;font-size:13px">💾 Guardar texto en borrador</button>
+      </div>
       <div style="padding:18px;border-radius:16px;background:linear-gradient(135deg,#061536 0%,#0C2D74 100%);color:#fff;margin-bottom:18px;border:1.5px solid var(--sky)">
         <b style="display:block;font-size:17px;color:var(--sky);margin-bottom:10px">🎉 Cumpleaños de HOY y próximos 30 días (${prox30.length})</b>
         ${!prox30.length ? `<p style="margin:0;font-size:14px;color:#DCE7F8">No hay cumpleaños en los próximos 30 días.</p>` : `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
@@ -3327,6 +3598,7 @@ function cleanContent(src) {
   c.actividades = (c.actividades || []).filter((a) => a && String(a.t || '').trim()).slice(0, 24);
   c.encuentrosExtra = (c.encuentrosExtra || []).filter((e) => e && e.fecha && e.fecha <= max3MonthsIso());
   c.cumpleanosExtra = (c.cumpleanosExtra || []).filter((x) => x && String(x.nombre || '').trim() && String(x.nac || '').trim());
+  c.cumpleanosMensaje = typeof src.cumpleanosMensaje === 'string' ? src.cumpleanosMensaje.trim() : (cfg.cumpleanosMensaje || '');
   c.posts = (c.posts || []).filter((p) => p && (String(p.t || '').trim() || String(p.x || '').trim() || p.video || p.foto));
   c.galeria = (c.galeria || []).filter((g) => g && g.url);
   c.testimonios = (c.testimonios || []).filter((x) => x && String(x.x || '').trim());
@@ -3435,6 +3707,7 @@ async function uploadVideoToCloud(file, onProgress) {
 modalRoot.addEventListener('input', (e) => {
   if (e.target.id === 'ins-search') { insQuery = e.target.value; const pos = e.target.selectionStart; repaintEd(); const inp = $('#ins-search'); if (inp) { inp.focus(); try { inp.setSelectionRange(pos, pos); } catch (x) {} } return; }
   if (e.target.id === 'qr-tema-in') { qrTema = e.target.value; return; }
+  if (e.target.id === 'cumple-msg-custom') { dr.cumpleanosMensaje = e.target.value; touch(); return; }
   const id = e.target.dataset && e.target.dataset.ed; if (id && setters.has(id)) { setters.get(id)(e.target.value); touch(); }
 });
 modalRoot.addEventListener('change', async (e) => {
@@ -3475,6 +3748,20 @@ modalRoot.addEventListener('click', async (e) => {
   if (q('[data-tab]')) { tab = q('[data-tab]').dataset.tab; edErr = ''; edOk = ''; repaintEd(); return; }
   if (q('[data-go-qr-tab]')) { tab = 'qr'; edErr = ''; edOk = ''; repaintEd(); return; }
   if (q('[data-cum-mes]')) { cumpleMesFilter = q('[data-cum-mes]').dataset.cumMes; repaintEd(); return; }
+  if (q('[data-test-cumple-anim]')) {
+    checkBirthdayCelebration(true, (myProfile && myProfile.nombre) ? myProfile : { nombre: 'Misionero JUMA', foto: 'img/new-chicas-capilla.jpg' });
+    return;
+  }
+  if (q('[data-save-cumple-msg]')) {
+    const val = (($('#cumple-msg-custom') || {}).value || '').trim();
+    if (val) {
+      dr.cumpleanosMensaje = val;
+      touch();
+      edOk = '✔ Mensaje de felicitación guardado en borrador. Pulsa «Publicar cambios» para guardarlo en la nube.';
+      repaintEd();
+    }
+    return;
+  }
   if (q('[data-add-cumple-extra]')) {
     const nom = (($('#cum-new-nom') || {}).value || '').trim();
     const nac = (($('#cum-new-nac') || {}).value || '').trim();
@@ -3889,7 +4176,35 @@ document.addEventListener('click', (e) => {
       const mk = e.target.closest('[data-mapk]'); if (mk && window.JUMA_FE) { close(); window.JUMA_FE.paisMapa(mk.dataset.mapk); }
       const g = e.target.closest('[data-goto]'); if (g) { close(); const s = document.querySelector(g.dataset.goto); if (s) s.scrollIntoView({ behavior: 'smooth' }); }
     });
-    if (first) { first = false; add(`<img class="jfull" src="${FULL}" alt="Joriel saludando">` + P(['¡Hola! Soy <b>Joriel</b>, joven misionero de JUMA Duaca. 👋', 'Te cuento cuándo nos reunimos, cómo inscribirte, cómo es la formación y quiénes son nuestros santos. ¿Qué quieres saber?'])); }
+    if (first) {
+      first = false;
+      const reg = getRegisteredUserRecord();
+      const isCelebrant = reg && isUserBirthdayToday(reg);
+      const bdayList = getCumpleanosList(cfg).filter((c) => c.esHoy);
+      const primerNom = reg ? (reg.nombre || ((reg.datos && reg.datos.nombres) || '')).trim().split(/\s+/)[0] : '';
+
+      let jMsg = [];
+      if (isCelebrant) {
+        jMsg = [
+          `¡Feliz cumpleaños, <b>${esc(primerNom || 'misionero(a)')}</b>! 🎂🎉`,
+          'Hoy el cielo y toda la familia de JUMA Duaca celebramos tu vida. Que Dios y Nuestra Madre la Virgen Consolata te colmen de bendiciones, salud y santidad en tu caminar misionero. ¡Te mando un fuerte abrazo! 🎈🎁✨',
+          '¿En qué te puedo ayudar hoy en tu día especial?'
+        ];
+      } else if (reg && bdayList.length > 0) {
+        const nombresHoy = bdayList.map((c) => c.nombre).join(', ');
+        jMsg = [
+          `¡Hola, <b>${esc(primerNom || 'misionero(a)')}</b>! Soy <b>Joriel</b> 👋.`,
+          `Hoy tenemos una gran fiesta misionera en JUMA: ¡<b>${esc(nombresHoy)}</b> está de cumpleaños hoy! 🎂🎈 No olvides felicitarla/o.`,
+          'Te cuento sobre nuestros encuentros, formación, oraciones y cómo participar. ¿Qué quieres saber?'
+        ];
+      } else {
+        jMsg = [
+          '¡Hola! Soy <b>Joriel</b>, joven misionero de JUMA Duaca. 👋',
+          'Te cuento cuándo nos reunimos, cómo inscribirte, cómo es la formación y quiénes son nuestros santos. ¿Qué quieres saber?'
+        ];
+      }
+      add(`<img class="jfull" src="${FULL}" alt="Joriel saludando">` + P(jMsg));
+    }
     setTimeout(() => { try { box.querySelector('input').focus({ preventScroll: true }); } catch (e) {} }, 50);
   }
   function close() { if (!box) return; box.style.display = 'none'; btn.style.display = ''; btn.focus(); }
@@ -3900,9 +4215,28 @@ document.addEventListener('click', (e) => {
   function hideHello() { if (!hello) return; hello.remove(); hello = null; try { sessionStorage.setItem('juma-hola', '1'); } catch (e) {} }
   function showHello() {
     try { if (sessionStorage.getItem('juma-hola')) return; } catch (e) {}
-    if (box || hello || modalRoot.firstChild) return;
+    if (box || hello || modalRoot.firstChild || $('#juma-cumple-modal')) return;
+    const reg = getRegisteredUserRecord();
+    const isCelebrant = reg && isUserBirthdayToday(reg);
+    const bdayList = getCumpleanosList(cfg).filter((c) => c.esHoy);
+    const primerNom = reg ? (reg.nombre || ((reg.datos && reg.datos.nombres) || '')).trim().split(/\s+/)[0] : '';
+
+    let bTitle = '¡Hola! Soy Joriel 👋';
+    let bText = 'Bienvenido a JUMA Duaca. Si quieres saber cuándo nos reunimos o cómo unirte, pregúntame.';
+    let bBtn = 'Hablar con Joriel';
+
+    if (isCelebrant) {
+      bTitle = `🎉 ¡Feliz cumpleaños, ${esc(primerNom || 'misionero(a)')}! 🎂`;
+      bText = '¡Soy Joriel! Hoy es tu día especial y toda la familia JUMA Duaca celebramos tu vida. ¡Que Dios te bendiga siempre! 🙏✨';
+      bBtn = 'Hablar con Joriel';
+    } else if (reg && bdayList.length > 0) {
+      const nomCumple = bdayList[0].nombre;
+      bTitle = `¡Hola, ${esc(primerNom || 'misionero(a)')}! Soy Joriel 👋`;
+      bText = `🎉 ¡Hoy está de cumpleaños ${esc(nomCumple)}! 🎂 No olvides felicitarla/o en este día tan especial.`;
+    }
+
     hello = document.createElement('div'); hello.className = 'jhello'; hello.setAttribute('role', 'status');
-    hello.innerHTML = `<img src="${FULL}" alt="" class="jhello-img"><div class="jhello-b"><button type="button" class="jhello-x" aria-label="Cerrar saludo">✕</button><b>¡Hola! Soy Joriel 👋</b><p>Bienvenido a JUMA Duaca. Si quieres saber cuándo nos reunimos o cómo unirte, pregúntame.</p><button type="button" class="jhello-go">Hablar con Joriel</button></div>`;
+    hello.innerHTML = `<img src="${FULL}" alt="" class="jhello-img"><div class="jhello-b"><button type="button" class="jhello-x" aria-label="Cerrar saludo">✕</button><b>${bTitle}</b><p>${bText}</p><button type="button" class="jhello-go">${bBtn}</button></div>`;
     document.body.appendChild(hello);
     hello.querySelector('.jhello-x').addEventListener('click', hideHello);
     hello.querySelector('.jhello-go').addEventListener('click', () => { hideHello(); open(); });
@@ -3937,6 +4271,7 @@ async function loadContenido() {
   } catch (e) {}
   renderAll(); setupUnroll(); updateAuthUI();
   setTimeout(() => checkMandatoryPhotoGate(), 300);
+  setTimeout(() => checkBirthdayCelebration(), 750);
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
   loadContenido();
   initFirebase();
