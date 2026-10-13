@@ -3041,15 +3041,15 @@ function updateBdayCornetaBtn() {
 function generateEmojiRain(container) {
   if (!container) return;
   const emojis = ['🎉', '🎂', '🎈', '✨', '🥳', '🎁', '🎊', '💙', '🍰', '🌟', '🧁', '🙌'];
-  const count = 20;
+  const count = 26;
   for (let i = 0; i < count; i++) {
     const el = document.createElement('span');
     el.className = 'falling-emoji';
     el.textContent = emojis[i % emojis.length];
-    const left = (i * 4.8 + Math.random() * 3) % 96;
-    const duration = 3.6 + (i % 4) * 0.9;
-    const delay = (i * 0.22) % 3.5;
-    const size = 22 + (i % 5) * 4.5;
+    const left = (i * 3.8 + (i % 3) * 1.5) % 96;
+    const duration = 3.2 + (i % 5) * 0.7;
+    const delay = (i * 0.18) % 3.2;
+    const size = 26 + (i % 5) * 4.5;
     el.style.left = left.toFixed(1) + '%';
     el.style.fontSize = size.toFixed(0) + 'px';
     el.style.animationDuration = duration.toFixed(1) + 's, ' + (2.5 + (i % 3) * 0.8).toFixed(1) + 's';
@@ -3084,7 +3084,6 @@ function showBirthdayCelebration(rec, isPreview = false) {
   modal.setAttribute('aria-label', 'Celebración de Cumpleaños');
 
   modal.innerHTML = `
-    <div class="cumple-rain-container" id="cumple-rain"></div>
     <div class="cumple-box">
       <!-- Video de fondo de los jóvenes celebrando (sin audio, en bucle protegido con recorte redondeado) -->
       <div class="cumple-bg-wrap" style="position:absolute;inset:0;border-radius:29px;overflow:hidden;clip-path:inset(0 round 29px);-webkit-clip-path:inset(0 round 29px);pointer-events:none;z-index:0">
@@ -3118,6 +3117,9 @@ function showBirthdayCelebration(rec, isPreview = false) {
         <p class="cumple-msg-direct">${esc(msgFinal)}</p>
       </div>
     </div>
+
+    <!-- Lluvia de emojis cayendo POR ENCIMA del texto, foto y tarjeta (z-index 20) -->
+    <div class="cumple-rain-container" id="cumple-rain"></div>
   `;
 
   document.body.appendChild(modal);

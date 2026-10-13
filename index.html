@@ -332,15 +332,15 @@ details[open] > summary .pd-ic::after{transform:translate(-50%,-50%) rotate(0deg
 /* ===== animación y lluvia de emojis de cumpleaños ===== */
 .cumple-overlay{position:fixed;inset:0;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:rgba(6,21,54,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:24px 16px 40px;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:100vh;min-height:100dvh;box-sizing:border-box;animation:fade 280ms cubic-bezier(0.16,1,0.3,1) both}
 .cumple-overlay.is-out{animation:fadeOut 200ms ease both;pointer-events:none}
-.cumple-rain-container{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:1}
-.falling-emoji{position:absolute;top:-60px;user-select:none;pointer-events:none;will-change:transform,top;animation-name:emojiDrop, emojiWobble;animation-iteration-count:infinite, infinite;animation-timing-function:linear, ease-in-out}
+.cumple-rain-container{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:20}
+.falling-emoji{position:absolute;top:-60px;user-select:none;pointer-events:none;will-change:transform,top;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.5));animation-name:emojiDrop, emojiWobble;animation-iteration-count:infinite, infinite;animation-timing-function:linear, ease-in-out}
 @keyframes emojiDrop{0%{top:-60px;opacity:0}8%{opacity:1}90%{opacity:1}100%{top:105vh;opacity:0}}
 @keyframes emojiWobble{0%{transform:translateX(0) rotate(0deg)}50%{transform:translateX(35px) rotate(180deg)}100%{transform:translateX(0) rotate(360deg)}}
-.cumple-box{position:relative;z-index:2;width:100%;max-width:440px;margin:auto 0;background:#061536;border:2.5px solid #F5C518;border-radius:24px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,0.85), 0 0 50px rgba(245,197,24,0.35);padding:clamp(22px, 5vw, 32px) clamp(16px, 4vw, 24px);text-align:center;color:#fff;animation:sheetIn 340ms cubic-bezier(0.16,1,0.3,1) both}
-.cumple-close-btn{position:absolute;top:16px;right:16px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.5);color:#fff;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 160ms ease, background-color 160ms ease;z-index:10}
-.cumple-close-btn:hover{background:#B71C1C;border-color:#fff;transform:scale(1.1)}
+.cumple-box{position:relative;z-index:2;width:calc(100% - 24px);max-width:420px;margin:auto 0;background:#061536;border:3px solid #F5C518;border-radius:32px;overflow:hidden;isolation:isolate;transform:translate3d(0,0,0);-webkit-transform:translate3d(0,0,0);-webkit-mask-image:-webkit-radial-gradient(white, black);mask-image:radial-gradient(white, black);clip-path:inset(0 round 32px);-webkit-clip-path:inset(0 round 32px);box-shadow:0 0 0 1px rgba(245,197,24,0.4), 0 24px 70px rgba(0,0,0,0.85), 0 0 45px rgba(245,197,24,0.35);padding:clamp(28px, 6vw, 36px) clamp(18px, 4vw, 24px) 28px;text-align:center;color:#fff;box-sizing:border-box;animation:sheetIn 340ms cubic-bezier(0.16,1,0.3,1) both}
+.cumple-close-btn{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;background:rgba(6,21,54,0.75);border:2px solid #F5C518;color:#F5C518;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 160ms ease, background-color 160ms ease, color 160ms ease, border-color 160ms ease;z-index:30;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.cumple-close-btn:hover{background:#B71C1C;border-color:#fff;color:#fff;transform:scale(1.08)}
 .cumple-close-btn:active{transform:scale(0.95)}
-.cumple-snd-btn{position:absolute;top:16px;left:16px;width:42px;height:42px;border-radius:50%;background:rgba(6,21,54,0.75);border:2px solid #F5C518;color:#F5C518;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;transition:transform 160ms ease, background-color 160ms ease;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.cumple-snd-btn{position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:50%;background:rgba(6,21,54,0.75);border:2px solid #F5C518;color:#F5C518;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:30;transition:transform 160ms ease, background-color 160ms ease;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .cumple-snd-btn:hover{background:#F5C518;color:#061536;transform:scale(1.08)}
 .cumple-snd-btn:active{transform:scale(0.95)}
 .cumple-snd-btn svg{width:22px;height:22px;fill:currentColor}
@@ -355,10 +355,7 @@ details[open] > summary .pd-ic::after{transform:translate(-50%,-50%) rotate(0deg
 .cumple-avatar-img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:4px solid #F5C518;box-shadow:0 0 35px rgba(245,197,24,0.7), 0 0 65px rgba(142,201,255,0.4)}
 .cumple-title{font-family:var(--display);font-size:clamp(28px,5.5vw,38px);text-transform:uppercase;color:#F5C518;letter-spacing:0.03em;margin:0 0 6px;text-shadow:0 2px 14px rgba(245,197,24,0.45);line-height:1.1}
 .cumple-name{font-size:clamp(20px,4.2vw,27px);font-weight:900;color:#fff;margin:0 0 12px;text-shadow:0 2px 8px rgba(0,0,0,0.75)}
-.cumple-msg-direct{font-size:15.5px;line-height:1.6;color:#FFFFFF;margin:6px 0 22px;text-shadow:0 2px 8px rgba(0,0,0,0.9);font-weight:500;padding:0 6px;max-width:420px}
-.cumple-btn-continuar{min-height:48px;padding:0 30px;font-family:var(--body);font-size:14.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;border-radius:999px;background:linear-gradient(135deg,#FFD54F 0%,#F5C518 100%);color:#061536!important;border:0;box-shadow:0 10px 24px rgba(245,197,24,.45);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:transform 160ms ease,box-shadow 160ms ease}
-.cumple-btn-continuar:hover{transform:translateY(-2px);box-shadow:0 14px 28px rgba(245,197,24,.6)}
-.cumple-btn-continuar:active{transform:scale(0.97)}
+.cumple-msg-direct{font-size:14.5px;line-height:1.62;color:#FFFFFF;margin:8px 0 16px;text-shadow:0 2px 8px rgba(0,0,0,0.95);font-weight:500;padding:0 8px;max-width:440px;white-space:pre-line;text-wrap:pretty}
 
 /* ===== novedades / noticias ===== */
 .posts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),440px));justify-content:center;gap:28px;margin-top:44px}
@@ -1112,7 +1109,7 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 </div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=36"></script>
-<script type="module" src="js/fe.js?v=36"></script>
+<script type="module" src="js/app.js?v=38"></script>
+<script type="module" src="js/fe.js?v=38"></script>
 </body>
 </html>
