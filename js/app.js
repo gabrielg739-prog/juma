@@ -118,11 +118,214 @@ function encuentrosProgramados(src = cfg) {
   return list;
 }
 
+/* ===================== Vinculación con Google Calendar, .ics y Recordatorios ===================== */
+function parseJumaTime(str) {
+  const s = String(str || hora() || '').toLowerCase();
+  const m = s.match(/(\d{1,2})(?:\s*[:.]\s*(\d{2}))?\s*(a\.?\s*m\.?|p\.?\s*m\.?)?/i);
+  if (!m) return { h: 14, m: 30 };
+  let hh = parseInt(m[1], 10);
+  const mm = m[2] ? parseInt(m[2], 10) : 0;
+  const ampm = (m[3] || '').replace(/[\s.]/g, '');
+  if (ampm === 'pm' && hh < 12) hh += 12;
+  else if (ampm === 'am' && hh === 12) hh = 0;
+  else if (!ampm && hh >= 1 && hh <= 6) hh += 12;
+  return { h: Math.min(23, Math.max(0, hh)), m: Math.min(59, Math.max(0, mm)) };
+}
+function parseSpanishDateToIso(str) {
+  const s = String(str || '').trim().toLowerCase();
+  if (!s) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const dmy = s.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (dmy) return `${dmy[3]}-${pad2(dmy[2])}-${pad2(dmy[1])}`;
+  const mIdx = MESES.findIndex((mes) => s.includes(mes) || s.includes(mes.slice(0, 3)));
+  const dayM = s.match(/\b(\d{1,2})\b/);
+  if (mIdx >= 0 && dayM) {
+    const now = new Date();
+    const yrM = s.match(/\b(20\d{2})\b/);
+    let yr = yrM ? parseInt(yrM[1], 10) : now.getFullYear();
+    const dNum = parseInt(dayM[1], 10);
+    if (!yrM && new Date(yr, mIdx, dNum) < new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)) yr += 1;
+    return `${yr}-${pad2(mIdx + 1)}-${pad2(dNum)}`;
+  }
+  return '';
+}
+function googleCalUrl({ title, dateIso, timeStr, desc, loc }) {
+  const cleanTitle = String(title || 'Encuentro JUMA Duaca').trim();
+  const cleanLoc = String(loc || lugar() || 'Parroquia San Juan Bautista, Duaca, Estado Lara').trim();
+  const cleanDesc = String(desc || 'Actividad de la Juventud Misionera Allamaniana de Duaca (JUMA Duaca). Hora: ' + hora() + ' · Lugar: ' + lugar()).trim();
+  const iso = parseSpanishDateToIso(dateIso);
+  let datesParam = '';
+  if (iso) {
+    const { h, m } = parseJumaTime(timeStr || hora());
+    const ymd = iso.replace(/-/g, '');
+    const endH = Math.min(23, h + 2);
+    datesParam = `&dates=${ymd}T${pad2(h)}${pad2(m)}00/${ymd}T${pad2(endH)}${pad2(m)}00&ctz=America/Caracas`;
+  }
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(cleanTitle)}${datesParam}&details=${encodeURIComponent(cleanDesc)}&location=${encodeURIComponent(cleanLoc)}`;
+}
+function allUpcomingCalendarEvents() {
+  const evs = [];
+  const loc = lugar();
+  const hr = hora();
+  encuentrosProgramados(cfg).forEach((s) => {
+    if (s.tema === 'Sin reunión') return;
+    evs.push({
+      uid: `juma-enc-${s.key}@jumaduaca.org`,
+      title: `JUMA Duaca · ${s.tema}`,
+      dateIso: s.key,
+      badge: `${s.dia} de ${s.mes} (${s.diaSem})`,
+      desc: `Encuentro de formación y comunidad de la Juventud Misionera Allamaniana de Duaca (JUMA Duaca).\nTema: ${s.tema}\nHora: ${hr}\nLugar: ${loc}`,
+      loc
+    });
+  });
+  (cfg.actividades || []).filter((x) => x && x.t).forEach((x, idx) => {
+    const iso = parseSpanishDateToIso(x.f);
+    evs.push({
+      uid: `juma-act-${iso || idx}@jumaduaca.org`,
+      title: `JUMA Duaca · ${x.t}`,
+      dateIso: iso,
+      badge: x.f || 'Próximamente',
+      desc: `${x.d ? x.d + '\n' : ''}Actividad de la Juventud Misionera Allamaniana de Duaca (JUMA Duaca).\nFecha: ${x.f || 'Por confirmar'}\nLugar: ${loc}`,
+      loc
+    });
+  });
+  return evs;
+}
+function downloadIcsCalendar() {
+  const evs = allUpcomingCalendarEvents().filter((e) => e.dateIso);
+  if (!evs.length) return;
+  const { h, m } = parseJumaTime(hora());
+  const endH = Math.min(23, h + 2);
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  const icsEsc = (t) => String(t || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//JUMA Duaca//Juventud Misionera Allamaniana//ES',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'X-WR-CALNAME:JUMA Duaca · Actividades y Formación',
+    'X-WR-TIMEZONE:America/Caracas'
+  ];
+  evs.forEach((e) => {
+    const ymd = e.dateIso.replace(/-/g, '');
+    lines.push(
+      'BEGIN:VEVENT',
+      `UID:${e.uid}`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART:${ymd}T${pad2(h)}${pad2(m)}00`,
+      `DTEND:${ymd}T${pad2(endH)}${pad2(m)}00`,
+      `SUMMARY:${icsEsc(e.title)}`,
+      `DESCRIPTION:${icsEsc(e.desc)}`,
+      `LOCATION:${icsEsc(e.loc)}`,
+      'BEGIN:VALARM',
+      'TRIGGER:-P1D',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:${icsEsc('Mañana: ' + e.title + ' (' + hora() + ')')}`,
+      'END:VALARM',
+      'BEGIN:VALARM',
+      'TRIGGER:-PT2H',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:${icsEsc('En 2 horas: ' + e.title + ' en ' + e.loc)}`,
+      'END:VALARM',
+      'END:VEVENT'
+    );
+  });
+  lines.push('END:VCALENDAR');
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Calendario-JUMA-Duaca.ics';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+}
+function remindersEnabled() {
+  try { return localStorage.getItem('juma-reminders-on') === '1'; } catch (e) { return false; }
+}
+async function notifyDevice(title, body) {
+  try {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return false;
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      if (reg && reg.showNotification) {
+        await reg.showNotification(title, { body, icon: './icons/icon-192.png', badge: './icons/icon-192.png' });
+        return true;
+      }
+    }
+    new Notification(title, { body, icon: './icons/icon-192.png' });
+    return true;
+  } catch (e) { return false; }
+}
+async function toggleReminders() {
+  const currentlyOn = remindersEnabled();
+  if (currentlyOn) {
+    try { localStorage.removeItem('juma-reminders-on'); } catch (e) {}
+    renderDomingos();
+    if ($('#au-t')) repaintAuth();
+    return;
+  }
+  try { localStorage.setItem('juma-reminders-on', '1'); } catch (e) {}
+  if ('Notification' in window && Notification.permission !== 'granted') {
+    try { await Notification.requestPermission(); } catch (e) {}
+  }
+  if (fb && fb.getToken && CFG.vapidKey && 'serviceWorker' in navigator && Notification.permission === 'granted') {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const token = await fb.getToken(fb.messaging, { vapidKey: CFG.vapidKey, serviceWorkerRegistration: reg });
+      if (token && fb.db) await fb.setDoc(fb.doc(fb.db, 'tokens', token), { creado: fb.serverTimestamp() });
+    } catch (e) {}
+  }
+  const nextEv = allUpcomingCalendarEvents().find((e) => e.dateIso);
+  await notifyDevice(
+    '🔔 Recordatorios de JUMA Duaca activados',
+    nextEv ? `Próxima cita: ${nextEv.title} (${nextEv.badge} · ${hora()})` : `Te avisaremos de tus próximos encuentros y actividades (${hora()}).`
+  );
+  checkUpcomingReminders(true);
+  renderDomingos();
+  if ($('#au-t')) repaintAuth();
+}
+function checkUpcomingReminders(forceBanner = false) {
+  if (!remindersEnabled()) return;
+  const now = new Date();
+  const hoyIso = todayIso();
+  const man = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const manIso = man.getFullYear() + '-' + pad2(man.getMonth() + 1) + '-' + pad2(man.getDate());
+  const evs = allUpcomingCalendarEvents().filter((e) => e.dateIso);
+  if (!evs.length) return;
+  const todayEv = evs.find((e) => e.dateIso === hoyIso);
+  const tomEv = evs.find((e) => e.dateIso === manIso);
+  const target = todayEv || tomEv || (forceBanner ? evs[0] : null);
+  if (!target) return;
+  const labelWhen = todayEv ? '¡HOY!' : (tomEv ? 'MAÑANA' : target.badge);
+  const seenKey = 'juma-rem-sent-' + target.dateIso + '-' + (todayEv ? 'hoy' : 'man');
+  if ((todayEv || tomEv) && !localStorage.getItem(seenKey)) {
+    try { localStorage.setItem(seenKey, '1'); } catch (e) {}
+    notifyDevice(`📅 ${labelWhen}: ${target.title}`, `Hora: ${hora()} · Lugar: ${lugar()}`);
+  }
+  let banner = $('#juma-rem-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'juma-rem-banner';
+    banner.style.cssText = 'position:fixed;bottom:18px;left:18px;z-index:85;max-width:390px;background:var(--navy);color:#fff;border:2px solid var(--sky);border-radius:16px;padding:14px 16px;box-shadow:0 16px 38px rgba(6,21,54,.42);font-size:13.5px;line-height:1.45';
+    document.body.appendChild(banner);
+  }
+  const gUrl = googleCalUrl(target);
+  banner.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px"><b style="color:var(--sky);font-size:14px">🔔 Recordatorio JUMA · ${esc(labelWhen)}</b><button type="button" aria-label="Cerrar recordatorio" style="background:none;border:0;color:#fff;cursor:pointer;font-size:15px;line-height:1;padding:0 2px" onclick="this.closest('#juma-rem-banner').remove()">✕</button></div><p style="margin:5px 0 10px;color:#E8F1FF"><b>${esc(target.title)}</b><br><span style="font-size:12.5px;color:var(--muted-lt)">${esc(target.badge)} · ${esc(hora())} · ${esc(lugar())}</span></p><div style="display:flex;flex-wrap:wrap;gap:8px"><a class="btn btn-blue btn-sm" style="padding:6px 12px;font-size:12px" target="_blank" rel="noopener" href="${esc(gUrl)}">📅 Abrir en Google Calendar</a><button type="button" class="btn btn-outline btn-sm" style="padding:6px 12px;font-size:12px;color:#fff;border-color:rgba(255,255,255,.35)" data-dl-ics>📲 Guardar todo (.ics)</button></div>`;
+}
+
 function renderDomingos() {
   $('#f-hora').textContent = hora(); $('#f-lugar').textContent = lugar();
   const all = encuentrosProgramados(cfg);
   const visible = showAllEnc ? all : all.slice(0, 4);
-  $('#tags').innerHTML = visible.map((s) => `<li class="dtag"><i aria-hidden="true"></i><div class="dcard${s.first ? ' first' : ''}"><span class="flag" style="${!s.first ? 'background:var(--mist);color:var(--royal)' : ''}">${esc(s.badge)}</span><span class="d num">${s.dia}</span><span class="m">${s.mes}</span><span class="t">${esc(s.tema)}</span></div></li>`).join('');
+  $('#tags').innerHTML = visible.map((s) => {
+    const canAgendar = s.tema !== 'Sin reunión';
+    const gUrl = canAgendar ? googleCalUrl({
+      title: `JUMA Duaca · ${s.tema}`,
+      dateIso: s.key,
+      desc: `Encuentro de formación y comunidad de la Juventud Misionera Allamaniana de Duaca (JUMA Duaca).\nTema: ${s.tema}\nHora: ${hora()}\nLugar: ${lugar()}`
+    }) : '';
+    return `<li class="dtag"><i aria-hidden="true"></i><div class="dcard${s.first ? ' first' : ''}"><span class="flag" style="${!s.first ? 'background:var(--mist);color:var(--royal)' : ''}">${esc(s.badge)}</span><span class="d num">${s.dia}</span><span class="m">${s.mes}</span><span class="t">${esc(s.tema)}</span>${canAgendar ? `<a class="gcal-chip" target="_blank" rel="noopener" href="${esc(gUrl)}" title="Agregar este encuentro a Google Calendar" style="display:inline-flex;align-items:center;gap:5px;margin-top:10px;padding:5px 10px;border-radius:99px;background:${s.first ? 'rgba(6,21,54,.14)' : 'var(--mist)'};color:${s.first ? 'var(--navy)' : 'var(--royal)'};font-size:12px;font-weight:800;text-decoration:none">📅 Agendar en Google</a>` : ''}</div></li>`;
+  }).join('');
   let moreBtn = $('#btn-more-enc');
   if (all.length > 4) {
     if (!moreBtn) {
@@ -135,13 +338,47 @@ function renderDomingos() {
   } else if (moreBtn) {
     moreBtn.remove();
   }
+  const factsEl = $('dl.facts');
+  if (factsEl) {
+    let syncBar = $('#cal-sync-bar');
+    if (!syncBar) {
+      syncBar = document.createElement('div');
+      syncBar.id = 'cal-sync-bar';
+      syncBar.style.cssText = 'margin-top:28px;padding:18px 22px;border-radius:16px;background:rgba(255,255,255,.08);border:1px solid var(--line-dk);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px';
+      factsEl.insertAdjacentElement('afterend', syncBar);
+    }
+    const nextMeet = all.find((x) => x.tema !== 'Sin reunión');
+    const nextGUrl = nextMeet ? googleCalUrl({
+      title: `JUMA Duaca · ${nextMeet.tema}`,
+      dateIso: nextMeet.key,
+      desc: `Encuentro de formación de JUMA Duaca (${nextMeet.dia} de ${nextMeet.mes}). Hora: ${hora()} · Lugar: ${lugar()}`
+    }) : '';
+    const remOn = remindersEnabled();
+    syncBar.innerHTML = `
+      <div style="flex:1 1 260px">
+        <b style="display:block;font-size:16px;color:#fff">📅 Vincula tus actividades con Google Calendar y activa recordatorios</b>
+        <p style="margin:4px 0 0;font-size:13.5px;color:var(--muted-lt)">Agrega cada encuentro a tu Google Calendar, sincroniza los 3 meses con alarmas en tu teléfono o activa avisos automáticos.</p>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        ${nextGUrl ? `<a class="btn btn-white btn-sm" target="_blank" rel="noopener" href="${esc(nextGUrl)}">📅 Agendar próximo encuentro en Google Calendar</a>` : ''}
+        <button type="button" class="btn btn-outline btn-sm" style="color:#fff;border-color:rgba(255,255,255,.4)" data-dl-ics>📲 Sincronizar calendario 3 meses (.ics con alarmas)</button>
+        <button type="button" class="btn ${remOn ? 'btn-blue' : 'btn-outline'} btn-sm" style="${remOn ? '' : 'color:#fff;border-color:rgba(255,255,255,.4)'}" data-toggle-rem>${remOn ? '🔔 Recordatorio activo en este dispositivo' : '🔔 Activar recordatorio en mi teléfono'}</button>
+      </div>`;
+  }
 }
 
 function renderActs() {
   const a = (cfg.actividades || []).filter((x) => x && x.t);
   $('#acts-wrap').classList.toggle('hide', !a.length);
   const visible = showAllActs ? a : a.slice(0, 4);
-  $('#acts').innerHTML = visible.map((x) => `<li><b>${esc(x.t)}</b><span class="f">${esc(x.f || '')}</span><p>${esc(x.d || '')}</p></li>`).join('');
+  $('#acts').innerHTML = visible.map((x) => {
+    const gUrl = googleCalUrl({
+      title: `JUMA Duaca · ${x.t}`,
+      dateIso: x.f || '',
+      desc: `${x.d ? x.d + '\n' : ''}Actividad de la Juventud Misionera Allamaniana de Duaca (JUMA Duaca).\nFecha: ${x.f || 'Por confirmar'}\nLugar: ${lugar()}`
+    });
+    return `<li><b>${esc(x.t)}</b><span class="f">${esc(x.f || '')}</span><p>${esc(x.d || '')}</p><div style="margin-top:14px"><a class="btn btn-outline btn-sm" style="padding:6px 12px;font-size:12px;color:var(--sky);border-color:rgba(142,201,255,.4)" target="_blank" rel="noopener" href="${esc(gUrl)}">📅 Agendar en Google Calendar</a></div></li>`;
+  }).join('');
   let moreActBtn = $('#btn-more-acts');
   if (a.length > 4) {
     if (!moreActBtn) {
@@ -689,6 +926,16 @@ modalRoot.addEventListener('click', async (e) => {
   if (e.target.closest('[data-dl]')) downloadPlanillaHtml(form.d);
 });
 document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-dl-ics]')) {
+    e.preventDefault();
+    downloadIcsCalendar();
+    return;
+  }
+  if (e.target.closest('[data-toggle-rem]')) {
+    e.preventDefault();
+    toggleReminders();
+    return;
+  }
   if (e.target.closest('[data-toggle-enc]')) {
     e.preventDefault();
     showAllEnc = !showAllEnc;
@@ -740,6 +987,8 @@ function authModalHtml() {
     const qrPayload = qrPayloadFor(myProfile || { uid: currentUser && currentUser.uid, correo: email });
     const qrUrl = qrImgUrl(qrPayload, 260);
     const misAsistencias = asistenciasUltimos6Meses(myProfile);
+    const proxEventos = allUpcomingCalendarEvents().slice(0, 4);
+    const remOn = remindersEnabled();
     const badgeTxt = trueMaster ? '★ Perfil Maestro · JUMA Duaca' : (role === 'coordinador' ? '★ Coordinador(a) · JUMA Duaca' : (role === 'asesor' ? '◆ Asesor(a) · JUMA Duaca' : '● Participante · JUMA Duaca'));
     return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="au-t"><div class="sheet" style="max-width:740px">${sheetHead('Juventud Misionera Allamaniana · Duaca', 'Mi perfil misionero', 'au-t')}<div style="padding:clamp(22px,4vw,40px)">
       <div class="u-card" style="display:flex;flex-wrap:wrap;align-items:center;gap:18px">
@@ -770,6 +1019,19 @@ function authModalHtml() {
           </div>
           ${misAsistencias.length ? `<details style="margin-top:10px"><summary style="cursor:pointer;font-size:13.5px;font-weight:700;color:var(--royal)">Ver mis formaciones y actividades asistidas</summary><ul style="margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink)">${misAsistencias.map((a) => `<li style="margin-bottom:4px"><b>${esc(a.titulo || 'Formación')}</b> — ${esc(a.fecha ? a.fecha.split('-').reverse().join('/') : '')} <span style="color:var(--muted)">(${esc(a.tipo || 'Formación')})</span></li>`).join('')}</ul></details>` : ''}
         </div>
+      </div>
+      <div style="padding:18px 20px;margin-bottom:20px;border-radius:14px;background:#F6F9FE;border:1.5px solid var(--line)">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
+          <div>
+            <b style="display:block;font-size:17px;color:var(--ink)">📅 Mis próximas actividades y recordatorios</b>
+            <p style="margin:2px 0 0;font-size:13.5px;color:var(--muted)">Vincula tus encuentros con Google Calendar o el calendario de tu teléfono con alarmas automáticas.</p>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <button type="button" class="btn ${remOn ? 'btn-blue' : 'btn-outline'} btn-sm" data-toggle-rem>${remOn ? '🔔 Recordatorio activo' : '🔔 Activar recordatorio'}</button>
+            <button type="button" class="btn btn-soft btn-sm" data-dl-ics>📲 Sincronizar 3 meses (.ics)</button>
+          </div>
+        </div>
+        ${proxEventos.length ? `<div style="display:grid;gap:8px">${proxEventos.map((ev) => `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-radius:10px;background:#fff;border:1px solid var(--line)"><div><b style="font-size:14.5px;color:var(--ink)">${esc(ev.title)}</b><span style="display:block;font-size:12.5px;color:var(--muted)">${esc(ev.badge)} · ${esc(hora())} · ${esc(lugar())}</span></div><a class="btn btn-outline btn-sm" style="padding:6px 12px;font-size:12px" target="_blank" rel="noopener" href="${esc(googleCalUrl(ev))}">📅 Google Calendar</a></div>`).join('')}</div>` : ''}
       </div>
       ${rows.length ? `<h3 class="h-display h-md" style="margin-bottom:12px">Datos de mi planilla guardada</h3><dl style="margin:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px 20px">${rows.map((r) => `<div style="display:flex;flex-wrap:wrap;gap:4px 18px;padding:10px 0;border-bottom:1px solid var(--mist)"><dt style="flex:0 0 180px;font-size:14px;font-weight:700;color:var(--royal)">${esc(r[0])}</dt><dd style="margin:0;flex:1 1 180px;font-size:15px">${esc(r[1])}</dd></div>`).join('')}</dl>` : `<div style="padding:20px;border-radius:14px;background:var(--mist);margin-bottom:18px"><p class="body" style="margin:0">Tu cuenta está activa, pero aún no has llenado tu planilla misionera.</p></div>`}
       <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px">
@@ -2188,6 +2450,7 @@ async function loadContenido() {
   cfg = clone(pub);
   if (isEditor()) { showFab(); const d = pickDraft(); if (d) cfg = cleanContent(d); }
   renderAll();
+  setTimeout(() => checkUpcomingReminders(false), 1200);
 }
 (function boot() {
   try {
