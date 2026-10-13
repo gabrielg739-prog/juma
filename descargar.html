@@ -546,6 +546,11 @@ h1 span {
         <span id="auto-text">Preparando descarga automática de JUMA.apk…</span>
       </div>
 
+      <div id="dl-counter-pill" style="display:inline-flex;align-items:center;gap:8px;margin:0 auto 14px;padding:7px 16px;border-radius:999px;background:rgba(142,201,255,0.14);border:1px solid rgba(142,201,255,0.38);color:#8EC9FF;font-size:13.5px;font-weight:800;letter-spacing:0.02em">
+        <span>📲</span>
+        <span id="dl-counter-txt">Cargando contador de descargas…</span>
+      </div>
+
       <a class="btn-apk" id="btn-download-apk" href="JUMA.apk" download="JUMA.apk">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -597,7 +602,52 @@ h1 span {
   </section>
 </main>
 
-<script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import { getFirestore, initializeFirestore, doc, setDoc, onSnapshot, increment } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+const fbCfg = {
+  apiKey: "AIzaSyC8-zbb-AGZmHHsdwo0B0K7mVQZDalwnlc",
+  authDomain: "juma-e4ab8.firebaseapp.com",
+  projectId: "juma-e4ab8",
+  storageBucket: "juma-e4ab8.firebasestorage.app",
+  messagingSenderId: "551880580074",
+  appId: "1:551880580074:web:618f067a7f3ddc9da1b093"
+};
+
+let statsRef = null;
+let countedThisSession = false;
+
+function registerApkDownload() {
+  if (countedThisSession || !statsRef) return;
+  try {
+    if (localStorage.getItem('juma-apk-dl-v1') === '1') {
+      countedThisSession = true;
+      return;
+    }
+    localStorage.setItem('juma-apk-dl-v1', '1');
+  } catch (e) {}
+  countedThisSession = true;
+  setDoc(statsRef, {
+    descargasApk: increment(1),
+    ultimaDescarga: new Date().toISOString()
+  }, { merge: true }).catch(() => {});
+}
+
+try {
+  const app = initializeApp(fbCfg);
+  let db;
+  try { db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true }); } catch (e) { db = getFirestore(app); }
+  statsRef = doc(db, 'site', 'stats');
+  const txtEl = document.getElementById('dl-counter-txt');
+  onSnapshot(statsRef, (snap) => {
+    const n = (snap.exists() && snap.data() && Number(snap.data().descargasApk)) || 0;
+    if (txtEl) {
+      txtEl.textContent = n === 1 ? '1 persona ya descargó la App' : n + ' personas ya descargaron la App';
+    }
+  }, () => {});
+} catch (e) {}
+
 (function () {
   var btn = document.getElementById('btn-download-apk');
   var statusTxt = document.getElementById('auto-text');
@@ -617,6 +667,7 @@ h1 span {
   /* Dispara la descarga automática de JUMA.apk 1.2 segundos después de abrir el enlace */
   setTimeout(function () {
     statusTxt.textContent = '✅ ¡Descarga de JUMA.apk iniciada! Revisa tus notificaciones o toca el botón azul.';
+    registerApkDownload();
     var a = document.createElement('a');
     a.href = btn.getAttribute('href');
     a.setAttribute('download', 'JUMA.apk');
@@ -627,6 +678,7 @@ h1 span {
   }, 1200);
 
   btn.addEventListener('click', function () {
+    registerApkDownload();
     statusTxt.textContent = '📲 Descargando JUMA.apk en tu dispositivo… Al finalizar, ábrelo para instalar.';
   });
 

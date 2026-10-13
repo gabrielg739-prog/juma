@@ -438,13 +438,95 @@ function getPostsList(src = cfg) {
   const defaults = DEFAULT_POSTS.filter((d) => !hiddenIds.has(d.id) && !seenIds.has(d.id));
   return custom.concat(defaults);
 }
+const postVideoFileCache = new Map();
+const postVideoBlobUrlCache = new Map();
+const postVideoPromiseCache = new Map();
+
+function u8ToB64(u8) {
+  let s = '';
+  for (let i = 0; i < u8.length; i += 0x8000) {
+    s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+  }
+  return btoa(s);
+}
+function b64ToU8(b64) {
+  const bin = atob(String(b64 || '').replace(/\s/g, ''));
+  const u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return u8;
+}
+async function resolveCloudVideo(vidRef) {
+  if (!vidRef || !String(vidRef).startsWith('juma-vid:')) return vidRef;
+  if (postVideoBlobUrlCache.has(vidRef)) return postVideoBlobUrlCache.get(vidRef);
+  if (postVideoPromiseCache.has(vidRef)) return postVideoPromiseCache.get(vidRef);
+
+  const p = (async () => {
+    const vidId = String(vidRef).slice(9);
+    const cacheKey = 'https://juma.local/cloud-video/' + encodeURIComponent(vidId);
+    try {
+      if ('caches' in globalThis) {
+        const c = await caches.open('juma-cloud-videos-v1');
+        const hit = await c.match(cacheKey);
+        if (hit) {
+          const blob = await hit.blob();
+          const url = URL.createObjectURL(blob);
+          postVideoBlobUrlCache.set(vidRef, url);
+          if ('File' in globalThis) {
+            postVideoFileCache.set(vidRef, new File([blob], 'Noticia-JUMA.mp4', { type: blob.type || 'video/mp4' }));
+          }
+          return url;
+        }
+      }
+    } catch (e) {}
+
+    for (let w = 0; w < 25 && !(fb && fb.db); w++) {
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    if (!fb || !fb.db) return '';
+
+    const metaSnap = await fb.getDoc(fb.doc(fb.db, 'site', 'vid_' + vidId));
+    if (!metaSnap.exists()) return '';
+    const meta = metaSnap.data() || {};
+    const total = Number(meta.chunks || 0);
+    if (!total) return '';
+
+    const snaps = await Promise.all(
+      Array.from({ length: total }, (_, idx) => fb.getDoc(fb.doc(fb.db, 'site', `vid_${vidId}_${idx}`)))
+    );
+    const parts = snaps.map((s) => (s.exists() && s.data() && s.data().d ? b64ToU8(s.data().d) : new Uint8Array(0)));
+    const mime = meta.mime || 'video/mp4';
+    const blob = new Blob(parts, { type: mime });
+    const url = URL.createObjectURL(blob);
+    postVideoBlobUrlCache.set(vidRef, url);
+    if ('File' in globalThis) {
+      postVideoFileCache.set(vidRef, new File([blob], meta.name || 'Noticia-JUMA.mp4', { type: mime }));
+    }
+    try {
+      if ('caches' in globalThis) {
+        const c = await caches.open('juma-cloud-videos-v1');
+        await c.put(cacheKey, new Response(blob, { headers: { 'Content-Type': mime } }));
+      }
+    } catch (e) {}
+    return url;
+  })();
+
+  postVideoPromiseCache.set(vidRef, p);
+  try {
+    return await p;
+  } finally {
+    postVideoPromiseCache.delete(vidRef);
+  }
+}
+
 function mediaHtml(p, idx) {
   const yt = p.video && String(p.video).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([\w-]{11})/);
   if (yt) return `<div class="post-media"><iframe class="yt" loading="lazy" src="https://www.youtube-nocookie.com/embed/${yt[1]}" title="${esc(p.t)}" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>`;
   if (p.video) {
-    return `<div class="post-media is-reel" data-post-media="${idx}">
+    const isCloud = String(p.video).startsWith('juma-vid:');
+    const readySrc = isCloud ? (postVideoBlobUrlCache.get(p.video) || '') : p.video;
+    return `<div class="post-media is-reel" data-post-media="${idx}" ${isCloud ? `data-cloud-vid="${esc(p.video)}"` : ''}>
       <button type="button" class="post-sound-btn" data-toggle-post-sound="${idx}">🔊 Con sonido</button>
-      <video controls preload="auto" playsinline loop src="${esc(p.video)}" data-post-video="${idx}"></video>
+      <video controls preload="auto" playsinline loop ${readySrc ? `src="${esc(readySrc)}"` : ''} data-post-video="${idx}"></video>
     </div>`;
   }
   if (p.foto) return `<div class="post-media"><img class="photo" loading="lazy" src="${esc(p.foto)}" alt="${esc(p.t)}"></div>`;
@@ -454,7 +536,7 @@ let postMediaObserver = null;
 function playWithSound(box) {
   const vid = box ? box.querySelector('video') : null;
   const sndBtn = box ? box.querySelector('[data-toggle-post-sound]') : null;
-  if (!vid) return;
+  if (!vid || !vid.getAttribute('src')) return;
   vid.muted = false;
   vid.volume = 1;
   if (sndBtn) sndBtn.textContent = '🔊 Con sonido';
@@ -475,12 +557,15 @@ function playWithSound(box) {
     ['pointerdown', 'touchstart', 'click', 'keydown'].forEach((ev) => document.addEventListener(ev, unlock, { capture: true, passive: true, once: true }));
   });
 }
-const postVideoFileCache = new Map();
 function preloadPostVideoFiles(list) {
-  if (!('File' in globalThis) || !navigator.canShare) return;
   (list || []).forEach((p) => {
     const v = p && p.video;
-    if (!v || postVideoFileCache.has(v) || /^(https?:)?\/\/(?:www\.)?(?:youtube\.com|youtu\.be)/i.test(v)) return;
+    if (!v || /^(https?:)?\/\/(?:www\.)?(?:youtube\.com|youtu\.be)/i.test(v)) return;
+    if (String(v).startsWith('juma-vid:')) {
+      resolveCloudVideo(v).catch(() => {});
+      return;
+    }
+    if (!('File' in globalThis) || !navigator.canShare || postVideoFileCache.has(v)) return;
     postVideoFileCache.set(v, 'loading');
     fetch(v).then((r) => (r.ok ? r.blob() : null)).then((blob) => {
       if (blob) {
@@ -495,6 +580,18 @@ function setupPostVideos() {
   if (postMediaObserver) { try { postMediaObserver.disconnect(); } catch (e) {} postMediaObserver = null; }
   const boxes = $$('[data-post-media]');
   if (!boxes.length) return;
+  boxes.forEach((b) => {
+    const cloudRef = b.dataset.cloudVid;
+    if (cloudRef) {
+      resolveCloudVideo(cloudRef).then((url) => {
+        const vid = b.querySelector('video');
+        if (vid && url && vid.getAttribute('src') !== url) {
+          vid.src = url;
+          if (b.dataset.inView === '1') playWithSound(b);
+        }
+      }).catch(() => {});
+    }
+  });
   if ('IntersectionObserver' in globalThis) {
     postMediaObserver = new IntersectionObserver((entries) => {
       entries.forEach((en) => {
@@ -541,8 +638,9 @@ async function sharePostWhatsApp(idx, btnEl) {
     }
   }
 
-  /* Apertura instantánea en WhatsApp (sin esperas de descarga) con todo el texto y enlace directo al video */
-  const videoAbsUrl = p.video ? new URL(p.video, location.href).href : location.href;
+  /* Apertura instantánea en WhatsApp (sin esperas de descarga) con todo el texto y enlace directo al video o sección de noticias */
+  const isCloud = p.video && String(p.video).startsWith('juma-vid:');
+  const videoAbsUrl = p.video ? (isCloud ? (location.origin + location.pathname + '#novedades') : new URL(p.video, location.href).href) : location.href;
   const waMsg = fullText + (p.video ? '\n\n🎥 Ver video aquí: ' + videoAbsUrl : '');
   const origHtml = btnEl ? btnEl.innerHTML : '';
   if (btnEl) {
@@ -1312,6 +1410,7 @@ function setupPush() {
 }
 
 /* ===================== firebase (Auth + Firestore optimizado para móviles + Messaging) ===================== */
+let appStats = { descargasApk: 0 };
 async function initFirebase() {
   if (!FB_ON) return;
   try {
@@ -1329,7 +1428,7 @@ async function initFirebase() {
       db = fs.getFirestore(a);
     }
     fb = { app: a, db, auth: au.getAuth(a), au };
-    ['doc', 'getDoc', 'setDoc', 'deleteDoc', 'updateDoc', 'collection', 'addDoc', 'getDocs', 'query', 'where', 'orderBy', 'limit', 'onSnapshot', 'serverTimestamp'].forEach((k) => { fb[k] = fs[k]; });
+    ['doc', 'getDoc', 'setDoc', 'deleteDoc', 'updateDoc', 'collection', 'addDoc', 'getDocs', 'query', 'where', 'orderBy', 'limit', 'onSnapshot', 'serverTimestamp', 'increment'].forEach((k) => { fb[k] = fs[k]; });
     try {
       fb.onSnapshot(fb.doc(fb.db, 'site', 'config'), (snap) => {
         if (snap.exists()) {
@@ -1340,6 +1439,22 @@ async function initFirebase() {
           }
         }
       }, () => {});
+      fb.onSnapshot(fb.doc(fb.db, 'site', 'stats'), (snap) => {
+        if (snap.exists()) {
+          appStats = Object.assign({ descargasApk: 0 }, snap.data());
+          const statNumEl = $('#stat-apk-dl-num');
+          if (statNumEl) statNumEl.textContent = '📲 ' + (appStats.descargasApk || 0);
+        }
+      }, () => {});
+      /* Si abre desde la APK instalada y aún no se había contabilizado este teléfono, suma 1 al contador */
+      const isInstalledApp = (window.matchMedia && (window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches)) || document.referrer.includes('android-app://') || /; wv\)|Version\/[\d.]+.*Chrome/i.test(navigator.userAgent || '');
+      if (isInstalledApp && !localStorage.getItem('juma-apk-dl-v1')) {
+        localStorage.setItem('juma-apk-dl-v1', '1');
+        fb.setDoc(fb.doc(fb.db, 'site', 'stats'), {
+          descargasApk: fb.increment ? fb.increment(1) : ((appStats.descargasApk || 0) + 1),
+          ultimaDescarga: new Date().toISOString()
+        }, { merge: true }).catch(() => {});
+      }
     } catch (e) {}
     loadMuro();
     await authInit();
@@ -1900,7 +2015,7 @@ function getTabs() {
     ['dat', 'Hora, lugar y WhatsApp'],
     ['act', 'Actividades'],
     ['for', 'Formación'],
-    ['nov', 'Novedades']
+    ['nov', '📰 Noticias']
   ];
   if (trueMaster) baseTabs.push(['fot', 'Fotos']);
   baseTabs.push(['tes', 'Testimonios'], ['mur', `Muro (${allMensajes.filter((m) => !m.aprobado).length})`]);
@@ -1926,6 +2041,7 @@ function editorBody() {
     const conSalud = allInscripciones.filter((x) => (x.datos && (x.datos.enf === 'Sí' || x.datos.med === 'Sí' || x.datos.alMed || x.datos.alAli || x.datos.alOtros))).length;
     return `<p class="ehint">${trueMaster ? '<b>Cuenta Maestra:</b> Inicialmente todos los registrados entran como <b>Participantes</b>. Únicamente desde esta Cuenta Maestra puedes decidir y modificar quién es <b>Coordinador</b>, <b>Asesor</b> o <b>Participante</b>, además de ver las asistencias de los últimos 6 meses.' : '<b>Vista de Coordinador:</b> Aquí puedes ver el número de participantes, sus planillas, su código QR y las formaciones/actividades a las que asistieron en los últimos 6 meses. <i>(Solo la Cuenta Maestra puede cambiar roles o editar la galería de fotos)</i>.'}</p>
       <div class="stat-grid">
+        <div class="stat-box" style="background:#E8F1FF;border-color:var(--royal)"><b id="stat-apk-dl-num" style="color:var(--royal)">📲 ${appStats.descargasApk || 0}</b><span style="color:var(--navy);font-weight:800">Descargaron la App</span></div>
         <div class="stat-box"><b>${allInscripciones.length}</b><span>Total inscritos</span></div>
         <div class="stat-box"><b>${totalCoord}</b><span>Coordinadores</span></div>
         <div class="stat-box"><b>${totalAses}</b><span>Asesores</span></div>
@@ -2113,7 +2229,37 @@ function editorBody() {
     const s = (k) => (v) => { dr.formacion = dr.formacion || {}; dr.formacion[String(fy)] = Object.assign({}, dr.formacion[String(fy)], { [k]: v }); };
     return `<p class="ehint">Elige el año y cambia su título, su texto o la lista de temas (un tema por línea).</p><div class="etabs">${YEARS.map((x, i) => `<button type="button" class="etab" data-fy="${i}" aria-pressed="${i === fy}">${x.name}</button>`).join('')}</div><div style="display:flex;flex-wrap:wrap;gap:18px">${fld('Título', fo.title != null ? fo.title : y.title, s('title'), { w: 1 })}${fld('Texto', fo.text != null ? fo.text : y.text, s('text'), { w: 1, area: 1 })}${fld('Temas (uno por línea)', fo.topicsText != null ? fo.topicsText : y.topics.map((t) => t.t).join('\n'), s('topicsText'), { w: 1, area: 1, rows: 10 })}</div>`;
   }
-  if (tab === 'nov') return `<p class="ehint">Publica novedades con texto y una foto, o con un enlace de YouTube para los videos. La más nueva aparece primero.</p><button type="button" class="btn btn-soft" data-newpost>Nueva entrada</button>${edBusy ? '<p class="ehint" style="margin-top:12px">Preparando la foto…</p>' : ''}` + (dr.posts || []).map((p, i) => `<div class="erow" style="flex-direction:column;align-items:stretch">${fld('Título', p.t || '', (v) => { dr.posts[i].t = v; }, { w: 1 })}${fld('Texto', p.x || '', (v) => { dr.posts[i].x = v; }, { w: 1, area: 1 })}${fld('Enlace de YouTube (opcional)', p.video || '', (v) => { dr.posts[i].video = v; }, { w: 1, ph: 'https://youtu.be/…' })}<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px"><label class="btn btn-soft btn-sm" style="cursor:pointer;position:relative">Elegir foto<input type="file" accept="image/*" data-up="foto" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0"></label>${p.foto ? `<img class="ethumb" src="${esc(p.foto)}" alt="">` : '<span style="font-size:14px;color:var(--muted)">Sin foto</span>'}<button type="button" class="btn btn-soft btn-sm" data-rmpost="${i}" style="margin-left:auto">Quitar entrada</button></div></div>`).join('');
+  if (tab === 'nov') {
+    return `<p class="ehint"><b>Noticias de JUMA (disponible para Cuenta Maestra y Coordinadores):</b> Publica todas las noticias que quieras subiendo un <b>video directo desde tu teléfono</b>, una <b>foto</b> o un enlace de YouTube. Cada publicación muestra el texto corto debajo del video, el botón <b>«Ver más ▾»</b> estilo TikTok y el botón para <b>compartir por WhatsApp</b>.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:14px">
+        <button type="button" class="btn btn-blue" data-newpost>+ Nueva noticia / publicación</button>
+        ${edBusy ? `<span style="font-size:14.5px;font-weight:800;color:var(--royal)" id="ed-up-status">${esc(edUploadMsg || 'Subiendo archivo…')}</span>` : ''}
+      </div>` + (dr.posts || []).map((p, i) => {
+        const hasVid = !!p.video;
+        const isCloudVid = hasVid && String(p.video).startsWith('juma-vid:');
+        return `<div class="erow" style="flex-direction:column;align-items:stretch;background:#fff;padding:18px;border-radius:14px;border:1.5px solid var(--line);margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px">
+            <b style="font-size:15px;color:var(--royal)">📰 Publicación #${i + 1} ${i === 0 ? '(Más reciente)' : ''}</b>
+            <button type="button" class="btn btn-danger btn-sm" data-rmpost="${i}">Borrar publicación</button>
+          </div>
+          ${fld('Texto corto principal (aparece debajo del video/foto)', p.t || '', (v) => { dr.posts[i].t = v; }, { w: 1, ph: 'Ej.: ¡Los dobletes no siempre son de catástrofes, esta vez venimos con uno de puro AMOR y CONSOLACIÓN! ❤️🔥✨' })}
+          ${fld('Texto completo al tocar «Ver más ▾» (estilo TikTok)', p.x || '', (v) => { dr.posts[i].x = v; }, { w: 1, area: 1, rows: 5, ph: 'Escribe aquí la información completa, ruta, fecha, hora…' })}
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--paper);border:1px solid var(--line)">
+            <label class="btn btn-blue btn-sm" style="cursor:pointer;position:relative">
+              <span>🎥 ${hasVid ? 'Cambiar video del teléfono' : 'Subir video del teléfono'}</span>
+              <input type="file" accept="video/*" data-up="video" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0">
+            </label>
+            ${hasVid ? `<span style="font-size:13.5px;font-weight:800;color:#14532D;background:#E4F5EA;padding:5px 12px;border-radius:99px">✔ Video cargado ${isCloudVid ? '(Nube JUMA)' : ''}</span><button type="button" class="btn btn-soft btn-sm" data-rmvid="${i}">Quitar video</button>` : '<span style="font-size:13.5px;color:var(--muted)">Sin video</span>'}
+            <label class="btn btn-soft btn-sm" style="cursor:pointer;position:relative;margin-left:auto">
+              <span>📷 ${p.foto ? 'Cambiar foto' : 'Elegir foto'}</span>
+              <input type="file" accept="image/*" data-up="foto" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0">
+            </label>
+            ${p.foto ? `<img class="ethumb" src="${esc(p.foto)}" alt=""><button type="button" class="btn btn-soft btn-sm" data-rmfoto="${i}">Quitar foto</button>` : ''}
+          </div>
+          ${!isCloudVid ? fld('O pega un enlace de YouTube / ruta de video (opcional)', p.video || '', (v) => { dr.posts[i].video = v; }, { w: 1, ph: 'https://youtu.be/… o img/mi-video.mp4' }) : ''}
+        </div>`;
+      }).join('');
+  }
   if (tab === 'fot') {
     const items = galItems(dr); const ocultas = new Set(dr.ocultas || []); const pies = dr.pies || {};
     const rows = items.map((it, n) => {
@@ -2158,7 +2304,7 @@ function cleanContent(src) {
   const c = clone(src);
   c.actividades = (c.actividades || []).filter((a) => a && String(a.t || '').trim()).slice(0, 24);
   c.encuentrosExtra = (c.encuentrosExtra || []).filter((e) => e && e.fecha && e.fecha <= max3MonthsIso());
-  c.posts = (c.posts || []).filter((p) => p && (String(p.t || '').trim() || String(p.x || '').trim()));
+  c.posts = (c.posts || []).filter((p) => p && (String(p.t || '').trim() || String(p.x || '').trim() || p.video || p.foto));
   c.galeria = (c.galeria || []).filter((g) => g && g.url);
   c.testimonios = (c.testimonios || []).filter((x) => x && String(x.x || '').trim());
   if (c.orden) { const ok = new Set(GAL_FIJA.map((g) => g.src).concat(c.galeria.map((g) => g.url))); c.orden = c.orden.filter((k) => ok.has(k)); }
@@ -2196,6 +2342,73 @@ async function shrinkToDataUrl(file) {
   cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
   return cv.toDataURL('image/jpeg', 0.78);
 }
+let edUploadMsg = '';
+async function uploadVideoToCloud(file, onProgress) {
+  if (!file) throw new Error('Selecciona un archivo de video.');
+  const maxBytes = 25 * 1024 * 1024;
+  if (file.size > maxBytes) {
+    throw new Error('El video supera los 25 MB permitidos. Prueba con un video más corto o enviado por WhatsApp.');
+  }
+  const buf = await file.arrayBuffer();
+  const u8 = new Uint8Array(buf);
+  const vidId = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  const mime = file.type || 'video/mp4';
+
+  /* Si tiene llave de GitHub activa en este dispositivo, también lo sube como archivo directo .mp4 */
+  if (ghToken()) {
+    try {
+      if (onProgress) onProgress('⏳ Subiendo video directo a GitHub…');
+      const ghFilePath = 'img/subidas/video-' + vidId + '.mp4';
+      await ghPut(ghFilePath, u8ToB64(u8), null, 'Sube video de noticia desde la app');
+      const blob = new Blob([u8], { type: mime });
+      if ('File' in globalThis) postVideoFileCache.set(ghFilePath, new File([blob], file.name || 'Noticia-JUMA.mp4', { type: mime }));
+      return ghFilePath;
+    } catch (e) {}
+  }
+
+  if (!fb || !fb.db) {
+    throw new Error('Esperando conexión con la nube de Firebase. Intenta de nuevo en unos segundos.');
+  }
+  const chunkSize = 524288; /* 512 KB por bloque (~683 KB en base64, dentro del límite de 1 MB de Firestore) */
+  const totalChunks = Math.ceil(u8.length / chunkSize);
+  const batchSize = 3;
+  for (let start = 0; start < totalChunks; start += batchSize) {
+    const end = Math.min(totalChunks, start + batchSize);
+    const tasks = [];
+    for (let c = start; c < end; c++) {
+      const slice = u8.subarray(c * chunkSize, Math.min(u8.length, (c + 1) * chunkSize));
+      const b64 = u8ToB64(slice);
+      tasks.push(fb.setDoc(fb.doc(fb.db, 'site', `vid_${vidId}_${c}`), { d: b64, i: c }));
+    }
+    await Promise.all(tasks);
+    const pct = Math.round((end / totalChunks) * 100);
+    if (onProgress) onProgress(`⏳ Subiendo video a la nube de JUMA… ${pct}%`);
+  }
+  await fb.setDoc(fb.doc(fb.db, 'site', 'vid_' + vidId), {
+    id: vidId,
+    mime,
+    size: u8.length,
+    chunks: totalChunks,
+    name: file.name || 'Noticia-JUMA.mp4',
+    creado: new Date().toISOString()
+  });
+
+  const vidRef = 'juma-vid:' + vidId;
+  const blob = new Blob([u8], { type: mime });
+  const localUrl = URL.createObjectURL(blob);
+  postVideoBlobUrlCache.set(vidRef, localUrl);
+  if ('File' in globalThis) {
+    postVideoFileCache.set(vidRef, new File([blob], file.name || 'Noticia-JUMA.mp4', { type: mime }));
+  }
+  try {
+    if ('caches' in globalThis) {
+      const cacheKey = 'https://juma.local/cloud-video/' + encodeURIComponent(vidId);
+      const c = await caches.open('juma-cloud-videos-v1');
+      await c.put(cacheKey, new Response(blob, { headers: { 'Content-Type': mime } }));
+    }
+  } catch (e) {}
+  return vidRef;
+}
 modalRoot.addEventListener('input', (e) => {
   if (e.target.id === 'ins-search') { insQuery = e.target.value; const pos = e.target.selectionStart; repaintEd(); const inp = $('#ins-search'); if (inp) { inp.focus(); try { inp.setSelectionRange(pos, pos); } catch (x) {} } return; }
   if (e.target.id === 'qr-tema-in') { qrTema = e.target.value; return; }
@@ -2209,16 +2422,29 @@ modalRoot.addEventListener('change', async (e) => {
   if (c && setters.has(c)) { setters.get(c)(t.checked); touch(); return; }
   const kind = t.dataset && t.dataset.up; if (!kind || !t.files || !t.files.length) return;
   const files = Array.from(t.files); const i = +t.dataset.i;
-  edBusy = true; edErr = ''; repaintEd();
+  edBusy = true; edErr = ''; edUploadMsg = kind === 'video' ? '⏳ Preparando video del teléfono…' : '⏳ Preparando foto…'; repaintEd();
   try {
-    for (const f of files) {
-      const url = await shrinkToDataUrl(f);
-      if (kind === 'gal') dr.galeria = (dr.galeria || []).concat([{ url, cap: '' }]);
-      else if (kind === 'foto') dr.posts[i].foto = url;
-      else if (kind === 'tes') dr.testimonios[i].foto = url;
+    if (kind === 'video') {
+      const f = files[0];
+      const vidRef = await uploadVideoToCloud(f, (msg) => {
+        edUploadMsg = msg;
+        const stEl = $('#ed-up-status');
+        if (stEl) stEl.textContent = msg;
+      });
+      dr.posts[i].video = vidRef;
+      edOk = '<b>✔ ¡Video cargado desde tu teléfono!</b> Ahora pulsa <b>«Publicar cambios»</b> abajo para que aparezca en todos los teléfonos.';
+    } else {
+      for (const f of files) {
+        const url = await shrinkToDataUrl(f);
+        if (kind === 'gal') dr.galeria = (dr.galeria || []).concat([{ url, cap: '' }]);
+        else if (kind === 'foto') dr.posts[i].foto = url;
+        else if (kind === 'tes') dr.testimonios[i].foto = url;
+      }
     }
-  } catch (x) { edErr = 'No se pudo leer la foto. Prueba con otra imagen (JPG o PNG).'; }
-  edBusy = false; touch(); repaintEd();
+  } catch (x) {
+    edErr = (x && x.message) || (kind === 'video' ? 'No se pudo subir el video. Intenta con un video más corto.' : 'No se pudo leer la foto. Prueba con otra imagen (JPG o PNG).');
+  }
+  edBusy = false; edUploadMsg = ''; touch(); repaintEd();
 });
 modalRoot.addEventListener('click', async (e) => {
   if (!$('#ed-t')) return; const t = e.target;
@@ -2359,7 +2585,24 @@ modalRoot.addEventListener('click', async (e) => {
   if (q('[data-newtes]')) { dr.testimonios = [{ n: '', r: '', x: '', foto: '' }].concat(dr.testimonios || []); touch(); repaintEd(); return; }
   if (q('[data-rmtes]')) { dr.testimonios.splice(+q('[data-rmtes]').dataset.rmtes, 1); touch(); repaintEd(); return; }
   if (q('[data-newpost]')) { dr.posts = [{ id: String(Date.now()), t: '', x: '', fecha: new Date().toISOString(), foto: '', video: '' }].concat(dr.posts || []); touch(); repaintEd(); return; }
-  if (q('[data-rmpost]')) { dr.posts.splice(+q('[data-rmpost]').dataset.rmpost, 1); touch(); repaintEd(); return; }
+  if (q('[data-rmpost]')) {
+    const idxRm = +q('[data-rmpost]').dataset.rmpost;
+    const [removed] = (dr.posts || []).splice(idxRm, 1);
+    if (removed && removed.id) {
+      dr.postsOcultos = Array.from(new Set((dr.postsOcultos || []).concat([removed.id])));
+    }
+    touch(); repaintEd(); return;
+  }
+  if (q('[data-rmvid]')) {
+    const idxVid = +q('[data-rmvid]').dataset.rmvid;
+    if (dr.posts && dr.posts[idxVid]) dr.posts[idxVid].video = '';
+    touch(); repaintEd(); return;
+  }
+  if (q('[data-rmfoto]')) {
+    const idxFot = +q('[data-rmfoto]').dataset.rmfoto;
+    if (dr.posts && dr.posts[idxFot]) dr.posts[idxFot].foto = '';
+    touch(); repaintEd(); return;
+  }
   if (q('[data-mv]') || q('[data-top]')) {
     const b = q('[data-mv]') || q('[data-top]'); const keys = galItems(dr).map((x) => x.key); const n = +(b.dataset.mv != null ? b.dataset.mv : b.dataset.top);
     const to = b.dataset.top != null ? 0 : n + (+b.dataset.d); if (to < 0 || to >= keys.length) return;
