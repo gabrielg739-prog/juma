@@ -18,6 +18,11 @@
   --royal-lt: #3568E8;
   --sky: #8EC9FF;
   --ice: #DCE7F8;
+  --c-af: #17824A;
+  --c-am: #C8322D;
+  --c-eu: #FFFFFF;
+  --c-oc: #2A5FE6;
+  --c-as: #F5C518;
   --display: 'Barlow Condensed', system-ui, -apple-system, sans-serif;
   --body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 }
@@ -32,6 +37,22 @@ html, body {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
+
+/* ===== CINTA MISIONERA SUPERIOR (5 CONTINENTES) ===== */
+.top-ribbon {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  box-shadow: 0 2px 12px rgba(0,0,0,.45);
+}
+.top-ribbon span:nth-child(1) { background: var(--c-oc); }
+.top-ribbon span:nth-child(2) { background: var(--c-as); }
+.top-ribbon span:nth-child(3) { background: var(--c-af); }
+.top-ribbon span:nth-child(4) { background: var(--c-am); }
+.top-ribbon span:nth-child(5) { background: var(--c-eu); }
 
 /* ===== FONDO DE COLLAGE DE FOTOS DE JUMA ===== */
 .collage-bg {
@@ -143,12 +164,18 @@ html, body {
   z-index: 1;
 }
 
-.card-top-bar {
+.card-ribbon {
   position: relative;
   z-index: 2;
-  height: 5px;
-  background: linear-gradient(90deg, #1B419F 0%, #8EC9FF 50%, #1B419F 100%);
+  height: 7px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
 }
+.card-ribbon i:nth-child(1) { background: var(--c-oc); }
+.card-ribbon i:nth-child(2) { background: var(--c-as); }
+.card-ribbon i:nth-child(3) { background: var(--c-af); }
+.card-ribbon i:nth-child(4) { background: var(--c-am); }
+.card-ribbon i:nth-child(5) { background: var(--c-eu); }
 
 .card-body {
   position: relative;
@@ -449,6 +476,10 @@ h1 span {
 </head>
 <body>
 
+<div class="top-ribbon" aria-hidden="true">
+  <span></span><span></span><span></span><span></span><span></span>
+</div>
+
 <!-- FONDO DE COLLAGE CON FOTOS DE JUMA DUACA -->
 <div class="collage-bg" aria-hidden="true" id="collage-bg">
   <div class="collage-col">
@@ -491,7 +522,7 @@ h1 span {
   <section class="card" aria-labelledby="dl-title">
     <video class="card-video-watermark" src="https://gabrielg739-prog.github.io/juma/video/v-encuentro.mp4?v=2" autoplay muted loop playsinline disablepictureinpicture disableremoteplayback aria-hidden="true"></video>
     <div class="card-video-veil" aria-hidden="true"></div>
-    <div class="card-top-bar" aria-hidden="true"></div>
+    <div class="card-ribbon" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
 
     <div class="card-body">
 
