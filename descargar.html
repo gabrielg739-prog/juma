@@ -604,7 +604,7 @@ h1 span {
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-import { getFirestore, initializeFirestore, doc, setDoc, onSnapshot, increment } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { getFirestore, initializeFirestore, doc, setDoc, onSnapshot, increment, collection, getDocs, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 const fbCfg = {
   apiKey: "AIzaSyC8-zbb-AGZmHHsdwo0B0K7mVQZDalwnlc",
@@ -617,6 +617,18 @@ const fbCfg = {
 
 let statsRef = null;
 let countedThisSession = false;
+let baseInscritos = 7;
+
+function detectDeviceLabel() {
+  const ua = navigator.userAgent || '';
+  if (/Android/i.test(ua)) {
+    const m = ua.match(/Android\s+[\d.]+;\s*([^;)]+)/i);
+    return 'Android' + (m && m[1] ? ' (' + m[1].trim() + ')' : '');
+  }
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'iPhone / iOS';
+  if (/Windows/i.test(ua)) return 'Computadora (Windows)';
+  return 'Teléfono móvil';
+}
 
 function registerApkDownload() {
   if (countedThisSession || !statsRef) return;
@@ -628,9 +640,11 @@ function registerApkDownload() {
     localStorage.setItem('juma-apk-dl-v1', '1');
   } catch (e) {}
   countedThisSession = true;
+  const nowIso = new Date().toISOString();
   setDoc(statsRef, {
     descargasApk: increment(1),
-    ultimaDescarga: new Date().toISOString()
+    ultimaDescarga: nowIso,
+    historialDescargas: arrayUnion({ dispositivo: detectDeviceLabel(), fecha: nowIso })
   }, { merge: true }).catch(() => {});
 }
 
@@ -640,8 +654,15 @@ try {
   try { db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true }); } catch (e) { db = getFirestore(app); }
   statsRef = doc(db, 'site', 'stats');
   const txtEl = document.getElementById('dl-counter-txt');
+  getDocs(collection(db, 'inscripciones')).then((qs) => {
+    if (qs && qs.size > baseInscritos) baseInscritos = qs.size;
+  }).catch(() => {});
   onSnapshot(statsRef, (snap) => {
-    const n = (snap.exists() && snap.data() && Number(snap.data().descargasApk)) || 0;
+    const raw = (snap.exists() && snap.data() && Number(snap.data().descargasApk)) || 0;
+    const n = Math.max(raw, baseInscritos);
+    if (raw < baseInscritos) {
+      setDoc(statsRef, { descargasApk: baseInscritos }, { merge: true }).catch(() => {});
+    }
     if (txtEl) {
       txtEl.textContent = n === 1 ? '1 persona ya descargó la App' : n + ' personas ya descargaron la App';
     }

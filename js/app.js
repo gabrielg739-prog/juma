@@ -1410,7 +1410,23 @@ function setupPush() {
 }
 
 /* ===================== firebase (Auth + Firestore optimizado para móviles + Messaging) ===================== */
-let appStats = { descargasApk: 0 };
+let appStats = { descargasApk: 0, historialDescargas: [] };
+function detectDeviceName() {
+  const ua = navigator.userAgent || '';
+  if (/Android/i.test(ua)) {
+    const m = ua.match(/Android\s+[\d.]+;\s*([^;)]+)/i);
+    return 'Android' + (m && m[1] ? ' (' + m[1].trim() + ')' : '');
+  }
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'iPhone / iOS';
+  if (/Windows/i.test(ua)) return 'Computadora (Windows)';
+  if (/Mac/i.test(ua)) return 'Mac';
+  return 'Teléfono / Navegador';
+}
+function totalAppDownloads() {
+  const regCount = allInscripciones.length;
+  const rawDl = Number(appStats.descargasApk) || 0;
+  return Math.max(rawDl, regCount);
+}
 async function initFirebase() {
   if (!FB_ON) return;
   try {
@@ -1441,9 +1457,9 @@ async function initFirebase() {
       }, () => {});
       fb.onSnapshot(fb.doc(fb.db, 'site', 'stats'), (snap) => {
         if (snap.exists()) {
-          appStats = Object.assign({ descargasApk: 0 }, snap.data());
+          appStats = Object.assign({ descargasApk: 0, historialDescargas: [] }, snap.data());
           const statNumEl = $('#stat-apk-dl-num');
-          if (statNumEl) statNumEl.textContent = '📲 ' + (appStats.descargasApk || 0);
+          if (statNumEl) statNumEl.textContent = '📲 ' + totalAppDownloads();
         }
       }, () => {});
       /* Si abre desde la APK instalada y aún no se había contabilizado este teléfono, suma 1 al contador */
@@ -1451,7 +1467,7 @@ async function initFirebase() {
       if (isInstalledApp && !localStorage.getItem('juma-apk-dl-v1')) {
         localStorage.setItem('juma-apk-dl-v1', '1');
         fb.setDoc(fb.doc(fb.db, 'site', 'stats'), {
-          descargasApk: fb.increment ? fb.increment(1) : ((appStats.descargasApk || 0) + 1),
+          descargasApk: fb.increment ? fb.increment(1) : (totalAppDownloads() + 1),
           ultimaDescarga: new Date().toISOString()
         }, { merge: true }).catch(() => {});
       }
@@ -1643,11 +1659,18 @@ async function loadAdminData() {
       }).catch(() => {}),
       withTimeout(fb.getDocs(fb.collection(fb.db, 'mensajes')), 5000).then((snap) => {
         snap.docs.forEach((d) => mmap.set(d.id, Object.assign({ id: d.id, _src: 'fs' }, d.data())));
+      }).catch(() => {}),
+      withTimeout(fb.getDoc(fb.doc(fb.db, 'site', 'stats')), 4000).then((snap) => {
+        if (snap.exists()) appStats = Object.assign({ descargasApk: 0, historialDescargas: [] }, snap.data());
       }).catch(() => {})
     ]);
   }
   allInscripciones = Array.from(map.values()).sort((a, b) => String(b.actualizado || '').localeCompare(String(a.actualizado || '')));
   allMensajes = Array.from(mmap.values());
+  if (fb && fb.db && (Number(appStats.descargasApk) || 0) < allInscripciones.length) {
+    appStats.descargasApk = allInscripciones.length;
+    fb.setDoc(fb.doc(fb.db, 'site', 'stats'), { descargasApk: allInscripciones.length }, { merge: true }).catch(() => {});
+  }
 }
 
 function exportInscripcionesCsv() {
@@ -2039,16 +2062,40 @@ function editorBody() {
     const totalPart = allInscripciones.filter((x) => userRole(x) === 'participante').length;
     const menores = allInscripciones.filter((x) => x.esMenor || esMenor(x.datos || {})).length;
     const conSalud = allInscripciones.filter((x) => (x.datos && (x.datos.enf === 'Sí' || x.datos.med === 'Sí' || x.datos.alMed || x.datos.alAli || x.datos.alOtros))).length;
+    const totalDl = totalAppDownloads();
+    const sinReg = Math.max(0, totalDl - allInscripciones.length);
+    const histDl = Array.isArray(appStats.historialDescargas) ? appStats.historialDescargas : [];
     return `<p class="ehint">${trueMaster ? '<b>Cuenta Maestra:</b> Inicialmente todos los registrados entran como <b>Participantes</b>. Únicamente desde esta Cuenta Maestra puedes decidir y modificar quién es <b>Coordinador</b>, <b>Asesor</b> o <b>Participante</b>, además de ver las asistencias de los últimos 6 meses.' : '<b>Vista de Coordinador:</b> Aquí puedes ver el número de participantes, sus planillas, su código QR y las formaciones/actividades a las que asistieron en los últimos 6 meses. <i>(Solo la Cuenta Maestra puede cambiar roles o editar la galería de fotos)</i>.'}</p>
       <div class="stat-grid">
-        <div class="stat-box" style="background:#E8F1FF;border-color:var(--royal)"><b id="stat-apk-dl-num" style="color:var(--royal)">📲 ${appStats.descargasApk || 0}</b><span style="color:var(--navy);font-weight:800">Descargaron la App</span></div>
-        <div class="stat-box"><b>${allInscripciones.length}</b><span>Total inscritos</span></div>
+        <div class="stat-box" style="background:#E8F1FF;border-color:var(--royal)"><b id="stat-apk-dl-num" style="color:var(--royal)">📲 ${totalDl}</b><span style="color:var(--navy);font-weight:800">Descargaron la App</span></div>
+        <div class="stat-box" style="background:#E4F5EA;border-color:#17824A"><b style="color:#14532D">✅ ${allInscripciones.length}</b><span style="color:#14532D;font-weight:800">App registrada</span></div>
+        ${sinReg > 0 ? `<div class="stat-box" style="background:#FFF8E1;border-color:#F5C518"><b style="color:#7A5200">⏳ ${sinReg}</b><span style="color:#7A5200;font-weight:800">Sin registrarse aún</span></div>` : ''}
         <div class="stat-box"><b>${totalCoord}</b><span>Coordinadores</span></div>
         <div class="stat-box"><b>${totalAses}</b><span>Asesores</span></div>
         <div class="stat-box"><b>${totalPart}</b><span>Participantes</span></div>
         <div class="stat-box"><b>${menores}</b><span>Menores de edad</span></div>
         <div class="stat-box"><b>${conSalud}</b><span>Con alerta médica</span></div>
       </div>
+      <details open style="margin-bottom:16px;padding:14px 18px;border-radius:14px;background:#fff;border:1.5px solid var(--royal)">
+        <summary style="cursor:pointer;font-size:15px;font-weight:800;color:var(--navy)">📲 Ver quiénes descargaron y registraron la App hasta ahora (${totalDl} en total)</summary>
+        <div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
+          <div style="padding:12px 14px;border-radius:12px;background:#F2FAF5;border:1px solid #B7E4C7">
+            <b style="display:block;font-size:14px;color:#14532D;margin-bottom:8px">✅ Ya descargaron y se registraron con nombre (${allInscripciones.length}):</b>
+            <ol style="margin:0;padding-left:20px;font-size:13.5px;line-height:1.65;color:var(--ink)">
+              ${allInscripciones.map((u) => {
+                const uNom = u.nombre || (((u.datos && u.datos.nombres) || '') + ' ' + ((u.datos && u.datos.apellidos) || '')).trim() || 'Sin nombre';
+                const uCel = u.celular || (u.datos && u.datos.celular) || '';
+                return `<li><b>${esc(uNom)}</b> <span style="color:var(--muted);font-size:12.5px">(${esc(roleLabel(userRole(u)))}${uCel ? ' · ' + esc(uCel) : ''})</span></li>`;
+              }).join('')}
+            </ol>
+          </div>
+          <div style="padding:12px 14px;border-radius:12px;background:#FFFDF5;border:1px solid #F5C518">
+            <b style="display:block;font-size:14px;color:#7A5200;margin-bottom:6px">⏳ ¿Por qué hay descargas sin nombre todavía? (${sinReg})</b>
+            <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#5C4300">Cuando alguien solo descarga el archivo <code>JUMA.apk</code> pero aún no abre la App ni llena su planilla, el teléfono no revela su nombre hasta que se registre en <b>«Quiero ser parte»</b>.</p>
+            ${histDl.length ? `<ul style="margin:0;padding-left:18px;font-size:12.5px;color:#5C4300;line-height:1.55">${histDl.slice(0, 8).map((h) => `<li>📲 ${esc(h.dispositivo || 'Teléfono Android')} · ${esc(h.fecha ? fmtF(h.fecha) : 'Reciente')}</li>`).join('')}</ul>` : `<p style="margin:0;font-size:12.5px;color:#14532D;font-weight:700">✔ Todos los que han usado la App hasta ahora ya aparecen registrados en la lista de la izquierda.</p>`}
+          </div>
+        </div>
+      </details>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
         ${[['todos', 'Todos (' + allInscripciones.length + ')'], ['coordinador', '★ Coordinadores (' + totalCoord + ')'], ['asesor', '◆ Asesores (' + totalAses + ')'], ['participante', '● Participantes (' + totalPart + ')']].map(([k, lbl]) => `<button type="button" class="chip" data-filter-rol="${k}" aria-pressed="${insRoleFilter === k}" style="min-height:38px;padding:0 14px;font-size:13.5px">${lbl}</button>`).join('')}
       </div>
@@ -2078,6 +2125,7 @@ function editorBody() {
                 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:3px">
                   <b style="font-size:18px;color:var(--ink)">${esc(nom)}</b>
                   ${roleBadgeHtml(rol)}
+                  <span style="display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:800;background:#E8F1FF;color:var(--royal)">📲 App registrada</span>
                 </div>
                 <div style="font-size:13.5px;color:var(--muted)">${esc(x.correo || d.correo || 'Sin correo')} · ${esc(x.celular || d.celular || 'Sin celular')}</div>
               </div>
