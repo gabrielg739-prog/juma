@@ -2947,7 +2947,7 @@ function getCumpleanosList(src = dr) {
 }
 
 /* ===================== Animación, Audio en bucle y Avisos de Cumpleaños ===================== */
-const DEFAULT_CUMPLE_MSG = '🎉🎂 ¡Feliz cumpleaños, {nombre}! Que Dios y Nuestra Madre la Virgen Consolata te bendigan siempre en tu camino misionero. ¡Un gran abrazo de parte de toda tu familia de JUMA Duaca! 💙✨';
+const DEFAULT_CUMPLE_MSG = '🎉🎂 ¡Feliz cumpleaños, {nombre}!\n\nHoy toda nuestra familia misionera de JUMA Duaca se llena de inmensa alegría y da infinitas gracias a Dios por el hermoso regalo de tu vida. Celebramos tu entrega, tu entusiasmo y ese corazón generoso que siempre busca llevar amor y esperanza a los demás.\n\nQue Nuestra Madre, la Virgen Consolata, te cobije siempre bajo su manto maternal de ternura y protección, y que San José Allamano guíe cada uno de tus pasos, derramando sobre ti abundantes bendiciones, salud, fortaleza y santidad.\n\n¡Gracias por ser luz, testimonio vivo de fe y parte tan especial de nuestro caminar! Te enviamos un abrazo fraterno inmenso con todo el amor de tu familia de JUMA Duaca. 💙✨🔥🙏';
 
 function getRegisteredUserRecord() {
   if (myProfile && (myProfile.id || myProfile.uid || myProfile.correo || (myProfile.datos && (myProfile.datos.correo || myProfile.datos.nombres)))) {
@@ -3086,11 +3086,13 @@ function showBirthdayCelebration(rec, isPreview = false) {
   modal.innerHTML = `
     <div class="cumple-rain-container" id="cumple-rain"></div>
     <div class="cumple-box">
-      <!-- Video de fondo de los jóvenes celebrando (sin audio, en bucle) -->
-      <video class="cumple-bg-vid" autoplay muted loop playsinline preload="auto" disablepictureinpicture disableremoteplayback aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:0.38;pointer-events:none">
-        <source src="video/v-salon.mp4?v=2" type="video/mp4">
-      </video>
-      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,21,54,0.78) 0%,rgba(10,35,92,0.84) 50%,rgba(6,21,54,0.94) 100%);z-index:1;pointer-events:none"></div>
+      <!-- Video de fondo de los jóvenes celebrando (sin audio, en bucle protegido con recorte redondeado) -->
+      <div class="cumple-bg-wrap" style="position:absolute;inset:0;border-radius:29px;overflow:hidden;clip-path:inset(0 round 29px);-webkit-clip-path:inset(0 round 29px);pointer-events:none;z-index:0">
+        <video class="cumple-bg-vid" autoplay muted loop playsinline preload="auto" disablepictureinpicture disableremoteplayback aria-hidden="true" style="width:100%;height:100%;object-fit:cover;border-radius:29px;opacity:0.38;display:block">
+          <source src="video/v-salon.mp4?v=2" type="video/mp4">
+        </video>
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,21,54,0.78) 0%,rgba(10,35,92,0.84) 50%,rgba(6,21,54,0.94) 100%)"></div>
+      </div>
 
       <!-- Botón de Corneta para silenciar o activar música (animado al sonar) -->
       <button type="button" class="cumple-snd-btn is-playing" id="cumple-snd-toggle" data-toggle-sound aria-label="Música de cumpleaños" aria-pressed="true" title="Toca para silenciar o activar música">
@@ -3114,11 +3116,6 @@ function showBirthdayCelebration(rec, isPreview = false) {
         <h2 class="cumple-title">¡Feliz Cumpleaños!</h2>
         <div class="cumple-name">${esc(nombre)} 🎉</div>
         <p class="cumple-msg-direct">${esc(msgFinal)}</p>
-        <div>
-          <button type="button" class="cumple-btn-continuar" data-close-cumple>
-            Continuar a la App ✕
-          </button>
-        </div>
       </div>
     </div>
   `;
@@ -3394,7 +3391,7 @@ function editorBody() {
         </div>
         <div class="fld w" style="margin-bottom:10px">
           <label for="cumple-msg-custom">Mensaje de felicitación para el cumpleañero (puedes usar <code>{nombre}</code>):</label>
-          <textarea id="cumple-msg-custom" rows="2" style="font-size:14px;line-height:1.5">${esc(dr.cumpleanosMensaje || cfg.cumpleanosMensaje || DEFAULT_CUMPLE_MSG)}</textarea>
+          <textarea id="cumple-msg-custom" rows="6" style="font-size:14px;line-height:1.5">${esc(dr.cumpleanosMensaje || cfg.cumpleanosMensaje || DEFAULT_CUMPLE_MSG)}</textarea>
         </div>
         <button type="button" class="btn btn-soft btn-sm" data-save-cumple-msg style="min-height:36px;font-size:13px">💾 Guardar texto en borrador</button>
       </div>
