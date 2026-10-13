@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#061536">
-<title>JUMA Duaca · Descargar Aplicación Oficial</title>
+<title>JUMA Duaca · Descargar App Oficial</title>
 <meta name="description" content="Descarga la aplicación oficial de JUMA Duaca · Juventud Misionera Allamaniana.">
 <link rel="icon" type="image/png" href="https://gabrielg739-prog.github.io/juma/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,15 +16,7 @@
   --cloth: #0C2D74;
   --royal: #2452C8;
   --sky: #8EC9FF;
-  --paper: #F6F9FE;
-  --mist: #E6EEFA;
-  --ink: #0A1B3F;
-  --muted-lt: #C3D3EE;
-  --c1: #2A5FE6;
-  --c2: #F5C518;
-  --c3: #17824A;
-  --c4: #C8322D;
-  --c5: #FFFFFF;
+  --ice: #DCE7F8;
   --display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
   --body: 'Atkinson Hyperlegible', 'Segoe UI', system-ui, sans-serif;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -33,310 +25,332 @@
 html, body {
   margin: 0;
   padding: 0;
-  height: 100%;
+  min-height: 100%;
   background: var(--navy);
-  color: #fff;
+  color: #FFFFFF;
   font-family: var(--body);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
-/* ===== CINTA DE LOS CINCO CONTINENTES ===== */
-.ribbon {
+/* ===== FONDO DE COLLAGE DE FOTOS DE JUMA ===== */
+.collage-bg {
   position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 6px;
-  z-index: 30;
-  background: linear-gradient(90deg, var(--c1) 0 20%, var(--c2) 20% 40%, var(--c3) 40% 60%, var(--c4) 60% 80%, var(--c5) 80% 100%);
-}
-
-/* ===== COLLAGE VISUAL DE FOTOS DE JUMA (PROTAGONISTA DE FONDO) ===== */
-.stage {
-  position: relative;
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 28px 18px;
-  overflow: hidden;
-}
-
-.collage {
-  position: fixed;
-  inset: -6%;
+  inset: -10% -10%;
   z-index: 0;
   display: grid;
-  grid-template-columns: repeat(5, minmax(200px, 1fr));
-  grid-auto-rows: 220px;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
   gap: 14px;
-  transform: rotate(-4deg) scale(1.05);
+  transform: rotate(-5deg) scale(1.06);
   pointer-events: none;
   user-select: none;
 }
-.tile {
+.collage-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: floatCol 36s ease-in-out infinite alternate;
+}
+.collage-col:nth-child(2) { animation-duration: 42s; animation-direction: alternate-reverse; margin-top: -55px; }
+.collage-col:nth-child(3) { animation-duration: 38s; margin-top: -25px; }
+.collage-col:nth-child(4) { animation-duration: 46s; animation-direction: alternate-reverse; margin-top: -70px; }
+
+@keyframes floatCol {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-95px); }
+}
+
+.collage-tile {
   position: relative;
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
-  background: var(--cloth);
-  box-shadow: 0 18px 36px -14px rgba(0, 0, 0, .7);
-  border: 2px solid rgba(255, 255, 255, .18);
-  animation: floatTile 18s ease-in-out infinite alternate;
+  aspect-ratio: 4 / 3;
+  background: #0A1F4D;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .5);
+  border: 1.5px solid rgba(142, 201, 255, .22);
 }
-.tile:nth-child(even) {
-  animation-duration: 24s;
-  animation-direction: alternate-reverse;
-}
-.tile:nth-child(3n) {
-  grid-row: span 2;
-}
-.tile img {
+.collage-tile img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-@keyframes floatTile {
-  0% { transform: translateY(0px); }
-  100% { transform: translateY(-22px); }
-}
 
-/* Velo azul Consolata limpio que deja ver las fotos con claridad */
-.veil {
+/* Velo azul suave sobre el collage */
+.collage-veil {
   position: fixed;
   inset: 0;
   z-index: 1;
   background:
-    radial-gradient(circle at 50% 50%, rgba(6, 21, 54, 0.52) 0%, rgba(6, 21, 54, 0.82) 75%, rgba(6, 21, 54, 0.94) 100%);
+    radial-gradient(circle at 50% 50%, rgba(6, 21, 54, 0.48) 0%, rgba(6, 21, 54, 0.80) 75%, rgba(4, 13, 36, 0.92) 100%);
   pointer-events: none;
 }
 
-/* ===== ESTANDARTE CENTRAL LIMPIO (ESTILO JUMA OFICIAL) ===== */
-.banner-wrap {
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.page-wrap {
   position: relative;
   z-index: 5;
-  width: 100%;
-  max-width: 480px;
-  animation: unroll 750ms var(--ease-out) both;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 18px;
 }
-@keyframes unroll {
-  from { opacity: 0; transform: translateY(22px); }
+
+/* ===== MARCO AZUL CENTRAL CON VIDEO EN MARCA DE AGUA ===== */
+.card {
+  position: relative;
+  width: 100%;
+  max-width: 470px;
+  background: rgba(8, 28, 76, 0.86);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(142, 201, 255, 0.38);
+  border-radius: 28px;
+  box-shadow:
+    0 28px 65px rgba(0, 0, 0, 0.68),
+    0 0 42px rgba(36, 82, 200, 0.38);
+  overflow: hidden;
+  animation: cardIn 650ms var(--ease-out) both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
   to { opacity: 1; transform: none; }
 }
 
-/* La vara metálica característica de JUMA */
-.rod {
-  position: relative;
-  height: 6px;
-  margin: 0 -6px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, #F1F6FD, #9BB0D6);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, .45);
-}
-.rod::before, .rod::after {
-  content: "";
+/* Video reproduciéndose como marca de agua dentro del marco azul */
+.card-video-watermark {
   position: absolute;
-  top: 50%;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #FFFFFF, #9BB0D6);
-  transform: translateY(-50%);
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.24;
+  mix-blend-mode: screen;
+  filter: saturate(1.1) contrast(1.08);
+  pointer-events: none;
+  z-index: 0;
 }
-.rod::before { left: -8px; }
-.rod::after { right: -8px; }
+.card-video-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(6, 21, 54, 0.55) 0%, rgba(12, 45, 116, 0.62) 50%, rgba(6, 21, 54, 0.86) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
 
-.banner {
+.card-body {
   position: relative;
-  background: rgba(12, 45, 116, 0.88);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  border-left: 1px solid rgba(255, 255, 255, .18);
-  border-right: 1px solid rgba(255, 255, 255, .18);
-  padding: 36px 28px 74px;
+  z-index: 2;
+  padding: clamp(32px, 6vw, 48px) clamp(24px, 5vw, 38px);
   text-align: center;
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 42px), 0 100%);
-  box-shadow: 0 28px 60px rgba(0, 0, 0, .65);
 }
 
-.banner-ribbon {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 5px;
-  background: linear-gradient(90deg, var(--c1) 0 20%, var(--c2) 20% 40%, var(--c3) 40% 60%, var(--c4) 60% 80%, var(--c5) 80% 100%);
-}
-
-.logo-box {
-  width: 96px;
-  height: 96px;
-  margin: 0 auto 16px;
-  padding: 10px;
+/* ===== LOGO DE JUMA CON ARO AZUL CELESTE QUE COMBINA ===== */
+.logo-ring {
+  width: 106px;
+  height: 106px;
+  margin: 0 auto 20px;
+  padding: 4px;
   border-radius: 50%;
-  background: #FFFFFF;
-  box-shadow: 0 14px 32px rgba(6, 21, 54, .5);
+  background: linear-gradient(145deg, #8EC9FF, #2452C8);
+  box-shadow:
+    0 0 0 4px rgba(142, 201, 255, 0.18),
+    0 14px 32px rgba(6, 21, 54, 0.65);
   display: grid;
   place-items: center;
 }
-.logo-box img {
+.logo-ring-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #FFFFFF;
+  display: grid;
+  place-items: center;
+  padding: 7px;
+}
+.logo-ring img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   display: block;
 }
 
-.kicker {
-  display: block;
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: .08em;
+/* ===== MENSAJE DE BIENVENIDA LIMPIO ===== */
+h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: clamp(42px, 8.5vw, 60px);
+  line-height: 0.92;
   text-transform: uppercase;
+  letter-spacing: 0.015em;
+  color: #FFFFFF;
+}
+h1 span {
+  display: block;
   color: var(--sky);
 }
 
-h1 {
-  margin: 10px 0 0;
-  font-family: var(--display);
-  font-weight: 900;
-  font-size: clamp(46px, 9vw, 66px);
-  line-height: .9;
-  text-transform: uppercase;
-  letter-spacing: .01em;
-  color: #FFFFFF;
-}
-
-.welcome {
+.welcome-text {
   margin: 16px auto 0;
   max-width: 34ch;
-  font-size: 17px;
-  line-height: 1.55;
-  color: #DCE7F8;
+  font-size: 16.5px;
+  line-height: 1.58;
+  color: var(--ice);
 }
 
-/* ===== BOTÓN PRINCIPAL LIMPIO (ESTILO JUMA) ===== */
-.cta-wrap {
-  margin-top: 26px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.btn-dl {
+/* ===== BOTÓN DE DESCARGA EN TONOS AZUL Y BLANCO ===== */
+.btn-apk {
+  margin-top: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
   width: 100%;
   min-height: 58px;
-  padding: 0 26px;
-  border-radius: 12px;
-  background: #FFFFFF;
-  color: var(--navy);
-  font-family: var(--body);
-  font-weight: 700;
-  font-size: 17px;
+  padding: 14px 24px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #2452C8 0%, #1B419F 100%);
+  border: 1.5px solid var(--sky);
+  color: #FFFFFF;
   text-decoration: none;
-  box-shadow: 0 14px 30px -10px rgba(0, 0, 0, .55);
-  transition: transform 160ms var(--ease-out), background-color 180ms ease;
+  font-weight: 700;
+  font-size: 17.5px;
+  letter-spacing: 0.01em;
+  box-shadow:
+    0 14px 32px rgba(6, 21, 54, 0.65),
+    0 0 24px rgba(142, 201, 255, 0.28);
+  transition: transform 160ms var(--ease-out), background 180ms ease, box-shadow 180ms ease;
+  cursor: pointer;
 }
-.btn-dl:hover {
-  background: var(--sky);
+.btn-apk:hover {
+  background: linear-gradient(135deg, #2E62E6 0%, #2452C8 100%);
   transform: translateY(-2px);
+  box-shadow:
+    0 18px 36px rgba(6, 21, 54, 0.75),
+    0 0 30px rgba(142, 201, 255, 0.42);
 }
-.btn-dl:active {
-  transform: scale(.97);
+.btn-apk:active {
+  transform: scale(0.98);
 }
-.btn-dl svg {
+.btn-apk svg {
   width: 22px;
   height: 22px;
   flex-shrink: 0;
-}
-
-.status-note {
-  margin: 0;
-  font-size: 13.5px;
-  font-weight: 700;
   color: var(--sky);
 }
 
-@media (max-width: 760px) {
-  .collage {
-    grid-template-columns: repeat(3, minmax(130px, 1fr));
-    grid-auto-rows: 165px;
+.status-note {
+  margin: 12px 0 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--sky);
+  opacity: 0.92;
+}
+
+@media (max-width: 680px) {
+  .collage-bg {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    inset: -8% -10%;
     gap: 10px;
-    inset: -4%;
   }
-  .banner {
-    padding: 30px 22px 66px;
+  .collage-col:nth-child(3),
+  .collage-col:nth-child(4) {
+    display: none;
   }
 }
 </style>
 </head>
 <body>
 
-<div class="ribbon" aria-hidden="true"></div>
-
-<!-- COLLAGE DE FOTOS DE JUMA DE FONDO -->
-<div class="collage" aria-hidden="true">
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/hero-900.jpg" alt=""></div>
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-chicas-capilla.jpg" alt=""></div>
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/grupo-iglesia.jpg" alt=""></div>
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/coromoto.jpg" alt=""></div>
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-danza-capilla.jpg" alt=""></div>
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/ourem.jpg" alt=""></div>
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-fam-grupo-frente.jpg" alt=""></div>
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/cena.jpg" alt=""></div>
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/mirador.jpg" alt=""></div>
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/alegria.jpg" alt=""></div>
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/puente.jpg" alt=""></div>
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-grupo-presbiterio.jpg" alt=""></div>
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/retrato.jpg" alt=""></div>
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/fatima-banderas.jpg" alt=""></div>
-  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-lectura-palabra.jpg" alt=""></div>
+<!-- FONDO DE COLLAGE CON FOTOS DE JUMA -->
+<div class="collage-bg" aria-hidden="true">
+  <div class="collage-col">
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/grupo-iglesia.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-chicas-capilla.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/coromoto.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-danza-capilla.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/mirador.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/alegria.jpg" alt=""></div>
+  </div>
+  <div class="collage-col">
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-fam-grupo-frente.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/cena.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/puente.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-lectura-palabra.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/capilla-rural.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/selfie.jpg" alt=""></div>
+  </div>
+  <div class="collage-col">
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/ourem.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/retrato.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-grupo-presbiterio.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/circulo.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/fatima-banderas.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/pareja.jpg" alt=""></div>
+  </div>
+  <div class="collage-col">
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/iglesia.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/allamano-par.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-grupo-palmera.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/valores.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-abrazo-sacerdotes.jpg" alt=""></div>
+    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/liturgia.jpg" alt=""></div>
+  </div>
 </div>
-<div class="veil" aria-hidden="true"></div>
+<div class="collage-veil" aria-hidden="true"></div>
 
-<!-- ESTANDARTE CENTRAL DE BIENVENIDA Y DESCARGA -->
-<main class="stage">
-  <div class="banner-wrap">
-    <div class="rod" aria-hidden="true"></div>
-    <section class="banner" aria-labelledby="t-title">
-      <div class="banner-ribbon" aria-hidden="true"></div>
+<!-- MARCO AZUL CENTRAL CON VIDEO EN MARCA DE AGUA -->
+<main class="page-wrap">
+  <section class="card" aria-labelledby="dl-title">
+    <video class="card-video-watermark" src="https://gabrielg739-prog.github.io/juma/video/v-encuentro.mp4?v=2" autoplay muted loop playsinline disablepictureinpicture disableremoteplayback aria-hidden="true"></video>
+    <div class="card-video-veil" aria-hidden="true"></div>
 
-      <div class="logo-box">
-        <img src="https://gabrielg739-prog.github.io/juma/img/logo.png" alt="Logo JUMA Duaca">
+    <div class="card-body">
+      <div class="logo-ring">
+        <div class="logo-ring-inner">
+          <img src="https://gabrielg739-prog.github.io/juma/img/logo.png" alt="Logo JUMA Duaca">
+        </div>
       </div>
 
-      <span class="kicker">Juventud Misionera Allamaniana · Duaca</span>
-      <h1 id="t-title">Bienvenido a JUMA</h1>
+      <h1 id="dl-title">
+        Bienvenido a
+        <span>JUMA Duaca</span>
+      </h1>
 
-      <p class="welcome">
-        Nos alegra caminar contigo en la fe y la misión. Descarga nuestra aplicación oficial en tu teléfono para comenzar.
+      <p class="welcome-text">
+        Nos alegra que seas parte de nuestra familia misionera. Descarga nuestra aplicación oficial en tu teléfono para caminar juntos en la fe, la formación y la misión.
       </p>
 
-      <div class="cta-wrap">
-        <a class="btn-dl" id="btn-apk" href="JUMA.apk" download="JUMA.apk">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          <span>Descargar App JUMA (.APK)</span>
-        </a>
-        <p class="status-note" id="dl-note" role="status" aria-live="polite">
-          Iniciando descarga automática…
-        </p>
-      </div>
-    </section>
-  </div>
+      <a class="btn-apk" id="btn-download-apk" href="JUMA.apk" download="JUMA.apk">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span>Descargar App JUMA (.APK)</span>
+      </a>
+
+      <p class="status-note" id="auto-text" role="status" aria-live="polite">
+        Iniciando descarga automática…
+      </p>
+    </div>
+  </section>
 </main>
 
 <script>
 (function () {
-  var btn = document.getElementById('btn-apk');
-  var note = document.getElementById('dl-note');
+  var btn = document.getElementById('btn-download-apk');
+  var statusTxt = document.getElementById('auto-text');
+  var vid = document.querySelector('.card-video-watermark');
+  if (vid && vid.play) {
+    var p = vid.play();
+    if (p && p.catch) p.catch(function () {});
+  }
+
   setTimeout(function () {
-    note.textContent = '✓ Descarga iniciada · Abre JUMA.apk al terminar';
+    statusTxt.textContent = '✓ Descarga iniciada · Abre JUMA.apk al terminar';
     var a = document.createElement('a');
     a.href = btn.getAttribute('href');
     a.setAttribute('download', 'JUMA.apk');
@@ -344,9 +358,10 @@ h1 {
     document.body.appendChild(a);
     a.click();
     setTimeout(function () { a.remove(); }, 1500);
-  }, 1000);
+  }, 1100);
+
   btn.addEventListener('click', function () {
-    note.textContent = '✓ Descargando JUMA.apk en tu teléfono…';
+    statusTxt.textContent = '✓ Descargando JUMA.apk en tu teléfono…';
   });
 })();
 </script>
