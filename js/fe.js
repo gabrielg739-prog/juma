@@ -251,7 +251,7 @@ const css = `
 .mp-map .pc.mc{stroke:#fff;stroke-width:.9;stroke-dasharray:2 1.5;vector-effect:non-scaling-stroke}
 /* ---------- videos ---------- */
 .vclip{display:block;width:100%;height:100%;object-fit:cover;background:#0A1F4D}
-.vover{position:absolute;inset:0;opacity:0;transition:opacity .6s ease}
+.vover{position:absolute;inset:0;opacity:0;background:transparent;transition:opacity 1s ease;pointer-events:none}
 .vover.on{opacity:1}
 .vbtn{position:absolute;top:12px;right:12px;z-index:3;width:42px;height:42px;padding:0;border:0;border-radius:50%;background:rgba(6,21,54,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);cursor:pointer;display:grid;place-items:center;visibility:hidden;opacity:0;transition:opacity .2s ease,visibility .2s,transform .12s ease}
 .vlive > .vbtn{visibility:visible;opacity:1}
@@ -424,136 +424,152 @@ const PAISES = {
   kg: { n: 'Kirguistán', c: 'as', y: 2020, q: 'mc', w: MCW + '2019/12/13/kirghizistan-santuario-alpino-in-asia/', t: 'm' }
 };
 const CASAS = {
-  ke: [
-    { n: 'Consolata Shrine y Casa Regional', l: 'Nairobi', d: 'Waiyaki Way, Westlands, Nairobi', lat: -1.2636, lon: 36.8029 },
-    { n: 'Misión Histórica de Tuthu y Murang’a', l: 'Murang’a (1902)', d: 'Diócesis de Murang’a (1.ª misión Consolata)', lat: -0.7210, lon: 37.1526 },
-    { n: 'Centro Misionero de Mathari · Nyeri', l: 'Nyeri', d: 'Complejo Misionero de Mathari, Nyeri', lat: -0.4201, lon: 36.9476 }
-  ],
-  et: [
-    { n: 'Casa Regional Misioneros de la Consolata', l: 'Adís Abeba', d: 'Capilla Consolata Mariyam, Mekanissa, Adís Abeba', lat: 8.9806, lon: 38.7269 },
-    { n: 'Misión Consolata de Modjo / Meki', l: 'Modjo · Oromía', d: 'Vicariato Apostólico de Meki, Oromía', lat: 8.5868, lon: 39.1211 }
-  ],
-  tz: [
-    { n: 'Casa Regional y Centro Misionero Consolata', l: 'Dar es Salaam', d: 'Oysterbay / Centro Misionero Bunju, Dar es Salaam', lat: -6.7582, lon: 39.2775 },
-    { n: 'Casa Misionera de Iringa (Tosamaganga)', l: 'Iringa', d: 'Diócesis de Iringa, Tanzania', lat: -7.7667, lon: 35.6833 }
-  ],
-  mz: [
-    { n: 'Casa Regional y Centro San Pablo', l: 'Maputo', d: 'Barrio Laulane, Maputo, Mozambique', lat: -25.9150, lon: 32.6080 },
-    { n: 'Comunidad Misionera de Lichinga', l: 'Lichinga · Niassa', d: 'Diócesis de Lichinga, Niassa', lat: -13.3128, lon: 35.2406 }
-  ],
-  za: [
-    { n: 'Casa Regional Misioneros de la Consolata', l: 'Pretoria', d: 'Waverley, Pretoria, Gauteng', lat: -25.7069, lon: 28.2575 },
-    { n: 'Seminario y Misión de Merrivale', l: 'Merrivale', d: 'Merrivale, KwaZulu-Natal, Sudáfrica', lat: -29.5167, lon: 30.2333 }
-  ],
-  cd: [
-    { n: 'Casa Regional Misioneros de la Consolata', l: 'Kinshasa', d: 'Limete, Kinshasa, R. D. del Congo', lat: -4.3490, lon: 15.3350 },
-    { n: 'Comunidad Misionera de Kisangani', l: 'Kisangani', d: 'Arquidiócesis de Kisangani, R. D. del Congo', lat: 0.5153, lon: 25.1910 }
-  ],
-  ug: [
-    { n: 'Casa Regional Misioneros de la Consolata', l: 'Kampala', d: 'Bweyogerere / Kiwanga, Kampala, Uganda', lat: 0.3519, lon: 32.6625 },
-    { n: 'Misión Consolata de Gulu', l: 'Gulu', d: 'Arquidiócesis de Gulu, Norte de Uganda', lat: 2.7724, lon: 32.2881 }
-  ],
-  ci: [
-    { n: 'Casa y Seminario Beata Irene Stefani', l: 'Abiyán', d: 'Cocody / Yopougon, Abiyán, Costa de Marfil', lat: 5.3599, lon: -4.0083 },
-    { n: 'Misión Consolata de San-Pédro', l: 'San-Pédro', d: 'Diócesis de San-Pédro, Costa de Marfil', lat: 4.7485, lon: -6.6363 }
-  ],
-  dj: [
-    { n: 'Misión Consolata · Catedral del Buen Pastor', l: 'Ciudad de Yibuti', d: 'Boulevard de la République, Ciudad de Yibuti', lat: 11.5950, lon: 43.1481 }
-  ],
-  sz: [
-    { n: 'Misión Consolata · Parroquia Santa María', l: 'Manzini / Lobamba', d: 'Lobamba / Kwaluseni, Diócesis de Manzini, Esuatini', lat: -26.4833, lon: 31.3167 }
-  ],
-  ao: [
-    { n: 'Casa de la Misión Consolata en Luanda', l: 'Luanda', d: 'Viana / Zango, Luanda, Angola', lat: -8.9167, lon: 13.3667 }
-  ],
-  mg: [
-    { n: 'Comunidad Misioneros de la Consolata', l: 'Antananarivo', d: 'Antananarivo, Madagascar', lat: -18.8792, lon: 47.5079 },
-    { n: 'Misión Consolata de Ambanja', l: 'Ambanja', d: 'Diócesis de Ambanja, Norte de Madagascar', lat: -13.6833, lon: 48.4500 }
-  ],
-  lr: [
-    { n: 'Casa Misioneras de la Consolata · Monrovia', l: 'Monrovia', d: 'Arquidiócesis de Monrovia, Liberia', lat: 6.3156, lon: -10.8074 }
-  ],
-  gw: [
-    { n: 'Casa Misioneras de la Consolata · Bisáu', l: 'Bisáu / Bula', d: 'Diócesis de Bisáu, Guinea-Bisáu', lat: 11.8636, lon: -15.5977 }
-  ],
-  br: [
-    { n: 'Casa Regional Misioneros de la Consolata', l: 'São Paulo (Sede)', d: 'Rua Dom Domingos de Silos 110, Jardim São Bento, São Paulo', lat: -23.4958, lon: -46.6433 },
-    { n: 'Parroquia Nossa Senhora Consolata', l: 'São Paulo', d: 'Rua Leão XIII 303, Jardim São Bento, São Paulo', lat: -23.4991, lon: -46.6456 },
-    { n: 'Misión Indígena y Casa Consolata · Roraima', l: 'Boa Vista · Roraima', d: 'Boa Vista / Misión Catrimani, Roraima', lat: 2.8235, lon: -60.6758 }
-  ],
-  ar: [
-    { n: 'Casa Regional Misioneros de la Consolata', l: 'Buenos Aires', d: 'José Bonifacio 1774, Flores, Buenos Aires', lat: -34.6331, lon: -58.4547 },
-    { n: 'Casa Misionera Martín Coronado', l: 'Martín Coronado', d: 'Juan XXIII 845, Martín Coronado, Prov. de Buenos Aires', lat: -34.5881, lon: -58.5914 },
-    { n: 'Comunidad Consolata en San Francisco', l: 'San Francisco · Córdoba', d: 'San Francisco, Provincia de Córdoba, Argentina', lat: -31.4280, lon: -62.0827 }
-  ],
-  us: [
-    { n: 'Sede Misioneros de la Consolata · Somerset', l: 'Somerset, NJ', d: '2301 Route 27, Somerset, New Jersey 08875', lat: 40.4534, lon: -74.5254 },
-    { n: 'Comunidad Consolata · Belmont', l: 'Belmont, MI', d: 'Belmont / Grand Rapids, Michigan', lat: 43.0631, lon: -85.6081 }
+  ve: [
+    { n: 'Juventud Misionera Allamaniana de Duaca (JUMA Duaca)', l: 'JUMA Duaca', d: 'Hacen vida en esta parroquia · Parroquia San Juan Bautista de Duaca (Calle 7 entre Carreras 5 y 6, frente a la Plaza Bolívar, Duaca, Estado Lara)', lat: 10.2869, lon: -69.1614, q: 'Iglesia+San+Juan+Bautista+Duaca+Lara+Venezuela', jm: true },
+    { n: 'Centro de Animación Misionera (CAM) «La Consolata» · Barquisimeto', l: 'CAM Barquisimeto', d: 'Carrera 17 entre Calles 48 y 49, N.º 48-53, Urb. Santa Inés, Barquisimeto, Estado Lara', lat: 10.0638, lon: -69.3422, q: 'Carrera+17+Con+Calle+48+Barquisimeto+Lara+Venezuela' },
+    { n: 'Casa de los Misioneros de la Consolata · Caracas', l: 'Misioneros IMC (Caracas)', d: 'Sede Delegación IMC · Av. Miranda, Quinta Ingrid Consolata, Urb. Washington, El Paraíso (y Parroquia San Joaquín y Santa Ana de Carapita), Caracas', lat: 10.4848, lon: -66.9365, q: 'Urbanizacion+Washington+El+Paraiso+Caracas+Venezuela' },
+    { n: 'Casa de las Hermanas Misioneras de la Consolata · Caracas', l: 'Hermanas MC (Caracas)', d: 'Quinta Milagros, Calle 8, Urb. Las Fuentes, El Paraíso (y comunidad de Carapita / Los Manguitos), Caracas', lat: 10.4815, lon: -66.9422, q: 'Calle+8+Urbanizacion+Las+Fuentes+El+Paraiso+Caracas+Venezuela' },
+    { n: 'Casa de los Misioneros de la Consolata · Tucupita', l: 'Casa Tucupita', d: 'Vicariato Apostólico de Tucupita (Calle Mariño con Av. Arismendi, sector Catedral Divina Pastora), Tucupita, Estado Delta Amacuro', lat: 9.0581, lon: -62.0510, q: 'Catedral+Divina+Pastora+Tucupita+Delta+Amacuro+Venezuela' },
+    { n: 'Casa de la Misión Indígena Warao · Nabasanuka', l: 'Misión Nabasanuka', d: 'Comunidad Indígena de Nabasanuka, Parroquia Manuel Renaud, Municipio Antonio Díaz (Caños del Delta del Orinoco), Estado Delta Amacuro', lat: 9.1467, lon: -61.0664, q: 'Nabasanuka+Delta+Amacuro+Venezuela' },
+    { n: 'Casa y Misión Consolata en Barlovento', l: 'Misión Barlovento', d: 'Parroquias de Caucagua, Tapipa, Panaquire y El Clavo, Diócesis de Guarenas, Estado Miranda', lat: 10.2831, lon: -66.3769, q: 'Iglesia+de+Caucagua+Miranda+Venezuela' }
   ],
   co: [
-    { n: 'Casa Regional Misioneros de la Consolata', l: 'Bogotá', d: 'Calle 24A # 81-14, Modelia, Bogotá D.C.', lat: 4.6685, lon: -74.1225 },
-    { n: 'Parroquia Ntra. Sra. de la Consolata · Bucaramanga', l: 'Bucaramanga', d: 'Calle 61 # 2W-13, Barrio Mutis, Bucaramanga', lat: 7.1039, lon: -73.1336 },
-    { n: 'Comunidad Misioneros de la Consolata · Cali', l: 'Cali', d: 'Arquidiócesis de Cali, Valle del Cauca', lat: 3.4516, lon: -76.5320 }
+    { n: 'Casa Regional y CAM Misioneros de la Consolata · Bogotá', l: 'Casa Regional Bogotá', d: 'Calle 24A # 81-14, Barrio Modelia, Bogotá D.C.', lat: 4.6685, lon: -74.1225, q: 'Calle+24A+81-14+Modelia+Bogota+Colombia' },
+    { n: 'Casa Regional Hermanas Misioneras de la Consolata · Bogotá', l: 'Hermanas MC Bogotá', d: 'Calle 170 # 8G-31, Bogotá D.C.', lat: 4.7482, lon: -74.0298, q: 'Calle+170+8G-31+Bogota+Colombia' },
+    { n: 'Parroquia Ntra. Sra. de la Consolata y Casa IMC · Bucaramanga', l: 'Bucaramanga', d: 'Calle 61 # 2W-13 / Cra. 8W # 56-42, Barrio Mutis, Bucaramanga, Santander', lat: 7.1039, lon: -73.1336, q: 'Parroquia+Nuestra+Senora+de+la+Consolata+Mutis+Bucaramanga' },
+    { n: 'Centro de Animación Misionera Consolata · Medellín', l: 'Medellín', d: 'Calle 45 (Av. 33) # 22A-67, Medellín, Antioquia', lat: 6.2386, lon: -75.5542, q: 'Calle+45+22A-67+Medellin+Colombia' },
+    { n: 'Casa San José y Santuario de Fátima · Manizales', l: 'Manizales', d: 'Calle 65 # 32-04, Barrio Fátima, Manizales, Caldas', lat: 5.0553, lon: -75.4908, q: 'Calle+65+32-04+Manizales+Colombia' },
+    { n: 'Centro de Animación y Pastoral Afro · Cali', l: 'Cali', d: 'Carrera 39D # 39-40, Cali, Valle del Cauca', lat: 3.4158, lon: -76.5082, q: 'Carrera+39D+39-40+Cali+Colombia' },
+    { n: 'Misión Consolata y Colegio Migani · Florencia', l: 'Florencia (Caquetá)', d: 'Calle 14 con Carrera 16, Arquidiócesis de Florencia, Caquetá', lat: 1.6144, lon: -75.6062, q: 'Catedral+Nuestra+Senora+de+Lourdes+Florencia+Caqueta' }
+  ],
+  br: [
+    { n: 'Casa Regional Instituto Missões Consolata · São Paulo', l: 'Sede São Paulo', d: 'Rua Dom Domingos de Silos 110, Jardim São Bento, CEP 02526-030, São Paulo - SP', lat: -23.4958, lon: -46.6433, q: 'Rua+Dom+Domingos+de+Silos+110+Sao+Paulo+Brasil' },
+    { n: 'Paróquia Nossa Senhora Consolata · São Paulo', l: 'Paróquia SP', d: 'Rua Leão XIII 303, Jardim São Bento, CEP 02526-000, São Paulo - SP', lat: -23.4991, lon: -46.6456, q: 'Rua+Leao+XIII+303+Jardim+Sao+Bento+Sao+Paulo' },
+    { n: 'Paróquia Nossa Senhora Consolata · Brasília', l: 'Brasília', d: 'SGAN 913, Módulo C (W5 Norte), Asa Norte, CEP 70790-130, Brasília - DF', lat: -15.7412, lon: -47.9056, q: 'Paroquia+Nossa+Senhora+Consolata+Asa+Norte+Brasilia' },
+    { n: 'Paróquia Nossa Senhora da Consolata y Misión · Boa Vista', l: 'Boa Vista (Roraima)', d: 'Rua Uraricoera 671, Bairro São Vicente, CEP 69303-453, Boa Vista - RR', lat: 2.8118, lon: -60.6725, q: 'Rua+Uraricoera+671+Sao+Vicente+Boa+Vista+Roraima' },
+    { n: 'Misión Indígena Yanomami · Catrimani (Roraima)', l: 'Misión Catrimani', d: 'Río Catrimani, Municipio de Caracaraí, Diócesis de Roraima', lat: 1.7667, lon: -62.2833, q: 'Caracarai+Roraima+Brasil' },
+    { n: 'Paróquia Nossa Senhora Consolata · Cascavel', l: 'Cascavel (Paraná)', d: 'Rua Gláuber Rocha 979, Bairro Brasília, CEP 85815-230, Cascavel - PR', lat: -24.9389, lon: -53.4317, q: 'Rua+Glauber+Rocha+979+Cascavel+Parana+Brasil' },
+    { n: 'Comunidad Misioneros de la Consolata · Feira de Santana', l: 'Feira de Santana', d: 'Arquidiócesis de Feira de Santana, Bahía', lat: -12.2664, lon: -38.9663, q: 'Missionarios+da+Consolata+Feira+de+Santana+Bahia' }
+  ],
+  ar: [
+    { n: 'Casa Regional Misioneros de la Consolata · Buenos Aires', l: 'Casa Regional Bs.As.', d: 'José Bonifacio 1774, C1406 Flores, Ciudad Autónoma de Buenos Aires', lat: -34.6331, lon: -58.4547, q: 'Jose+Bonifacio+1774+Buenos+Aires+Argentina' },
+    { n: 'Casa Misionera Martín Coronado', l: 'Martín Coronado', d: 'Juan XXIII 845, B1683DEP Martín Coronado, Provincia de Buenos Aires', lat: -34.5881, lon: -58.5914, q: 'Juan+XXIII+845+Martin+Coronado+Buenos+Aires+Argentina' },
+    { n: 'Comunidad y Parroquia Consolata · San Francisco (Córdoba)', l: 'San Francisco (Córdoba)', d: 'San Francisco, Provincia de Córdoba, Argentina', lat: -31.4280, lon: -62.0827, q: 'Parroquia+Nuestra+Senora+de+la+Consolata+San+Francisco+Cordoba' },
+    { n: 'Misión Consolata · Parroquia Ntra. Sra. de Andacollo (San Juan)', l: 'Rivadavia (San Juan)', d: 'Ruta Provincial 12, La Bebida, Rivadavia, J5407 San Juan', lat: -31.5475, lon: -68.6164, q: 'Parroquia+Nuestra+Senora+de+Andacollo+La+Bebida+San+Juan+Argentina' }
+  ],
+  us: [
+    { n: 'Sede Misioneros de la Consolata · Somerset', l: 'Somerset (New Jersey)', d: '2301 Route 27, P.O. Box 5550, Somerset, NJ 08875, EE. UU.', lat: 40.4534, lon: -74.5254, q: '2301+Route+27+Somerset+NJ+08875+USA' },
+    { n: 'Casa Hermanas Misioneras de la Consolata · Belmont', l: 'Belmont (Michigan)', d: '6801 Belmont Ave NE, Belmont, MI 49306, EE. UU.', lat: 43.0631, lon: -85.6081, q: '6801+Belmont+Ave+NE+Belmont+MI+49306+USA' }
   ],
   ca: [
-    { n: 'Casa Regional Missionnaires de la Consolata', l: 'Montréal', d: '2505 Boulevard Gouin Ouest, Montréal, QC H3M 1B5', lat: 45.5414, lon: -73.6961 },
-    { n: 'Comunidad Consolata · Toronto', l: 'Toronto', d: 'Etobicoke / Toronto, Ontario, Canadá', lat: 43.6532, lon: -79.3832 }
-  ],
-  ve: [
-    { n: 'JUMA Duaca · Parroquia San Juan Bautista', l: 'JUMA Duaca', d: 'Templo San Juan Bautista, Duaca, Estado Lara', lat: 10.2864, lon: -69.1611, jm: true },
-    { n: 'Parroquia Ntra. Sra. de la Consolata · Barquisimeto', l: 'Barquisimeto', d: 'Urb. Patarata / Av. Libertador, Barquisimeto, Lara', lat: 10.0758, lon: -69.3025 },
-    { n: 'Casa Delegación Misioneros de la Consolata · Caracas', l: 'Caracas', d: 'Los Chorros / Parroquia de Carapita, Caracas', lat: 10.5061, lon: -66.8289 },
-    { n: 'Misión Indígena de Nabasanuka y Tucupita', l: 'Tucupita · Delta', d: 'Vicariato Apostólico de Tucupita, Delta Amacuro', lat: 9.0581, lon: -62.0500 }
+    { n: 'Casa Regional Missionnaires de la Consolata · Montréal', l: 'Montréal', d: '2505 Boulevard Gouin Ouest, Montréal, QC H3M 1B5, Canadá', lat: 45.5414, lon: -73.6961, q: '2505+Boulevard+Gouin+Ouest+Montreal+QC+H3M+1B5+Canada' },
+    { n: 'Comunidad Consolata · Toronto', l: 'Toronto', d: '2648 Islington Ave, Etobicoke, Toronto, ON M9V 2X5, Canadá', lat: 43.7397, lon: -79.5653, q: '2648+Islington+Ave+Etobicoke+Toronto+Canada' }
   ],
   ec: [
-    { n: 'Casa Misioneros de la Consolata · Quito', l: 'Quito', d: 'Sector Norte, Quito, Pichincha', lat: -0.1807, lon: -78.4678 },
-    { n: 'Misión Amazónica · El Coca (Orellana)', l: 'El Coca · Amazonía', d: 'Puerto Francisco de Orellana, Vicariato de Aguarico', lat: -0.4665, lon: -76.9872 }
+    { n: 'Casa Misioneros de la Consolata · Quito', l: 'Quito', d: 'Sector Norte, Arquidiócesis de Quito, Pichincha, Ecuador', lat: -0.1807, lon: -78.4678, q: 'Misioneros+de+la+Consolata+Quito+Ecuador' },
+    { n: 'Misión Amazónica · Puerto Francisco de Orellana (El Coca)', l: 'El Coca (Orellana)', d: 'Vicariato Apostólico de Aguarico, Puerto Francisco de Orellana', lat: -0.4665, lon: -76.9872, q: 'Catedral+Nuestra+Senora+del+Carmen+Francisco+de+Orellana+Ecuador' },
+    { n: 'Comunidad Misionera · Santo Domingo de los Tsáchilas', l: 'Santo Domingo', d: 'Diócesis de Santo Domingo en Ecuador', lat: -0.2531, lon: -79.1754, q: 'Diócesis+de+Santo+Domingo+Ecuador' }
   ],
   mx: [
-    { n: 'Casa Misioneros de la Consolata · Guadalajara', l: 'Guadalajara', d: 'Zona Metropolitana de Guadalajara / Juanacaxtle, Jalisco', lat: 20.6597, lon: -103.3496 },
-    { n: 'Comunidad Misionera · Ciudad de México', l: 'Ciudad de México', d: 'Arquidiócesis de México, CDMX', lat: 19.4326, lon: -99.1332 }
+    { n: 'Casa Misioneros de la Consolata · Guadalajara / Juanacaxtle', l: 'Guadalajara (Jalisco)', d: 'San Antonio Juanacaxtle / Juanacatlán, Zona Metropolitana de Guadalajara, Jalisco', lat: 20.5089, lon: -103.1686, q: 'San+Antonio+Juanacaxtle+Jalisco+Mexico' },
+    { n: 'Comunidad Misionera Consolata · Chiapas', l: 'Chiapas', d: 'Diócesis de San Cristóbal de las Casas / Tuxtla, Chiapas', lat: 16.7370, lon: -92.6376, q: 'San+Cristobal+de+las+Casas+Chiapas+Mexico' }
   ],
   pe: [
-    { n: 'Casa Misioneros de la Consolata · Lima', l: 'Lima', d: 'Diócesis de Carabayllo / San Martín de Porres, Lima', lat: -11.9864, lon: -77.0714 }
+    { n: 'Casa Misioneros de la Consolata · Lima (Carabayllo)', l: 'Lima (Carabayllo)', d: 'Diócesis de Carabayllo, Lima Norte, Perú', lat: -11.8864, lon: -77.0264, q: 'Obispado+de+Carabayllo+Lima+Peru' },
+    { n: 'Misión Amazónica Consolata · Loreto / San José del Amazonas', l: 'Amazonía Peruana', d: 'Vicariato Apostólico de San José del Amazonas, Perú', lat: -3.7437, lon: -73.2516, q: 'Vicariato+Apostolico+de+San+Jose+del+Amazonas+Iquitos+Peru' }
   ],
   bo: [
-    { n: 'Misión Misioneras de la Consolata · Poopó', l: 'Poopó · Oruro', d: 'Poopó, Diócesis de Oruro, Bolivia', lat: -18.3806, lon: -66.9656 }
+    { n: 'Casa Hermanas Misioneras de la Consolata · Poopó', l: 'Poopó (Oruro)', d: 'Parroquia San Bartolomé de Poopó, Diócesis de Oruro, Bolivia', lat: -18.3806, lon: -66.9656, q: 'Iglesia+de+Poopo+Oruro+Bolivia' }
   ],
   it: [
-    { n: 'Santuario della Consolata y Casa Madre (1901)', l: 'Turín (Casa Madre)', d: 'Piazza della Consolata / Corso Ferrucci 14, 10138 Torino', lat: 45.0767, lon: 7.6790 },
-    { n: 'Casa Generalicia · Misioneros de la Consolata', l: 'Roma (Casa General)', d: 'Viale delle Mura Aurelie 11-13, 00165 Roma', lat: 41.8986, lon: 12.4539 },
-    { n: 'Casa Natal de San José Allamano', l: 'Castelnuovo Don Bosco', d: 'Castelnuovo Don Bosco, Asti, Piamonte', lat: 45.0414, lon: 7.9642 }
+    { n: 'Santuario della Consolata · Turín (Cuna espiritual)', l: 'Santuario Consolata', d: 'Piazza della Consolata, 10122 Torino TO, Italia', lat: 45.0767, lon: 7.6790, q: 'Santuario+della+Consolata+Piazza+della+Consolata+Torino+Italia' },
+    { n: 'Casa Madre · Misioneros de la Consolata (1901)', l: 'Casa Madre (Turín)', d: 'Corso Ferrucci 14, 10138 Torino TO, Italia', lat: 45.0691, lon: 7.6578, q: 'Corso+Ferrucci+14+10138+Torino+Italia' },
+    { n: 'Casa Generalicia · Misioneros de la Consolata (IMC)', l: 'Casa General IMC (Roma)', d: 'Viale delle Mura Aurelie 11-13, 00165 Roma RM, Italia', lat: 41.8986, lon: 12.4539, q: 'Viale+delle+Mura+Aurelie+11+00165+Roma+Italia' },
+    { n: 'Casa Generalicia · Hermanas Misioneras de la Consolata (MC)', l: 'Casa General MC (Nepi)', d: 'Via Niccolò Machiavelli 18, 01036 Nepi (Viterbo / Roma), Italia', lat: 42.2428, lon: 12.3464, q: 'Via+Niccolo+Machiavelli+18+01036+Nepi+VT+Italia' },
+    { n: 'Casa Natal de San José Allamano', l: 'Castelnuovo Don Bosco', d: 'Via San Giovanni Bosco, 14022 Castelnuovo Don Bosco AT, Piamonte', lat: 45.0414, lon: 7.9642, q: 'Casa+Natale+San+Giuseppe+Allamano+Castelnuovo+Don+Bosco' }
   ],
   gb: [
-    { n: 'Casa Misioneros de la Consolata · Londres', l: 'Londres', d: '3 Salisbury Avenue, Finchley, London N3 3AJ', lat: 51.5975, lon: -0.1931 }
+    { n: 'Casa Misioneros de la Consolata · Londres', l: 'Londres (Finchley)', d: '3 Salisbury Avenue, Finchley, London N3 3AJ, Reino Unido', lat: 51.5975, lon: -0.1931, q: '3+Salisbury+Avenue+London+N3+3AJ+UK' }
   ],
   pt: [
-    { n: 'Casa Regional Missionários da Consolata · Lisboa', l: 'Lisboa', d: 'Rua Capitão Santiago de Carvalho 9, 1700-096 Lisboa', lat: 38.7517, lon: -9.1364 },
-    { n: 'Casa y Seminario da Consolata · Fátima', l: 'Fátima', d: 'Estrada de Minde, 2495-402 Fátima', lat: 39.6256, lon: -8.6669 }
+    { n: 'Casa Regional Missionários da Consolata · Lisboa', l: 'Casa Regional Lisboa', d: 'Rua Capitão Santiago de Carvalho 9, 1700-096 Lisboa, Portugal', lat: 38.7517, lon: -9.1364, q: 'Rua+Capitao+Santiago+de+Carvalho+9+1700-096+Lisboa+Portugal' },
+    { n: 'Casa y Seminario Missionários da Consolata · Fátima', l: 'Seminario Fátima', d: 'Estrada de Minde, 2495-402 Fátima, Portugal', lat: 39.6256, lon: -8.6669, q: 'Missionarios+da+Consolata+Estrada+de+Minde+Fatima+Portugal' }
   ],
   es: [
-    { n: 'Curia Provincial Misioneros de la Consolata · Madrid', l: 'Madrid', d: 'Calle Pablo Aranda 18, Chamartín, 28006 Madrid', lat: 40.4439, lon: -3.6869 },
-    { n: 'Comunidad Misioneros de la Consolata · Barcelona', l: 'Barcelona', d: 'Barcelona, Cataluña, España', lat: 41.3874, lon: 2.1686 }
+    { n: 'Curia Provincial Misioneros de la Consolata · Madrid', l: 'Curia Madrid', d: 'Calle Pablo Aranda 18, Chamartín, 28006 Madrid, España', lat: 40.4439, lon: -3.6869, q: 'Calle+Pablo+Aranda+18+28006+Madrid+Espana' },
+    { n: 'Casa Misioneros de la Consolata · Barcelona', l: 'Barcelona', d: 'Passeig de Valldaura / Horta-Guinardó, Barcelona, España', lat: 41.4361, lon: 2.1644, q: 'Misioneros+de+la+Consolata+Barcelona+Espana' }
   ],
   pl: [
-    { n: 'Casa Misioneros de la Consolata · Kiełpin / Varsovia', l: 'Kiełpin · Varsovia', d: 'ul. Rolnicza 219, 05-092 Kiełpin-Łomianki, Varsovia', lat: 52.3533, lon: 20.8736 }
+    { n: 'Dom Zakonny Misjonarzy Consolata · Kiełpin / Varsovia', l: 'Kiełpin (Varsovia)', d: 'ul. Rolnicza 219, 05-092 Kiełpin-Łomianki, Varsovia, Polonia', lat: 52.3533, lon: 20.8736, q: 'Rolnicza+219+05-092+Kielpin+Polonia' }
+  ],
+  ke: [
+    { n: 'Consolata Shrine y Casa Regional · Nairobi', l: 'Nairobi (Sede Regional)', d: 'Waiyaki Way, Westlands, P.O. Box 14930-00800, Nairobi, Kenia', lat: -1.2636, lon: 36.8029, q: 'Consolata+Shrine+Waiyaki+Way+Westlands+Nairobi+Kenya' },
+    { n: 'Misión Histórica de Tuthu (1.ª Misión Consolata, 1902)', l: 'Tuthu · Murang’a', d: 'Tuthu, Kangema, Diócesis de Murang’a, Kenia', lat: -0.6847, lon: 36.8906, q: 'Tuthu+Catholic+Mission+Muranga+Kenya' },
+    { n: 'Centro Misionero de Mathari y Tumba de la Beata Irene Stefani', l: 'Mathari · Nyeri', d: 'Complejo de la Consolata en Mathari, Arquidiócesis de Nyeri, Kenia', lat: -0.4201, lon: 36.9476, q: 'Mathari+Consolata+Mission+Nyeri+Kenya' }
+  ],
+  et: [
+    { n: 'Casa Regional Misioneros de la Consolata · Adís Abeba', l: 'Adís Abeba', d: 'Capilla Consolata Mariyam, Mekanissa, P.O. Box 5535, Adís Abeba', lat: 8.9806, lon: 38.7269, q: 'Consolata+Missionaries+Mekanissa+Addis+Ababa+Ethiopia' },
+    { n: 'Misión Consolata de Modjo / Vicariato de Meki', l: 'Modjo · Meki', d: 'Vicariato Apostólico de Meki, Región de Oromía, Etiopía', lat: 8.5868, lon: 39.1211, q: 'Kidane+Mehret+Cathedral+Meki+Ethiopia' }
+  ],
+  tz: [
+    { n: 'Casa Regional y Procura Consolata · Dar es Salaam', l: 'Dar es Salaam', d: 'Oysterbay / Consolata Mission Centre Bunju, Dar es Salaam, Tanzania', lat: -6.7582, lon: 39.2775, q: 'Consolata+Sisters+Oysterbay+Dar+es+Salaam+Tanzania' },
+    { n: 'Casa Regional y Misión Histórica de Tosamaganga · Iringa', l: 'Iringa (Tosamaganga)', d: 'Misión de Tosamaganga, Diócesis de Iringa, Tanzania', lat: -7.8542, lon: 35.5358, q: 'Tosamaganga+Mission+Iringa+Tanzania' }
+  ],
+  mz: [
+    { n: 'Casa Regional y Centro Espiritual San Pablo · Maputo', l: 'Maputo', d: 'Bairro Laulane / Av. Julius Nyerere, Maputo, Mozambique', lat: -25.9150, lon: 32.6080, q: 'Missionarios+da+Consolata+Laulane+Maputo+Mozambique' },
+    { n: 'Casa Misionera Consolata · Lichinga (Niassa)', l: 'Lichinga (Niassa)', d: 'Diócesis de Lichinga, Provincia de Niassa, Mozambique', lat: -13.3128, lon: 35.2406, q: 'Diocese+de+Lichinga+Niassa+Mozambique' }
+  ],
+  za: [
+    { n: 'Casa Regional Misioneros de la Consolata · Pretoria', l: 'Pretoria (Waverley)', d: 'Waverley, Pretoria, Gauteng, Sudáfrica', lat: -25.7069, lon: 28.2575, q: 'Consolata+Missionaries+Waverley+Pretoria+South+Africa' },
+    { n: 'Seminario y Casa Consolata · Merrivale', l: 'Merrivale (Natal)', d: 'Merrivale, KwaZulu-Natal, Sudáfrica', lat: -29.5167, lon: 30.2333, q: 'Consolata+Missionaries+Merrivale+South+Africa' }
+  ],
+  cd: [
+    { n: 'Casa Regional Misioneros de la Consolata · Kinshasa', l: 'Kinshasa', d: '10ème Rue Limete, Kinshasa, R. D. del Congo', lat: -4.3490, lon: 15.3350, q: 'Missionnaires+de+la+Consolata+Limete+Kinshasa' },
+    { n: 'Comunidad Misionera Consolata · Kisangani', l: 'Kisangani', d: 'Arquidiócesis de Kisangani, R. D. del Congo', lat: 0.5153, lon: 25.1910, q: 'Cathédrale+Notre-Dame+du+Très-Saint-Rosaire+Kisangani' }
+  ],
+  ug: [
+    { n: 'Casa Regional Misioneros de la Consolata · Kampala', l: 'Kampala (Bweyogerere)', d: 'Bweyogerere / Kiwanga, P.O. Box 40088 Nakawa, Kampala, Uganda', lat: 0.3519, lon: 32.6625, q: 'Consolata+Missionaries+Bweyogerere+Kampala+Uganda' },
+    { n: 'Misión Consolata de Gulu', l: 'Gulu', d: 'Arquidiócesis de Gulu, Norte de Uganda', lat: 2.7724, lon: 32.2881, q: 'St+Joseph+Cathedral+Gulu+Uganda' }
+  ],
+  ci: [
+    { n: 'Casa Regional y Seminario Beata Irene Stefani · Abiyán', l: 'Abiyán', d: 'Cocody / Yopougon, Abiyán, Costa de Marfil', lat: 5.3599, lon: -4.0083, q: 'Missionnaires+de+la+Consolata+Abidjan+Cote+d+Ivoire' },
+    { n: 'Misión Consolata de San-Pédro', l: 'San-Pédro', d: 'Diócesis de San-Pédro, Costa de Marfil', lat: 4.7485, lon: -6.6363, q: 'Cathedrale+Saint+Pierre+San-Pedro+Cote+d+Ivoire' }
+  ],
+  dj: [
+    { n: 'Misión Consolata · Catedral Ntra. Sra. del Buen Pastor', l: 'Ciudad de Yibuti', d: 'Boulevard de la République, Diócesis de Yibuti', lat: 11.5950, lon: 43.1481, q: 'Cathedrale+Notre+Dame+du+Bon+Pasteur+Djibouti' }
+  ],
+  sz: [
+    { n: 'Misión Consolata · Parroquia Santa María (Lobamba)', l: 'Lobamba / Manzini', d: 'Lobamba / Kwaluseni, Diócesis de Manzini, Esuatini', lat: -26.4465, lon: 31.2064, q: 'St+Marys+Catholic+Church+Lobamba+Eswatini' }
+  ],
+  ao: [
+    { n: 'Casa y Misión Consolata en Luanda', l: 'Luanda (Viana)', d: 'Viana / Zango, Arquidiócesis de Luanda, Angola', lat: -8.9167, lon: 13.3667, q: 'Paroquia+de+Viana+Luanda+Angola' }
+  ],
+  mg: [
+    { n: 'Casa Misioneros de la Consolata · Antananarivo', l: 'Antananarivo', d: 'Arquidiócesis de Antananarivo, Madagascar', lat: -18.8792, lon: 47.5079, q: 'Antananarivo+Madagascar' },
+    { n: 'Misión Consolata de Ambanja / Beandrarezina', l: 'Ambanja', d: 'Diócesis de Ambanja, Norte de Madagascar', lat: -13.6833, lon: 48.4500, q: 'Cathédrale+Saint+Joseph+Ambanja+Madagascar' }
+  ],
+  lr: [
+    { n: 'Casa Hermanas Misioneras de la Consolata · Monrovia', l: 'Monrovia', d: 'Arquidiócesis de Monrovia, Liberia', lat: 6.3156, lon: -10.8074, q: 'Sacred+Heart+Cathedral+Monrovia+Liberia' }
+  ],
+  gw: [
+    { n: 'Casa Hermanas Misioneras de la Consolata · Bisáu', l: 'Bisáu / Bula', d: 'Diócesis de Bisáu, Guinea-Bisáu', lat: 11.8636, lon: -15.5977, q: 'Catedral+de+Bissau+Guinea-Bissau' }
   ],
   kr: [
-    { n: 'Casa Regional Misioneros de la Consolata · Seúl / Incheon', l: 'Seúl / Incheon', d: 'Región Metropolitana de Seúl / Incheon, Corea del Sur', lat: 37.4563, lon: 126.7052 },
-    { n: 'Centro Misionero Consolata · Daejeon', l: 'Daejeon', d: 'Diócesis de Daejeon, Corea del Sur', lat: 36.3504, lon: 127.3845 }
+    { n: 'Casa Regional Misioneros de la Consolata · Incheon / Seúl', l: 'Incheon / Seúl', d: 'Diócesis de Incheon, Área Metropolitana de Seúl, Corea del Sur', lat: 37.4563, lon: 126.7052, q: 'Catholic+Diocese+of+Incheon+South+Korea' },
+    { n: 'Centro Misionero Consolata · Daejeon', l: 'Daejeon', d: 'Diócesis de Daejeon, Corea del Sur', lat: 36.3504, lon: 127.3845, q: 'Catholic+Diocese+of+Daejeon+South+Korea' }
   ],
   mn: [
-    { n: 'Casa Misioneros de la Consolata · Ulán Bator', l: 'Ulán Bator', d: 'Prefectura Apostólica de Ulán Bator, Mongolia', lat: 47.9212, lon: 106.9186 },
-    { n: 'Misión Consolata de Arvaikheer', l: 'Arvaikheer', d: 'Provincia de Övörkhangai, Mongolia', lat: 46.2639, lon: 102.7750 }
+    { n: 'Casa Misioneros de la Consolata · Ulán Bator', l: 'Ulán Bator', d: 'Prefectura Apostólica de Ulán Bator, Mongolia', lat: 47.9212, lon: 106.9186, q: 'Sts+Peter+and+Paul+Cathedral+Ulaanbaatar+Mongolia' },
+    { n: 'Casa de la Misión Consolata · Arvaikheer', l: 'Arvaikheer', d: 'Arvaikheer, Provincia de Övörkhangai, Mongolia', lat: 46.2639, lon: 102.7750, q: 'Catholic+Mission+Arvaikheer+Mongolia' }
   ],
   tw: [
-    { n: 'Casa Misioneros de la Consolata · Hsinchu', l: 'Hsinchu', d: 'Diócesis de Hsinchu / Zhubei, Taiwán', lat: 24.8138, lon: 120.9675 }
+    { n: 'Casa Misioneros de la Consolata · Hsinchu', l: 'Hsinchu', d: 'Diócesis de Hsinchu / Zhubei, Taiwán', lat: 24.8138, lon: 120.9675, q: 'Immaculate+Heart+of+Mary+Cathedral+Hsinchu+Taiwan' }
   ],
   kz: [
-    { n: 'Casa Misioneras de la Consolata · Almatý', l: 'Almatý', d: 'Almatý / Talgar, Kazajistán', lat: 43.2389, lon: 76.8897 }
+    { n: 'Casa Hermanas Misioneras de la Consolata · Almatý', l: 'Almatý / Talgar', d: 'Diócesis de la Santísima Trinidad en Almatý, Kazajistán', lat: 43.2389, lon: 76.8897, q: 'Holy+Trinity+Cathedral+Almaty+Kazakhstan' }
   ],
   kg: [
-    { n: 'Casa Misioneras de la Consolata · Biskek', l: 'Biskek', d: 'Biskek / Talas, Kirguistán', lat: 42.8746, lon: 74.5698 }
+    { n: 'Casa Hermanas Misioneras de la Consolata · Biskek / Talas', l: 'Biskek / Talas', d: 'Administración Apostólica de Kirguistán, Biskek', lat: 42.8746, lon: 74.5698, q: 'Catholic+Church+Bishkek+Kyrgyzstan' }
   ]
 };
 
@@ -566,7 +582,8 @@ function geoToSvg(lat, lon) {
 }
 
 function mapsUrl(c) {
-  return `https://www.google.com/maps?q=${c.lat},${c.lon}+(${encodeURIComponent(c.n + ' - ' + c.d)})&z=16`;
+  if (c.q) return `https://www.google.com/maps/search/?api=1&query=${c.q}`;
+  return `https://www.google.com/maps?q=${c.lat},${c.lon}+(${encodeURIComponent(c.n)})&z=16`;
 }
 
 const WEB = { p: (d) => `Página de la Consolata en ${d.n}`, r: (d) => `Página de la Consolata en ${CONT[d.c][0]}`, g: () => 'Sitio oficial de la Consolata', d: () => 'Página de la diócesis sobre la Consolata', m: () => 'Página de las Misioneras de la Consolata' };
@@ -575,24 +592,22 @@ function paisInfo(k) {
   const quien = d.q === 'mc' ? 'Misioneras de la Consolata' : 'Misioneros de la Consolata';
   const desde = d.y ? `<p class="mp-year"><b>${d.y}</b><span>${d.y === 1901 ? 'fundación del Instituto' : `llegada de ${d.q === 'mc' ? 'las' : 'los'} ${quien}`}</span></p>` : `<p><b>${quien}</b> · año de llegada por confirmar</p>`;
   const casas = CASAS[k] || [];
-  const casasHtml = casas.length ? `<div class="mp-casas-box"><div class="mp-casas-title">🏠 Casas y misiones en ${esc(d.n)} (${casas.length})</div><p style="margin:0 0 6px;font-size:13.5px;color:var(--muted)">Toca el icono de casa en el mapa o en esta lista para abrir su ubicación exacta en Google Maps:</p>${casas.map((c) => `<a class="mp-casa-card" href="${mapsUrl(c)}" target="_blank" rel="noopener"><i>🏠</i><div><b>${esc(c.n)}</b><small>📍 ${esc(c.d)}</small></div><span>Google Maps ↗</span></a>`).join('')}</div>` : '';
+  const casasHtml = casas.length ? `<div class="mp-casas-box"><div class="mp-casas-title">🏠 Casas y presencia en ${esc(d.n)} (${casas.length})</div><p style="margin:0 0 6px;font-size:13.5px;color:var(--muted)">Toca el icono de casa en el mapa o en esta lista para abrir su ubicación exacta en Google Maps:</p>${casas.map((c) => `<a class="mp-casa-card" href="${mapsUrl(c)}" target="_blank" rel="noopener"><i>🏠</i><div><b>${esc(c.n)}</b><small>📍 ${esc(c.d)}</small></div><span>Google Maps ↗</span></a>`).join('')}</div>` : '';
   return `<h3>${esc(d.n)}</h3><p><b>${CONT[d.c][0]}</b>${d.y && d.y !== 1901 ? ` · ${new Date().getFullYear() - d.y} años de presencia` : ''}</p>${desde}${d.q === 'mc' ? '<p>En este país sirven las <b>Misioneras de la Consolata</b>, la rama femenina fundada también por san José Allamano.</p>' : ''}${d.x ? `<p>${esc(d.x)}</p>` : ''}${casasHtml}<p class="mp-links"><a class="fe-tab mp-web" href="${d.w}" target="_blank" rel="noopener">${esc(WEB[d.t](d))} ↗</a><button type="button" class="fe-tab" data-mpreset>🌍 Ver mapa mundial</button></p>`;
 }
 async function mapa() {
   const box = $('#mapa-app'); if (!box) return;
   const keys = Object.keys(PAISES);
   const totalCasas = Object.values(CASAS).reduce((acc, l) => acc + l.length, 0);
-  box.innerHTML = `<div class="mp-wrap"><div class="mp-map" id="mp-svg" aria-busy="true"></div><div class="mp-info" id="mp-info" aria-live="polite"><h3>Toca un país del menú o del mapa</h3><p>Al seleccionar un país, el mapa hará <b>zoom automático</b> y mostrará los <b>iconos de casa (🏠)</b> en la ubicación exacta de las casas de los Misioneros de la Consolata. Al presionar cualquier casa se abrirá en <b>Google Maps</b>.</p><div class="mp-stats"><div><b>${keys.length}</b><span>países</span></div><div><b>${totalCasas}</b><span>casas en el mapa</span></div><div><b>1901</b><span>año de fundación</span></div><div><b>898</b><span>misioneros (2024)</span></div></div></div></div><div class="mp-list" id="mp-list"></div><p class="fe-note" style="color:#BFD3F2">Los países con borde punteado tienen presencia de las Misioneras de la Consolata. Toca cualquier país del menú inferior para acercar el mapa y ver sus casas misioneras con enlace directo a Google Maps.</p>`;
+  box.innerHTML = `<div class="mp-wrap"><div class="mp-map" id="mp-svg" aria-busy="true"></div><div class="mp-info" id="mp-info" aria-live="polite"><h3>Toca un país del menú o del mapa</h3><p>Al seleccionar un país, el mapa hará <b>zoom automático</b> y mostrará los <b>iconos de casa (🏠)</b> en la ubicación exacta de las casas de los Misioneros y Hermanas de la Consolata. Al presionar cualquier casa se abrirá en <b>Google Maps</b>.</p><div class="mp-stats"><div><b>${keys.length}</b><span>países</span></div><div><b>${totalCasas}</b><span>casas registradas</span></div><div><b>1901</b><span>año de fundación</span></div><div><b>898</b><span>misioneros (2024)</span></div></div></div></div><div class="mp-list" id="mp-list"></div><p class="fe-note" style="color:#BFD3F2">Los países con borde punteado tienen presencia de las Misioneras de la Consolata. Toca cualquier país del menú inferior para acercar el mapa y ver sus casas misioneras con enlace directo a Google Maps.</p>`;
   $('#mp-list').innerHTML = Object.keys(CONT).map((c) => { const ks = keys.filter((k) => PAISES[k].c === c).sort((a, b) => (PAISES[a].y || 9999) - (PAISES[b].y || 9999)); return `<div><b><i style="background:${CONT[c][1]}"></i>${CONT[c][0]} (${ks.length})</b><ul>${ks.map((k) => `<li><button type="button" data-mpk="${k}">${esc(PAISES[k].n)}<span>🏠 ${(CASAS[k] || []).length} · ${PAISES[k].y || '—'}</span></button></li>`).join('')}</ul></div>`; }).join('');
   let ps = [], svgEl = null, casasLayer = null, hudEl = null, curVb = [0, 0, 960, 470], animId = 0, selK = '';
 
   const updateCasasScale = (vw) => {
     if (!casasLayer) return;
-    const s = selK ? Math.max(0.06, Math.min(0.95, (vw / 960) * 1.35)) : 0.42;
+    const s = Math.max(0.055, Math.min(0.85, (vw / 960) * 1.18));
     casasLayer.querySelectorAll('.mp-casa-inner').forEach((g) => {
-      const k = g.parentElement.dataset.k;
-      const sc = selK ? (k === selK ? s : s * 0.55) : (g.parentElement.classList.contains('jm') ? 0.56 : 0.36);
-      g.setAttribute('transform', `scale(${sc.toFixed(4)})`);
+      g.setAttribute('transform', `scale(${s.toFixed(4)})`);
     });
   };
 
@@ -614,34 +629,51 @@ async function mapa() {
     animId = requestAnimationFrame(step);
   };
 
-  const renderCasasSvg = () => {
+  const renderCasasSvg = (targetVw) => {
     if (!casasLayer) return;
-    const items = [];
-    for (const [k, list] of Object.entries(CASAS)) {
-      if (selK && k !== selK) continue;
-      const pts = list.map((c) => {
-        const [x, y] = geoToSvg(c.lat, c.lon);
-        return { c, x, y };
-      });
-      /* separa ligeramente dos casas muy cercanas en la misma ciudad para que ambas se puedan tocar */
+    /* En la vista general del mapamundi NO se muestran casas; solo cuando se selecciona un país */
+    if (!selK) {
+      casasLayer.innerHTML = '';
+      return;
+    }
+    const list = CASAS[selK] || [];
+    const vw = targetVw || curVb[2] || 60;
+    const s = Math.max(0.055, Math.min(0.85, (vw / 960) * 1.18));
+    const minDist = 26 * s;
+    const pts = list.map((c) => {
+      const [ox, oy] = geoToSvg(c.lat, c.lon);
+      return { c, ox, oy, x: ox, y: oy };
+    });
+    /* Separa suavemente los iconos de casas en la misma ciudad (p. ej. Barquisimeto o Caracas) para que todas se vean claras */
+    for (let iter = 0; iter < 30; iter++) {
       for (let i = 0; i < pts.length; i++) {
         for (let j = i + 1; j < pts.length; j++) {
-          const dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y, dist = Math.hypot(dx, dy);
-          if (dist < 2.4) {
-            const ang = (j * Math.PI) / 3;
-            pts[i].x -= Math.cos(ang) * 1.1; pts[i].y -= Math.sin(ang) * 1.1;
-            pts[j].x += Math.cos(ang) * 1.1; pts[j].y += Math.sin(ang) * 1.1;
+          let dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y;
+          let dist = Math.hypot(dx, dy);
+          if (dist < minDist) {
+            if (dist < 0.01) {
+              const ang = ((i + j + 1) * Math.PI) / 3;
+              dx = Math.cos(ang) * 0.1; dy = Math.sin(ang) * 0.1; dist = 0.1;
+            }
+            const push = (minDist - dist) * 0.52;
+            const ux = dx / dist, uy = dy / dist;
+            pts[i].x -= ux * push; pts[i].y -= uy * push;
+            pts[j].x += ux * push; pts[j].y += uy * push;
           }
         }
       }
-      pts.forEach(({ c, x, y }, idx) => {
-        const isJm = !!c.jm;
-        const lbl = c.l || c.n;
-        const w = Math.max(48, lbl.length * 5.6 + 16);
-        const showLbl = !!selK;
-        items.push(`<a class="mp-casa${isJm ? ' jm' : ''}" href="${mapsUrl(c)}" target="_blank" rel="noopener" data-k="${k}" data-idx="${idx}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})" aria-label="Abrir en Google Maps: ${esc(c.n)}, ${esc(c.d)}"><title>🏠 ${esc(c.n)} (${esc(c.d)}) · Toca para abrir en Google Maps</title><g class="mp-casa-inner"><circle class="casa-pulse" r="11"/><circle class="casa-bg" r="10.5"/><path class="casa-ico" d="M0 -6.2 L-6.8 -0.6 H-4.6 V5.2 H-1.4 V1.2 H1.4 V5.2 H4.6 V-0.6 H6.8 Z"/>${showLbl ? `<g transform="translate(0 18.5)"><rect class="casa-lbl-bg" x="${(-w / 2).toFixed(1)}" y="-7.5" width="${w.toFixed(1)}" height="14.5" rx="7.2"/><text class="casa-lbl" text-anchor="middle" y="2.8">${esc(lbl)} ↗</text></g>` : ''}</g></a>`);
-      });
     }
+    const items = [];
+    pts.forEach(({ c, ox, oy, x, y }, idx) => {
+      const isJm = !!c.jm;
+      const lbl = c.l || c.n;
+      const w = Math.max(52, lbl.length * 5.5 + 16);
+      if (Math.hypot(x - ox, y - oy) > 0.35) {
+        items.push(`<line x1="${ox.toFixed(2)}" y1="${oy.toFixed(2)}" x2="${x.toFixed(2)}" y2="${y.toFixed(2)}" stroke="#F5C518" stroke-width="1.4" stroke-dasharray="2 2" vector-effect="non-scaling-stroke" opacity="0.85"/>`);
+        items.push(`<circle cx="${ox.toFixed(2)}" cy="${oy.toFixed(2)}" r="${(2.6 * s).toFixed(2)}" fill="#F5C518" stroke="#061536" stroke-width="1" vector-effect="non-scaling-stroke"/>`);
+      }
+      items.push(`<a class="mp-casa${isJm ? ' jm' : ''}" href="${mapsUrl(c)}" target="_blank" rel="noopener" data-k="${selK}" data-idx="${idx}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})" aria-label="Abrir en Google Maps: ${esc(c.n)}, ${esc(c.d)}"><title>🏠 ${esc(c.n)} — ${esc(c.d)} (Toca para abrir en Google Maps)</title><g class="mp-casa-inner"><circle class="casa-pulse" r="11"/><circle class="casa-bg" r="10.5"/><path class="casa-ico" d="M0 -6.2 L-6.8 -0.6 H-4.6 V5.2 H-1.4 V1.2 H1.4 V5.2 H4.6 V-0.6 H6.8 Z"/><g transform="translate(0 18.5)"><rect class="casa-lbl-bg" x="${(-w / 2).toFixed(1)}" y="-7.5" width="${w.toFixed(1)}" height="14.5" rx="7.2"/><text class="casa-lbl" text-anchor="middle" y="2.8">${esc(lbl)} ↗</text></g></g></a>`);
+    });
     casasLayer.innerHTML = items.join('');
     updateCasasScale(curVb[2]);
   };
@@ -650,11 +682,11 @@ async function mapa() {
     selK = '';
     ps.forEach((x) => x.classList.remove('sel'));
     document.querySelectorAll('[data-mpk]').forEach((b) => b.setAttribute('aria-pressed', 'false'));
-    if (hudEl) hudEl.innerHTML = `<span class="mp-hud-badge">🌍 Mapa mundial · Toca un país para hacer zoom a sus casas</span>`;
-    renderCasasSvg();
+    if (hudEl) hudEl.innerHTML = `<span class="mp-hud-badge">🌍 Mapa mundial · Selecciona un país para hacer zoom y ver sus casas</span>`;
+    renderCasasSvg(960);
     animateViewBox([0, 0, 960, 470]);
     const keysAll = Object.keys(PAISES);
-    $('#mp-info').innerHTML = `<h3>Toca un país del menú o del mapa</h3><p>Al seleccionar un país, el mapa hará <b>zoom automático</b> y mostrará los <b>iconos de casa (🏠)</b> en la ubicación exacta de las casas de los Misioneros de la Consolata. Al presionar cualquier casa se abrirá en <b>Google Maps</b>.</p><div class="mp-stats"><div><b>${keysAll.length}</b><span>países</span></div><div><b>${totalCasas}</b><span>casas en el mapa</span></div><div><b>1901</b><span>año de fundación</span></div><div><b>898</b><span>misioneros (2024)</span></div></div>`;
+    $('#mp-info').innerHTML = `<h3>Toca un país del menú o del mapa</h3><p>Al seleccionar un país, el mapa hará <b>zoom automático</b> y mostrará los <b>iconos de casa (🏠)</b> en la ubicación exacta de las casas de los Misioneros y Hermanas de la Consolata. Al presionar cualquier casa se abrirá en <b>Google Maps</b>.</p><div class="mp-stats"><div><b>${keysAll.length}</b><span>países</span></div><div><b>${totalCasas}</b><span>casas registradas</span></div><div><b>1901</b><span>año de fundación</span></div><div><b>898</b><span>misioneros (2024)</span></div></div>`;
   };
 
   const sel = (k, scroll) => {
@@ -683,11 +715,11 @@ async function mapa() {
       w = Math.min(960, w); h = Math.min(470, h);
       const vx = Math.max(0, Math.min(960 - w, cx - w / 2));
       const vy = Math.max(0, Math.min(470 - h, cy - h / 2));
-      renderCasasSvg();
+      renderCasasSvg(w);
       animateViewBox([vx, vy, w, h]);
     }
     if (hudEl) {
-      hudEl.innerHTML = `<span class="mp-hud-badge">🏠 ${esc(d.n)} · Toca una casa para abrir Google Maps</span><button type="button" class="mp-hud-btn" data-mpreset>🌍 Ver mapa mundial</button>`;
+      hudEl.innerHTML = `<span class="mp-hud-badge">🏠 ${esc(d.n)} (${(CASAS[k] || []).length} casas) · Toca una casa para ir a Google Maps</span><button type="button" class="mp-hud-btn" data-mpreset>🌍 Ver mapa mundial</button>`;
     }
     if (scroll && svgEl) {
       const r = svgEl.getBoundingClientRect();
@@ -701,22 +733,21 @@ async function mapa() {
   try {
     const r = await fetch('img/mapa-consolata.svg?v=2'); const s = await r.text();
     const m = $('#mp-svg');
-    m.innerHTML = `<div class="mp-hud" id="mp-hud"><span class="mp-hud-badge">🌍 Mapa mundial · Toca un país para hacer zoom a sus casas</span></div>` + s;
+    m.innerHTML = `<div class="mp-hud" id="mp-hud"><span class="mp-hud-badge">🌍 Mapa mundial · Selecciona un país para hacer zoom y ver sus casas</span></div>` + s;
     m.removeAttribute('aria-busy');
     svgEl = m.querySelector('svg');
     hudEl = m.querySelector('#mp-hud');
-    /* ocultamos los 3 puntos antiguos para mostrar los nuevos iconos de casa interactivos */
+    /* quitamos los puntos fijos de la vista general para que el mapa mundial esté limpio y las casas solo salgan al elegir un país */
     m.querySelectorAll('.pin').forEach((p) => p.remove());
     casasLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     casasLayer.setAttribute('id', 'mp-casas-layer');
     svgEl.appendChild(casasLayer);
     ps = Array.from(m.querySelectorAll('.pc'));
     ps.forEach((p) => { const d = PAISES[p.dataset.k]; if (!d) return; p.setAttribute('tabindex', '0'); p.setAttribute('role', 'button'); p.setAttribute('aria-label', `${d.n}${d.y ? ', desde ' + d.y : ''}`); const t = document.createElementNS('http://www.w3.org/2000/svg', 'title'); t.textContent = `${d.n}${d.y ? ' · desde ' + d.y : ''} (Toca para hacer zoom y ver casas)`; p.appendChild(t); });
-    renderCasasSvg();
+    renderCasasSvg(960);
     m.addEventListener('click', (e) => {
       const casa = e.target.closest('.mp-casa');
       if (casa) {
-        /* Si aún no había zoom en el país y toca una casa desde el mapa mundial, hacemos zoom primero si quiere o dejamos que el enlace abra Google Maps */
         e.stopPropagation();
         return;
       }
@@ -731,6 +762,14 @@ async function mapa() {
    Empiezan sin sonido (los teléfonos no dejan otra cosa); con el botón de sonido se escucha
    y, mientras el sonido esté activado, suena solo un video a la vez. ---------- */
 function videos() {
+  const REMOTO = 'https://gabrielg739-prog.github.io/juma/';
+  document.querySelectorAll('img.photo').forEach((im) => {
+    im.addEventListener('error', () => {
+      const s = im.getAttribute('src') || '';
+      if (s && !/^https?:/i.test(s) && !im.dataset.remoto) { im.dataset.remoto = '1'; im.src = REMOTO + s.replace(/^\.?\//, ''); }
+    });
+    if (im.complete && im.naturalWidth === 0) im.dispatchEvent(new Event('error'));
+  });
   const vs = Array.from(document.querySelectorAll('video.vclip[data-src]')); if (!vs.length) return;
   const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const ahorro = !!(navigator.connection && navigator.connection.saveData);
@@ -747,8 +786,20 @@ function videos() {
   const tocar = (v) => { if (parado.has(v) || !cargar(v)) return; if (sonido && !suena) sonar(v); reproducir(v); };
   vs.forEach((v) => {
     v.muted = true; v.defaultMuted = true;
-    v.addEventListener('playing', () => { v.classList.add('on'); box(v).classList.add('vlive'); marcar(v, true); });
-    v.addEventListener('pause', () => { marcar(v, false); if (suena === v) { callar(v); pasar(); } });
+    v.addEventListener('error', () => {
+      const s = v.dataset.src || '';
+      if (s && !/^https?:/i.test(s) && !v.dataset.remoto) { v.dataset.remoto = '1'; v.src = REMOTO + s.replace(/^\.?\//, ''); reproducir(v); }
+    });
+    v.addEventListener('playing', () => {
+      marcar(v, true);
+      clearTimeout(v._tOn);
+      if (v.classList.contains('vover')) {
+        v._tOn = setTimeout(() => { if (!v.paused) { v.classList.add('on'); box(v).classList.add('vlive'); } }, 850);
+      } else {
+        v.classList.add('on'); box(v).classList.add('vlive');
+      }
+    });
+    v.addEventListener('pause', () => { clearTimeout(v._tOn); marcar(v, false); if (suena === v) { callar(v); pasar(); } });
   });
   document.addEventListener('click', (e) => {
     const s = e.target.closest('.vsnd');
@@ -760,11 +811,16 @@ function videos() {
   });
   if (quieto || ahorro) { vs.forEach((v) => { if (v.poster) { box(v).classList.add('vlive'); marcar(v, false); parado.add(v); } }); return; }
   const cerca = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) { cargar(en.target); cerca.unobserve(en.target); } }), { rootMargin: '360px 0px' });
-  const dentro = (en) => en.isIntersecting && en.intersectionRatio >= 0.5;
+  const dentro = (en) => en.isIntersecting && en.intersectionRatio >= 0.35;
   const vista = new IntersectionObserver((es) => {
-    es.filter((en) => !dentro(en)).forEach((en) => { const v = en.target; if (suena === v) callar(v); if (!v.paused) v.pause(); });
+    es.filter((en) => !dentro(en)).forEach((en) => {
+      const v = en.target; clearTimeout(v._tOn);
+      if (suena === v) callar(v);
+      if (!v.paused) v.pause();
+      if (v.classList.contains('vover')) { v.classList.remove('on'); box(v).classList.remove('vlive'); }
+    });
     es.filter(dentro).forEach((en) => tocar(en.target));
-  }, { threshold: [0, 0.5, 0.8] });
+  }, { threshold: [0, 0.35, 0.75] });
   vs.forEach((v) => { cerca.observe(v); vista.observe(v); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) vs.forEach((v) => { if (!v.paused) v.pause(); }); });
 }
