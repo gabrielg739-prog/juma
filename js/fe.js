@@ -193,21 +193,42 @@ const css = `
 .tes blockquote{margin:0;padding:18px 18px 8px;font-size:17px;line-height:1.6}
 .tes figcaption{padding:0 18px 18px;font-size:14px;color:var(--muted)}
 .mp-wrap{margin-top:clamp(24px,4vw,40px);display:grid;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:20px;align-items:start}
-.mp-map{position:relative;background:#0A1F4D;border-radius:18px;padding:10px;overflow:hidden}
-.mp-map svg{display:block;width:100%;height:auto}
-.mp-map .po{fill:#1C3A78;stroke:#0A1F4D;stroke-width:.5}
-.mp-map .pc{stroke:#0A1F4D;stroke-width:.6;cursor:pointer;transition:opacity .2s}
+.mp-map{position:relative;background:#0A1F4D;border-radius:18px;padding:10px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(142,201,255,.18)}
+.mp-map svg{display:block;width:100%;height:auto;touch-action:manipulation}
+.mp-map .po{fill:#1C3A78;stroke:#0A1F4D;stroke-width:.7;vector-effect:non-scaling-stroke}
+.mp-map .pc{stroke:#0A1F4D;stroke-width:.8;cursor:pointer;transition:opacity .2s,filter .2s;vector-effect:non-scaling-stroke}
 .mp-map .pc.af{fill:#17824A}.mp-map .pc.am{fill:#C8322D}.mp-map .pc.eu{fill:#FFFFFF}.mp-map .pc.as{fill:#F5C518}
-.mp-map .pc:hover,.mp-map .pc:focus{opacity:.75;outline:none}
-.mp-map .pc.sel{stroke:#8EC9FF;stroke-width:2}
+.mp-map .pc:hover,.mp-map .pc:focus{opacity:.82;outline:none}
+.mp-map .pc.sel{stroke:#8EC9FF;stroke-width:2.5;filter:drop-shadow(0 0 8px rgba(142,201,255,.55))}
 .mp-map .pin .dot{fill:#8EC9FF;stroke:#fff;stroke-width:1.4}
 .mp-map .pin.jm .dot{fill:#F5C518}
 .mp-map .pin .pulse{fill:#8EC9FF;transform-box:fill-box;transform-origin:center;animation:mpPulse 2.2s cubic-bezier(.23,1,.32,1) infinite}
 .mp-map .pin.jm .pulse{fill:#F5C518}
-@keyframes mpPulse{from{opacity:.7;transform:scale(1)}to{opacity:0;transform:scale(3.2)}}
+@keyframes mpPulse{from{opacity:.75;transform:scale(1)}to{opacity:0;transform:scale(2.8)}}
+.mp-casa{cursor:pointer;text-decoration:none;outline:none}
+.mp-casa .casa-pulse{fill:#F5C518;transform-box:fill-box;transform-origin:center;animation:mpPulse 2s cubic-bezier(.23,1,.32,1) infinite}
+.mp-casa .casa-bg{fill:#0C2D74;stroke:#F5C518;stroke-width:2.2;transition:transform .18s ease,fill .18s ease}
+.mp-casa.jm .casa-bg{fill:#C8322D;stroke:#F5C518;stroke-width:2.5}
+.mp-casa .casa-ico{fill:#FFFFFF}
+.mp-casa .casa-lbl-bg{fill:rgba(6,21,54,.92);stroke:#8EC9FF;stroke-width:1}
+.mp-casa .casa-lbl{fill:#FFFFFF;font:800 9.5px/1 var(--body); paint-order:stroke;user-select:none}
+.mp-casa:hover .casa-bg,.mp-casa:focus-visible .casa-bg{fill:#2452C8;stroke:#FFFFFF;transform:scale(1.16)}
+.mp-hud{position:absolute;top:14px;left:14px;right:14px;z-index:4;display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none;flex-wrap:wrap}
+.mp-hud-badge{pointer-events:auto;padding:6px 12px;border-radius:999px;background:rgba(6,21,54,.84);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font-size:13px;font-weight:700;border:1px solid rgba(142,201,255,.35);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.mp-hud-btn{pointer-events:auto;border:1.5px solid #F5C518;border-radius:999px;background:#061536;color:#F5C518;font:800 13px/1 var(--body);padding:8px 14px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4);transition:transform .14s ease,background-color .15s}
+.mp-hud-btn:hover{background:#0C2D74;color:#fff}
+.mp-hud-btn:active{transform:scale(.96)}
 .mp-info{background:#fff;color:var(--ink);border-radius:16px;padding:18px}
 .mp-info h3{margin:0;font:800 26px/1 var(--display);text-transform:uppercase;color:var(--cloth)}
 .mp-info p{margin:8px 0 0;font-size:15px;line-height:1.5}
+.mp-casas-box{margin-top:14px;display:grid;gap:8px}
+.mp-casas-title{font:800 14px/1.2 var(--body);text-transform:uppercase;letter-spacing:.04em;color:var(--royal);margin:4px 0 2px}
+.mp-casa-card{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--mist);border:1.5px solid #D3DEF0;text-decoration:none;color:var(--ink);transition:border-color .16s,background-color .16s,transform .12s}
+.mp-casa-card:hover{border-color:var(--royal);background:#EAF2FF;transform:translateY(-1px)}
+.mp-casa-card i{width:34px;height:34px;border-radius:10px;background:var(--cloth);color:#F5C518;display:grid;place-items:center;font-style:normal;font-size:17px}
+.mp-casa-card b{display:block;font-size:14.5px;line-height:1.25;color:var(--cloth)}
+.mp-casa-card small{display:block;font-size:12.5px;line-height:1.3;color:var(--muted);margin-top:2px}
+.mp-casa-card span{padding:6px 10px;border-radius:999px;background:var(--royal);color:#fff;font-size:12px;font-weight:800;white-space:nowrap}
 .mp-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
 .mp-stats div{padding:12px;border-radius:12px;background:var(--mist)}
 .mp-stats b{display:block;font:800 30px/1 var(--display);color:var(--cloth)}
@@ -227,7 +248,7 @@ const css = `
 .mp-year span{font-size:14px;color:var(--muted)}
 .mp-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px!important}
 .mp-web{display:inline-flex;align-items:center;text-decoration:none;background:var(--cloth);color:#fff!important;border-color:var(--cloth)}
-.mp-map .pc.mc{stroke:#fff;stroke-width:.9;stroke-dasharray:2 1.5}
+.mp-map .pc.mc{stroke:#fff;stroke-width:.9;stroke-dasharray:2 1.5;vector-effect:non-scaling-stroke}
 /* ---------- videos ---------- */
 .vclip{display:block;width:100%;height:100%;object-fit:cover;background:#0A1F4D}
 .vover{position:absolute;inset:0;opacity:0;transition:opacity .6s ease}
@@ -402,34 +423,307 @@ const PAISES = {
   kz: { n: 'Kazajistán', c: 'as', y: 2020, q: 'mc', w: MCW + 'presenza-e-appartenenza-4-anni-in-kazakistan/', t: 'm' },
   kg: { n: 'Kirguistán', c: 'as', y: 2020, q: 'mc', w: MCW + '2019/12/13/kirghizistan-santuario-alpino-in-asia/', t: 'm' }
 };
+const CASAS = {
+  ke: [
+    { n: 'Consolata Shrine y Casa Regional', l: 'Nairobi', d: 'Waiyaki Way, Westlands, Nairobi', lat: -1.2636, lon: 36.8029 },
+    { n: 'Misión Histórica de Tuthu y Murang’a', l: 'Murang’a (1902)', d: 'Diócesis de Murang’a (1.ª misión Consolata)', lat: -0.7210, lon: 37.1526 },
+    { n: 'Centro Misionero de Mathari · Nyeri', l: 'Nyeri', d: 'Complejo Misionero de Mathari, Nyeri', lat: -0.4201, lon: 36.9476 }
+  ],
+  et: [
+    { n: 'Casa Regional Misioneros de la Consolata', l: 'Adís Abeba', d: 'Capilla Consolata Mariyam, Mekanissa, Adís Abeba', lat: 8.9806, lon: 38.7269 },
+    { n: 'Misión Consolata de Modjo / Meki', l: 'Modjo · Oromía', d: 'Vicariato Apostólico de Meki, Oromía', lat: 8.5868, lon: 39.1211 }
+  ],
+  tz: [
+    { n: 'Casa Regional y Centro Misionero Consolata', l: 'Dar es Salaam', d: 'Oysterbay / Centro Misionero Bunju, Dar es Salaam', lat: -6.7582, lon: 39.2775 },
+    { n: 'Casa Misionera de Iringa (Tosamaganga)', l: 'Iringa', d: 'Diócesis de Iringa, Tanzania', lat: -7.7667, lon: 35.6833 }
+  ],
+  mz: [
+    { n: 'Casa Regional y Centro San Pablo', l: 'Maputo', d: 'Barrio Laulane, Maputo, Mozambique', lat: -25.9150, lon: 32.6080 },
+    { n: 'Comunidad Misionera de Lichinga', l: 'Lichinga · Niassa', d: 'Diócesis de Lichinga, Niassa', lat: -13.3128, lon: 35.2406 }
+  ],
+  za: [
+    { n: 'Casa Regional Misioneros de la Consolata', l: 'Pretoria', d: 'Waverley, Pretoria, Gauteng', lat: -25.7069, lon: 28.2575 },
+    { n: 'Seminario y Misión de Merrivale', l: 'Merrivale', d: 'Merrivale, KwaZulu-Natal, Sudáfrica', lat: -29.5167, lon: 30.2333 }
+  ],
+  cd: [
+    { n: 'Casa Regional Misioneros de la Consolata', l: 'Kinshasa', d: 'Limete, Kinshasa, R. D. del Congo', lat: -4.3490, lon: 15.3350 },
+    { n: 'Comunidad Misionera de Kisangani', l: 'Kisangani', d: 'Arquidiócesis de Kisangani, R. D. del Congo', lat: 0.5153, lon: 25.1910 }
+  ],
+  ug: [
+    { n: 'Casa Regional Misioneros de la Consolata', l: 'Kampala', d: 'Bweyogerere / Kiwanga, Kampala, Uganda', lat: 0.3519, lon: 32.6625 },
+    { n: 'Misión Consolata de Gulu', l: 'Gulu', d: 'Arquidiócesis de Gulu, Norte de Uganda', lat: 2.7724, lon: 32.2881 }
+  ],
+  ci: [
+    { n: 'Casa y Seminario Beata Irene Stefani', l: 'Abiyán', d: 'Cocody / Yopougon, Abiyán, Costa de Marfil', lat: 5.3599, lon: -4.0083 },
+    { n: 'Misión Consolata de San-Pédro', l: 'San-Pédro', d: 'Diócesis de San-Pédro, Costa de Marfil', lat: 4.7485, lon: -6.6363 }
+  ],
+  dj: [
+    { n: 'Misión Consolata · Catedral del Buen Pastor', l: 'Ciudad de Yibuti', d: 'Boulevard de la République, Ciudad de Yibuti', lat: 11.5950, lon: 43.1481 }
+  ],
+  sz: [
+    { n: 'Misión Consolata · Parroquia Santa María', l: 'Manzini / Lobamba', d: 'Lobamba / Kwaluseni, Diócesis de Manzini, Esuatini', lat: -26.4833, lon: 31.3167 }
+  ],
+  ao: [
+    { n: 'Casa de la Misión Consolata en Luanda', l: 'Luanda', d: 'Viana / Zango, Luanda, Angola', lat: -8.9167, lon: 13.3667 }
+  ],
+  mg: [
+    { n: 'Comunidad Misioneros de la Consolata', l: 'Antananarivo', d: 'Antananarivo, Madagascar', lat: -18.8792, lon: 47.5079 },
+    { n: 'Misión Consolata de Ambanja', l: 'Ambanja', d: 'Diócesis de Ambanja, Norte de Madagascar', lat: -13.6833, lon: 48.4500 }
+  ],
+  lr: [
+    { n: 'Casa Misioneras de la Consolata · Monrovia', l: 'Monrovia', d: 'Arquidiócesis de Monrovia, Liberia', lat: 6.3156, lon: -10.8074 }
+  ],
+  gw: [
+    { n: 'Casa Misioneras de la Consolata · Bisáu', l: 'Bisáu / Bula', d: 'Diócesis de Bisáu, Guinea-Bisáu', lat: 11.8636, lon: -15.5977 }
+  ],
+  br: [
+    { n: 'Casa Regional Misioneros de la Consolata', l: 'São Paulo (Sede)', d: 'Rua Dom Domingos de Silos 110, Jardim São Bento, São Paulo', lat: -23.4958, lon: -46.6433 },
+    { n: 'Parroquia Nossa Senhora Consolata', l: 'São Paulo', d: 'Rua Leão XIII 303, Jardim São Bento, São Paulo', lat: -23.4991, lon: -46.6456 },
+    { n: 'Misión Indígena y Casa Consolata · Roraima', l: 'Boa Vista · Roraima', d: 'Boa Vista / Misión Catrimani, Roraima', lat: 2.8235, lon: -60.6758 }
+  ],
+  ar: [
+    { n: 'Casa Regional Misioneros de la Consolata', l: 'Buenos Aires', d: 'José Bonifacio 1774, Flores, Buenos Aires', lat: -34.6331, lon: -58.4547 },
+    { n: 'Casa Misionera Martín Coronado', l: 'Martín Coronado', d: 'Juan XXIII 845, Martín Coronado, Prov. de Buenos Aires', lat: -34.5881, lon: -58.5914 },
+    { n: 'Comunidad Consolata en San Francisco', l: 'San Francisco · Córdoba', d: 'San Francisco, Provincia de Córdoba, Argentina', lat: -31.4280, lon: -62.0827 }
+  ],
+  us: [
+    { n: 'Sede Misioneros de la Consolata · Somerset', l: 'Somerset, NJ', d: '2301 Route 27, Somerset, New Jersey 08875', lat: 40.4534, lon: -74.5254 },
+    { n: 'Comunidad Consolata · Belmont', l: 'Belmont, MI', d: 'Belmont / Grand Rapids, Michigan', lat: 43.0631, lon: -85.6081 }
+  ],
+  co: [
+    { n: 'Casa Regional Misioneros de la Consolata', l: 'Bogotá', d: 'Calle 24A # 81-14, Modelia, Bogotá D.C.', lat: 4.6685, lon: -74.1225 },
+    { n: 'Parroquia Ntra. Sra. de la Consolata · Bucaramanga', l: 'Bucaramanga', d: 'Calle 61 # 2W-13, Barrio Mutis, Bucaramanga', lat: 7.1039, lon: -73.1336 },
+    { n: 'Comunidad Misioneros de la Consolata · Cali', l: 'Cali', d: 'Arquidiócesis de Cali, Valle del Cauca', lat: 3.4516, lon: -76.5320 }
+  ],
+  ca: [
+    { n: 'Casa Regional Missionnaires de la Consolata', l: 'Montréal', d: '2505 Boulevard Gouin Ouest, Montréal, QC H3M 1B5', lat: 45.5414, lon: -73.6961 },
+    { n: 'Comunidad Consolata · Toronto', l: 'Toronto', d: 'Etobicoke / Toronto, Ontario, Canadá', lat: 43.6532, lon: -79.3832 }
+  ],
+  ve: [
+    { n: 'JUMA Duaca · Parroquia San Juan Bautista', l: 'JUMA Duaca', d: 'Templo San Juan Bautista, Duaca, Estado Lara', lat: 10.2864, lon: -69.1611, jm: true },
+    { n: 'Parroquia Ntra. Sra. de la Consolata · Barquisimeto', l: 'Barquisimeto', d: 'Urb. Patarata / Av. Libertador, Barquisimeto, Lara', lat: 10.0758, lon: -69.3025 },
+    { n: 'Casa Delegación Misioneros de la Consolata · Caracas', l: 'Caracas', d: 'Los Chorros / Parroquia de Carapita, Caracas', lat: 10.5061, lon: -66.8289 },
+    { n: 'Misión Indígena de Nabasanuka y Tucupita', l: 'Tucupita · Delta', d: 'Vicariato Apostólico de Tucupita, Delta Amacuro', lat: 9.0581, lon: -62.0500 }
+  ],
+  ec: [
+    { n: 'Casa Misioneros de la Consolata · Quito', l: 'Quito', d: 'Sector Norte, Quito, Pichincha', lat: -0.1807, lon: -78.4678 },
+    { n: 'Misión Amazónica · El Coca (Orellana)', l: 'El Coca · Amazonía', d: 'Puerto Francisco de Orellana, Vicariato de Aguarico', lat: -0.4665, lon: -76.9872 }
+  ],
+  mx: [
+    { n: 'Casa Misioneros de la Consolata · Guadalajara', l: 'Guadalajara', d: 'Zona Metropolitana de Guadalajara / Juanacaxtle, Jalisco', lat: 20.6597, lon: -103.3496 },
+    { n: 'Comunidad Misionera · Ciudad de México', l: 'Ciudad de México', d: 'Arquidiócesis de México, CDMX', lat: 19.4326, lon: -99.1332 }
+  ],
+  pe: [
+    { n: 'Casa Misioneros de la Consolata · Lima', l: 'Lima', d: 'Diócesis de Carabayllo / San Martín de Porres, Lima', lat: -11.9864, lon: -77.0714 }
+  ],
+  bo: [
+    { n: 'Misión Misioneras de la Consolata · Poopó', l: 'Poopó · Oruro', d: 'Poopó, Diócesis de Oruro, Bolivia', lat: -18.3806, lon: -66.9656 }
+  ],
+  it: [
+    { n: 'Santuario della Consolata y Casa Madre (1901)', l: 'Turín (Casa Madre)', d: 'Piazza della Consolata / Corso Ferrucci 14, 10138 Torino', lat: 45.0767, lon: 7.6790 },
+    { n: 'Casa Generalicia · Misioneros de la Consolata', l: 'Roma (Casa General)', d: 'Viale delle Mura Aurelie 11-13, 00165 Roma', lat: 41.8986, lon: 12.4539 },
+    { n: 'Casa Natal de San José Allamano', l: 'Castelnuovo Don Bosco', d: 'Castelnuovo Don Bosco, Asti, Piamonte', lat: 45.0414, lon: 7.9642 }
+  ],
+  gb: [
+    { n: 'Casa Misioneros de la Consolata · Londres', l: 'Londres', d: '3 Salisbury Avenue, Finchley, London N3 3AJ', lat: 51.5975, lon: -0.1931 }
+  ],
+  pt: [
+    { n: 'Casa Regional Missionários da Consolata · Lisboa', l: 'Lisboa', d: 'Rua Capitão Santiago de Carvalho 9, 1700-096 Lisboa', lat: 38.7517, lon: -9.1364 },
+    { n: 'Casa y Seminario da Consolata · Fátima', l: 'Fátima', d: 'Estrada de Minde, 2495-402 Fátima', lat: 39.6256, lon: -8.6669 }
+  ],
+  es: [
+    { n: 'Curia Provincial Misioneros de la Consolata · Madrid', l: 'Madrid', d: 'Calle Pablo Aranda 18, Chamartín, 28006 Madrid', lat: 40.4439, lon: -3.6869 },
+    { n: 'Comunidad Misioneros de la Consolata · Barcelona', l: 'Barcelona', d: 'Barcelona, Cataluña, España', lat: 41.3874, lon: 2.1686 }
+  ],
+  pl: [
+    { n: 'Casa Misioneros de la Consolata · Kiełpin / Varsovia', l: 'Kiełpin · Varsovia', d: 'ul. Rolnicza 219, 05-092 Kiełpin-Łomianki, Varsovia', lat: 52.3533, lon: 20.8736 }
+  ],
+  kr: [
+    { n: 'Casa Regional Misioneros de la Consolata · Seúl / Incheon', l: 'Seúl / Incheon', d: 'Región Metropolitana de Seúl / Incheon, Corea del Sur', lat: 37.4563, lon: 126.7052 },
+    { n: 'Centro Misionero Consolata · Daejeon', l: 'Daejeon', d: 'Diócesis de Daejeon, Corea del Sur', lat: 36.3504, lon: 127.3845 }
+  ],
+  mn: [
+    { n: 'Casa Misioneros de la Consolata · Ulán Bator', l: 'Ulán Bator', d: 'Prefectura Apostólica de Ulán Bator, Mongolia', lat: 47.9212, lon: 106.9186 },
+    { n: 'Misión Consolata de Arvaikheer', l: 'Arvaikheer', d: 'Provincia de Övörkhangai, Mongolia', lat: 46.2639, lon: 102.7750 }
+  ],
+  tw: [
+    { n: 'Casa Misioneros de la Consolata · Hsinchu', l: 'Hsinchu', d: 'Diócesis de Hsinchu / Zhubei, Taiwán', lat: 24.8138, lon: 120.9675 }
+  ],
+  kz: [
+    { n: 'Casa Misioneras de la Consolata · Almatý', l: 'Almatý', d: 'Almatý / Talgar, Kazajistán', lat: 43.2389, lon: 76.8897 }
+  ],
+  kg: [
+    { n: 'Casa Misioneras de la Consolata · Biskek', l: 'Biskek', d: 'Biskek / Talas, Kirguistán', lat: 42.8746, lon: 74.5698 }
+  ]
+};
+
+function geoToSvg(lat, lon) {
+  const lam = lon * Math.PI / 180, phi = lat * Math.PI / 180;
+  const p2 = phi * phi, p4 = p2 * p2;
+  const nx = lam * (0.8707 - 0.131979 * p2 + p4 * (-0.013791 + p4 * (0.003971 * p2 - 0.001529 * p4)));
+  const ny = phi * (1.007226 + p2 * (0.015085 + p4 * (-0.044475 + 0.028874 * p2 - 0.005916 * p4)));
+  return [+(479.76 + 175.21 * nx).toFixed(2), +(270.52 - 175.28 * ny).toFixed(2)];
+}
+
+function mapsUrl(c) {
+  return `https://www.google.com/maps?q=${c.lat},${c.lon}+(${encodeURIComponent(c.n + ' - ' + c.d)})&z=16`;
+}
+
 const WEB = { p: (d) => `Página de la Consolata en ${d.n}`, r: (d) => `Página de la Consolata en ${CONT[d.c][0]}`, g: () => 'Sitio oficial de la Consolata', d: () => 'Página de la diócesis sobre la Consolata', m: () => 'Página de las Misioneras de la Consolata' };
 function paisInfo(k) {
   const d = PAISES[k]; if (!d) return '';
   const quien = d.q === 'mc' ? 'Misioneras de la Consolata' : 'Misioneros de la Consolata';
   const desde = d.y ? `<p class="mp-year"><b>${d.y}</b><span>${d.y === 1901 ? 'fundación del Instituto' : `llegada de ${d.q === 'mc' ? 'las' : 'los'} ${quien}`}</span></p>` : `<p><b>${quien}</b> · año de llegada por confirmar</p>`;
-  return `<h3>${esc(d.n)}</h3><p><b>${CONT[d.c][0]}</b>${d.y && d.y !== 1901 ? ` · ${new Date().getFullYear() - d.y} años de presencia` : ''}</p>${desde}${d.q === 'mc' ? '<p>En este país sirven las <b>Misioneras de la Consolata</b>, la rama femenina fundada también por san José Allamano.</p>' : ''}${d.x ? `<p>${esc(d.x)}</p>` : ''}<p class="mp-links"><a class="fe-tab mp-web" href="${d.w}" target="_blank" rel="noopener">${esc(WEB[d.t](d))} ↗</a><button type="button" class="fe-tab" data-mpreset>Ver todos</button></p>`;
+  const casas = CASAS[k] || [];
+  const casasHtml = casas.length ? `<div class="mp-casas-box"><div class="mp-casas-title">🏠 Casas y misiones en ${esc(d.n)} (${casas.length})</div><p style="margin:0 0 6px;font-size:13.5px;color:var(--muted)">Toca el icono de casa en el mapa o en esta lista para abrir su ubicación exacta en Google Maps:</p>${casas.map((c) => `<a class="mp-casa-card" href="${mapsUrl(c)}" target="_blank" rel="noopener"><i>🏠</i><div><b>${esc(c.n)}</b><small>📍 ${esc(c.d)}</small></div><span>Google Maps ↗</span></a>`).join('')}</div>` : '';
+  return `<h3>${esc(d.n)}</h3><p><b>${CONT[d.c][0]}</b>${d.y && d.y !== 1901 ? ` · ${new Date().getFullYear() - d.y} años de presencia` : ''}</p>${desde}${d.q === 'mc' ? '<p>En este país sirven las <b>Misioneras de la Consolata</b>, la rama femenina fundada también por san José Allamano.</p>' : ''}${d.x ? `<p>${esc(d.x)}</p>` : ''}${casasHtml}<p class="mp-links"><a class="fe-tab mp-web" href="${d.w}" target="_blank" rel="noopener">${esc(WEB[d.t](d))} ↗</a><button type="button" class="fe-tab" data-mpreset>🌍 Ver mapa mundial</button></p>`;
 }
 async function mapa() {
   const box = $('#mapa-app'); if (!box) return;
   const keys = Object.keys(PAISES);
-  box.innerHTML = `<div class="mp-wrap"><div class="mp-map" id="mp-svg" aria-busy="true"></div><div class="mp-info" id="mp-info" aria-live="polite"><h3>Toca un país</h3><p>Los países de color son donde están los Misioneros y las Misioneras de la Consolata. Toca uno para ver desde qué año están allí y su página web. El punto amarillo es Duaca: ¡aquí estamos nosotros!</p><div class="mp-stats"><div><b>${keys.length}</b><span>países</span></div><div><b>4</b><span>continentes</span></div><div><b>1901</b><span>año de fundación</span></div><div><b>898</b><span>misioneros (2024)</span></div></div></div></div><div class="mp-list" id="mp-list"></div><p class="fe-note" style="color:#BFD3F2">Los países con borde punteado tienen presencia de las Misioneras de la Consolata. Datos: Consolata América, Consolata Africa, sitios oficiales de la Consolata en cada país y GCatholic (2024). La presencia de las comunidades puede cambiar con los años.</p>`;
-  $('#mp-list').innerHTML = Object.keys(CONT).map((c) => { const ks = keys.filter((k) => PAISES[k].c === c).sort((a, b) => (PAISES[a].y || 9999) - (PAISES[b].y || 9999)); return `<div><b><i style="background:${CONT[c][1]}"></i>${CONT[c][0]} (${ks.length})</b><ul>${ks.map((k) => `<li><button type="button" data-mpk="${k}">${esc(PAISES[k].n)}<span>${PAISES[k].y || '—'}</span></button></li>`).join('')}</ul></div>`; }).join('');
-  let ps = [];
+  const totalCasas = Object.values(CASAS).reduce((acc, l) => acc + l.length, 0);
+  box.innerHTML = `<div class="mp-wrap"><div class="mp-map" id="mp-svg" aria-busy="true"></div><div class="mp-info" id="mp-info" aria-live="polite"><h3>Toca un país del menú o del mapa</h3><p>Al seleccionar un país, el mapa hará <b>zoom automático</b> y mostrará los <b>iconos de casa (🏠)</b> en la ubicación exacta de las casas de los Misioneros de la Consolata. Al presionar cualquier casa se abrirá en <b>Google Maps</b>.</p><div class="mp-stats"><div><b>${keys.length}</b><span>países</span></div><div><b>${totalCasas}</b><span>casas en el mapa</span></div><div><b>1901</b><span>año de fundación</span></div><div><b>898</b><span>misioneros (2024)</span></div></div></div></div><div class="mp-list" id="mp-list"></div><p class="fe-note" style="color:#BFD3F2">Los países con borde punteado tienen presencia de las Misioneras de la Consolata. Toca cualquier país del menú inferior para acercar el mapa y ver sus casas misioneras con enlace directo a Google Maps.</p>`;
+  $('#mp-list').innerHTML = Object.keys(CONT).map((c) => { const ks = keys.filter((k) => PAISES[k].c === c).sort((a, b) => (PAISES[a].y || 9999) - (PAISES[b].y || 9999)); return `<div><b><i style="background:${CONT[c][1]}"></i>${CONT[c][0]} (${ks.length})</b><ul>${ks.map((k) => `<li><button type="button" data-mpk="${k}">${esc(PAISES[k].n)}<span>🏠 ${(CASAS[k] || []).length} · ${PAISES[k].y || '—'}</span></button></li>`).join('')}</ul></div>`; }).join('');
+  let ps = [], svgEl = null, casasLayer = null, hudEl = null, curVb = [0, 0, 960, 470], animId = 0, selK = '';
+
+  const updateCasasScale = (vw) => {
+    if (!casasLayer) return;
+    const s = selK ? Math.max(0.06, Math.min(0.95, (vw / 960) * 1.35)) : 0.42;
+    casasLayer.querySelectorAll('.mp-casa-inner').forEach((g) => {
+      const k = g.parentElement.dataset.k;
+      const sc = selK ? (k === selK ? s : s * 0.55) : (g.parentElement.classList.contains('jm') ? 0.56 : 0.36);
+      g.setAttribute('transform', `scale(${sc.toFixed(4)})`);
+    });
+  };
+
+  const animateViewBox = (targetVb) => {
+    if (!svgEl) return;
+    if (animId) cancelAnimationFrame(animId);
+    const startVb = curVb.slice();
+    const t0 = performance.now();
+    const dur = matchMedia('(prefers-reduced-motion: reduce)').matches ? 10 : 520;
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      const ease = 1 - Math.pow(1 - p, 3);
+      curVb = startVb.map((v, i) => v + (targetVb[i] - v) * ease);
+      svgEl.setAttribute('viewBox', curVb.map((n) => n.toFixed(2)).join(' '));
+      updateCasasScale(curVb[2]);
+      if (p < 1) animId = requestAnimationFrame(step);
+      else animId = 0;
+    };
+    animId = requestAnimationFrame(step);
+  };
+
+  const renderCasasSvg = () => {
+    if (!casasLayer) return;
+    const items = [];
+    for (const [k, list] of Object.entries(CASAS)) {
+      if (selK && k !== selK) continue;
+      const pts = list.map((c) => {
+        const [x, y] = geoToSvg(c.lat, c.lon);
+        return { c, x, y };
+      });
+      /* separa ligeramente dos casas muy cercanas en la misma ciudad para que ambas se puedan tocar */
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y, dist = Math.hypot(dx, dy);
+          if (dist < 2.4) {
+            const ang = (j * Math.PI) / 3;
+            pts[i].x -= Math.cos(ang) * 1.1; pts[i].y -= Math.sin(ang) * 1.1;
+            pts[j].x += Math.cos(ang) * 1.1; pts[j].y += Math.sin(ang) * 1.1;
+          }
+        }
+      }
+      pts.forEach(({ c, x, y }, idx) => {
+        const isJm = !!c.jm;
+        const lbl = c.l || c.n;
+        const w = Math.max(48, lbl.length * 5.6 + 16);
+        const showLbl = !!selK;
+        items.push(`<a class="mp-casa${isJm ? ' jm' : ''}" href="${mapsUrl(c)}" target="_blank" rel="noopener" data-k="${k}" data-idx="${idx}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})" aria-label="Abrir en Google Maps: ${esc(c.n)}, ${esc(c.d)}"><title>🏠 ${esc(c.n)} (${esc(c.d)}) · Toca para abrir en Google Maps</title><g class="mp-casa-inner"><circle class="casa-pulse" r="11"/><circle class="casa-bg" r="10.5"/><path class="casa-ico" d="M0 -6.2 L-6.8 -0.6 H-4.6 V5.2 H-1.4 V1.2 H1.4 V5.2 H4.6 V-0.6 H6.8 Z"/>${showLbl ? `<g transform="translate(0 18.5)"><rect class="casa-lbl-bg" x="${(-w / 2).toFixed(1)}" y="-7.5" width="${w.toFixed(1)}" height="14.5" rx="7.2"/><text class="casa-lbl" text-anchor="middle" y="2.8">${esc(lbl)} ↗</text></g>` : ''}</g></a>`);
+      });
+    }
+    casasLayer.innerHTML = items.join('');
+    updateCasasScale(curVb[2]);
+  };
+
+  const resetZoom = () => {
+    selK = '';
+    ps.forEach((x) => x.classList.remove('sel'));
+    document.querySelectorAll('[data-mpk]').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+    if (hudEl) hudEl.innerHTML = `<span class="mp-hud-badge">🌍 Mapa mundial · Toca un país para hacer zoom a sus casas</span>`;
+    renderCasasSvg();
+    animateViewBox([0, 0, 960, 470]);
+    const keysAll = Object.keys(PAISES);
+    $('#mp-info').innerHTML = `<h3>Toca un país del menú o del mapa</h3><p>Al seleccionar un país, el mapa hará <b>zoom automático</b> y mostrará los <b>iconos de casa (🏠)</b> en la ubicación exacta de las casas de los Misioneros de la Consolata. Al presionar cualquier casa se abrirá en <b>Google Maps</b>.</p><div class="mp-stats"><div><b>${keysAll.length}</b><span>países</span></div><div><b>${totalCasas}</b><span>casas en el mapa</span></div><div><b>1901</b><span>año de fundación</span></div><div><b>898</b><span>misioneros (2024)</span></div></div>`;
+  };
+
   const sel = (k, scroll) => {
+    const d = PAISES[k]; if (!d) return;
+    selK = k;
     ps.forEach((x) => x.classList.toggle('sel', x.dataset.k === k));
     document.querySelectorAll('[data-mpk]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.mpk === k));
     $('#mp-info').innerHTML = paisInfo(k);
-    if (scroll && window.matchMedia('(max-width:860px)').matches) $('#mp-info').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const pEl = ps.find((x) => x.dataset.k === k);
+    if (pEl && svgEl) {
+      const bb = pEl.getBBox();
+      let minX = bb.x, maxX = bb.x + bb.width, minY = bb.y, maxY = bb.y + bb.height;
+      /* Para EE.UU. y Canadá enfocamos la región continental donde están las casas para que el zoom sea cercano y claro */
+      if (k === 'us') { minX = 175; maxX = 308; minY = 118; maxY = 192; }
+      if (k === 'ca') { minX = 240; maxX = 336; minY = 100; maxY = 145; }
+      (CASAS[k] || []).forEach((c) => {
+        const [cx, cy] = geoToSvg(c.lat, c.lon);
+        if (cx < minX) minX = cx; if (cx > maxX) maxX = cx;
+        if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+      });
+      const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+      let w = Math.max(46, (maxX - minX) * 1.75);
+      let h = Math.max(22.5, (maxY - minY) * 1.85);
+      const ratio = 960 / 470;
+      if (w / h > ratio) h = w / ratio; else w = h * ratio;
+      w = Math.min(960, w); h = Math.min(470, h);
+      const vx = Math.max(0, Math.min(960 - w, cx - w / 2));
+      const vy = Math.max(0, Math.min(470 - h, cy - h / 2));
+      renderCasasSvg();
+      animateViewBox([vx, vy, w, h]);
+    }
+    if (hudEl) {
+      hudEl.innerHTML = `<span class="mp-hud-badge">🏠 ${esc(d.n)} · Toca una casa para abrir Google Maps</span><button type="button" class="mp-hud-btn" data-mpreset>🌍 Ver mapa mundial</button>`;
+    }
+    if (scroll && svgEl) {
+      const r = svgEl.getBoundingClientRect();
+      if (r.top < 50 || r.bottom > (window.innerHeight || 800)) {
+        $('#mp-svg').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
   };
   $('#mp-list').addEventListener('click', (e) => { const b = e.target.closest('[data-mpk]'); if (b) sel(b.dataset.mpk, true); });
-  $('#mp-info').addEventListener('click', (e) => { if (e.target.closest('[data-mpreset]')) mapa(); });
+  box.addEventListener('click', (e) => { if (e.target.closest('[data-mpreset]')) resetZoom(); });
   try {
     const r = await fetch('img/mapa-consolata.svg?v=2'); const s = await r.text();
-    const m = $('#mp-svg'); m.innerHTML = s; m.removeAttribute('aria-busy');
+    const m = $('#mp-svg');
+    m.innerHTML = `<div class="mp-hud" id="mp-hud"><span class="mp-hud-badge">🌍 Mapa mundial · Toca un país para hacer zoom a sus casas</span></div>` + s;
+    m.removeAttribute('aria-busy');
+    svgEl = m.querySelector('svg');
+    hudEl = m.querySelector('#mp-hud');
+    /* ocultamos los 3 puntos antiguos para mostrar los nuevos iconos de casa interactivos */
+    m.querySelectorAll('.pin').forEach((p) => p.remove());
+    casasLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    casasLayer.setAttribute('id', 'mp-casas-layer');
+    svgEl.appendChild(casasLayer);
     ps = Array.from(m.querySelectorAll('.pc'));
-    ps.forEach((p) => { const d = PAISES[p.dataset.k]; if (!d) return; p.setAttribute('tabindex', '0'); p.setAttribute('role', 'button'); p.setAttribute('aria-label', `${d.n}${d.y ? ', desde ' + d.y : ''}`); const t = document.createElementNS('http://www.w3.org/2000/svg', 'title'); t.textContent = `${d.n}${d.y ? ' · desde ' + d.y : ''}`; p.appendChild(t); });
-    m.addEventListener('click', (e) => { const p = e.target.closest('.pc'); if (p) sel(p.dataset.k, true); });
-    m.addEventListener('keydown', (e) => { const p = e.target.closest('.pc'); if (p && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); sel(p.dataset.k, true); } });
+    ps.forEach((p) => { const d = PAISES[p.dataset.k]; if (!d) return; p.setAttribute('tabindex', '0'); p.setAttribute('role', 'button'); p.setAttribute('aria-label', `${d.n}${d.y ? ', desde ' + d.y : ''}`); const t = document.createElementNS('http://www.w3.org/2000/svg', 'title'); t.textContent = `${d.n}${d.y ? ' · desde ' + d.y : ''} (Toca para hacer zoom y ver casas)`; p.appendChild(t); });
+    renderCasasSvg();
+    m.addEventListener('click', (e) => {
+      const casa = e.target.closest('.mp-casa');
+      if (casa) {
+        /* Si aún no había zoom en el país y toca una casa desde el mapa mundial, hacemos zoom primero si quiere o dejamos que el enlace abra Google Maps */
+        e.stopPropagation();
+        return;
+      }
+      const p = e.target.closest('.pc');
+      if (p) sel(p.dataset.k, false);
+    });
+    m.addEventListener('keydown', (e) => { const p = e.target.closest('.pc'); if (p && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); sel(p.dataset.k, false); } });
   } catch (e) { $('#mp-svg').innerHTML = '<p style="color:#fff;padding:20px">No se pudo cargar el mapa.</p>'; }
 }
 

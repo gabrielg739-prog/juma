@@ -1,5 +1,5 @@
 /* Service worker: funciona sin conexión + avisos en segundo plano */
-const CACHE = 'juma-v18';
+const CACHE = 'juma-v19';
 /* Lo esencial se guarda al instalar; las fotos se guardan a medida que se ven. */
 const CORE = ['./', 'index.html', 'js/app.js', 'js/fe.js', 'js/firebase-config.js', 'oraciones.json', 'contenido.json', 'manifest.webmanifest',
   'img/logo.png', 'img/hero-900.jpg', 'img/joriel-avatar.png', 'img/mapa-consolata.svg', 'icons/icon-192.png'];
@@ -45,8 +45,8 @@ self.addEventListener('fetch', (e) => {
   if (/\.(mp4|webm|mov)$/i.test(url.pathname)) return;
   const key = llave(r.url);
   if (r.mode === 'navigate' || /\.(js|css|json|webmanifest)$/.test(url.pathname)) {
-    /* páginas y datos: primero internet (para ver lo más nuevo); sin conexión, lo último guardado */
-    e.respondWith(fetch(r).then((res) => guardar(key, res)).catch(() => caches.match(key).then((m) => m || (r.mode === 'navigate' ? caches.match(llave(new URL('index.html', self.registration.scope).href)) : Response.error()))));
+    /* páginas y datos: primero internet (para ver lo más nuevo sin caché vieja); sin conexión, lo último guardado */
+    e.respondWith(fetch(r, { cache: 'no-cache' }).then((res) => guardar(key, res)).catch(() => caches.match(key).then((m) => m || (r.mode === 'navigate' ? caches.match(llave(new URL('index.html', self.registration.scope).href)) : Response.error()))));
   } else {
     /* fotos y dibujos: primero lo guardado (rápido y sin gastar datos) */
     e.respondWith(caches.match(key).then((m) => m || fetch(r).then((res) => guardar(key, res))));
