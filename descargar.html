@@ -2,607 +2,341 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#061536">
-<title>Descargar App Oficial · JUMA Duaca | Juventud Misionera Allamaniana</title>
-<meta name="description" content="Descarga directa de la aplicación oficial de JUMA Duaca (Juventud Misionera Allamaniana · Parroquia San Juan Bautista de Duaca).">
+<title>JUMA Duaca · Descargar Aplicación Oficial</title>
+<meta name="description" content="Descarga la aplicación oficial de JUMA Duaca · Juventud Misionera Allamaniana.">
 <link rel="icon" type="image/png" href="https://gabrielg739-prog.github.io/juma/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 :root {
   --navy: #061536;
   --cloth: #0C2D74;
-  --royal: #1F51C6;
+  --royal: #2452C8;
   --sky: #8EC9FF;
-  --gold: #F5C518;
-  --c-af: #17824A;
-  --c-am: #C8322D;
-  --c-eu: #FFFFFF;
-  --c-oc: #2A5FE6;
-  --c-as: #F5C518;
-  --display: 'Barlow Condensed', system-ui, -apple-system, sans-serif;
-  --body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --paper: #F6F9FE;
+  --mist: #E6EEFA;
+  --ink: #0A1B3F;
+  --muted-lt: #C3D3EE;
+  --c1: #2A5FE6;
+  --c2: #F5C518;
+  --c3: #17824A;
+  --c4: #C8322D;
+  --c5: #FFFFFF;
+  --display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --body: 'Atkinson Hyperlegible', 'Segoe UI', system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 *, *::before, *::after { box-sizing: border-box; }
 html, body {
   margin: 0;
   padding: 0;
-  min-height: 100%;
+  height: 100%;
   background: var(--navy);
-  color: #FFFFFF;
+  color: #fff;
   font-family: var(--body);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
-/* ===== CINTA MISIONERA SUPERIOR (5 CONTINENTES) ===== */
-.top-ribbon {
+/* ===== CINTA DE LOS CINCO CONTINENTES ===== */
+.ribbon {
   position: fixed;
   top: 0; left: 0; right: 0;
   height: 6px;
-  z-index: 50;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  box-shadow: 0 2px 12px rgba(0,0,0,.45);
+  z-index: 30;
+  background: linear-gradient(90deg, var(--c1) 0 20%, var(--c2) 20% 40%, var(--c3) 40% 60%, var(--c4) 60% 80%, var(--c5) 80% 100%);
 }
-.top-ribbon span:nth-child(1) { background: var(--c-oc); }
-.top-ribbon span:nth-child(2) { background: var(--c-as); }
-.top-ribbon span:nth-child(3) { background: var(--c-af); }
-.top-ribbon span:nth-child(4) { background: var(--c-am); }
-.top-ribbon span:nth-child(5) { background: var(--c-eu); }
 
-/* ===== FONDO DE COLLAGE DE FOTOS DE JUMA ===== */
-.collage-bg {
-  position: fixed;
-  inset: -12% -12%;
-  z-index: 0;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
-  gap: 14px;
-  transform: rotate(-6deg) scale(1.08);
-  pointer-events: none;
-  user-select: none;
-  filter: saturate(1.12) contrast(1.04);
-}
-.collage-col {
+/* ===== COLLAGE VISUAL DE FOTOS DE JUMA (PROTAGONISTA DE FONDO) ===== */
+.stage {
+  position: relative;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  animation: floatCol 38s ease-in-out infinite alternate;
-}
-.collage-col:nth-child(2) { animation-duration: 44s; animation-direction: alternate-reverse; margin-top: -60px; }
-.collage-col:nth-child(3) { animation-duration: 40s; margin-top: -25px; }
-.collage-col:nth-child(4) { animation-duration: 48s; animation-direction: alternate-reverse; margin-top: -80px; }
-
-@keyframes floatCol {
-  0% { transform: translateY(0px); }
-  100% { transform: translateY(-110px); }
-}
-
-.collage-tile {
-  position: relative;
-  border-radius: 16px;
+  justify-content: center;
+  align-items: center;
+  padding: 28px 18px;
   overflow: hidden;
-  aspect-ratio: 4 / 3;
-  background: #0A1F4D;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, .45);
-  border: 1.5px solid rgba(142, 201, 255, .22);
 }
-.collage-tile img {
+
+.collage {
+  position: fixed;
+  inset: -6%;
+  z-index: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(200px, 1fr));
+  grid-auto-rows: 220px;
+  gap: 14px;
+  transform: rotate(-4deg) scale(1.05);
+  pointer-events: none;
+  user-select: none;
+}
+.tile {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--cloth);
+  box-shadow: 0 18px 36px -14px rgba(0, 0, 0, .7);
+  border: 2px solid rgba(255, 255, 255, .18);
+  animation: floatTile 18s ease-in-out infinite alternate;
+}
+.tile:nth-child(even) {
+  animation-duration: 24s;
+  animation-direction: alternate-reverse;
+}
+.tile:nth-child(3n) {
+  grid-row: span 2;
+}
+.tile img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
+@keyframes floatTile {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-22px); }
+}
 
-/* Velo protector estilizado para que el collage luzca y el texto sea 100% legible */
-.collage-veil {
+/* Velo azul Consolata limpio que deja ver las fotos con claridad */
+.veil {
   position: fixed;
   inset: 0;
   z-index: 1;
   background:
-    radial-gradient(circle at 50% 18%, rgba(31, 81, 198, 0.38) 0%, rgba(6, 21, 54, 0.80) 68%, rgba(4, 13, 36, 0.92) 100%),
-    linear-gradient(180deg, rgba(6, 21, 54, 0.50) 0%, rgba(6, 21, 54, 0.72) 55%, rgba(6, 21, 54, 0.90) 100%);
+    radial-gradient(circle at 50% 50%, rgba(6, 21, 54, 0.52) 0%, rgba(6, 21, 54, 0.82) 75%, rgba(6, 21, 54, 0.94) 100%);
   pointer-events: none;
 }
 
-/* ===== CONTENEDOR PRINCIPAL ===== */
-.page-wrap {
+/* ===== ESTANDARTE CENTRAL LIMPIO (ESTILO JUMA OFICIAL) ===== */
+.banner-wrap {
   position: relative;
   z-index: 5;
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(24px, 5vw, 52px) clamp(16px, 4vw, 32px);
-}
-
-.card {
   width: 100%;
-  max-width: 650px;
-  background: rgba(8, 26, 68, 0.82);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  backdrop-filter: blur(18px) saturate(140%);
-  border: 1.5px solid rgba(142, 201, 255, 0.32);
-  border-radius: 28px;
-  box-shadow:
-    0 28px 70px rgba(0, 0, 0, 0.65),
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
-    0 0 50px rgba(31, 81, 198, 0.35);
-  overflow: hidden;
-  animation: cardIn 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  max-width: 480px;
+  animation: unroll 750ms var(--ease-out) both;
 }
-@keyframes cardIn {
-  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+@keyframes unroll {
+  from { opacity: 0; transform: translateY(22px); }
   to { opacity: 1; transform: none; }
 }
 
-.card-ribbon {
-  height: 7px;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+/* La vara metálica característica de JUMA */
+.rod {
+  position: relative;
+  height: 6px;
+  margin: 0 -6px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #F1F6FD, #9BB0D6);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .45);
 }
-.card-ribbon i:nth-child(1) { background: var(--c-oc); }
-.card-ribbon i:nth-child(2) { background: var(--c-as); }
-.card-ribbon i:nth-child(3) { background: var(--c-af); }
-.card-ribbon i:nth-child(4) { background: var(--c-am); }
-.card-ribbon i:nth-child(5) { background: var(--c-eu); }
-
-.card-body {
-  padding: clamp(24px, 5vw, 44px);
-  text-align: center;
-}
-
-/* ===== CABECERA Y ESCUDO ===== */
-.logo-ring {
-  width: 104px;
-  height: 104px;
-  margin: 0 auto 16px;
-  padding: 6px;
+.rod::before, .rod::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--gold), var(--sky), var(--royal));
-  box-shadow: 0 12px 32px rgba(245, 197, 24, 0.28);
-  display: grid;
-  place-items: center;
+  background: radial-gradient(circle at 35% 35%, #FFFFFF, #9BB0D6);
+  transform: translateY(-50%);
 }
-.logo-ring-inner {
-  width: 100%;
-  height: 100%;
+.rod::before { left: -8px; }
+.rod::after { right: -8px; }
+
+.banner {
+  position: relative;
+  background: rgba(12, 45, 116, 0.88);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-left: 1px solid rgba(255, 255, 255, .18);
+  border-right: 1px solid rgba(255, 255, 255, .18);
+  padding: 36px 28px 74px;
+  text-align: center;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 42px), 0 100%);
+  box-shadow: 0 28px 60px rgba(0, 0, 0, .65);
+}
+
+.banner-ribbon {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, var(--c1) 0 20%, var(--c2) 20% 40%, var(--c3) 40% 60%, var(--c4) 60% 80%, var(--c5) 80% 100%);
+}
+
+.logo-box {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 16px;
+  padding: 10px;
   border-radius: 50%;
   background: #FFFFFF;
+  box-shadow: 0 14px 32px rgba(6, 21, 54, .5);
   display: grid;
   place-items: center;
-  padding: 6px;
 }
-.logo-ring img {
+.logo-box img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  display: block;
 }
 
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: rgba(142, 201, 255, 0.14);
-  border: 1px solid rgba(142, 201, 255, 0.35);
-  color: var(--sky);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+.kicker {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
   text-transform: uppercase;
+  color: var(--sky);
 }
 
 h1 {
-  margin: 14px 0 8px;
+  margin: 10px 0 0;
   font-family: var(--display);
   font-weight: 900;
-  font-size: clamp(36px, 7vw, 56px);
-  line-height: 0.94;
+  font-size: clamp(46px, 9vw, 66px);
+  line-height: .9;
   text-transform: uppercase;
-  letter-spacing: 0.01em;
+  letter-spacing: .01em;
   color: #FFFFFF;
 }
-h1 span {
-  color: var(--gold);
-  display: block;
-}
 
-.quote-pill {
-  margin: 14px auto 0;
-  max-width: 50ch;
-  padding: 12px 18px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.07);
-  border-left: 4px solid var(--gold);
-  text-align: left;
-  font-size: 14.5px;
-  line-height: 1.5;
-  color: #E8F1FF;
-}
-.quote-pill b {
-  color: var(--gold);
-}
-
-.welcome-text {
+.welcome {
   margin: 16px auto 0;
-  max-width: 52ch;
-  font-size: 15.5px;
-  line-height: 1.6;
+  max-width: 34ch;
+  font-size: 17px;
+  line-height: 1.55;
   color: #DCE7F8;
 }
 
-/* ===== BARRA DE DESCARGA AUTOMÁTICA ===== */
-.auto-box {
-  margin: 22px 0 16px;
-  padding: 12px 16px;
-  border-radius: 14px;
-  background: rgba(23, 130, 74, 0.22);
-  border: 1.5px solid rgba(72, 219, 139, 0.45);
+/* ===== BOTÓN PRINCIPAL LIMPIO (ESTILO JUMA) ===== */
+.cta-wrap {
+  margin-top: 26px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #C9FBE0;
-}
-.pulse-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #48DB8B;
-  box-shadow: 0 0 0 0 rgba(72, 219, 139, 0.7);
-  animation: pulseG 1.6s infinite;
-  flex-shrink: 0;
-}
-@keyframes pulseG {
-  70% { box-shadow: 0 0 0 10px rgba(72, 219, 139, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(72, 219, 139, 0); }
+  gap: 12px;
 }
 
-/* ===== BOTÓN PRINCIPAL DE DESCARGA APK ===== */
-.btn-apk {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  width: 100%;
-  padding: 18px 24px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #F5C518 0%, #FFD84D 50%, #F5B100 100%);
-  color: #061536;
-  text-decoration: none;
-  font-weight: 800;
-  font-size: clamp(18px, 3vw, 21px);
-  box-shadow:
-    0 14px 34px rgba(245, 197, 24, 0.42),
-    0 2px 0 rgba(255, 255, 255, 0.55) inset;
-  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
-  cursor: pointer;
-  border: 0;
-}
-.btn-apk:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 40px rgba(245, 197, 24, 0.55);
-  filter: brightness(1.04);
-}
-.btn-apk:active {
-  transform: scale(0.98);
-}
-.btn-apk svg {
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-}
-.btn-apk-sub {
-  display: block;
-  font-size: 12.5px;
-  font-weight: 700;
-  opacity: 0.85;
-  margin-top: 2px;
-}
-
-/* ===== CONTENIDO DE LA APP (CHIPS) ===== */
-.features {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin: 18px 0 0;
-}
-.feat-chip {
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(142, 201, 255, 0.2);
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #DCE7F8;
-}
-
-/* ===== PASOS DE INSTALACIÓN ===== */
-.steps-box {
-  margin-top: 24px;
-  padding: 18px 20px;
-  border-radius: 18px;
-  background: rgba(6, 21, 54, 0.65);
-  border: 1px solid rgba(142, 201, 255, 0.22);
-  text-align: left;
-}
-.steps-title {
-  margin: 0 0 12px;
-  font-family: var(--display);
-  font-weight: 800;
-  font-size: 20px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--sky);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.steps-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 10px;
-}
-.steps-list li {
-  display: grid;
-  grid-template-columns: 28px 1fr;
-  gap: 10px;
-  align-items: start;
-  font-size: 13.8px;
-  line-height: 1.45;
-  color: #E1EAF8;
-}
-.step-num {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--royal);
-  color: #FFFFFF;
-  font-weight: 800;
-  font-size: 13px;
-  display: grid;
-  place-items: center;
-  margin-top: 1px;
-}
-
-/* ===== ACCIONES SECUNDARIAS Y QR ===== */
-.secondary-row {
-  margin-top: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-}
-.btn-sec {
+.btn-dl {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 11px 18px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1.5px solid rgba(142, 201, 255, 0.35);
-  color: #FFFFFF;
-  text-decoration: none;
-  font-size: 13.5px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.12s ease;
-}
-.btn-sec:hover {
-  background: rgba(142, 201, 255, 0.22);
-  transform: translateY(-1px);
-}
-
-.qr-drawer {
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(142, 201, 255, 0.18);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  text-align: left;
-}
-.qr-drawer img {
-  width: 88px;
-  height: 88px;
+  gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  padding: 0 26px;
   border-radius: 12px;
   background: #FFFFFF;
-  padding: 5px;
-  border: 2px solid var(--gold);
+  color: var(--navy);
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 17px;
+  text-decoration: none;
+  box-shadow: 0 14px 30px -10px rgba(0, 0, 0, .55);
+  transition: transform 160ms var(--ease-out), background-color 180ms ease;
 }
-.qr-drawer div {
-  max-width: 310px;
-  font-size: 12.8px;
-  line-height: 1.45;
-  color: #B9CBE8;
+.btn-dl:hover {
+  background: var(--sky);
+  transform: translateY(-2px);
 }
-.qr-drawer b {
-  display: block;
-  color: #FFFFFF;
-  font-size: 14px;
-  margin-bottom: 2px;
+.btn-dl:active {
+  transform: scale(.97);
+}
+.btn-dl svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
 }
 
-@media (max-width: 680px) {
-  .collage-bg {
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
-    inset: -8% -10%;
+.status-note {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--sky);
+}
+
+@media (max-width: 760px) {
+  .collage {
+    grid-template-columns: repeat(3, minmax(130px, 1fr));
+    grid-auto-rows: 165px;
     gap: 10px;
+    inset: -4%;
   }
-  .collage-col:nth-child(3),
-  .collage-col:nth-child(4) {
-    display: none;
-  }
-  .qr-drawer {
-    text-align: center;
+  .banner {
+    padding: 30px 22px 66px;
   }
 }
 </style>
 </head>
 <body>
 
-<div class="top-ribbon" aria-hidden="true">
-  <span></span><span></span><span></span><span></span><span></span>
+<div class="ribbon" aria-hidden="true"></div>
+
+<!-- COLLAGE DE FOTOS DE JUMA DE FONDO -->
+<div class="collage" aria-hidden="true">
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/hero-900.jpg" alt=""></div>
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-chicas-capilla.jpg" alt=""></div>
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/grupo-iglesia.jpg" alt=""></div>
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/coromoto.jpg" alt=""></div>
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-danza-capilla.jpg" alt=""></div>
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/ourem.jpg" alt=""></div>
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-fam-grupo-frente.jpg" alt=""></div>
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/cena.jpg" alt=""></div>
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/mirador.jpg" alt=""></div>
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/alegria.jpg" alt=""></div>
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/puente.jpg" alt=""></div>
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-grupo-presbiterio.jpg" alt=""></div>
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/retrato.jpg" alt=""></div>
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/fatima-banderas.jpg" alt=""></div>
+  <div class="tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-lectura-palabra.jpg" alt=""></div>
 </div>
+<div class="veil" aria-hidden="true"></div>
 
-<!-- FONDO DE COLLAGE CON FOTOS DE JUMA DUACA -->
-<div class="collage-bg" aria-hidden="true" id="collage-bg">
-  <div class="collage-col">
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/grupo-iglesia.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-chicas-capilla.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/coromoto.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-danza-capilla.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/mirador.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/alegria.jpg" alt=""></div>
-  </div>
-  <div class="collage-col">
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-fam-grupo-frente.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/cena.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/puente.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-lectura-palabra.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/capilla-rural.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/selfie.jpg" alt=""></div>
-  </div>
-  <div class="collage-col">
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/ourem.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/retrato.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-grupo-presbiterio.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/circulo.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/fatima-banderas.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/pareja.jpg" alt=""></div>
-  </div>
-  <div class="collage-col">
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/iglesia.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/allamano-par.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-grupo-palmera.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/valores.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/new-abrazo-sacerdotes.jpg" alt=""></div>
-    <div class="collage-tile"><img src="https://gabrielg739-prog.github.io/juma/img/liturgia.jpg" alt=""></div>
-  </div>
-</div>
-<div class="collage-veil" aria-hidden="true"></div>
+<!-- ESTANDARTE CENTRAL DE BIENVENIDA Y DESCARGA -->
+<main class="stage">
+  <div class="banner-wrap">
+    <div class="rod" aria-hidden="true"></div>
+    <section class="banner" aria-labelledby="t-title">
+      <div class="banner-ribbon" aria-hidden="true"></div>
 
-<!-- TARJETA CENTRAL DE BIENVENIDA Y DESCARGA -->
-<main class="page-wrap">
-  <section class="card" aria-labelledby="dl-title">
-    <div class="card-ribbon" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-    <div class="card-body">
-
-      <div class="logo-ring">
-        <div class="logo-ring-inner">
-          <img src="https://gabrielg739-prog.github.io/juma/img/logo.png" alt="Logo JUMA Duaca">
-        </div>
+      <div class="logo-box">
+        <img src="https://gabrielg739-prog.github.io/juma/img/logo.png" alt="Logo JUMA Duaca">
       </div>
 
-      <span class="eyebrow">✨ Parroquia San Juan Bautista · Duaca, Edo. Lara</span>
+      <span class="kicker">Juventud Misionera Allamaniana · Duaca</span>
+      <h1 id="t-title">Bienvenido a JUMA</h1>
 
-      <h1 id="dl-title">
-        ¡Bienvenido a la familia
-        <span>JUMA Duaca!</span>
-      </h1>
-
-      <div class="quote-pill">
-        <b>«Primero santos, después grandes misioneros.»</b> — San José Allamano.<br>
-        Jóvenes que caminan juntos en la fe, la formación, la alegría y el servicio misionero con el carisma de la Consolata.
-      </div>
-
-      <p class="welcome-text">
-        Descarga e instala nuestra <b>Aplicación Oficial de JUMA Duaca</b> en tu teléfono para llevar siempre contigo el calendario de encuentros, tu planilla y código QR de asistencia, el devocionario misionero y todas nuestras actividades.
+      <p class="welcome">
+        Nos alegra caminar contigo en la fe y la misión. Descarga nuestra aplicación oficial en tu teléfono para comenzar.
       </p>
 
-      <div class="auto-box" id="auto-status" role="status" aria-live="polite">
-        <span class="pulse-dot"></span>
-        <span id="auto-text">Preparando descarga automática de JUMA.apk…</span>
-      </div>
-
-      <a class="btn-apk" id="btn-download-apk" href="JUMA.apk" download="JUMA.apk">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        <span>
-          📲 DESCARGAR APP JUMA (.APK)
-          <small class="btn-apk-sub">Descarga directa para Android · 1.3 MB · Segura y Oficial</small>
-        </span>
-      </a>
-
-      <div class="features" aria-label="Funciones de la aplicación">
-        <span class="feat-chip">📅 Domingos y Google Calendar</span>
-        <span class="feat-chip">📷 Mi Código QR de Asistencia</span>
-        <span class="feat-chip">🙏 Oraciones y Rosario Misionero</span>
-        <span class="feat-chip">🌍 Mapa Mundial Consolata</span>
-      </div>
-
-      <div class="steps-box">
-        <h2 class="steps-title">📱 ¿Cómo instalarla en tu teléfono en 3 pasos?</h2>
-        <ol class="steps-list">
-          <li>
-            <span class="step-num">1</span>
-            <span>La descarga comienza automáticamente al abrir esta página (si no inició, toca el botón amarillo <b>«Descargar App JUMA (.APK)»</b>).</span>
-          </li>
-          <li>
-            <span class="step-num">2</span>
-            <span>Al terminar, toca el archivo <b>JUMA.apk</b> en tu barra de notificaciones o en la carpeta <b>Descargas</b> de tu teléfono.</span>
-          </li>
-          <li>
-            <span class="step-num">3</span>
-            <span>Si tu teléfono pregunta <i>«¿Deseas instalar esta aplicación?»</i> o <i>«Permitir de esta fuente»</i>, toca <b>Instalar</b> y ¡listo!</span>
-          </li>
-        </ol>
-      </div>
-
-      <div class="secondary-row">
-        <button type="button" class="btn-sec" id="btn-share-wa">
-          📤 Compartir enlace de descarga por WhatsApp
-        </button>
-        <a class="btn-sec" href="https://gabrielg739-prog.github.io/juma/" target="_blank" rel="noopener">
-          🌐 Abrir versión Web (iPhone / PC)
+      <div class="cta-wrap">
+        <a class="btn-dl" id="btn-apk" href="JUMA.apk" download="JUMA.apk">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Descargar App JUMA (.APK)</span>
         </a>
+        <p class="status-note" id="dl-note" role="status" aria-live="polite">
+          Iniciando descarga automática…
+        </p>
       </div>
-
-      <div class="qr-drawer">
-        <img id="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=6&color=061536&bgcolor=FFFFFF&data=https%3A%2F%2Fgabrielg739-prog.github.io%2Fjuma%2Fdescargar.html" alt="Código QR de descarga directa">
-        <div>
-          <b>📷 ¿Estás junto a otro joven de JUMA?</b>
-          Pídele que escanee este código QR con la cámara de su teléfono para abrir esta página y descargar <b>JUMA.apk</b> al instante.
-        </div>
-      </div>
-
-    </div>
-  </section>
+    </section>
+  </div>
 </main>
 
 <script>
 (function () {
-  var btn = document.getElementById('btn-download-apk');
-  var statusTxt = document.getElementById('auto-text');
-  var qrImg = document.getElementById('qr-img');
-
-  /* Actualiza el QR con la URL exacta donde esté alojada esta página */
-  if (location.protocol.indexOf('http') === 0) {
-    var cleanUrl = location.href.split('#')[0];
-    qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=6&color=061536&bgcolor=FFFFFF&data=' + encodeURIComponent(cleanUrl);
-  }
-
-  /* Dispara la descarga automática de JUMA.apk 1.2 segundos después de abrir el enlace */
+  var btn = document.getElementById('btn-apk');
+  var note = document.getElementById('dl-note');
   setTimeout(function () {
-    statusTxt.textContent = '✅ ¡Descarga de JUMA.apk iniciada! Revisa tus notificaciones o toca el botón amarillo.';
+    note.textContent = '✓ Descarga iniciada · Abre JUMA.apk al terminar';
     var a = document.createElement('a');
     a.href = btn.getAttribute('href');
     a.setAttribute('download', 'JUMA.apk');
@@ -610,22 +344,10 @@ h1 span {
     document.body.appendChild(a);
     a.click();
     setTimeout(function () { a.remove(); }, 1500);
-  }, 1200);
-
+  }, 1000);
   btn.addEventListener('click', function () {
-    statusTxt.textContent = '📲 Descargando JUMA.apk en tu dispositivo… Al finalizar, ábrelo para instalar.';
+    note.textContent = '✓ Descargando JUMA.apk en tu teléfono…';
   });
-
-  /* Botón para compartir por WhatsApp al grupo o amigos */
-  var shareBtn = document.getElementById('btn-share-wa');
-  if (shareBtn) {
-    shareBtn.addEventListener('click', function () {
-      var link = location.protocol.indexOf('http') === 0 ? location.href.split('#')[0] : 'https://gabrielg739-prog.github.io/juma/descargar.html';
-      var msg = '✨ *¡Descarga la App Oficial de JUMA Duaca!* 📲\n\n'
-        + 'Entra a este enlace directo para descargar e instalar la aplicación de la *Juventud Misionera Allamaniana de Duaca* en tu teléfono:\n👉 ' + link;
-      window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank', 'noopener');
-    });
-  }
 })();
 </script>
 </body>
