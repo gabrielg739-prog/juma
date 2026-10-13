@@ -424,13 +424,15 @@ const DEFAULT_POSTS = [
     t: '¡Los dobletes no siempre son de catástrofes, esta vez venimos con uno de puro AMOR y CONSOLACIÓN! ❤️🔥✨',
     x: 'Este sábado 31 de octubre nos activamos para caminar juntos en la misión, llevando esperanza, sonrisas y el amor de Cristo a donde más se necesita. 🤝🔥 Porque cuando caminamos unidos, ¡cada gesto transforma vidas!\n\n📍 Ruta: Metro Nuevo Circo ➡️ Av. Bolívar ➡️ Parque Los Caobos.\n📅 Fecha: Sábado, 31 de octubre.\n⏰ Hora: 8:00 a. m.\n\n¡Es hora de salir al encuentro y ser testigos del amor! 👟✝️💛\n\nY tú... ¿cuál será doblete de amor?',
     fecha: '2026-10-12T23:35:00.000Z',
-    foto: 'img/caminata-misionera-2026.png',
-    video: 'img/caminata-misionera-2026.mp4',
-    introCoverMs: 2000
+    foto: '',
+    video: 'img/caminata-misionera-2026.mp4'
   }
 ];
 function getPostsList(src = cfg) {
-  const custom = ((src && src.posts) || []).filter((p) => p && (p.t || p.x));
+  const custom = ((src && src.posts) || []).filter((p) => p && (p.t || p.x)).map((p) => {
+    if (p.id === 'doblete-amor-2026') return Object.assign({}, p, { foto: '' });
+    return p;
+  });
   const hiddenIds = new Set((src && src.postsOcultos) || []);
   const seenIds = new Set(custom.map((p) => p.id).filter(Boolean));
   const defaults = DEFAULT_POSTS.filter((d) => !hiddenIds.has(d.id) && !seenIds.has(d.id));
@@ -439,56 +441,76 @@ function getPostsList(src = cfg) {
 function mediaHtml(p, idx) {
   const yt = p.video && String(p.video).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([\w-]{11})/);
   if (yt) return `<div class="post-media"><iframe class="yt" loading="lazy" src="https://www.youtube-nocookie.com/embed/${yt[1]}" title="${esc(p.t)}" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>`;
-  if (p.video && p.foto) {
-    const delay = p.introCoverMs || 2000;
-    return `<div class="post-media is-reel" data-post-media="${idx}" data-intro-ms="${delay}">
-      <div class="post-intro-cover" data-intro-cover="${idx}" title="Toca para ver el video con sonido">
-        <img src="${esc(p.foto)}" alt="${esc(p.t)}">
-      </div>
-      <span class="post-intro-badge" data-intro-badge="${idx}">🖼️ Portada · el video inicia en 2 s…</span>
-      <button type="button" class="post-sound-btn" data-toggle-post-sound="${idx}">🔇 Activar sonido</button>
-      <video controls preload="auto" playsinline muted loop src="${esc(p.video)}" data-post-video="${idx}"></video>
+  if (p.video) {
+    return `<div class="post-media is-reel" data-post-media="${idx}">
+      <button type="button" class="post-sound-btn" data-toggle-post-sound="${idx}">🔊 Con sonido</button>
+      <video controls preload="auto" playsinline loop src="${esc(p.video)}" data-post-video="${idx}"></video>
     </div>`;
   }
-  if (p.video) return `<div class="post-media is-reel"><video controls preload="metadata" playsinline src="${esc(p.video)}" data-post-video="${idx}"></video></div>`;
   if (p.foto) return `<div class="post-media"><img class="photo" loading="lazy" src="${esc(p.foto)}" alt="${esc(p.t)}"></div>`;
   return '';
 }
 let postMediaObserver = null;
+function playWithSound(box) {
+  const vid = box ? box.querySelector('video') : null;
+  const sndBtn = box ? box.querySelector('[data-toggle-post-sound]') : null;
+  if (!vid) return;
+  vid.muted = false;
+  vid.volume = 1;
+  if (sndBtn) sndBtn.textContent = '🔊 Con sonido';
+  vid.play().then(() => {
+    vid.muted = false;
+    if (sndBtn) sndBtn.textContent = '🔊 Con sonido';
+  }).catch(() => {
+    /* Si el navegador aún espera el primer toque en pantalla para liberar el audio, empieza a reproducir y activa el audio apenas el usuario toque o deslice */
+    vid.muted = true;
+    vid.play().catch(() => {});
+    const unlock = () => {
+      vid.muted = false;
+      vid.volume = 1;
+      if (sndBtn) sndBtn.textContent = '🔊 Con sonido';
+      if (box.dataset.inView === '1' && vid.paused) vid.play().catch(() => {});
+      ['pointerdown', 'touchstart', 'click', 'keydown'].forEach((ev) => document.removeEventListener(ev, unlock, true));
+    };
+    ['pointerdown', 'touchstart', 'click', 'keydown'].forEach((ev) => document.addEventListener(ev, unlock, { capture: true, passive: true, once: true }));
+  });
+}
+const postVideoFileCache = new Map();
+function preloadPostVideoFiles(list) {
+  if (!('File' in globalThis) || !navigator.canShare) return;
+  (list || []).forEach((p) => {
+    const v = p && p.video;
+    if (!v || postVideoFileCache.has(v) || /^(https?:)?\/\/(?:www\.)?(?:youtube\.com|youtu\.be)/i.test(v)) return;
+    postVideoFileCache.set(v, 'loading');
+    fetch(v).then((r) => (r.ok ? r.blob() : null)).then((blob) => {
+      if (blob) {
+        postVideoFileCache.set(v, new File([blob], 'Doblete-de-Amor-JUMA.mp4', { type: blob.type || 'video/mp4' }));
+      } else {
+        postVideoFileCache.delete(v);
+      }
+    }).catch(() => { postVideoFileCache.delete(v); });
+  });
+}
 function setupPostVideos() {
   if (postMediaObserver) { try { postMediaObserver.disconnect(); } catch (e) {} postMediaObserver = null; }
   const boxes = $$('[data-post-media]');
   if (!boxes.length) return;
-  const triggerIntro = (box) => {
-    if (box.dataset.introStarted) return;
-    box.dataset.introStarted = '1';
-    const ms = parseInt(box.dataset.introMs || '2000', 10) || 2000;
-    const cover = box.querySelector('[data-intro-cover]');
-    const badge = box.querySelector('[data-intro-badge]');
-    const vid = box.querySelector('video');
-    setTimeout(() => {
-      if (cover) cover.classList.add('is-hidden');
-      if (badge) { badge.style.opacity = '0'; setTimeout(() => { if (badge) badge.style.display = 'none'; }, 420); }
-      if (vid && vid.paused) vid.play().catch(() => {});
-    }, ms);
-  };
   if ('IntersectionObserver' in globalThis) {
     postMediaObserver = new IntersectionObserver((entries) => {
       entries.forEach((en) => {
         const vid = en.target.querySelector('video');
+        if (!vid) return;
+        en.target.dataset.inView = en.isIntersecting ? '1' : '0';
         if (en.isIntersecting) {
-          triggerIntro(en.target);
-          if (en.target.dataset.introStarted && en.target.querySelector('.post-intro-cover.is-hidden') && vid && vid.paused) {
-            vid.play().catch(() => {});
-          }
-        } else if (vid && !vid.paused) {
+          playWithSound(en.target);
+        } else if (!vid.paused) {
           vid.pause();
         }
       });
     }, { threshold: 0.25 });
     boxes.forEach((b) => postMediaObserver.observe(b));
   } else {
-    boxes.forEach(triggerIntro);
+    boxes.forEach((b) => { b.dataset.inView = '1'; playWithSound(b); });
   }
 }
 async function sharePostWhatsApp(idx, btnEl) {
@@ -496,59 +518,42 @@ async function sharePostWhatsApp(idx, btnEl) {
   const p = list[idx];
   if (!p) return;
   const fullText = [p.t, p.x].filter((s) => String(s || '').trim()).join('\n\n');
-  const origHtml = btnEl ? btnEl.innerHTML : '';
-  if (btnEl) {
-    btnEl.disabled = true;
-    btnEl.innerHTML = '<span>⏳ Preparando video y texto…</span>';
-  }
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(fullText).catch(() => {});
+      navigator.clipboard.writeText(fullText).catch(() => {});
     }
   } catch (e) {}
 
-  /* Cuando se comparte, solo se comparte el archivo de video (no la imagen de portada de 2 s) junto con todo el texto */
-  const isLocalVideo = p.video && !/^(https?:)?\/\/(?:www\.)?(?:youtube\.com|youtu\.be)/i.test(p.video);
-  if (isLocalVideo && navigator.share && navigator.canShare) {
+  /* Si el archivo de video ya está pre-cargado en memoria, se comparte de inmediato (0 ms de espera) con el video + texto */
+  const cachedFile = p.video ? postVideoFileCache.get(p.video) : null;
+  if (cachedFile && cachedFile !== 'loading' && navigator.share && navigator.canShare) {
     try {
-      const resp = await fetch(p.video);
-      if (resp.ok) {
-        const blob = await resp.blob();
-        const file = new File([blob], 'Doblete-de-Amor-JUMA.mp4', { type: blob.type || 'video/mp4' });
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: p.t || 'Noticia JUMA',
-            text: fullText
-          });
-          if (btnEl) {
-            btnEl.disabled = false;
-            btnEl.innerHTML = '<span>✔ ¡Video y texto listos!</span>';
-            setTimeout(() => { btnEl.innerHTML = origHtml; }, 3000);
-          }
-          return;
-        }
-      }
-    } catch (err) {
-      if (err && err.name === 'AbortError') {
-        if (btnEl) { btnEl.disabled = false; btnEl.innerHTML = origHtml; }
+      if (navigator.canShare({ files: [cachedFile] })) {
+        await navigator.share({
+          files: [cachedFile],
+          title: p.t || 'Noticia JUMA',
+          text: fullText
+        });
         return;
       }
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
     }
   }
 
-  /* Respaldo directo a WhatsApp con el texto completo y enlace directo únicamente al video */
+  /* Apertura instantánea en WhatsApp (sin esperas de descarga) con todo el texto y enlace directo al video */
   const videoAbsUrl = p.video ? new URL(p.video, location.href).href : location.href;
-  const waMsg = fullText + (p.video ? '\n\n🎥 Video: ' + videoAbsUrl : '');
-  window.open('https://wa.me/?text=' + encodeURIComponent(waMsg), '_blank', 'noopener');
+  const waMsg = fullText + (p.video ? '\n\n🎥 Ver video aquí: ' + videoAbsUrl : '');
+  const origHtml = btnEl ? btnEl.innerHTML : '';
   if (btnEl) {
-    btnEl.disabled = false;
     btnEl.innerHTML = '<span>✔ Abriendo WhatsApp…</span>';
-    setTimeout(() => { btnEl.innerHTML = origHtml; }, 3000);
+    setTimeout(() => { btnEl.innerHTML = origHtml; }, 2200);
   }
+  window.open('https://wa.me/?text=' + encodeURIComponent(waMsg), '_blank', 'noopener');
 }
 function renderPosts() {
   const list = getPostsList();
+  preloadPostVideoFiles(list);
   $('#novedades').classList.toggle('hide', !list.length);
   $('#nav-nov').classList.toggle('hide', !list.length);
   $('#posts').innerHTML = list.map((p, idx) => {
