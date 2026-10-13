@@ -776,17 +776,20 @@ function openModal(html, onKey) {
   setTimeout(() => { const f = modalRoot.querySelector('input,textarea'); if (f) f.focus(); }, 260);
 }
 function closeModal() {
+  if (modalKey === 'force-photo') return;
   if (typeof form !== 'undefined' && form.sending) return;
   if (typeof stopQrCamera === 'function') stopQrCamera();
+  if (typeof stopSelfieCamera === 'function') stopSelfieCamera();
   const ov = $('.overlay', modalRoot);
   const done = () => { modalRoot.innerHTML = ''; lock(false); modalKey = null; };
   if (!ov || reduced()) return done();
   ov.classList.add('is-out'); setTimeout(done, 180);
 }
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalRoot.firstChild) closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalRoot.firstChild && modalKey !== 'force-photo') closeModal(); });
 const closeBtn = `<button type="button" data-close aria-label="Cerrar" style="flex:0 0 auto;width:46px;height:46px;border-radius:10px;border:1.5px solid rgba(255,255,255,.35);background:transparent;color:#fff;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"></path></svg></button>`;
-modalRoot.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeModal(); });
+modalRoot.addEventListener('click', (e) => { if (e.target.closest('[data-close]') && modalKey !== 'force-photo') closeModal(); });
 const sheetHead = (kicker, title, id) => `<div class="sheet-head"><div class="ribbon" aria-hidden="true" style="position:absolute;top:0;left:0;right:0"></div><div style="display:flex;align-items:center;gap:16px"><div style="flex:1 1 auto;min-width:0"><div style="font-size:13px;color:var(--muted-lt)">${esc(kicker)}</div><h2 id="${id}" class="h-display" style="margin-top:4px;font-size:clamp(28px,4vw,38px)">${esc(title)}</h2></div>${closeBtn}</div></div>`;
+const sheetHeadNoClose = (kicker, title, id) => `<div class="sheet-head"><div class="ribbon" aria-hidden="true" style="position:absolute;top:0;left:0;right:0"></div><div style="display:flex;align-items:center;gap:16px"><div style="flex:1 1 auto;min-width:0"><div style="font-size:13px;color:var(--muted-lt)">${esc(kicker)}</div><h2 id="${id}" class="h-display" style="margin-top:4px;font-size:clamp(28px,4vw,38px)">${esc(title)}</h2></div></div></div>`;
 
 /* ===================== estado de usuario, registro y planilla ===================== */
 let currentUser = null;
@@ -799,7 +802,7 @@ let authErr = '', authOk = '', authBusy = false;
 
 const form = { step: 1, d: {}, consent: false, done: false, err: '', isUpdate: false };
 const FLD = {
-  1: [['nombres','Nombres *','text','given-name'],['apellidos','Apellidos *','text','family-name'],['nac','Fecha de nacimiento','date','bday'],['@edad'],['celular','Celular *','tel','tel'],['madre','Nombre de la madre'],['padre','Nombre del padre'],['hermano','Hermano/a'],['ocupacion','Ocupación'],['direccion','Dirección','text','street-address','w'],['parroquia','Parroquia','text','','w']],
+  1: [['nombres','Nombres *','text','given-name'],['apellidos','Apellidos *','text','family-name'],['cedula','Cédula de identidad (para tu carnet)','text','','','Ej.: 28.429.102'],['nac','Fecha de nacimiento','date','bday'],['@edad'],['celular','Celular *','tel','tel'],['madre','Nombre de la madre'],['padre','Nombre del padre'],['hermano','Hermano/a'],['ocupacion','Ocupación'],['direccion','Dirección','text','street-address','w'],['parroquia','Parroquia','text','','w']],
   2: [['repNombre','Nombre completo','text','','w'],['repCedula','Cédula'],['repCelular','Celular','tel'],['repOcupacion','Ocupación','text','','w']]
 };
 function edadDe(src) {
@@ -817,7 +820,7 @@ const chips = (k, vals) => vals.map((v) => { const on = form.d[k] === v; return 
 function summaryRows(src) {
   const d = src || form.d, e = edadDe(d);
   return [
-    ['Nombre', ((d.nombres || '') + ' ' + (d.apellidos || '')).trim()], ['Fecha de nacimiento', d.nac ? d.nac.split('-').reverse().join('/') : ''], ['Edad', e ? e + ' años' : ''],
+    ['Nombre', ((d.nombres || '') + ' ' + (d.apellidos || '')).trim()], ['Cédula', d.cedula], ['Sexo', d.sexo], ['Fecha de nacimiento', d.nac ? d.nac.split('-').reverse().join('/') : ''], ['Edad', e ? e + ' años' : ''],
     ['Celular', d.celular], ['Correo', d.correo], ['Madre', d.madre], ['Padre', d.padre], ['Hermano/a', d.hermano], ['Ocupación', d.ocupacion], ['Dirección', d.direccion], ['Parroquia', d.parroquia],
     ['Representante', d.repNombre], ['Cédula del representante', d.repCedula], ['Celular del representante', d.repCelular], ['Ocupación del representante', d.repOcupacion],
     ['Grupo sanguíneo', d.sangre], ['Enfermedad', d.enf ? (d.enf === 'Sí' ? 'Sí: ' + (d.enfCual || 'sin especificar') : 'No') : ''], ['Medicamento', d.med ? (d.med === 'Sí' ? 'Sí: ' + (d.medCual || 'sin especificar') : 'No') : ''],
@@ -827,6 +830,7 @@ function summaryRows(src) {
 function validate(st) {
   const d = form.d;
   if (st === 1) {
+    if (!d.foto || !String(d.foto).trim()) return '⚠️ La foto de perfil es obligatoria para generar tu carnet misionero. Tómate una foto o elige una de tu galería para continuar.';
     if (!(d.nombres || '').trim() || !(d.apellidos || '').trim()) return 'Escribe tus nombres y apellidos.';
     if (!(d.celular || '').trim()) return 'Escribe un número de celular para contactarte.';
     if (!(d.correo || '').trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.correo.trim())) return 'Escribe un correo electrónico válido para tu cuenta en la app.';
@@ -844,9 +848,621 @@ async function shrinkAvatarDataUrl(file) {
   const bmp = await createImageBitmap(file);
   const s = Math.min(bmp.width, bmp.height);
   const sx = Math.round((bmp.width - s) / 2), sy = Math.round((bmp.height - s) / 2);
-  const cv = document.createElement('canvas'); cv.width = 240; cv.height = 240;
-  cv.getContext('2d').drawImage(bmp, sx, sy, s, s, 0, 0, 240, 240);
-  return cv.toDataURL('image/jpeg', 0.78);
+  const cv = document.createElement('canvas'); cv.width = 420; cv.height = 420;
+  cv.getContext('2d').drawImage(bmp, sx, sy, s, s, 0, 0, 420, 420);
+  return cv.toDataURL('image/jpeg', 0.84);
+}
+
+/* ===================== Cámara en vivo para foto de perfil y Alerta Obligatoria (Lismar y Juli) ===================== */
+let selfieStream = null;
+let selfieFacing = 'user';
+let selfieTarget = ''; // 'form' | 'force' | 'auth'
+let forcePhotoTemp = '';
+let forceCedulaTemp = '';
+let forceSexoTemp = '';
+let forceSaving = false;
+let forceErr = '';
+
+function stopSelfieCamera() {
+  if (selfieStream) {
+    try { selfieStream.getTracks().forEach((t) => t.stop()); } catch (e) {}
+    selfieStream = null;
+  }
+  selfieTarget = '';
+}
+
+async function startSelfieCamera(target = 'form', flip = false) {
+  if (flip) selfieFacing = selfieFacing === 'user' ? 'environment' : 'user';
+  else selfieFacing = 'user';
+  if (selfieStream) {
+    try { selfieStream.getTracks().forEach((t) => t.stop()); } catch (e) {}
+    selfieStream = null;
+  }
+  selfieTarget = target;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    selfieTarget = '';
+    const camIn = document.getElementById(target === 'force' ? 'fp-cam-in' : (target === 'auth' ? 'au-cam-in' : 'f-avatar-cam'));
+    if (camIn) camIn.click();
+    return;
+  }
+  try {
+    selfieStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: selfieFacing }, width: { ideal: 720 }, height: { ideal: 720 } },
+      audio: false
+    });
+    if (target === 'force') repaintForcePhoto();
+    else if (target === 'auth') repaintAuth();
+    else repaintForm();
+    const v = document.getElementById('selfie-live-video');
+    if (v) {
+      v.srcObject = selfieStream;
+      await v.play().catch(() => {});
+    }
+  } catch (err) {
+    stopSelfieCamera();
+    const camIn = document.getElementById(target === 'force' ? 'fp-cam-in' : (target === 'auth' ? 'au-cam-in' : 'f-avatar-cam'));
+    if (camIn) camIn.click();
+  }
+}
+
+async function captureSelfieFromVideo() {
+  const v = document.getElementById('selfie-live-video');
+  const target = selfieTarget || 'form';
+  if (!v || !v.videoWidth) return;
+  const s = Math.min(v.videoWidth, v.videoHeight);
+  const sx = Math.round((v.videoWidth - s) / 2);
+  const sy = Math.round((v.videoHeight - s) / 2);
+  const cv = document.createElement('canvas');
+  cv.width = 420;
+  cv.height = 420;
+  const ctx = cv.getContext('2d');
+  if (selfieFacing === 'user') {
+    ctx.translate(420, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(v, sx, sy, s, s, 0, 0, 420, 420);
+  const dataUrl = cv.toDataURL('image/jpeg', 0.85);
+  stopSelfieCamera();
+  if (target === 'force') {
+    forcePhotoTemp = dataUrl;
+    forceErr = '';
+    repaintForcePhoto();
+  } else if (target === 'auth') {
+    await saveNewProfilePhoto(dataUrl);
+    repaintAuth();
+  } else {
+    form.d.foto = dataUrl;
+    form.err = '';
+    repaintForm();
+  }
+}
+
+function selfieBoxHtml(target) {
+  if (selfieTarget !== target || !selfieStream) return '';
+  return `<div style="width:100%;margin-top:12px;padding:14px;border-radius:14px;background:#061536;color:#fff;text-align:center">
+    <div style="width:210px;height:210px;margin:0 auto 12px;border-radius:50%;overflow:hidden;border:3.5px solid var(--sky);background:#000;position:relative">
+      <video id="selfie-live-video" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;${selfieFacing === 'user' ? 'transform:scaleX(-1)' : ''}"></video>
+    </div>
+    <p style="margin:0 0 10px;font-size:13px;color:#CFE2FF">Ubica tu rostro en el círculo y pulsa «Capturar foto»</p>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px">
+      <button type="button" class="btn btn-white btn-sm" data-capture-selfie style="min-height:38px;padding:0 16px">📸 Capturar foto</button>
+      <button type="button" class="btn btn-outline btn-sm" data-flip-selfie="${esc(target)}" style="min-height:38px;padding:0 12px;background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.4)">🔄 Voltear cámara</button>
+      <button type="button" class="btn btn-danger btn-sm" data-cancel-selfie style="min-height:38px;padding:0 12px">Cancelar</button>
+    </div>
+  </div>`;
+}
+
+async function saveNewProfilePhoto(url, extraFields = {}) {
+  if (!myProfile) {
+    const email = (currentUser && currentUser.email) || '';
+    const uid = (currentUser && currentUser.uid) || ('juma-' + sha256(email || 'user').slice(0, 20));
+    myProfile = { id: uid, uid, correo: email, nombre: (currentUser && currentUser.displayName) || 'Joven Misionero', foto: url, datos: { correo: email, foto: url } };
+  } else {
+    myProfile.foto = url;
+    myProfile.datos = myProfile.datos || {};
+    myProfile.datos.foto = url;
+  }
+  if (extraFields.cedula) {
+    myProfile.cedula = extraFields.cedula;
+    myProfile.datos.cedula = extraFields.cedula;
+  }
+  if (extraFields.sexo) {
+    myProfile.sexo = extraFields.sexo;
+    myProfile.datos.sexo = extraFields.sexo;
+  }
+  myProfile.fotoCarnetOk = true;
+  myProfile.actualizado = new Date().toISOString();
+  const uid = myProfile.uid || myProfile.id || (currentUser && currentUser.uid) || '';
+  try {
+    if (uid) localStorage.setItem('juma-perfil-' + uid, JSON.stringify(myProfile));
+    if (myProfile.correo) localStorage.setItem('juma-perfil-email-' + myProfile.correo, JSON.stringify(myProfile));
+    localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile));
+  } catch (x) {}
+  if (fb && fb.db && uid) {
+    try {
+      await withTimeout(fb.setDoc(fb.doc(fb.db, 'inscripciones', uid), {
+        foto: url,
+        fotoCarnetOk: true,
+        datos: myProfile.datos,
+        actualizado: myProfile.actualizado
+      }, { merge: true }), 4500);
+    } catch (e) {}
+  }
+  updateAuthUI();
+}
+
+function needsMandatoryPhoto(rec) {
+  if (!rec) return false;
+  if (isMasterAccount()) return false;
+  const d = rec.datos || {};
+  const em = String(rec.correo || d.correo || (currentUser && currentUser.email) || '').trim().toLowerCase();
+  const nom = String(rec.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')) || '').trim().toLowerCase();
+  if (!em && !nom) return false;
+  const foto = String(rec.foto || d.foto || '').trim();
+  const isTargetUser = /lismar|juli/i.test(nom) || /lismar|juli/i.test(em);
+  if (isTargetUser && !foto) return true;
+  if (!foto && (rec.id || rec.uid || d.nombres)) return true;
+  return false;
+}
+
+function forcePhotoModalHtml() {
+  const d = (myProfile && myProfile.datos) || {};
+  const nombre = (myProfile && myProfile.nombre) || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Misionero(a)';
+  const primerNombre = nombre.split(/\s+/)[0] || 'Misionero(a)';
+  const previewFoto = forcePhotoTemp || (myProfile && (myProfile.foto || d.foto)) || '';
+  const curSexo = forceSexoTemp || d.sexo || detectGender(myProfile);
+  const curCed = forceCedulaTemp || d.cedula || '';
+  const tempRec = Object.assign({}, myProfile || {}, {
+    foto: previewFoto,
+    datos: Object.assign({}, d, { foto: previewFoto, cedula: curCed, sexo: curSexo })
+  });
+  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="fp-t"><div class="sheet" style="max-width:620px">${sheetHeadNoClose('Actualización Obligatoria · JUMA Duaca', 'Foto para tu Carnet Misionero', 'fp-t')}<div style="padding:clamp(22px,4vw,36px)">
+    <div style="padding:16px 18px;border-radius:14px;background:#FFF8E1;border:2px solid #F5C518;color:#5C4300;margin-bottom:20px;line-height:1.55;font-size:15px">
+      <b style="display:block;font-size:16.5px;color:#7A5200;margin-bottom:4px">⚠️ ¡Hola, ${esc(primerNombre)}! Falta tu foto de perfil para tu Carnet</b>
+      Como ya estás registrada en <b>JUMA Duaca</b>, necesitamos tu foto de perfil para generar tu <b>Carnet Misionero Digital con Código QR</b>.<br>
+      <b>Para poder continuar usando la aplicación, tómate una foto ahora o súbela desde tu galería.</b>
+    </div>
+
+    <div style="padding:18px;border-radius:16px;background:#fff;border:1.5px solid var(--royal);margin-bottom:18px">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:16px">
+        <div style="width:92px;height:92px;border-radius:50%;background:var(--mist);border:3px solid var(--royal);overflow:hidden;display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin:0 auto">
+          ${previewFoto ? `<img src="${esc(previewFoto)}" alt="Vista previa" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-size:36px">📷</span>`}
+        </div>
+        <div style="flex:1 1 220px">
+          <b style="display:block;font-size:16px;color:var(--ink)">1. Coloca tu foto de perfil *</b>
+          <p style="margin:4px 0 12px;font-size:13.5px;color:var(--muted)">Elige una foto donde se vea bien tu rostro para tu carnet de JUMA.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <button type="button" class="btn btn-blue btn-sm" data-start-selfie="force" style="min-height:40px;padding:0 14px">📸 Tomarme una foto</button>
+            <label class="btn btn-soft btn-sm" style="min-height:40px;padding:0 14px;cursor:pointer;margin:0"><span>🖼️ Elegir de la galería</span><input type="file" accept="image/*" id="fp-gal-in" style="display:none"></label>
+            <input type="file" accept="image/*" capture="user" id="fp-cam-in" style="display:none">
+          </div>
+        </div>
+      </div>
+      ${selfieBoxHtml('force')}
+      <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+        <div class="fld" style="flex:1 1 180px">
+          <label for="fp-cedula">Cédula de identidad (para tu carnet)</label>
+          <input id="fp-cedula" type="text" value="${esc(curCed)}" placeholder="Ej.: 30.123.456">
+        </div>
+        <div class="fld" style="flex:1 1 180px">
+          <span class="flabel">Diseño de carnet</span>
+          <div style="display:flex;gap:8px">
+            <button type="button" class="chip" data-fp-sexo="Mujer" aria-pressed="${curSexo === 'Mujer'}" style="flex:1;min-height:44px;border:2px solid ${curSexo === 'Mujer' ? '#2452C8' : '#B9C8E4'};background:${curSexo === 'Mujer' ? '#2452C8' : '#fff'};color:${curSexo === 'Mujer' ? '#fff' : '#0A1B3F'}">👧 Mujer</button>
+            <button type="button" class="chip" data-fp-sexo="Hombre" aria-pressed="${curSexo === 'Hombre'}" style="flex:1;min-height:44px;border:2px solid ${curSexo === 'Hombre' ? '#2452C8' : '#B9C8E4'};background:${curSexo === 'Hombre' ? '#2452C8' : '#fff'};color:${curSexo === 'Hombre' ? '#fff' : '#0A1B3F'}">👦 Hombre</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    ${previewFoto ? `<div style="margin-bottom:18px;padding:16px;border-radius:16px;background:#F2F7FF;border:1.5px solid #B9C8E4;text-align:center">
+      <b style="display:block;font-size:14.5px;color:var(--navy);margin-bottom:10px">✨ Así quedará tu Carnet Misionero JUMA:</b>
+      ${carnetCardOnlyHtml(tempRec)}
+    </div>` : ''}
+
+    ${forceErr ? `<p role="alert" style="margin:0 0 14px;padding:12px 16px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:14.5px;font-weight:700">${esc(forceErr)}</p>` : ''}
+
+    <button type="button" class="btn btn-blue" data-save-force-photo ${!previewFoto || forceSaving ? 'disabled' : ''} style="width:100%;min-height:52px;font-size:16px;opacity:${previewFoto ? '1' : '.55'}">
+      ${forceSaving ? '⏳ Guardando tu foto y generando tu carnet…' : (previewFoto ? '✅ Guardar mi foto y continuar a la App' : '🔒 Coloca tu foto arriba para desbloquear la App')}
+    </button>
+  </div></div></div>`;
+}
+
+function openForcePhotoModal() {
+  const d = (myProfile && myProfile.datos) || {};
+  forcePhotoTemp = (myProfile && (myProfile.foto || d.foto)) || '';
+  forceCedulaTemp = d.cedula || '';
+  forceSexoTemp = d.sexo || detectGender(myProfile);
+  forceErr = '';
+  forceSaving = false;
+  openModal(forcePhotoModalHtml(), 'force-photo');
+}
+function repaintForcePhoto() {
+  if (modalKey !== 'force-photo') return;
+  modalRoot.innerHTML = forcePhotoModalHtml();
+  const ov = $('.overlay', modalRoot);
+  if (ov) { ov.style.animation = 'none'; const sh = $('.sheet', modalRoot); if (sh) sh.style.animation = 'none'; }
+}
+function checkMandatoryPhotoGate() {
+  if (needsMandatoryPhoto(myProfile)) {
+    if (modalKey !== 'force-photo') openForcePhotoModal();
+    return true;
+  }
+  return false;
+}
+
+/* ===================== Generador de Carnet Misionero y Mockup (Hombre / Mujer) ===================== */
+let carnetViewMode = 'carnet'; // 'carnet' | 'mockup'
+let carnetGenderOverride = ''; // '' | 'Hombre' | 'Mujer'
+
+function detectGender(rec) {
+  const d = (rec && rec.datos) || {};
+  const explicit = String(rec?.sexo || d.sexo || '').trim().toLowerCase();
+  if (explicit === 'mujer' || explicit === 'femenino' || explicit === 'f') return 'Mujer';
+  if (explicit === 'hombre' || explicit === 'masculino' || explicit === 'm') return 'Hombre';
+  const full = String(rec?.nombre || d.nombres || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const first = full.split(/\s+/)[0] || '';
+  const femNames = ['juli', 'julieth', 'lismar', 'clara', 'maria', 'ana', 'carmen', 'luisa', 'valeria', 'sofia', 'gabriela', 'daniela', 'paola', 'andrea', 'genesis', 'mariana', 'camila', 'isabella', 'alejandra', 'fernanda', 'victoria', 'natalia', 'veronica', 'karen', 'laura', 'rosa', 'elena', 'patricia', 'carolina', 'estefania', 'oriadna', 'yulimar', 'anyeli', 'leidymar', 'milagros', 'valentina', 'lucia', 'paula', 'sara', 'nicole', 'genesis', 'barbara', 'genesis', 'karla', 'fabiana', 'mariangel', 'mariangela', 'mariale', 'genesis'];
+  const mascNames = ['jesus', 'angel', 'gabriel', 'carlos', 'jose', 'juan', 'luis', 'pedro', 'miguel', 'alejandro', 'daniel', 'david', 'rafael', 'andres', 'diego', 'santiago', 'samuel', 'leonardo', 'manuel', 'francisco', 'antonio', 'jorge', 'ricardo', 'eduardo', 'fernando', 'roberto', 'moises', 'elias', 'matias', 'sebastian', 'nicolas', 'adrian', 'victor', 'hector', 'oscar', 'cesar', 'julio', 'marco', 'marcos', 'pablo', 'sergio'];
+  if (femNames.includes(first)) return 'Mujer';
+  if (mascNames.includes(first)) return 'Hombre';
+  if (first.endsWith('a') && first !== 'luca' && first !== 'josua') return 'Mujer';
+  return 'Hombre';
+}
+
+function formatCedula(raw) {
+  const clean = String(raw || '').trim();
+  if (!clean) return '';
+  const digits = clean.replace(/\D/g, '');
+  if (digits.length >= 6 && digits.length <= 10) {
+    return 'C.I. ' + digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+  return /^c\.?i\.?/i.test(clean) ? clean.toUpperCase() : ('C.I. ' + clean);
+}
+
+function getCarnetDisplayData(rec) {
+  const d = (rec && rec.datos) || {};
+  const fullNom = String(rec?.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'JOVEN MISIONERO').trim();
+  const parts = fullNom.split(/\s+/).filter(Boolean);
+  let shortNom = fullNom;
+  if (parts.length >= 4) shortNom = parts[0] + ' ' + parts[2];
+  else if (parts.length === 3) shortNom = parts[0] + ' ' + parts[1];
+  const rol = userRole(rec);
+  const gender = detectGender(rec);
+  const rolUpper = rol === 'coordinador' ? (gender === 'Mujer' ? 'COORDINADORA' : 'COORDINADOR') : (rol === 'asesor' ? (gender === 'Mujer' ? 'ASESORA' : 'ASESOR') : 'PARTICIPANTE');
+  const cedulaTxt = formatCedula(rec?.cedula || d.cedula || '');
+  const subTxt = cedulaTxt || (d.parroquia ? d.parroquia.toUpperCase() : 'JUMA DUACA');
+  const foto = (rec && (rec.foto || d.foto)) || '';
+  const qrPayload = qrPayloadFor(rec || {});
+  const qrUrl = qrImgUrl(qrPayload, 260);
+  const sangre = d.sangre || rec?.sangre || '';
+  return { fullNom, shortNom: shortNom.toUpperCase(), rolUpper, cedulaTxt, subTxt, foto, qrPayload, qrUrl, gender, sangre };
+}
+
+function carnetCardOnlyHtml(rec, compact = false) {
+  const info = getCarnetDisplayData(rec);
+  return `<div class="j-carnet" style="${compact ? 'max-width:100%;width:100%;height:100%;border-radius:6px;box-shadow:none' : ''}">
+    <div class="ribbon" style="position:absolute;top:0;left:0;right:0;height:${compact ? '3px' : '5px'};z-index:3"></div>
+    <img class="j-carnet-wm" src="img/logo.png" alt="" aria-hidden="true">
+    <div class="j-carnet-top" style="${compact ? 'padding:6% 5% 1%' : ''}">
+      <img class="j-carnet-logo" src="img/logo.png" alt="JUMA" style="${compact ? 'width:40%' : ''}">
+    </div>
+    <div class="j-carnet-pic" style="${compact ? 'width:46%;border-width:2px;margin-top:2%' : ''}">
+      ${info.foto ? `<img src="${esc(info.foto)}" alt="${esc(info.fullNom)}">` : `<span style="font-size:${compact ? '18px' : '42px'};font-weight:900;color:var(--royal)">${esc(info.shortNom.charAt(0))}</span>`}
+    </div>
+    <div class="j-carnet-info" style="${compact ? 'padding:3% 4% 1%;gap:0' : ''}">
+      <span class="j-carnet-rol" style="${compact ? 'font-size:5.2px;letter-spacing:.08em' : ''}">${esc(info.rolUpper)}</span>
+      <b class="j-carnet-nom" style="${compact ? 'font-size:9px;margin-top:1px' : ''}">${esc(info.shortNom)}</b>
+      <span class="j-carnet-ci" style="${compact ? 'font-size:6px;margin-top:1px' : ''}">${esc(info.subTxt)}${!compact && info.sangre ? ` · 🩸 ${esc(info.sangre)}` : ''}</span>
+    </div>
+    <div class="j-carnet-foot" style="${compact ? 'padding:7% 6% 5%;gap:5px;border-top-left-radius:50% 10px;border-top-right-radius:50% 10px' : ''}">
+      <div class="j-carnet-qr" style="${compact ? 'width:26px;height:26px;padding:1.5px;border-radius:4px' : ''}">
+        <img src="${esc(info.qrUrl)}" alt="QR">
+      </div>
+      <div class="j-carnet-ftxt">
+        <b style="${compact ? 'font-size:5px;letter-spacing:.03em' : ''}">FAMILIA CONSOLATA</b>
+        <span style="${compact ? 'font-size:4.5px;margin-top:1px' : ''}">- VENEZUELA -</span>
+        ${!compact ? `<span style="font-size:9.5px;color:#8EC9FF;margin-top:2px">JUMA DUACA</span>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function carnetMockupHtml(rec, forcedGender) {
+  const info = getCarnetDisplayData(rec);
+  const g = forcedGender || carnetGenderOverride || info.gender;
+  const isMujer = g === 'Mujer';
+  const bgSrc = isMujer ? 'img/mockup-mujer.jpg' : 'img/mockup-hombre.jpg';
+  const slotStyle = isMujer
+    ? 'left:42.22%;top:54.88%;width:17.08%;height:21.63%'
+    : 'left:42.36%;top:54.25%;width:16.94%;height:18.78%';
+  return `<div class="j-mockup-wrap">
+    <img class="j-mockup-bg" src="${bgSrc}" alt="Mockup de Carnet JUMA (${esc(g)})">
+    <div class="j-mockup-slot" style="${slotStyle}">
+      ${carnetCardOnlyHtml(rec, true)}
+      <div class="j-mockup-gloss"></div>
+    </div>
+  </div>`;
+}
+
+function carnetInteractiveSectionHtml(rec, contextKey = 'profile') {
+  const info = getCarnetDisplayData(rec);
+  const g = carnetGenderOverride || info.gender;
+  const uid = (rec && (rec.id || rec.uid)) || 'me';
+  return `<div style="padding:20px;margin-bottom:20px;border-radius:16px;background:linear-gradient(180deg,#F2F7FF 0%,#FFFFFF 100%);border:1.5px solid var(--royal)">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px">
+      <div>
+        <b style="display:block;font-size:18px;color:var(--navy)">🪪 Carnet Misionero Digital JUMA</b>
+        <p style="margin:2px 0 0;font-size:13.5px;color:var(--muted)">Incluye tu foto de perfil, rol, código QR de asistencia y vista previa en la franela oficial (${esc(g)}).</p>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <button type="button" class="chip" data-carnet-view="carnet" aria-pressed="${carnetViewMode === 'carnet'}" style="min-height:36px;padding:0 12px;font-size:13px;border:2px solid ${carnetViewMode === 'carnet' ? '#2452C8' : '#B9C8E4'};background:${carnetViewMode === 'carnet' ? '#2452C8' : '#fff'};color:${carnetViewMode === 'carnet' ? '#fff' : '#0A1B3F'}">🪪 Solo Carnet</button>
+        <button type="button" class="chip" data-carnet-view="mockup" aria-pressed="${carnetViewMode === 'mockup'}" style="min-height:36px;padding:0 12px;font-size:13px;border:2px solid ${carnetViewMode === 'mockup' ? '#2452C8' : '#B9C8E4'};background:${carnetViewMode === 'mockup' ? '#2452C8' : '#fff'};color:${carnetViewMode === 'mockup' ? '#fff' : '#0A1B3F'}">👕 Ver Mockup (${esc(g)})</button>
+      </div>
+    </div>
+
+    ${carnetViewMode === 'mockup' ? `<div style="display:flex;justify-content:center;gap:8px;margin-bottom:12px">
+      <button type="button" class="chip" data-carnet-gender="Hombre" aria-pressed="${g === 'Hombre'}" style="min-height:34px;padding:0 12px;font-size:12.5px;border:1.5px solid ${g === 'Hombre' ? '#2452C8' : '#B9C8E4'};background:${g === 'Hombre' ? '#E8F1FF' : '#fff'};color:#0A1B3F">👦 Mockup Hombre</button>
+      <button type="button" class="chip" data-carnet-gender="Mujer" aria-pressed="${g === 'Mujer'}" style="min-height:34px;padding:0 12px;font-size:12.5px;border:1.5px solid ${g === 'Mujer' ? '#2452C8' : '#B9C8E4'};background:${g === 'Mujer' ? '#E8F1FF' : '#fff'};color:#0A1B3F">👧 Mockup Mujer</button>
+    </div>` : ''}
+
+    <div style="padding:10px 0 16px">
+      ${carnetViewMode === 'mockup' ? carnetMockupHtml(rec, g) : carnetCardOnlyHtml(rec, false)}
+    </div>
+
+    ${contextKey === 'profile' ? `<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;padding:12px 14px;margin-bottom:14px;border-radius:12px;background:#fff;border:1px solid var(--line)">
+      <div class="fld" style="flex:1 1 160px">
+        <label for="au-quick-ci" style="font-size:12.5px">Cédula en el carnet (C.I.)</label>
+        <input id="au-quick-ci" type="text" value="${esc((rec && rec.datos && rec.datos.cedula) || '')}" placeholder="Ej.: 28.429.102" style="min-height:40px;font-size:14px">
+      </div>
+      <div class="fld" style="flex:1 1 150px">
+        <label for="au-quick-sexo" style="font-size:12.5px">Mockup predeterminado</label>
+        <select id="au-quick-sexo" style="min-height:40px;padding:0 10px;border-radius:10px;border:1.5px solid #B9C8E4;font-size:14px;background:#fff">
+          <option value="Hombre" ${info.gender === 'Hombre' ? 'selected' : ''}>👦 Hombre</option>
+          <option value="Mujer" ${info.gender === 'Mujer' ? 'selected' : ''}>👧 Mujer</option>
+        </select>
+      </div>
+      <button type="button" class="btn btn-soft btn-sm" data-save-quick-carnet style="min-height:40px">Actualizar datos del carnet</button>
+    </div>` : ''}
+
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px">
+      <button type="button" class="btn btn-blue btn-sm" data-dl-carnet-png="${esc(uid)}">📥 Descargar Carnet (PNG HD)</button>
+      <button type="button" class="btn btn-outline btn-sm" data-dl-mockup-png="${esc(uid)}" data-gender="${esc(g)}" style="background:#fff">👕 Descargar Mockup (${esc(g)})</button>
+    </div>
+  </div>`;
+}
+
+async function loadImageSafe(src) {
+  if (!src) return null;
+  try {
+    if (src.startsWith('data:')) {
+      const res = await fetch(src);
+      const blob = await res.blob();
+      return await createImageBitmap(blob);
+    }
+    const res = await fetch(src, { mode: 'cors', credentials: 'omit' });
+    if (res.ok) {
+      const blob = await res.blob();
+      return await createImageBitmap(blob);
+    }
+  } catch (e) {}
+  return new Promise((resolve) => {
+    const im = new Image();
+    im.crossOrigin = 'anonymous';
+    im.onload = () => resolve(im);
+    im.onerror = () => resolve(null);
+    im.src = src;
+  });
+}
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+async function renderCarnetToCanvas(rec) {
+  const info = getCarnetDisplayData(rec);
+  const W = 900, H = 1420;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+
+  /* Fondo degradado con esquinas redondeadas */
+  ctx.save();
+  roundRectPath(ctx, 0, 0, W, H, 56);
+  ctx.clip();
+
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#FFFFFF');
+  bgGrad.addColorStop(0.36, '#FFFFFF');
+  bgGrad.addColorStop(0.70, '#DCEBFF');
+  bgGrad.addColorStop(1, '#7BAEF6');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  /* Cinta misionera de 5 colores en el borde superior */
+  const cols = ['#D62828', '#1B8A4B', '#F1F5FB', '#F4B400', '#1849B6'];
+  for (let i = 0; i < 5; i++) {
+    ctx.fillStyle = cols[i];
+    ctx.fillRect(i * (W / 5), 0, Math.ceil(W / 5), 14);
+  }
+
+  /* Cargar recursos gráficos (logo, foto de perfil, QR) */
+  const [logoImg, avatarImg, qrImg] = await Promise.all([
+    loadImageSafe('img/logo.png'),
+    info.foto ? loadImageSafe(info.foto) : Promise.resolve(null),
+    loadImageSafe(info.qrUrl)
+  ]);
+
+  /* Marca de agua central del logo JUMA */
+  if (logoImg) {
+    ctx.save();
+    ctx.globalAlpha = 0.075;
+    const wmW = 680;
+    const wmH = wmW * (logoImg.height / logoImg.width);
+    ctx.drawImage(logoImg, (W - wmW) / 2, 330, wmW, wmH);
+    ctx.restore();
+
+    /* Logo principal superior */
+    const lgW = 350;
+    const lgH = lgW * (logoImg.height / logoImg.width);
+    ctx.drawImage(logoImg, (W - lgW) / 2, 48, lgW, lgH);
+  }
+
+  /* Foto circular del participante en el centro */
+  const cx = W / 2, cy = 575, r = 205;
+  ctx.save();
+  ctx.shadowColor = 'rgba(8, 31, 92, 0.24)';
+  ctx.shadowBlur = 32;
+  ctx.shadowOffsetY = 12;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 14, 0, Math.PI * 2);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+  ctx.fillStyle = '#E8F1FF';
+  ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+  if (avatarImg) {
+    const s = Math.min(avatarImg.width, avatarImg.height);
+    const sx = (avatarImg.width - s) / 2;
+    const sy = (avatarImg.height - s) / 2;
+    ctx.drawImage(avatarImg, sx, sy, s, s, cx - r, cy - r, r * 2, r * 2);
+  } else {
+    ctx.fillStyle = '#1849B6';
+    ctx.font = '900 160px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(info.shortNom.charAt(0), cx, cy);
+  }
+  ctx.restore();
+
+  /* Textos: ROL, NOMBRE, C.I. */
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#123478';
+  ctx.font = '800 35px "Segoe UI", Arial, sans-serif';
+  ctx.fillText(info.rolUpper, W / 2, 855);
+
+  ctx.fillStyle = '#071E54';
+  let fontSize = 68;
+  ctx.font = `900 ${fontSize}px "Segoe UI", Arial, sans-serif`;
+  while (ctx.measureText(info.shortNom).width > W - 90 && fontSize > 38) {
+    fontSize -= 3;
+    ctx.font = `900 ${fontSize}px "Segoe UI", Arial, sans-serif`;
+  }
+  ctx.fillText(info.shortNom, W / 2, 935);
+
+  ctx.fillStyle = '#123478';
+  ctx.font = '700 41px "Segoe UI", Arial, sans-serif';
+  ctx.fillText(info.subTxt, W / 2, 998);
+
+  if (info.sangre) {
+    ctx.font = '800 26px "Segoe UI", Arial, sans-serif';
+    ctx.fillStyle = '#0F439E';
+    ctx.fillText('GRUPO SANGUÍNEO: ' + info.sangre, W / 2, 1044);
+  }
+
+  /* Onda azul real inferior */
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(0, 1125);
+  ctx.quadraticCurveTo(W * 0.52, 1185, W, 1085);
+  ctx.lineTo(W, H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  const footGrad = ctx.createLinearGradient(0, 1085, W, H);
+  footGrad.addColorStop(0, '#0F56C8');
+  footGrad.addColorStop(1, '#083282');
+  ctx.fillStyle = footGrad;
+  ctx.fill();
+  ctx.restore();
+
+  /* Caja blanca con el Código QR abajo a la izquierda */
+  const qrBoxX = 68, qrBoxY = 1142, qrBoxS = 224;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.25)';
+  ctx.shadowBlur = 18;
+  ctx.shadowOffsetY = 6;
+  roundRectPath(ctx, qrBoxX, qrBoxY, qrBoxS, qrBoxS, 28);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+  ctx.restore();
+
+  if (qrImg) {
+    ctx.drawImage(qrImg, qrBoxX + 14, qrBoxY + 14, qrBoxS - 28, qrBoxS - 28);
+  }
+
+  /* Texto FAMILIA CONSOLATA - VENEZUELA abajo a la derecha */
+  const rightCenterX = qrBoxX + qrBoxS + (W - (qrBoxX + qrBoxS)) / 2 - 10;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '800 38px "Segoe UI", Arial, sans-serif';
+  ctx.fillText('FAMILIA CONSOLATA', rightCenterX, 1236);
+  ctx.font = '800 35px "Segoe UI", Arial, sans-serif';
+  ctx.fillText('- VENEZUELA -', rightCenterX, 1286);
+  ctx.fillStyle = '#9ECAFF';
+  ctx.font = '800 27px "Segoe UI", Arial, sans-serif';
+  ctx.fillText('JUMA DUACA', rightCenterX, 1332);
+
+  ctx.restore();
+  return cv;
+}
+
+async function downloadCarnetPng(rec, mode = 'carnet', forcedGender = '') {
+  const targetRec = rec || myProfile || { datos: form.d, foto: form.d.foto };
+  const info = getCarnetDisplayData(targetRec);
+  const slug = info.shortNom.replace(/[^A-Z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'Misionero';
+  const carnetCv = await renderCarnetToCanvas(targetRec);
+
+  if (mode === 'mockup') {
+    const g = forcedGender || carnetGenderOverride || info.gender;
+    const isMujer = g === 'Mujer';
+    const bgImg = await loadImageSafe(isMujer ? 'img/mockup-mujer.jpg' : 'img/mockup-hombre.jpg');
+    if (bgImg) {
+      const mCv = document.createElement('canvas');
+      mCv.width = bgImg.width;
+      mCv.height = bgImg.height;
+      const mCtx = mCv.getContext('2d');
+      mCtx.drawImage(bgImg, 0, 0);
+
+      const bx = Math.round(bgImg.width * (isMujer ? 0.4222 : 0.4236));
+      const by = Math.round(bgImg.height * (isMujer ? 0.5488 : 0.5425));
+      const bw = Math.round(bgImg.width * (isMujer ? 0.1708 : 0.1694));
+      const bh = Math.round(bgImg.height * (isMujer ? 0.2163 : 0.1878));
+
+      mCtx.save();
+      roundRectPath(mCtx, bx, by, bw, bh, 10);
+      mCtx.clip();
+      mCtx.drawImage(carnetCv, bx, by, bw, bh);
+      const gloss = mCtx.createLinearGradient(bx, by, bx + bw, by + bh);
+      gloss.addColorStop(0, 'rgba(255,255,255,0.22)');
+      gloss.addColorStop(0.45, 'rgba(255,255,255,0)');
+      gloss.addColorStop(1, 'rgba(255,255,255,0.08)');
+      mCtx.fillStyle = gloss;
+      mCtx.fillRect(bx, by, bw, bh);
+      mCtx.restore();
+
+      const a = document.createElement('a');
+      a.href = mCv.toDataURL('image/png');
+      a.download = `Mockup-Carnet-JUMA-${slug}.png`;
+      a.click();
+      return;
+    }
+  }
+
+  const a = document.createElement('a');
+  a.href = carnetCv.toDataURL('image/png');
+  a.download = `Carnet-JUMA-${slug}.png`;
+  a.click();
 }
 
 function sixMonthsAgoIso() {
@@ -903,7 +1519,8 @@ function formHtml() {
   const st = form.step, d = form.d;
   if (form.done) {
     const wa = waNums();
-    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', 'Registro y planilla misionera', 'pl-t')}<div style="padding:clamp(28px,5vw,56px)"><div class="u-badge" style="background:#E4F5EA;color:#14532D;margin-bottom:12px">✔ Cuenta y planilla guardadas</div><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">${d.foto ? `<img src="${esc(d.foto)}" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--royal)">` : ''}<h3 class="h-display h-lg" style="margin:0">¡Bienvenido a JUMA, ${esc((d.nombres || '').trim().split(' ')[0] || 'misionero')}!</h3></div><p class="body" style="margin-top:12px;max-width:54ch">${form.saved ? 'Tu registro, tu planilla y tu código QR personal ya quedaron guardados en la nube de JUMA y tu sesión está iniciada en la app. ' : 'Tu planilla quedó guardada en este dispositivo. '}${wa.length ? 'También puedes enviarla por WhatsApp a un coordinador con un toque o ver tu carnet con QR.' : ''}</p><div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:28px"><button type="button" class="btn btn-blue" data-go-profile>Ver mi perfil y código QR</button>${wa.map((n) => `<a class="btn btn-soft" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${encodeURIComponent(planillaTexto())}">Enviar por WhatsApp a ${esc(waLabel(n))}</a>`).join('')}<button type="button" class="btn btn-soft" data-dl>Descargar mi planilla</button><button type="button" class="btn btn-soft" data-close>Cerrar</button></div></div></div></div>`;
+    const recDone = myProfile || { datos: d, foto: d.foto, correo: d.correo, nombre: ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() };
+    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', 'Registro y Carnet Misionero', 'pl-t')}<div style="padding:clamp(24px,4vw,44px)"><div class="u-badge" style="background:#E4F5EA;color:#14532D;margin-bottom:12px">✔ Cuenta, planilla y carnet listos</div><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px">${d.foto ? `<img src="${esc(d.foto)}" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--royal)">` : ''}<h3 class="h-display h-lg" style="margin:0">¡Bienvenido(a) a JUMA, ${esc((d.nombres || '').trim().split(' ')[0] || 'misionero')}!</h3></div><p class="body" style="margin:0 0 18px;max-width:58ch">${form.saved ? 'Tu registro, tu planilla y tu Carnet Misionero con Código QR ya quedaron guardados en la nube de JUMA. ' : 'Tu planilla y tu Carnet Misionero quedaron guardados. '}Aquí puedes ver cómo queda tu carnet en el mockup y descargarlo en alta calidad:</p>${carnetInteractiveSectionHtml(recDone, 'done')}<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:22px"><button type="button" class="btn btn-blue" data-go-profile>Ir a mi perfil misionero</button>${wa.map((n) => `<a class="btn btn-soft" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${encodeURIComponent(planillaTexto())}">Enviar planilla por WhatsApp (${esc(waLabel(n))})</a>`).join('')}<button type="button" class="btn btn-soft" data-dl>Descargar planilla</button><button type="button" class="btn btn-soft" data-close>Cerrar</button></div></div></div></div>`;
   }
   const names = ['Cuenta y datos', 'Representante', 'Salud', 'Confirmar'];
   const prog = names.map((l, i) => `<div class="${i + 1 === st ? 'on' : (i + 1 < st ? 'ok' : '')}"><i aria-hidden="true"></i><span>${l}</span></div>`).join('');
@@ -912,20 +1529,27 @@ function formHtml() {
     const loginBanner = !currentUser ? `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;margin-bottom:20px;border-radius:12px;background:var(--mist);font-size:14.5px"><span>¿Ya te registraste antes en la app?</span><button type="button" class="btn btn-soft btn-sm" data-switch-login style="min-height:36px;padding:0 14px;background:#fff">Iniciar sesión</button></div>` : `<div style="padding:12px 16px;margin-bottom:20px;border-radius:12px;background:#E4F5EA;color:#14532D;font-size:14.5px;font-weight:700">Sesión activa como ${esc(currentUser.email)} · Actualizando tu planilla</div>`;
     const googleQuickBtn = !currentUser ? `<div style="margin-bottom:14px"><button type="button" class="btn btn-soft btn-sm" data-google-form style="width:100%;background:#fff;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;gap:10px"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Conectar con mi cuenta de Google</span></button></div>` : '';
     const accountFields = `<div style="width:100%;padding:16px 18px;margin-bottom:14px;border-radius:14px;background:#fff;border:1.5px solid var(--line)"><div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--royal);margin-bottom:12px">Datos de tu cuenta en la App</div>${googleQuickBtn}<div style="display:flex;flex-wrap:wrap;gap:16px">${inputHtml('correo', 'Correo electrónico *', 'email', 'email', '', 'tucorreo@ejemplo.com')}${!currentUser ? inputHtml('password', 'Contraseña para la app * (mín. 6 caracteres)', 'password', 'new-password', '', 'Mínimo 6 caracteres') : ''}</div></div>`;
-    const photoField = `<div style="width:100%;padding:16px 18px;margin-bottom:10px;border-radius:14px;background:#fff;border:1.5px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:16px">
-      <div style="width:74px;height:74px;border-radius:50%;background:var(--mist);border:2.5px solid var(--royal);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto">
-        ${d.foto ? `<img src="${esc(d.foto)}" alt="Tu foto de perfil" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-size:28px" aria-hidden="true">📷</span>`}
+    const photoField = `<div style="width:100%;padding:16px 18px;margin-bottom:14px;border-radius:14px;background:${d.foto ? '#F2FAF5' : '#FFFDF5'};border:2px solid ${d.foto ? '#17824A' : '#F5C518'};display:flex;flex-wrap:wrap;align-items:center;gap:16px">
+      <div style="width:82px;height:82px;border-radius:50%;background:var(--mist);border:3px solid ${d.foto ? '#17824A' : 'var(--royal)'};display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto">
+        ${d.foto ? `<img src="${esc(d.foto)}" alt="Tu foto de perfil" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-size:32px" aria-hidden="true">📷</span>`}
       </div>
-      <div style="flex:1 1 200px">
-        <b style="display:block;font-size:15.5px;color:var(--ink)">Foto para tu perfil misionero</b>
-        <p style="margin:2px 0 10px;font-size:13.5px;color:var(--muted)">Elige una foto tuya para tu carnet y perfil dentro de la app.</p>
+      <div style="flex:1 1 220px">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+          <b style="font-size:16px;color:var(--ink)">Foto para tu Carnet y Perfil * (Obligatoria)</b>
+          <span style="padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:800;background:${d.foto ? '#E4F5EA;color:#14532D' : '#FCE8E7;color:#8A1C1C'}">${d.foto ? '✔ Foto cargada' : 'Requerida para continuar'}</span>
+        </div>
+        <p style="margin:4px 0 10px;font-size:13.5px;color:var(--muted)">Esta foto aparecerá en tu <b>Carnet Misionero Digital</b>. Puedes tomarte una foto ahora mismo o elegir una de tu galería.</p>
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-          <label class="btn btn-soft btn-sm" style="min-height:38px;padding:0 14px;cursor:pointer"><span>${d.foto ? 'Cambiar foto' : 'Subir o tomar foto'}</span><input type="file" accept="image/*" id="f-avatar" style="display:none"></label>
+          <button type="button" class="btn btn-blue btn-sm" data-start-selfie="form" style="min-height:38px;padding:0 14px">📸 Tomarme una foto</button>
+          <label class="btn btn-soft btn-sm" style="min-height:38px;padding:0 14px;cursor:pointer;margin:0"><span>🖼️ ${d.foto ? 'Cambiar de galería' : 'Usar de la galería'}</span><input type="file" accept="image/*" id="f-avatar" style="display:none"></label>
+          <input type="file" accept="image/*" capture="user" id="f-avatar-cam" style="display:none">
           ${d.foto ? `<button type="button" class="btn btn-danger btn-sm" data-rm-avatar style="min-height:38px;padding:0 12px">Quitar</button>` : ''}
         </div>
       </div>
+      ${selfieBoxHtml('form')}
     </div>`;
-    body = loginBanner + '<h3 class="h-display h-md">Tus datos personales</h3><p class="body" style="margin:8px 0 18px;font-size:15px">Con estos datos creamos tu perfil y tu planilla de inscripción en JUMA. Los campos con * son obligatorios.</p>' + accountFields + photoField + '<div style="display:flex;flex-wrap:wrap;gap:18px;margin-top:14px">' + FLD[1].map((f) => f[0] === '@edad' ? `<div class="fld"><span class="flabel">Edad</span><div class="fake num" id="edad-box">${edadDe() ? edadDe() + ' años' : 'Se calcula sola'}</div></div>` : inputHtml(f[0], f[1], f[2], f[3], f[4])).join('') + '</div>';
+    const sexoField = `<div class="fld" style="flex:1 1 220px"><span class="flabel">Sexo (para el diseño del mockup de tu carnet) *</span><div style="display:flex;gap:10px">${chips('sexo', ['Hombre', 'Mujer'])}</div></div>`;
+    body = loginBanner + '<h3 class="h-display h-md">Tus datos personales y foto de carnet</h3><p class="body" style="margin:8px 0 18px;font-size:15px">Con estos datos creamos tu perfil, tu planilla y tu Carnet Misionero en JUMA. Los campos con * son obligatorios.</p>' + accountFields + photoField + '<div style="display:flex;flex-wrap:wrap;gap:18px;margin-top:14px">' + sexoField + FLD[1].map((f) => f[0] === '@edad' ? `<div class="fld"><span class="flabel">Edad</span><div class="fake num" id="edad-box">${edadDe() ? edadDe() + ' años' : 'Se calcula sola'}</div></div>` : inputHtml(f[0], f[1], f[2], f[3], f[4], f[5])).join('') + '</div>';
   } else if (st === 2) {
     const intro = `<h3 class="h-display h-md">Representante</h3><p class="body" style="margin:8px 0 24px;font-size:15px">${esMenor() ? 'Eres menor de edad: necesitamos los datos de tu representante.' : 'Si eres menor de edad, completa los datos de tu representante.'}</p>`;
     body = intro + '<div style="display:flex;flex-wrap:wrap;gap:18px">' + FLD[2].map((f) => inputHtml(f[0], f[1], f[2], f[3], f[4])).join('') + '</div>';
@@ -936,12 +1560,18 @@ function formHtml() {
 <div class="qlabel" style="margin-top:14px">¿Tomas algún medicamento?</div><div style="display:flex;gap:10px;margin:10px 0 14px">${chips('med', ['Sí','No'])}</div>${d.med === 'Sí' ? `<div style="margin-bottom:22px">${inputHtml('medCual', '¿Cuál?')}</div>` : ''}
 <div class="qlabel" style="margin:14px 0 12px">Alergias</div><div style="display:flex;flex-wrap:wrap;gap:18px">${inputHtml('alMed', 'Medicamentos')}${inputHtml('alAli', 'Alimentos')}${inputHtml('alOtros', 'Otras')}<div class="fld w"><label for="f-obs">Observaciones</label><textarea id="f-obs" data-k="obs" rows="3">${esc(d.obs || '')}</textarea></div></div>`;
   } else {
-    body = `<h3 class="h-display h-md">Revisa y confirma tu registro</h3><p class="body" style="margin:8px 0 22px;font-size:15px">Verifica que todo esté bien antes de guardar tu cuenta y tu planilla.</p>${d.foto ? `<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px"><img src="${esc(d.foto)}" alt="Foto de perfil" style="width:68px;height:68px;border-radius:50%;object-fit:cover;border:2.5px solid var(--royal)"><span style="font-size:14.5px;font-weight:700;color:var(--royal)">Foto de perfil lista ✔</span></div>` : ''}<dl style="margin:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px 22px">${summaryRows().map((r) => `<div style="display:flex;flex-wrap:wrap;gap:4px 18px;padding:12px 0;border-bottom:1px solid var(--mist)"><dt style="flex:0 0 190px;font-size:14px;font-weight:700;color:var(--royal)">${esc(r[0])}</dt><dd style="margin:0;flex:1 1 200px;min-width:0;font-size:15px;overflow-wrap:anywhere">${esc(r[1])}</dd></div>`).join('')}</dl>
+    const previewRec = { datos: d, foto: d.foto, correo: d.correo, nombre: ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() };
+    body = `<h3 class="h-display h-md">Revisa tu Carnet y confirma tu registro</h3><p class="body" style="margin:8px 0 18px;font-size:15px">Verifica cómo luce tu Carnet Misionero y que todos tus datos estén bien antes de guardar.</p>
+    <div style="margin-bottom:20px;padding:16px;border-radius:16px;background:#F2F7FF;border:1.5px solid #B9C8E4;text-align:center">
+      <b style="display:block;font-size:14.5px;color:var(--navy);margin-bottom:10px">🪪 Vista previa de tu Carnet Misionero:</b>
+      ${carnetCardOnlyHtml(previewRec, false)}
+    </div>
+    <dl style="margin:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px 22px">${summaryRows().map((r) => `<div style="display:flex;flex-wrap:wrap;gap:4px 18px;padding:12px 0;border-bottom:1px solid var(--mist)"><dt style="flex:0 0 190px;font-size:14px;font-weight:700;color:var(--royal)">${esc(r[0])}</dt><dd style="margin:0;flex:1 1 200px;min-width:0;font-size:15px;overflow-wrap:anywhere">${esc(r[1])}</dd></div>`).join('')}</dl>
 <label style="display:flex;gap:14px;align-items:flex-start;margin-top:22px;padding:18px 20px;border-radius:14px;background:var(--mist);font-size:15px;line-height:1.55;cursor:pointer"><input type="checkbox" id="f-consent" ${form.consent ? 'checked' : ''} style="flex:0 0 auto;width:22px;height:22px;margin:2px 0 0"><span>Confirmo que los datos son verdaderos y, si soy menor de edad, que mi representante conoce y autoriza mi participación en JUMA.</span></label>
 <div style="margin-top:16px;padding:14px 18px;border-radius:12px;background:#FFF8E1;border:1.5px solid #F5C518;color:#5C4300;font-size:14.5px;line-height:1.5"><b>⏳ Importante:</b> Al pulsar el botón de registro, este proceso puede tardar un momento según tu conexión a internet. <b>Por favor espera y no cierres la planilla</b> hasta ver la confirmación.</div>`;
   }
   const sendingBanner = form.sending ? `<div role="status" style="margin:18px 0 0;padding:16px 18px;border-radius:12px;background:#E8F1FF;border:1.5px solid var(--royal);color:var(--navy);font-size:15px;font-weight:700;line-height:1.5">⏳ Guardando tu registro en JUMA… Este proceso puede tardar unos momentos, por favor espera y no cierres la planilla.</div>` : '';
-  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', form.isUpdate ? 'Actualizar mi planilla' : 'Registro e inscripción misionera', 'pl-t')}<div style="padding:clamp(22px,4vw,40px)"><div class="progress" role="group" aria-label="Paso ${st} de 4">${prog}</div>${body}${sendingBanner}${form.err ? `<p role="alert" style="margin:20px 0 0;padding:14px 18px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:15px;font-weight:700">${esc(form.err)}</p>` : ''}<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-top:30px"><div>${st > 1 && !form.sending ? '<button type="button" class="btn btn-soft" data-back>Atrás</button>' : ''}</div><div>${st < 4 ? '<button type="button" class="btn btn-blue" data-next>Siguiente</button>' : `<button type="button" class="btn btn-blue" data-submit ${form.sending ? 'disabled' : ''}>${form.sending ? 'Guardando… Por favor espera' : (form.isUpdate ? 'Guardar cambios' : 'Registrarme y guardar planilla')}</button>`}</div></div></div></div></div>`;
+  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', form.isUpdate ? 'Actualizar mi planilla' : 'Registro e inscripción misionera', 'pl-t')}<div style="padding:clamp(22px,4vw,40px)"><div class="progress" role="group" aria-label="Paso ${st} de 4">${prog}</div>${body}${sendingBanner}${form.err ? `<p role="alert" style="margin:20px 0 0;padding:14px 18px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:15px;font-weight:700">${esc(form.err)}</p>` : ''}<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-top:30px"><div>${st > 1 && !form.sending ? '<button type="button" class="btn btn-soft" data-back>Atrás</button>' : ''}</div><div>${st < 4 ? '<button type="button" class="btn btn-blue" data-next>Siguiente</button>' : `<button type="button" class="btn btn-blue" data-submit ${form.sending ? 'disabled' : ''}>${form.sending ? 'Guardando… Por favor espera' : (form.isUpdate ? 'Guardar cambios' : 'Registrarme y generar mi carnet')}</button>`}</div></div></div></div></div>`;
 }
 
 function openForm(editExisting = false) {
@@ -956,7 +1586,6 @@ function openForm(editExisting = false) {
   } else {
     form.isUpdate = false;
     if (currentUser && currentUser.email) form.d.correo = currentUser.email;
-    if (currentUser && currentUser.photoURL && !form.d.foto) form.d.foto = currentUser.photoURL;
   }
   openModal(formHtml());
 }
@@ -998,7 +1627,6 @@ async function saveRegistration() {
     }
   }
   if (!uid) uid = 'juma-' + sha256(email || ((d.nombres || '') + (d.celular || ''))).slice(0, 20);
-  if (!d.foto && currentUser && currentUser.photoURL) d.foto = currentUser.photoURL;
 
   const prevRol = isMasterEmail(email)
     ? 'coordinador'
@@ -1010,7 +1638,10 @@ async function saveRegistration() {
     uid,
     correo: email,
     nombre: ((d.nombres || '') + ' ' + (d.apellidos || '')).trim(),
+    cedula: d.cedula || '',
+    sexo: d.sexo || detectGender({ datos: d }),
     foto: d.foto || '',
+    fotoCarnetOk: true,
     rol: prevRol || 'participante',
     asistencias: prevAsistencias,
     celular: d.celular || '',
@@ -1069,7 +1700,11 @@ async function loadUserProfile(user) {
         const data = Object.assign({ id: snap.id }, snap.data());
         myProfile = data;
         if (userRole(data) === 'coordinador') { isAdmin = true; try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {} }
-        try { localStorage.setItem('juma-perfil-' + uid, JSON.stringify(data)); } catch (e) {}
+        try {
+          localStorage.setItem('juma-perfil-' + uid, JSON.stringify(data));
+          localStorage.setItem('juma-ultimo-perfil', JSON.stringify(data));
+        } catch (e) {}
+        checkMandatoryPhotoGate();
         return data;
       }
       if (email) {
@@ -1079,6 +1714,8 @@ async function loadUserProfile(user) {
           const data = Object.assign({ id: qs.docs[0].id }, qs.docs[0].data());
           myProfile = data;
           if (userRole(data) === 'coordinador') { isAdmin = true; try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {} }
+          try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(data)); } catch (e) {}
+          checkMandatoryPhotoGate();
           return data;
         }
       }
@@ -1088,6 +1725,7 @@ async function loadUserProfile(user) {
     isAdmin = true;
     try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {}
   }
+  checkMandatoryPhotoGate();
   return myProfile || null;
 }
 
@@ -1110,7 +1748,7 @@ function updateAuthUI() {
       btnAuth.innerHTML = (foto ? `<img src="${esc(foto)}" alt="" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:7px;border:1.5px solid #fff">` : '') + `<span>Mi perfil · ${esc(nombreCorto)}</span>`;
       btnAuth.className = 'btn btn-blue btn-sm';
     }
-    if (btnJoin) { btnJoin.textContent = myProfile ? 'Mi planilla' : 'Completar planilla'; }
+    if (btnJoin) { btnJoin.textContent = myProfile ? '🪪 Mi Carnet' : 'Completar planilla'; }
     if (footAuth) footAuth.textContent = 'Mi perfil (' + nombreCorto + ')';
   } else {
     if (btnAuth) { btnAuth.textContent = 'Iniciar sesión'; btnAuth.className = 'btn btn-outline btn-sm'; }
@@ -1122,15 +1760,18 @@ function updateAuthUI() {
 }
 
 modalRoot.addEventListener('input', (e) => {
+  if (e.target.id === 'fp-cedula') { forceCedulaTemp = e.target.value; return; }
   const k = e.target.dataset && e.target.dataset.k; if (!k || !$('#pl-t')) return;
   form.d[k] = e.target.value;
   if (k === 'nac') { const b = $('#edad-box'); if (b) b.textContent = edadDe() ? edadDe() + ' años' : 'Se calcula sola'; }
 });
 modalRoot.addEventListener('change', async (e) => {
   if (e.target.id === 'f-consent') { form.consent = e.target.checked; return; }
-  if (e.target.id === 'f-avatar' && e.target.files && e.target.files[0]) {
+  if ((e.target.id === 'f-avatar' || e.target.id === 'f-avatar-cam') && e.target.files && e.target.files[0]) {
     try {
+      stopSelfieCamera();
       form.d.foto = await shrinkAvatarDataUrl(e.target.files[0]);
+      form.err = '';
       repaintForm();
     } catch (x) {
       form.err = 'No se pudo cargar esa foto. Intenta con otra imagen.';
@@ -1138,32 +1779,131 @@ modalRoot.addEventListener('change', async (e) => {
     }
     return;
   }
-  if (e.target.id === 'au-avatar' && e.target.files && e.target.files[0]) {
+  if ((e.target.id === 'fp-gal-in' || e.target.id === 'fp-cam-in') && e.target.files && e.target.files[0]) {
     try {
+      stopSelfieCamera();
+      forcePhotoTemp = await shrinkAvatarDataUrl(e.target.files[0]);
+      forceErr = '';
+      repaintForcePhoto();
+    } catch (x) {
+      forceErr = 'No se pudo cargar esa foto. Intenta con otra imagen.';
+      repaintForcePhoto();
+    }
+    return;
+  }
+  if ((e.target.id === 'au-avatar' || e.target.id === 'au-cam-in') && e.target.files && e.target.files[0]) {
+    try {
+      stopSelfieCamera();
       const url = await shrinkAvatarDataUrl(e.target.files[0]);
-      if (!myProfile) {
-        const email = (currentUser && currentUser.email) || '';
-        const uid = (currentUser && currentUser.uid) || ('juma-' + sha256(email || 'user').slice(0, 20));
-        myProfile = { id: uid, uid, correo: email, nombre: (currentUser && currentUser.displayName) || 'Joven Misionero', foto: url, datos: { correo: email, foto: url } };
-      } else {
-        myProfile.foto = url;
-        myProfile.datos = myProfile.datos || {};
-        myProfile.datos.foto = url;
-      }
-      const uid = myProfile.uid || myProfile.id || (currentUser && currentUser.uid) || '';
-      try {
-        if (uid) localStorage.setItem('juma-perfil-' + uid, JSON.stringify(myProfile));
-        if (myProfile.correo) localStorage.setItem('juma-perfil-email-' + myProfile.correo, JSON.stringify(myProfile));
-        localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile));
-      } catch (x) {}
-      if (fb && fb.db && uid) {
-        fb.setDoc(fb.doc(fb.db, 'inscripciones', uid), { foto: url, datos: myProfile.datos, actualizado: new Date().toISOString() }, { merge: true }).catch(() => {});
-      }
-      updateAuthUI(); repaintAuth();
+      await saveNewProfilePhoto(url);
+      repaintAuth();
     } catch (x) {}
     return;
   }
 });
+
+/* Eventos globales dentro de modales para Cámara Selfie, Carnet, Mockup y Alerta Obligatoria */
+modalRoot.addEventListener('click', async (e) => {
+  const startCamBtn = e.target.closest('[data-start-selfie]');
+  if (startCamBtn) {
+    e.preventDefault();
+    await startSelfieCamera(startCamBtn.dataset.startSelfie, false);
+    return;
+  }
+  const flipCamBtn = e.target.closest('[data-flip-selfie]');
+  if (flipCamBtn) {
+    e.preventDefault();
+    await startSelfieCamera(flipCamBtn.dataset.flipSelfie, true);
+    return;
+  }
+  if (e.target.closest('[data-capture-selfie]')) {
+    e.preventDefault();
+    await captureSelfieFromVideo();
+    return;
+  }
+  if (e.target.closest('[data-cancel-selfie]')) {
+    e.preventDefault();
+    const prevTarget = selfieTarget;
+    stopSelfieCamera();
+    if (prevTarget === 'force') repaintForcePhoto();
+    else if (prevTarget === 'auth') repaintAuth();
+    else repaintForm();
+    return;
+  }
+  const fpSexoBtn = e.target.closest('[data-fp-sexo]');
+  if (fpSexoBtn) {
+    forceSexoTemp = fpSexoBtn.dataset.fpSexo;
+    repaintForcePhoto();
+    return;
+  }
+  if (e.target.closest('[data-save-force-photo]')) {
+    if (!forcePhotoTemp) {
+      forceErr = 'Por favor tómate una foto o elige una de tu galería antes de continuar.';
+      repaintForcePhoto();
+      return;
+    }
+    forceSaving = true; forceErr = ''; repaintForcePhoto();
+    await saveNewProfilePhoto(forcePhotoTemp, { cedula: forceCedulaTemp, sexo: forceSexoTemp });
+    forceSaving = false;
+    modalKey = null;
+    openAuthModal();
+    return;
+  }
+  const viewBtn = e.target.closest('[data-carnet-view]');
+  if (viewBtn) {
+    carnetViewMode = viewBtn.dataset.carnetView;
+    if ($('#au-t')) repaintAuth();
+    else if ($('#pl-t')) repaintForm();
+    else if ($('#ed-t')) repaintEd();
+    return;
+  }
+  const genBtn = e.target.closest('[data-carnet-gender]');
+  if (genBtn) {
+    carnetGenderOverride = genBtn.dataset.carnetGender;
+    if ($('#au-t')) repaintAuth();
+    else if ($('#pl-t')) repaintForm();
+    else if ($('#ed-t')) repaintEd();
+    return;
+  }
+  const dlCarnetBtn = e.target.closest('[data-dl-carnet-png]');
+  if (dlCarnetBtn) {
+    const uidTarget = dlCarnetBtn.dataset.dlCarnetPng;
+    const recTarget = uidTarget === 'me' ? (myProfile || { datos: form.d, foto: form.d.foto }) : (allInscripciones.find((x) => x && (x.id === uidTarget || x.uid === uidTarget)) || myProfile);
+    const orig = dlCarnetBtn.innerHTML;
+    dlCarnetBtn.innerHTML = '⏳ Generando Carnet HD…';
+    await downloadCarnetPng(recTarget, 'carnet');
+    setTimeout(() => { dlCarnetBtn.innerHTML = orig; }, 1200);
+    return;
+  }
+  const dlMockupBtn = e.target.closest('[data-dl-mockup-png]');
+  if (dlMockupBtn) {
+    const uidTarget = dlMockupBtn.dataset.dlMockupPng;
+    const g = dlMockupBtn.dataset.gender || '';
+    const recTarget = uidTarget === 'me' ? (myProfile || { datos: form.d, foto: form.d.foto }) : (allInscripciones.find((x) => x && (x.id === uidTarget || x.uid === uidTarget)) || myProfile);
+    const orig = dlMockupBtn.innerHTML;
+    dlMockupBtn.innerHTML = '⏳ Generando Mockup…';
+    await downloadCarnetPng(recTarget, 'mockup', g);
+    setTimeout(() => { dlMockupBtn.innerHTML = orig; }, 1200);
+    return;
+  }
+  if (e.target.closest('[data-save-quick-carnet]')) {
+    const ciVal = (($('#au-quick-ci') || {}).value || '').trim();
+    const sxVal = (($('#au-quick-sexo') || {}).value || '').trim();
+    if (myProfile) {
+      myProfile.cedula = ciVal;
+      myProfile.sexo = sxVal;
+      myProfile.datos = myProfile.datos || {};
+      myProfile.datos.cedula = ciVal;
+      myProfile.datos.sexo = sxVal;
+      carnetGenderOverride = sxVal;
+      const fotoActual = myProfile.foto || myProfile.datos.foto || '';
+      await saveNewProfilePhoto(fotoActual, { cedula: ciVal, sexo: sxVal });
+      repaintAuth();
+    }
+    return;
+  }
+});
+
 modalRoot.addEventListener('click', async (e) => {
   if (!$('#pl-t')) return;
   if (e.target.closest('[data-switch-login]')) { authTab = 'user'; authErr = ''; authOk = ''; openAuthModal(); return; }
@@ -1175,7 +1915,6 @@ modalRoot.addEventListener('click', async (e) => {
       const cred = await fb.au.signInWithPopup(fb.auth, new fb.au.GoogleAuthProvider());
       currentUser = cred.user;
       if (currentUser.email) form.d.correo = currentUser.email;
-      if (currentUser.photoURL && !form.d.foto) form.d.foto = currentUser.photoURL;
       if (currentUser.displayName && !form.d.nombres) {
         const parts = currentUser.displayName.trim().split(/\s+/);
         form.d.nombres = parts.slice(0, Math.ceil(parts.length / 2)).join(' ');
@@ -1324,19 +2063,26 @@ function authModalHtml() {
     return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="au-t"><div class="sheet" style="max-width:740px">${sheetHead('Juventud Misionera Allamaniana · Duaca', 'Mi perfil misionero', 'au-t')}<div style="padding:clamp(22px,4vw,40px)">
       <div class="u-card" style="display:flex;flex-wrap:wrap;align-items:center;gap:18px">
         <div class="ribbon" style="position:absolute;top:0;left:0;right:0"></div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:0 0 auto">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto">
           <div style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,.15);border:3px solid var(--sky);overflow:hidden;display:flex;align-items:center;justify-content:center">
             ${foto ? `<img src="${esc(foto)}" alt="Foto de perfil" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-size:32px;font-weight:800;color:#fff">${esc(nombre.charAt(0).toUpperCase())}</span>`}
           </div>
-          <label style="font-size:12px;font-weight:700;color:var(--sky);cursor:pointer;text-decoration:underline"><span>📷 ${foto ? 'Cambiar foto' : 'Subir foto'}</span><input type="file" accept="image/*" id="au-avatar" style="display:none"></label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button type="button" data-start-selfie="auth" style="border:0;background:transparent;padding:0;font-size:12px;font-weight:700;color:var(--sky);cursor:pointer;text-decoration:underline">📸 Cámara</button>
+            <span style="color:rgba(255,255,255,.4)">|</span>
+            <label style="font-size:12px;font-weight:700;color:var(--sky);cursor:pointer;text-decoration:underline;margin:0"><span>🖼️ Galería</span><input type="file" accept="image/*" id="au-avatar" style="display:none"></label>
+            <input type="file" accept="image/*" capture="user" id="au-cam-in" style="display:none">
+          </div>
         </div>
         <div style="flex:1 1 200px;min-width:0">
           <span class="u-badge">${esc(badgeTxt)}</span>
           <b>${esc(nombre)}</b>
           <p style="margin:6px 0 0;font-size:15px;color:var(--muted-lt)">${esc(email)}${d.parroquia ? ' · ' + esc(d.parroquia) : ''}${d.sangre ? ' · Sangre ' + esc(d.sangre) : ''}</p>
         </div>
+        ${selfieBoxHtml('auth')}
       </div>
-      ${masterOn ? `<div style="padding:16px 20px;margin-bottom:20px;border-radius:14px;background:#E8F1FF;border:1.5px solid var(--royal);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px"><div><b style="color:var(--navy);font-size:16px">${trueMaster ? 'Panel Maestro activo' : 'Panel de Coordinación activo'}</b><p style="margin:4px 0 0;font-size:14px;color:var(--muted)">${trueMaster ? 'Puedes modificar toda la app, asignar roles (Coordinador, Asesor, Participante), editar la galería y escanear QR.' : 'Puedes ver los participantes, escanear códigos QR de asistencia y actualizar domingos, actividades y formación.'}</p></div><div style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="btn btn-blue btn-sm" data-open-qr-scanner>📷 Escanear QR</button><button type="button" class="btn btn-outline btn-sm" data-open-master-panel>Abrir Panel y Editor</button></div></div>` : ''}
+      ${masterOn ? `<div style="padding:16px 20px;margin-bottom:20px;border-radius:14px;background:#E8F1FF;border:1.5px solid var(--royal);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px"><div><b style="color:var(--navy);font-size:16px">${trueMaster ? 'Panel Maestro activo' : 'Panel de Coordinación activo'}</b><p style="margin:4px 0 0;font-size:14px;color:var(--muted)">${trueMaster ? 'Puedes modificar toda la app, asignar roles, ver el calendario de cumpleaños, descargar carnets, editar la galería y escanear QR.' : 'Puedes ver los participantes, sus carnets, el calendario de cumpleaños, escanear códigos QR de asistencia y actualizar actividades.'}</p></div><div style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="btn btn-blue btn-sm" data-open-qr-scanner>📷 Escanear QR</button><button type="button" class="btn btn-soft btn-sm" data-open-cumple-tab style="background:#fff;border:1.5px solid var(--royal);color:var(--royal)">🎂 Cumpleaños</button><button type="button" class="btn btn-outline btn-sm" data-open-master-panel>Abrir Panel y Editor</button></div></div>` : ''}
+      ${carnetInteractiveSectionHtml(myProfile || { uid: currentUser && currentUser.uid, correo: email, nombre, foto, datos: d }, 'profile')}
       <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:center;padding:18px 20px;margin-bottom:20px;border-radius:14px;background:#fff;border:1.5px solid var(--line)">
         <div style="flex:0 0 auto;text-align:center;margin:0 auto">
           <img src="${esc(qrUrl)}" alt="Mi código QR JUMA" width="150" height="150" style="display:block;border-radius:12px;border:2px solid var(--royal);padding:6px;background:#fff">
@@ -1344,7 +2090,7 @@ function authModalHtml() {
         <div style="flex:1 1 220px">
           <div style="margin-bottom:6px">${roleBadgeHtml(role)}</div>
           <b style="display:block;font-size:17px;color:var(--ink)">Mi código QR de asistencia</b>
-          <p style="margin:4px 0 12px;font-size:14px;color:var(--muted);line-height:1.45">Muéstrale este código QR a cualquiera de los coordinadores en la formación o actividad del día para registrar tu asistencia.</p>
+          <p style="margin:4px 0 12px;font-size:14px;color:var(--muted);line-height:1.45">Muéstrale este código QR (o tu Carnet Digital de arriba) a cualquiera de los coordinadores en la formación o actividad del día para registrar tu asistencia.</p>
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
             <span style="padding:6px 12px;border-radius:99px;background:var(--mist);color:var(--royal);font-size:13px;font-weight:800">📋 ${misAsistencias.length} asistencia${misAsistencias.length === 1 ? '' : 's'} (últimos 6 meses)</span>
           </div>
@@ -1396,8 +2142,8 @@ function authModalHtml() {
     </div>
   </div></div></div>`;
 }
-function openAuthModal() { openModal(authModalHtml()); }
-function repaintAuth() { modalRoot.innerHTML = authModalHtml(); const ov = $('.overlay', modalRoot); if (ov) { ov.style.animation = 'none'; const sh = $('.sheet', modalRoot); if (sh) sh.style.animation = 'none'; } }
+function openAuthModal() { if (checkMandatoryPhotoGate()) return; openModal(authModalHtml()); }
+function repaintAuth() { if (checkMandatoryPhotoGate()) return; modalRoot.innerHTML = authModalHtml(); const ov = $('.overlay', modalRoot); if (ov) { ov.style.animation = 'none'; const sh = $('.sheet', modalRoot); if (sh) sh.style.animation = 'none'; } }
 
 /* ===================== muro de mensajes (moderado) ===================== */
 async function loadMuro() {
@@ -1571,6 +2317,7 @@ modalRoot.addEventListener('click', async (e) => {
   if (e.target.closest('[data-dl-profile]')) { if (myProfile && myProfile.datos) downloadPlanillaHtml(myProfile.datos, myProfile); return; }
   if (e.target.closest('[data-open-master-panel]')) { openEditor(); return; }
   if (e.target.closest('[data-open-qr-scanner]')) { tab = 'qr'; openEditor(); return; }
+  if (e.target.closest('[data-open-cumple-tab]')) { tab = 'cum'; openEditor(); return; }
   if (e.target.closest('[data-logout]')) {
     stopQrCamera();
     try { if (fb && fb.auth) await fb.au.signOut(fb.auth); } catch (x) {}
@@ -2045,7 +2792,7 @@ async function ghCheck(token) {
 const uploaded = new Map();
 let ghState = '', ghMsg = '';
 
-let dr = {}, tab = 'ins', fy = 0, edErr = '', edOk = '', edBusy = false, draftWarn = false, showAllSunEd = false;
+let dr = {}, tab = 'ins', fy = 0, edErr = '', edOk = '', edBusy = false, draftWarn = false, showAllSunEd = false, cumpleMesFilter = 'todos';
 const setters = new Map(); let uid = 0;
 function fld(label, val, set, o = {}) {
   const id = 'ed-' + (uid++); setters.set(id, set);
@@ -2053,10 +2800,98 @@ function fld(label, val, set, o = {}) {
   return `<div class="fld ${o.w ? 'w' : ''}">${label ? `<label for="${id}">${label}</label>` : ''}${tag}</div>`;
 }
 function chk(label, on, set) { const id = 'ed-' + (uid++); setters.set(id, set); return `<label style="display:flex;gap:10px;align-items:center;min-height:52px;font-size:15px;font-weight:700"><input type="checkbox" id="${id}" data-edc="${id}" ${on ? 'checked' : ''} style="width:22px;height:22px;margin:0">${label}</label>`; }
+
+function getCumpleanosList(src = dr) {
+  const now = new Date();
+  const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const curY = todayMid.getFullYear();
+  const out = [];
+
+  const addEntry = ({ id, nombre, nac, celular, rolTxt, foto, isExtra, extraIdx }) => {
+    const m = String(nac || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return;
+    const yNac = parseInt(m[1], 10);
+    const mesIdx = parseInt(m[2], 10) - 1;
+    const dia = parseInt(m[3], 10);
+    if (mesIdx < 0 || mesIdx > 11 || dia < 1 || dia > 31) return;
+
+    let nextBday = new Date(curY, mesIdx, dia);
+    if (nextBday < todayMid) nextBday = new Date(curY + 1, mesIdx, dia);
+    const diasFaltan = Math.round((nextBday.getTime() - todayMid.getTime()) / 86400000);
+    const edadCumple = yNac > 1900 ? (nextBday.getFullYear() - yNac) : null;
+
+    const celClean = String(celular || '').replace(/\D/g, '');
+    const waNum = celClean ? (celClean.startsWith('0') ? '58' + celClean.slice(1) : (celClean.startsWith('58') ? celClean : '58' + celClean)) : '';
+    const msgWa = `🎉🎂 ¡Feliz cumpleaños, *${nombre}*! Que Dios y Nuestra Madre la Virgen Consolata te bendigan siempre en tu camino misionero. ¡Un gran abrazo de parte de toda tu familia de JUMA Duaca! 💙✨`;
+    const waUrl = waNum.length >= 10 ? `https://wa.me/${waNum}?text=${encodeURIComponent(msgWa)}` : '';
+
+    const ymd = `${nextBday.getFullYear()}${pad2(mesIdx + 1)}${pad2(dia)}`;
+    const nextDay = new Date(nextBday.getFullYear(), mesIdx, dia + 1);
+    const ymdEnd = `${nextDay.getFullYear()}${pad2(nextDay.getMonth() + 1)}${pad2(nextDay.getDate())}`;
+    const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('🎂 Cumpleaños de ' + nombre + ' (JUMA Duaca)')}&dates=${ymd}/${ymdEnd}&details=${encodeURIComponent('Cumpleaños de ' + nombre + (rolTxt ? ' (' + rolTxt + ')' : '') + ' · Familia misionera JUMA Duaca.')}&recur=RRULE:FREQ=YEARLY`;
+
+    out.push({
+      id,
+      nombre: nombre || 'Sin nombre',
+      nac,
+      mesIdx,
+      mesNombre: MESES[mesIdx],
+      dia,
+      yNac,
+      edadCumple,
+      diasFaltan,
+      esHoy: diasFaltan === 0,
+      esManana: diasFaltan === 1,
+      celular: celular || '',
+      rolTxt: rolTxt || 'Participante',
+      foto: foto || '',
+      waUrl,
+      gcalUrl,
+      isExtra: !!isExtra,
+      extraIdx
+    });
+  };
+
+  allInscripciones.forEach((x) => {
+    const d = x.datos || {};
+    const nac = d.nac || x.nac || '';
+    if (!nac) return;
+    const nom = x.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Sin nombre';
+    addEntry({
+      id: x.id || x.uid,
+      nombre: nom,
+      nac,
+      celular: x.celular || d.celular || '',
+      rolTxt: roleLabel(userRole(x)),
+      foto: x.foto || d.foto || '',
+      isExtra: false
+    });
+  });
+
+  const extras = ((src && src.cumpleanosExtra) || (cfg && cfg.cumpleanosExtra) || []);
+  extras.forEach((ex, idx) => {
+    if (!ex || !ex.nombre || !ex.nac) return;
+    addEntry({
+      id: 'extra-' + idx,
+      nombre: ex.nombre,
+      nac: ex.nac,
+      celular: ex.celular || '',
+      rolTxt: ex.rol || 'Miembro JUMA',
+      foto: '',
+      isExtra: true,
+      extraIdx: idx
+    });
+  });
+
+  return out;
+}
+
 function getTabs() {
   const trueMaster = isMasterAccount();
+  const hoyCumpleCount = getCumpleanosList().filter((c) => c.esHoy).length;
   const baseTabs = [
     ['ins', trueMaster ? `Inscritos y Roles (${allInscripciones.length})` : `Inscritos (${allInscripciones.length})`],
+    ['cum', `🎂 Cumpleaños${hoyCumpleCount ? ' (' + hoyCumpleCount + ' hoy 🎉)' : ''}`],
     ['qr', '📷 Asistencia QR'],
     ['enc', 'Domingos y Días'],
     ['dat', 'Hora, lugar y WhatsApp'],
@@ -2089,7 +2924,16 @@ function editorBody() {
     const totalDl = totalAppDownloads();
     const sinReg = Math.max(0, totalDl - allInscripciones.length);
     const histDl = Array.isArray(appStats.historialDescargas) ? appStats.historialDescargas : [];
+    const proxCumples = getCumpleanosList().filter((c) => c.diasFaltan <= 7).sort((a, b) => a.diasFaltan - b.diasFaltan);
+    const cumpleBanner = proxCumples.length ? `<div style="margin-bottom:16px;padding:14px 18px;border-radius:14px;background:linear-gradient(90deg,#FFF8E1 0%,#E8F1FF 100%);border:1.5px solid #F5C518;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
+      <div>
+        <b style="font-size:15px;color:#5C4300">🎂 ${proxCumples.some((c) => c.esHoy) ? '¡Hoy estamos de cumpleaños en JUMA!' : 'Cumpleaños de esta semana en JUMA:'}</b>
+        <div style="font-size:13.5px;color:var(--navy);margin-top:3px">${proxCumples.map((c) => `<b>${esc(c.nombre)}</b> (${c.esHoy ? '🎉 ¡HOY!' : (c.esManana ? 'Mañana ' : '') + c.dia + ' de ' + c.mesNombre})`).join(' · ')}</div>
+      </div>
+      <button type="button" class="btn btn-blue btn-sm" data-tab="cum">🎂 Abrir Calendario de Cumpleaños</button>
+    </div>` : '';
     return `<p class="ehint">${trueMaster ? '<b>Cuenta Maestra:</b> Inicialmente todos los registrados entran como <b>Participantes</b>. Únicamente desde esta Cuenta Maestra puedes decidir y modificar quién es <b>Coordinador</b>, <b>Asesor</b> o <b>Participante</b>, además de ver las asistencias de los últimos 6 meses.' : '<b>Vista de Coordinador:</b> Aquí puedes ver el número de participantes, sus planillas, su código QR y las formaciones/actividades a las que asistieron en los últimos 6 meses. <i>(Solo la Cuenta Maestra puede cambiar roles o editar la galería de fotos)</i>.'}</p>
+      ${cumpleBanner}
       <div class="stat-grid">
         <div class="stat-box" style="background:#E8F1FF;border-color:var(--royal)"><b id="stat-apk-dl-num" style="color:var(--royal)">📲 ${totalDl}</b><span style="color:var(--navy);font-weight:800">Descargaron la App</span></div>
         <div class="stat-box" style="background:#E4F5EA;border-color:#17824A"><b style="color:#14532D">✅ ${allInscripciones.length}</b><span style="color:#14532D;font-weight:800">App registrada</span></div>
@@ -2156,6 +3000,7 @@ function editorBody() {
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:8px">
               ${waJoven.length >= 10 ? `<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="https://wa.me/${waJoven}">WhatsApp</a>` : ''}
+              <button type="button" class="btn btn-blue btn-sm" data-dl-carnet-png="${esc(x.id || x.uid)}">🪪 Carnet PNG</button>
               <button type="button" class="btn btn-soft btn-sm" data-dl-ins="${idx}">Planilla + QR</button>
               ${trueMaster ? `<button type="button" class="btn btn-danger btn-sm" data-rm-ins="${esc(x.id)}">Borrar</button>` : ''}
             </div>
@@ -2170,13 +3015,32 @@ function editorBody() {
           </div>` : ''}
           <div class="inscrito-meta" style="margin-top:10px">
             <span style="background:#E8F1FF;color:#0C2D74;font-weight:800">📋 ${asis6.length} asistencia${asis6.length === 1 ? '' : 's'} (últimos 6 meses)</span>
+            ${!foto ? `<span style="background:#FCE8E7;color:#8A1C1C">⚠️ Sin foto de carnet aún</span>` : `<span style="background:#E4F5EA;color:#14532D">📷 Foto lista</span>`}
             ${(x.edad || edadDe(d)) ? `<span>${esc(x.edad || edadDe(d))} años</span>` : ''}
             ${(x.esMenor || esMenor(d)) ? `<span style="background:#FFF3CD;color:#7A5200">Menor · Rep: ${esc(d.repNombre || 'Pendiente')}</span>` : ''}
             ${d.sangre ? `<span>Sangre: ${esc(d.sangre)}</span>` : ''}
             ${d.parroquia ? `<span>${esc(d.parroquia)}</span>` : ''}
             ${(d.enf === 'Sí' || d.alMed || d.alAli) ? `<span style="background:#FCE8E7;color:#8A1C1C">⚕ Atención médica</span>` : ''}
           </div>
-          <details style="margin-top:10px"><summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--royal)">📅 Ver formaciones y actividades asistidas en los últimos 6 meses (${asis6.length}) y Código QR</summary>
+          <details style="margin-top:10px"><summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--royal)">🪪 Ver Carnet Misionero y Mockup (${esc(detectGender(x))}) de ${esc(nom)}</summary>
+            <div style="margin-top:10px;padding:14px;background:#F2F7FF;border-radius:12px;border:1px solid #B9C8E4">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;align-items:center">
+                <div>
+                  <b style="display:block;text-align:center;font-size:13px;color:var(--navy);margin-bottom:8px">🪪 Diseño del Carnet</b>
+                  ${carnetCardOnlyHtml(x, false)}
+                </div>
+                <div>
+                  <b style="display:block;text-align:center;font-size:13px;color:var(--navy);margin-bottom:8px">👕 Mockup (${esc(detectGender(x))})</b>
+                  ${carnetMockupHtml(x, detectGender(x))}
+                </div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:14px">
+                <button type="button" class="btn btn-blue btn-sm" data-dl-carnet-png="${esc(x.id || x.uid)}">📥 Descargar Carnet (PNG HD)</button>
+                <button type="button" class="btn btn-outline btn-sm" data-dl-mockup-png="${esc(x.id || x.uid)}" data-gender="${esc(detectGender(x))}" style="background:#fff">👕 Descargar Mockup (${esc(detectGender(x))})</button>
+              </div>
+            </div>
+          </details>
+          <details style="margin-top:8px"><summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--royal)">📅 Ver formaciones y actividades asistidas en los últimos 6 meses (${asis6.length}) y Código QR</summary>
             <div style="margin-top:10px;padding:12px 14px;background:var(--paper);border-radius:10px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
               <div style="flex:0 0 auto;text-align:center;background:#fff;padding:10px;border-radius:10px;border:1px solid var(--line)">
                 <img src="${esc(qrImgUrl(qrData, 160))}" alt="QR de ${esc(nom)}" width="120" height="120" style="display:block;margin:0 auto">
@@ -2236,6 +3100,92 @@ function editorBody() {
             <button type="button" class="btn ${present ? 'btn-soft' : 'btn-blue'} btn-sm" data-toggle-asis="${esc(x.id)}" style="min-height:36px;padding:0 12px;font-size:13px">${present ? 'Asistió ✔ (Quitar)' : 'Marcar asistencia'}</button>
           </div>`;
         }).join('')}</div>`}
+      </div>`;
+  }
+
+  if (tab === 'cum') {
+    const cumples = getCumpleanosList(dr);
+    const prox30 = cumples.slice().filter((c) => c.diasFaltan <= 30).sort((a, b) => a.diasFaltan - b.diasFaltan);
+    const curMonth = new Date().getMonth();
+    const monthOrder = [];
+    for (let i = 0; i < 12; i++) monthOrder.push((curMonth + i) % 12);
+    const monthsToShow = cumpleMesFilter === 'todos' ? monthOrder : [parseInt(cumpleMesFilter, 10)];
+
+    return `<p class="ehint"><b>🎂 Calendario Privado de Cumpleaños (Exclusivo Coordinadores y Cuenta Maestra):</b> Este calendario toma automáticamente las fechas de nacimiento de todas las planillas registradas en la App y te avisa quién cumple años hoy o próximamente para felicitarlo por WhatsApp o agendar recordatorio.</p>
+      <div style="padding:18px;border-radius:16px;background:linear-gradient(135deg,#061536 0%,#0C2D74 100%);color:#fff;margin-bottom:18px;border:1.5px solid var(--sky)">
+        <b style="display:block;font-size:17px;color:var(--sky);margin-bottom:10px">🎉 Cumpleaños de HOY y próximos 30 días (${prox30.length})</b>
+        ${!prox30.length ? `<p style="margin:0;font-size:14px;color:#DCE7F8">No hay cumpleaños en los próximos 30 días.</p>` : `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+          ${prox30.map((c) => `<div style="padding:12px 14px;border-radius:12px;background:${c.esHoy ? 'rgba(245,197,24,0.22)' : 'rgba(255,255,255,0.1)'};border:1.5px solid ${c.esHoy ? '#F5C518' : 'rgba(142,201,255,0.35)'};display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:44px;height:44px;border-radius:50%;background:var(--royal);border:2px solid #fff;overflow:hidden;display:flex;align-items:center;justify-content:center;flex:0 0 auto">
+                ${c.foto ? `<img src="${esc(c.foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:18px;color:#fff">${esc(c.nombre.charAt(0).toUpperCase())}</b>`}
+              </div>
+              <div style="min-width:0;flex:1">
+                <span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:11.5px;font-weight:800;background:${c.esHoy ? '#F5C518;color:#061536' : '#8EC9FF;color:#061536'}">${c.esHoy ? '🎉 ¡CUMPLE HOY!' : (c.esManana ? '⏰ ¡MAÑANA!' : 'En ' + c.diasFaltan + ' días')}</span>
+                <b style="display:block;font-size:15.5px;color:#fff;margin-top:2px">${esc(c.nombre)}</b>
+                <span style="font-size:12.5px;color:#DCE7F8">📅 ${c.dia} de ${esc(c.mesNombre)}${c.edadCumple ? ' · Cumple ' + c.edadCumple + ' años' : ''} · ${esc(c.rolTxt)}</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px">
+              ${c.waUrl ? `<a class="btn btn-white btn-sm" style="min-height:32px;padding:0 10px;font-size:12px" target="_blank" rel="noopener" href="${esc(c.waUrl)}">📲 Felicitar por WhatsApp</a>` : ''}
+              <a class="btn btn-outline btn-sm" style="min-height:32px;padding:0 10px;font-size:12px;color:#fff;border-color:rgba(255,255,255,.45)" target="_blank" rel="noopener" href="${esc(c.gcalUrl)}">📅 Recordar en Google</a>
+            </div>
+          </div>`).join('')}
+        </div>`}
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;align-items:center">
+        <button type="button" class="chip" data-cum-mes="todos" aria-pressed="${cumpleMesFilter === 'todos'}" style="min-height:34px;padding:0 12px;font-size:13px">Todos los meses (${cumples.length})</button>
+        ${MESES.map((mNom, mIdx) => {
+          const cnt = cumples.filter((c) => c.mesIdx === mIdx).length;
+          const cap = mNom.charAt(0).toUpperCase() + mNom.slice(1);
+          return `<button type="button" class="chip" data-cum-mes="${mIdx}" aria-pressed="${String(cumpleMesFilter) === String(mIdx)}" style="min-height:34px;padding:0 12px;font-size:12.5px">${esc(cap)}${mIdx === curMonth ? ' ★' : ''} (${cnt})</button>`;
+        }).join('')}
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin-bottom:22px">
+        ${monthsToShow.map((mIdx) => {
+          const mList = cumples.filter((c) => c.mesIdx === mIdx).sort((a, b) => a.dia - b.dia);
+          const mCap = MESES[mIdx].charAt(0).toUpperCase() + MESES[mIdx].slice(1);
+          const isCur = mIdx === curMonth;
+          return `<div style="padding:14px 16px;border-radius:14px;background:#fff;border:${isCur ? '2px solid var(--royal)' : '1.5px solid var(--line)'};box-shadow:${isCur ? '0 8px 24px rgba(36,82,200,.12)' : 'none'}">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;margin-bottom:10px;border-bottom:1.5px solid var(--mist)">
+              <b style="font-size:16px;color:${isCur ? 'var(--royal)' : 'var(--navy)'}">📅 ${esc(mCap)} ${isCur ? '<span style="font-size:11.5px;padding:2px 8px;border-radius:99px;background:#E8F1FF;color:var(--royal);margin-left:4px">Mes actual</span>' : ''}</b>
+              <span style="font-size:12.5px;font-weight:700;color:var(--muted)">${mList.length} cumple${mList.length === 1 ? '' : 's'}</span>
+            </div>
+            ${!mList.length ? `<p style="margin:0;font-size:13px;color:var(--muted)">Sin cumpleaños registrados en ${esc(MESES[mIdx])}.</p>` : `<div style="display:flex;flex-direction:column;gap:8px">
+              ${mList.map((c) => `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:10px;background:${c.esHoy ? '#FFF8E1' : 'var(--paper)'};border:1px solid ${c.esHoy ? '#F5C518' : 'var(--line)'}">
+                <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                  <div style="width:36px;height:36px;border-radius:10px;background:${c.esHoy ? '#F5C518' : 'var(--navy)'};color:${c.esHoy ? '#061536' : '#fff'};display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:14px;line-height:1;flex:0 0 auto">
+                    <span>${c.dia}</span>
+                    <small style="font-size:9px;text-transform:uppercase;opacity:.85">${esc(c.mesNombre.slice(0, 3))}</small>
+                  </div>
+                  <div style="min-width:0">
+                    <b style="display:block;font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.nombre)} ${c.esHoy ? '🎉' : ''}</b>
+                    <span style="font-size:12px;color:var(--muted)">${esc(c.rolTxt)}${c.edadCumple ? ' · ' + c.edadCumple + ' años' : ''}</span>
+                  </div>
+                </div>
+                <div style="display:flex;gap:4px;flex:0 0 auto">
+                  ${c.waUrl ? `<a class="btn btn-soft btn-sm" style="min-height:30px;padding:0 8px;font-size:12px" target="_blank" rel="noopener" href="${esc(c.waUrl)}" title="Felicitar por WhatsApp">📲</a>` : ''}
+                  <a class="btn btn-soft btn-sm" style="min-height:30px;padding:0 8px;font-size:12px" target="_blank" rel="noopener" href="${esc(c.gcalUrl)}" title="Guardar en Google Calendar">📅</a>
+                  ${c.isExtra ? `<button type="button" class="btn btn-danger btn-sm" data-rm-cumple-extra="${c.extraIdx}" style="min-height:30px;padding:0 8px;font-size:12px" title="Quitar">✕</button>` : ''}
+                </div>
+              </div>`).join('')}
+            </div>`}
+          </div>`;
+        }).join('')}
+      </div>
+
+      <div style="padding:16px 18px;border-radius:14px;background:#fff;border:1.5px solid var(--line)">
+        <b style="display:block;font-size:15.5px;color:var(--navy);margin-bottom:4px">➕ Añadir cumpleaños manual (Sacerdotes, Hermanas, Asesores o Jóvenes sin planilla)</b>
+        <p class="ehint" style="margin:0 0 12px">Los jóvenes que llenan su planilla aparecen arriba automáticamente. Usa este recuadro si quieres agregar además a alguien manualmente.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+          <div class="fld" style="flex:2 1 180px"><label for="cum-new-nom">Nombre y Apellido</label><input id="cum-new-nom" type="text" placeholder="Ej.: P. Juan / Hna. María"></div>
+          <div class="fld" style="flex:1 1 145px"><label for="cum-new-nac">Fecha de nacimiento</label><input id="cum-new-nac" type="date" style="min-height:46px;padding:0 10px;border-radius:10px;border:1.5px solid #B9C8E4;font-size:14.5px"></div>
+          <div class="fld" style="flex:1 1 135px"><label for="cum-new-cel">Celular (opcional)</label><input id="cum-new-cel" type="tel" placeholder="0412-000-0000"></div>
+          <div class="fld" style="flex:1 1 135px"><label for="cum-new-rol">Rol / Nota</label><input id="cum-new-rol" type="text" placeholder="Ej.: Sacerdote / Asesor"></div>
+          <button type="button" class="btn btn-blue btn-sm" data-add-cumple-extra style="min-height:46px">+ Añadir</button>
+        </div>
       </div>`;
   }
 
@@ -2376,6 +3326,7 @@ function cleanContent(src) {
   const c = clone(src);
   c.actividades = (c.actividades || []).filter((a) => a && String(a.t || '').trim()).slice(0, 24);
   c.encuentrosExtra = (c.encuentrosExtra || []).filter((e) => e && e.fecha && e.fecha <= max3MonthsIso());
+  c.cumpleanosExtra = (c.cumpleanosExtra || []).filter((x) => x && String(x.nombre || '').trim() && String(x.nac || '').trim());
   c.posts = (c.posts || []).filter((p) => p && (String(p.t || '').trim() || String(p.x || '').trim() || p.video || p.foto));
   c.galeria = (c.galeria || []).filter((g) => g && g.url);
   c.testimonios = (c.testimonios || []).filter((x) => x && String(x.x || '').trim());
@@ -2523,6 +3474,23 @@ modalRoot.addEventListener('click', async (e) => {
   const q = (s) => t.closest(s);
   if (q('[data-tab]')) { tab = q('[data-tab]').dataset.tab; edErr = ''; edOk = ''; repaintEd(); return; }
   if (q('[data-go-qr-tab]')) { tab = 'qr'; edErr = ''; edOk = ''; repaintEd(); return; }
+  if (q('[data-cum-mes]')) { cumpleMesFilter = q('[data-cum-mes]').dataset.cumMes; repaintEd(); return; }
+  if (q('[data-add-cumple-extra]')) {
+    const nom = (($('#cum-new-nom') || {}).value || '').trim();
+    const nac = (($('#cum-new-nac') || {}).value || '').trim();
+    const cel = (($('#cum-new-cel') || {}).value || '').trim();
+    const rol = (($('#cum-new-rol') || {}).value || '').trim() || 'Miembro JUMA';
+    if (!nom || !nac) { edErr = 'Escribe el nombre y selecciona la fecha de nacimiento.'; repaintEd(); return; }
+    dr.cumpleanosExtra = Array.isArray(dr.cumpleanosExtra) ? dr.cumpleanosExtra : [];
+    dr.cumpleanosExtra.push({ nombre: nom, nac, celular: cel, rol });
+    edErr = ''; edOk = '✔ Cumpleaños añadido al calendario. Pulsa «Publicar cambios» para guardarlo en la nube.';
+    touch(); repaintEd(); return;
+  }
+  if (q('[data-rm-cumple-extra]')) {
+    const idxRm = +q('[data-rm-cumple-extra]').dataset.rmCumpleExtra;
+    if (Array.isArray(dr.cumpleanosExtra)) dr.cumpleanosExtra.splice(idxRm, 1);
+    touch(); repaintEd(); return;
+  }
   if (q('[data-filter-rol]')) { insRoleFilter = q('[data-filter-rol]').dataset.filterRol; repaintEd(); return; }
   if (q('[data-set-rol]')) {
     const b = q('[data-set-rol]');
@@ -2968,6 +3936,7 @@ async function loadContenido() {
     if (last) myProfile = JSON.parse(last);
   } catch (e) {}
   renderAll(); setupUnroll(); updateAuthUI();
+  setTimeout(() => checkMandatoryPhotoGate(), 300);
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
   loadContenido();
   initFirebase();

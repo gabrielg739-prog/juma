@@ -477,6 +477,27 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 .pushbtn{margin-top:18px}
 @media (max-width:980px){.muro{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:640px){.topbar-actions{gap:6px}.topbar .btn-sm{padding:0 11px;font-size:13.5px;min-height:40px}}
+.j-carnet{position:relative;width:100%;max-width:300px;aspect-ratio:900/1420;margin:0 auto;border-radius:22px;background:linear-gradient(180deg,#FFFFFF 0%,#FFFFFF 38%,#DCEBFF 72%,#89B4F8 100%);box-shadow:0 18px 42px -12px rgba(6,21,54,.38),0 0 0 1.5px rgba(36,82,200,.18);overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;user-select:none;font-family:var(--body)}
+.j-carnet-wm{position:absolute;top:24%;left:50%;transform:translateX(-50%);width:76%;opacity:.075;pointer-events:none;filter:grayscale(20%)}
+.j-carnet-top{position:relative;z-index:2;padding:16px 14px 4px;display:flex;flex-direction:column;align-items:center}
+.j-carnet-logo{width:118px;height:auto;display:block;filter:drop-shadow(0 2px 4px rgba(6,21,54,.1))}
+.j-carnet-pic{position:relative;z-index:2;width:48%;aspect-ratio:1/1;border-radius:50%;border:5px solid #fff;box-shadow:0 8px 22px rgba(10,33,88,.22),0 0 0 2px rgba(36,82,200,.22);overflow:hidden;background:#E8F1FF;margin-top:6px;display:flex;align-items:center;justify-content:center}
+.j-carnet-pic img{width:100%;height:100%;object-fit:cover;display:block}
+.j-carnet-info{position:relative;z-index:2;padding:10px 14px 4px;width:100%;display:flex;flex-direction:column;align-items:center;gap:2px}
+.j-carnet-rol{font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#14387F}
+.j-carnet-nom{font-family:var(--display);font-weight:900;font-size:clamp(21px,4.5vw,26px);line-height:1.02;letter-spacing:.02em;text-transform:uppercase;color:#081F5C;margin-top:2px;word-break:break-word}
+.j-carnet-ci{font-size:13.5px;font-weight:700;color:#123478;letter-spacing:.03em;margin-top:2px}
+.j-carnet-foot{position:relative;z-index:2;margin-top:auto;width:100%;padding:22px 16px 15px;background:linear-gradient(165deg,#0F56C8 0%,#08358A 100%);border-top-left-radius:50% 24px;border-top-right-radius:50% 24px;display:flex;align-items:center;gap:12px;color:#fff;text-align:left;box-shadow:0 -4px 16px rgba(8,53,138,.22)}
+.j-carnet-qr{width:68px;height:68px;border-radius:10px;background:#fff;padding:4px;flex:0 0 auto;box-shadow:0 4px 10px rgba(0,0,0,.22)}
+.j-carnet-qr img{width:100%;height:100%;display:block;object-fit:contain}
+.j-carnet-ftxt{flex:1 1 auto;min-width:0;text-align:center;line-height:1.22}
+.j-carnet-ftxt b{display:block;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff}
+.j-carnet-ftxt span{display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#CFE2FF;margin-top:2px}
+.j-mockup-wrap{position:relative;width:100%;max-width:360px;margin:0 auto;border-radius:18px;overflow:hidden;box-shadow:0 18px 40px -14px rgba(6,21,54,.4);background:#0A1B3F;user-select:none}
+.j-mockup-bg{width:100%;height:auto;display:block}
+.j-mockup-slot{position:absolute;overflow:hidden;border-radius:5px;box-shadow:0 2px 6px rgba(0,0,0,.28)}
+.j-mockup-slot .j-carnet{width:300px;max-width:none;height:473px;aspect-ratio:auto;border-radius:14px;box-shadow:none;transform-origin:top left}
+.j-mockup-gloss{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.26) 0%,rgba(255,255,255,0) 45%,rgba(255,255,255,.08) 100%);pointer-events:none;border-radius:5px}
 
 </style>
 </head>
@@ -1059,7 +1080,7 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 <button type="button" class="editfab hide" id="fab-edit">Editar página</button>
 </div>
 <script src="js/firebase-config.js"></script>
-<script type="module" src="js/app.js?v=32"></script>
-<script type="module" src="js/fe.js?v=32"></script>
+<script type="module" src="js/app.js?v=34"></script>
+<script type="module" src="js/fe.js?v=34"></script>
 </body>
 </html>
