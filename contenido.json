@@ -13,7 +13,17 @@
    "d": ""
   }
  ],
- "posts": [],
+ "posts": [
+  {
+   "id": "doblete-amor-2026",
+   "t": "¡Los dobletes no siempre son de catástrofes, esta vez venimos con uno de puro AMOR y CONSOLACIÓN! ❤️🔥✨",
+   "x": "Este sábado 31 de octubre nos activamos para caminar juntos en la misión, llevando esperanza, sonrisas y el amor de Cristo a donde más se necesita. 🤝🔥 Porque cuando caminamos unidos, ¡cada gesto transforma vidas!\n\n📍 Ruta: Metro Nuevo Circo ➡️ Av. Bolívar ➡️ Parque Los Caobos.\n📅 Fecha: Sábado, 31 de octubre.\n⏰ Hora: 8:00 a. m.\n\n¡Es hora de salir al encuentro y ser testigos del amor! 👟✝️💛\n\nY tú... ¿cuál será doblete de amor?",
+   "fecha": "2026-10-12T23:35:00.000Z",
+   "foto": "img/caminata-misionera-2026.png",
+   "video": "img/caminata-misionera-2026.mp4",
+   "introCoverMs": 2000
+  }
+ ],
  "galeria": [
   {
    "url": "img/subidas/convivencia-2026-1.jpg",
@@ -32,7 +42,7 @@
    "cap": "Todos juntos con la camisa de San José Allamano"
   }
  ],
- "actualizado": "2026-10-10T15:46:56.000Z",
+ "actualizado": "2026-10-13T03:50:00.000Z",
  "testimonios": [],
  "orden": [
   "img/subidas/convivencia-2026-1.jpg",

@@ -418,18 +418,159 @@ $('#pennants').addEventListener('click', (e) => {
   if (el.animate) el.animate(reduced() ? [{ opacity: .4 }, { opacity: 1 }] : [{ clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)' }], { duration: reduced() ? 200 : 300, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' });
 });
 function fmtF(iso) { const d = new Date(iso); return isNaN(d.getTime()) ? '' : d.getDate() + ' de ' + MESES[d.getMonth()] + ' de ' + d.getFullYear(); }
-function mediaHtml(p) {
+const DEFAULT_POSTS = [
+  {
+    id: 'doblete-amor-2026',
+    t: '¡Los dobletes no siempre son de catástrofes, esta vez venimos con uno de puro AMOR y CONSOLACIÓN! ❤️🔥✨',
+    x: 'Este sábado 31 de octubre nos activamos para caminar juntos en la misión, llevando esperanza, sonrisas y el amor de Cristo a donde más se necesita. 🤝🔥 Porque cuando caminamos unidos, ¡cada gesto transforma vidas!\n\n📍 Ruta: Metro Nuevo Circo ➡️ Av. Bolívar ➡️ Parque Los Caobos.\n📅 Fecha: Sábado, 31 de octubre.\n⏰ Hora: 8:00 a. m.\n\n¡Es hora de salir al encuentro y ser testigos del amor! 👟✝️💛\n\nY tú... ¿cuál será doblete de amor?',
+    fecha: '2026-10-12T23:35:00.000Z',
+    foto: 'img/caminata-misionera-2026.png',
+    video: 'img/caminata-misionera-2026.mp4',
+    introCoverMs: 2000
+  }
+];
+function getPostsList(src = cfg) {
+  const custom = ((src && src.posts) || []).filter((p) => p && (p.t || p.x));
+  const hiddenIds = new Set((src && src.postsOcultos) || []);
+  const seenIds = new Set(custom.map((p) => p.id).filter(Boolean));
+  const defaults = DEFAULT_POSTS.filter((d) => !hiddenIds.has(d.id) && !seenIds.has(d.id));
+  return custom.concat(defaults);
+}
+function mediaHtml(p, idx) {
   const yt = p.video && String(p.video).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([\w-]{11})/);
   if (yt) return `<div class="post-media"><iframe class="yt" loading="lazy" src="https://www.youtube-nocookie.com/embed/${yt[1]}" title="${esc(p.t)}" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>`;
-  if (p.video) return `<div class="post-media"><video controls preload="metadata" playsinline src="${esc(p.video)}"></video></div>`;
+  if (p.video && p.foto) {
+    const delay = p.introCoverMs || 2000;
+    return `<div class="post-media is-reel" data-post-media="${idx}" data-intro-ms="${delay}">
+      <div class="post-intro-cover" data-intro-cover="${idx}" title="Toca para ver el video con sonido">
+        <img src="${esc(p.foto)}" alt="${esc(p.t)}">
+      </div>
+      <span class="post-intro-badge" data-intro-badge="${idx}">🖼️ Portada · el video inicia en 2 s…</span>
+      <button type="button" class="post-sound-btn" data-toggle-post-sound="${idx}">🔇 Activar sonido</button>
+      <video controls preload="auto" playsinline muted loop src="${esc(p.video)}" data-post-video="${idx}"></video>
+    </div>`;
+  }
+  if (p.video) return `<div class="post-media is-reel"><video controls preload="metadata" playsinline src="${esc(p.video)}" data-post-video="${idx}"></video></div>`;
   if (p.foto) return `<div class="post-media"><img class="photo" loading="lazy" src="${esc(p.foto)}" alt="${esc(p.t)}"></div>`;
   return '';
 }
+let postMediaObserver = null;
+function setupPostVideos() {
+  if (postMediaObserver) { try { postMediaObserver.disconnect(); } catch (e) {} postMediaObserver = null; }
+  const boxes = $$('[data-post-media]');
+  if (!boxes.length) return;
+  const triggerIntro = (box) => {
+    if (box.dataset.introStarted) return;
+    box.dataset.introStarted = '1';
+    const ms = parseInt(box.dataset.introMs || '2000', 10) || 2000;
+    const cover = box.querySelector('[data-intro-cover]');
+    const badge = box.querySelector('[data-intro-badge]');
+    const vid = box.querySelector('video');
+    setTimeout(() => {
+      if (cover) cover.classList.add('is-hidden');
+      if (badge) { badge.style.opacity = '0'; setTimeout(() => { if (badge) badge.style.display = 'none'; }, 420); }
+      if (vid && vid.paused) vid.play().catch(() => {});
+    }, ms);
+  };
+  if ('IntersectionObserver' in globalThis) {
+    postMediaObserver = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        const vid = en.target.querySelector('video');
+        if (en.isIntersecting) {
+          triggerIntro(en.target);
+          if (en.target.dataset.introStarted && en.target.querySelector('.post-intro-cover.is-hidden') && vid && vid.paused) {
+            vid.play().catch(() => {});
+          }
+        } else if (vid && !vid.paused) {
+          vid.pause();
+        }
+      });
+    }, { threshold: 0.25 });
+    boxes.forEach((b) => postMediaObserver.observe(b));
+  } else {
+    boxes.forEach(triggerIntro);
+  }
+}
+async function sharePostWhatsApp(idx, btnEl) {
+  const list = getPostsList();
+  const p = list[idx];
+  if (!p) return;
+  const fullText = [p.t, p.x].filter((s) => String(s || '').trim()).join('\n\n');
+  const origHtml = btnEl ? btnEl.innerHTML : '';
+  if (btnEl) {
+    btnEl.disabled = true;
+    btnEl.innerHTML = '<span>⏳ Preparando video y texto…</span>';
+  }
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(fullText).catch(() => {});
+    }
+  } catch (e) {}
+
+  /* Cuando se comparte, solo se comparte el archivo de video (no la imagen de portada de 2 s) junto con todo el texto */
+  const isLocalVideo = p.video && !/^(https?:)?\/\/(?:www\.)?(?:youtube\.com|youtu\.be)/i.test(p.video);
+  if (isLocalVideo && navigator.share && navigator.canShare) {
+    try {
+      const resp = await fetch(p.video);
+      if (resp.ok) {
+        const blob = await resp.blob();
+        const file = new File([blob], 'Doblete-de-Amor-JUMA.mp4', { type: blob.type || 'video/mp4' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: p.t || 'Noticia JUMA',
+            text: fullText
+          });
+          if (btnEl) {
+            btnEl.disabled = false;
+            btnEl.innerHTML = '<span>✔ ¡Video y texto listos!</span>';
+            setTimeout(() => { btnEl.innerHTML = origHtml; }, 3000);
+          }
+          return;
+        }
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') {
+        if (btnEl) { btnEl.disabled = false; btnEl.innerHTML = origHtml; }
+        return;
+      }
+    }
+  }
+
+  /* Respaldo directo a WhatsApp con el texto completo y enlace directo únicamente al video */
+  const videoAbsUrl = p.video ? new URL(p.video, location.href).href : location.href;
+  const waMsg = fullText + (p.video ? '\n\n🎥 Video: ' + videoAbsUrl : '');
+  window.open('https://wa.me/?text=' + encodeURIComponent(waMsg), '_blank', 'noopener');
+  if (btnEl) {
+    btnEl.disabled = false;
+    btnEl.innerHTML = '<span>✔ Abriendo WhatsApp…</span>';
+    setTimeout(() => { btnEl.innerHTML = origHtml; }, 3000);
+  }
+}
 function renderPosts() {
-  const list = (cfg.posts || []).filter((p) => p && (p.t || p.x));
+  const list = getPostsList();
   $('#novedades').classList.toggle('hide', !list.length);
   $('#nav-nov').classList.toggle('hide', !list.length);
-  $('#posts').innerHTML = list.map((p) => `<article class="post">${mediaHtml(p)}<div class="post-body"><time>${esc(fmtF(p.fecha))}</time><h3>${esc(p.t)}</h3><p>${esc(p.x)}</p></div></article>`).join('');
+  $('#posts').innerHTML = list.map((p, idx) => {
+    const hasMore = !!String(p.x || '').trim();
+    return `<article class="post">
+      ${mediaHtml(p, idx)}
+      <div class="post-body">
+        ${p.fecha ? `<time>📅 ${esc(fmtF(p.fecha))}</time>` : ''}
+        <p class="post-lead">${esc(p.t)}</p>
+        ${hasMore ? `<div class="post-more-wrap">
+          <button type="button" class="post-more-btn" data-toggle-post-more="${idx}" aria-expanded="false">Ver más ▾</button>
+          <div class="post-more-txt hide" id="post-more-${idx}">${esc(p.x)}</div>
+        </div>` : ''}
+        <div class="post-actions">
+          <button type="button" class="btn-wa-share" data-share-post="${idx}">
+            <span>📲 Compartir por WhatsApp</span>
+          </button>
+        </div>
+      </div>
+    </article>`;
+  }).join('');
+  setupPostVideos();
 }
 /* Fotos fijas de la galería: se pueden ocultar o cambiar su pie desde el editor. */
 const GAL_FIJA = Array.from(document.querySelectorAll('#galeria figure.gal')).filter((f) => !f.closest('#gal-extra')).map((f) => {
@@ -926,6 +1067,54 @@ modalRoot.addEventListener('click', async (e) => {
   if (e.target.closest('[data-dl]')) downloadPlanillaHtml(form.d);
 });
 document.addEventListener('click', (e) => {
+  const moreBtn = e.target.closest('[data-toggle-post-more]');
+  if (moreBtn) {
+    e.preventDefault();
+    const idx = moreBtn.dataset.togglePostMore;
+    const txtEl = $('#post-more-' + idx);
+    if (txtEl) {
+      const hidden = txtEl.classList.toggle('hide');
+      moreBtn.setAttribute('aria-expanded', String(!hidden));
+      moreBtn.textContent = hidden ? 'Ver más ▾' : 'Ver menos ▴';
+    }
+    return;
+  }
+  const shareBtn = e.target.closest('[data-share-post]');
+  if (shareBtn) {
+    e.preventDefault();
+    sharePostWhatsApp(+shareBtn.dataset.sharePost, shareBtn);
+    return;
+  }
+  const sndBtn = e.target.closest('[data-toggle-post-sound]');
+  if (sndBtn) {
+    e.preventDefault();
+    const idx = sndBtn.dataset.togglePostSound;
+    const box = $(`[data-post-media="${idx}"]`);
+    const vid = box ? box.querySelector('video') : null;
+    const cover = box ? box.querySelector('[data-intro-cover]') : null;
+    if (cover) cover.classList.add('is-hidden');
+    if (vid) {
+      vid.muted = !vid.muted;
+      if (vid.paused) vid.play().catch(() => {});
+      sndBtn.textContent = vid.muted ? '🔇 Activar sonido' : '🔊 Con sonido';
+    }
+    return;
+  }
+  const introCov = e.target.closest('[data-intro-cover]');
+  if (introCov) {
+    e.preventDefault();
+    const idx = introCov.dataset.introCover;
+    const box = $(`[data-post-media="${idx}"]`);
+    const vid = box ? box.querySelector('video') : null;
+    const snd = box ? box.querySelector('[data-toggle-post-sound]') : null;
+    introCov.classList.add('is-hidden');
+    if (vid) {
+      vid.muted = false;
+      vid.play().catch(() => {});
+      if (snd) snd.textContent = '🔊 Con sonido';
+    }
+    return;
+  }
   if (e.target.closest('[data-dl-ics]')) {
     e.preventDefault();
     downloadIcsCalendar();
@@ -1988,6 +2177,7 @@ function showFab() { $('#fab-edit').classList.remove('hide'); }
 async function openEditor() {
   if (ghToken()) { try { const f = await ghGet('contenido.json'); if (f && f.content) { const c = JSON.parse(dec64(f.content)); if (String(c.actualizado || '') >= String(pub.actualizado || '')) pub = c; } } catch (e) {} }
   dr = clone(pickDraft() || cfg || pub);
+  dr.posts = getPostsList(dr);
   edErr = ''; edOk = ''; draftWarn = false;
   if (!qrTema) qrTema = defaultTemaDelDia(qrDate);
   openModal(editorHtml());

@@ -329,15 +329,29 @@ details[open] > summary .pd-ic::after{transform:translate(-50%,-50%) rotate(0deg
 .progress .on span{color:var(--ink)}
 .progress .ok i{background:var(--c3)}
 
-/* ===== novedades ===== */
-.posts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:56px}
-.post{display:flex;flex-direction:column;border-radius:16px;overflow:hidden;background:#fff;box-shadow:var(--shadow)}
-.post-media{position:relative;aspect-ratio:16 / 10;background:var(--cloth)}
-.post-media video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
-.post-body{padding:24px 26px 28px}
-.post-body time{display:block;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--royal)}
-.post-body h3{margin:8px 0 0;font-family:var(--display);font-weight:800;font-size:clamp(28px,2.6vw,36px);line-height:.98;text-transform:uppercase}
-.post-body p{margin:12px 0 0;font-size:17px;line-height:1.65;color:var(--muted);white-space:pre-line;text-wrap:pretty}
+/* ===== novedades / noticias ===== */
+.posts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),440px));justify-content:center;gap:28px;margin-top:44px}
+.post{display:flex;flex-direction:column;border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 24px 60px -20px rgba(6,21,54,.22);border:1.5px solid var(--line)}
+.post-media{position:relative;aspect-ratio:16 / 10;background:#050D24;overflow:hidden}
+.post-media.is-reel{aspect-ratio:9 / 15.2;max-height:590px}
+.post-media video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#050D24;z-index:1}
+.post-intro-cover{position:absolute;inset:0;z-index:3;background:#050D24;display:flex;align-items:center;justify-content:center;transition:opacity 550ms cubic-bezier(0.22,1,0.36,1),visibility 550ms ease;cursor:pointer}
+.post-intro-cover img{width:100%;height:100%;object-fit:contain;display:block}
+.post-intro-cover.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+.post-intro-badge{position:absolute;top:14px;left:14px;z-index:4;padding:6px 12px;border-radius:999px;background:rgba(6,21,54,.82);backdrop-filter:blur(8px);color:#fff;font-size:12.5px;font-weight:800;letter-spacing:.04em;display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(142,201,255,.4);pointer-events:none;transition:opacity 400ms ease}
+.post-sound-btn{position:absolute;top:14px;right:14px;z-index:4;min-height:38px;padding:0 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,.45);background:rgba(6,21,54,.82);backdrop-filter:blur(8px);color:#fff;font-size:13px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+.post-body{padding:20px 22px 24px;display:flex;flex-direction:column;gap:8px}
+.post-body time{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--royal)}
+.post-body h3{margin:4px 0 0;font-family:var(--display);font-weight:800;font-size:clamp(26px,2.4vw,32px);line-height:1;text-transform:uppercase}
+.post-lead{margin:4px 0 0;font-size:17.5px;line-height:1.45;font-weight:800;color:var(--ink);text-wrap:pretty}
+.post-more-wrap{margin-top:2px}
+.post-more-txt{margin:10px 0 0;padding:14px 16px;border-radius:14px;background:var(--paper);border:1px solid var(--line);font-size:15.5px;line-height:1.65;color:var(--ink);white-space:pre-line;text-wrap:pretty;animation:fade 220ms ease both}
+.post-more-btn{margin-top:4px;padding:6px 14px;border-radius:999px;border:0;background:var(--mist);color:var(--royal);font-size:14px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background-color 160ms ease}
+.post-more-btn:hover{background:#DCE7F8}
+.post-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;padding-top:14px;border-top:1px solid var(--mist)}
+.btn-wa-share{flex:1 1 auto;min-height:46px;padding:0 18px;border-radius:12px;border:0;background:#17824A;color:#fff;font-size:15px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 10px 24px -8px rgba(23,130,74,.55);transition:transform 150ms ease,filter 150ms ease}
+.btn-wa-share:hover{filter:brightness(1.06)}
+.btn-wa-share:active{transform:scale(.98)}
 
 /* ===== modo edición (solo para quien puede editar) ===== */
 .editfab{position:fixed;right:16px;bottom:16px;z-index:40;min-height:52px;padding:0 22px;border:0;border-radius:999px;background:var(--navy);color:#fff;font-weight:700;font-size:16px;box-shadow:0 14px 30px -10px rgba(0,0,0,.55);display:inline-flex;align-items:center;gap:10px;transition:transform 160ms var(--ease-out)}
@@ -484,7 +498,7 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 <a class="navlink" href="#formacion">Formación</a>
 <a class="navlink" href="#fe">Oración</a>
 <a class="navlink" href="#consolata">Consolata</a>
-<a class="navlink hide" id="nav-nov" href="#novedades">Novedades</a>
+<a class="navlink" id="nav-nov" href="#novedades">Noticias</a>
 <a class="navlink" href="#galeria">Galería</a>
 </nav>
 <div class="topbar-actions">
@@ -511,6 +525,7 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 <div class="hero-actions rise" style="animation-delay: 640ms">
 <button type="button" class="btn btn-white" data-open-form>Quiero ser parte</button>
 <a class="link-lt" href="#domingos">Ver los próximos domingos</a>
+<a class="link-lt" href="#novedades">📰 Noticias</a>
 </div>
 <div class="hero-chips rise" style="animation-delay: 720ms"><span>Domingos de encuentro</span><span>Formación de 5 años</span><span>Misión en Duaca</span></div>
 <nav class="hero-links rise" style="animation-delay: 800ms" aria-label="Redes de JUMA"><a href="https://www.instagram.com/juma_duaca/" target="_blank" rel="noopener">Instagram</a><a href="https://www.tiktok.com/@juma.duaca" target="_blank" rel="noopener">TikTok</a><a href="https://whatsapp.com/channel/0029VaqbBJ972WTqOwLsLL0u" target="_blank" rel="noopener">Canal de WhatsApp</a></nav>
@@ -837,12 +852,12 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 </div>
 </section>
 
-<!-- ============ NOVEDADES (blog) ============ -->
-<section id="novedades" class="sec hide" style="background: var(--paper)">
+<!-- ============ NOTICIAS Y NOVEDADES (blog) ============ -->
+<section id="novedades" class="sec" style="background: var(--paper)">
 <div class="wrap">
 <div class="split">
-<h2 class="h-display h-xl">Novedades de JUMA</h2>
-<p class="body">Lo último de nuestros encuentros, misiones y actividades.</p>
+<h2 class="h-display h-xl">Noticias de JUMA</h2>
+<p class="body">Lo último de nuestros encuentros, caminatas misioneras y actividades.</p>
 </div>
 <div class="posts" id="posts"></div>
 </div>
@@ -1044,7 +1059,7 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 <button type="button" class="editfab hide" id="fab-edit">Editar página</button>
 </div>
 <script src="js/firebase-config.js"></script>
-<script type="module" src="js/app.js?v=23"></script>
-<script type="module" src="js/fe.js?v=23"></script>
+<script type="module" src="js/app.js?v=24"></script>
+<script type="module" src="js/fe.js?v=24"></script>
 </body>
 </html>
