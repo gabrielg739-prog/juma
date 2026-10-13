@@ -313,12 +313,17 @@ function checkUpcomingReminders(forceBanner = false) {
   banner.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px"><b style="color:var(--sky);font-size:14px">🔔 Recordatorio JUMA · ${esc(labelWhen)}</b><button type="button" aria-label="Cerrar recordatorio" style="background:none;border:0;color:#fff;cursor:pointer;font-size:15px;line-height:1;padding:0 2px" onclick="this.closest('#juma-rem-banner').remove()">✕</button></div><p style="margin:5px 0 10px;color:#E8F1FF"><b>${esc(target.title)}</b><br><span style="font-size:12.5px;color:var(--muted-lt)">${esc(target.badge)} · ${esc(hora())} · ${esc(lugar())}</span></p><div style="display:flex;flex-wrap:wrap;gap:8px"><a class="btn btn-blue btn-sm" style="padding:6px 12px;font-size:12px" target="_blank" rel="noopener" href="${esc(gUrl)}">📅 Abrir en Google Calendar</a><button type="button" class="btn btn-outline btn-sm" style="padding:6px 12px;font-size:12px;color:#fff;border-color:rgba(255,255,255,.35)" data-dl-ics>📲 Guardar todo (.ics)</button></div>`;
 }
 
+function canUseGoogleCalendar() {
+  return !!(typeof currentUser !== 'undefined' && currentUser) || !!(typeof myProfile !== 'undefined' && myProfile);
+}
+
 function renderDomingos() {
   $('#f-hora').textContent = hora(); $('#f-lugar').textContent = lugar();
   const all = encuentrosProgramados(cfg);
   const visible = showAllEnc ? all : all.slice(0, 4);
+  const canCal = canUseGoogleCalendar();
   $('#tags').innerHTML = visible.map((s) => {
-    const canAgendar = s.tema !== 'Sin reunión';
+    const canAgendar = canCal && s.tema !== 'Sin reunión';
     const gUrl = canAgendar ? googleCalUrl({
       title: `JUMA Duaca · ${s.tema}`,
       dateIso: s.key,
@@ -338,46 +343,22 @@ function renderDomingos() {
   } else if (moreBtn) {
     moreBtn.remove();
   }
-  const factsEl = $('dl.facts');
-  if (factsEl) {
-    let syncBar = $('#cal-sync-bar');
-    if (!syncBar) {
-      syncBar = document.createElement('div');
-      syncBar.id = 'cal-sync-bar';
-      syncBar.style.cssText = 'margin-top:28px;padding:18px 22px;border-radius:16px;background:rgba(255,255,255,.08);border:1px solid var(--line-dk);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px';
-      factsEl.insertAdjacentElement('afterend', syncBar);
-    }
-    const nextMeet = all.find((x) => x.tema !== 'Sin reunión');
-    const nextGUrl = nextMeet ? googleCalUrl({
-      title: `JUMA Duaca · ${nextMeet.tema}`,
-      dateIso: nextMeet.key,
-      desc: `Encuentro de formación de JUMA Duaca (${nextMeet.dia} de ${nextMeet.mes}). Hora: ${hora()} · Lugar: ${lugar()}`
-    }) : '';
-    const remOn = remindersEnabled();
-    syncBar.innerHTML = `
-      <div style="flex:1 1 260px">
-        <b style="display:block;font-size:16px;color:#fff">📅 Vincula tus actividades con Google Calendar y activa recordatorios</b>
-        <p style="margin:4px 0 0;font-size:13.5px;color:var(--muted-lt)">Agrega cada encuentro a tu Google Calendar, sincroniza los 3 meses con alarmas en tu teléfono o activa avisos automáticos.</p>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-        ${nextGUrl ? `<a class="btn btn-white btn-sm" target="_blank" rel="noopener" href="${esc(nextGUrl)}">📅 Agendar próximo encuentro en Google Calendar</a>` : ''}
-        <button type="button" class="btn btn-outline btn-sm" style="color:#fff;border-color:rgba(255,255,255,.4)" data-dl-ics>📲 Sincronizar calendario 3 meses (.ics con alarmas)</button>
-        <button type="button" class="btn ${remOn ? 'btn-blue' : 'btn-outline'} btn-sm" style="${remOn ? '' : 'color:#fff;border-color:rgba(255,255,255,.4)'}" data-toggle-rem>${remOn ? '🔔 Recordatorio activo en este dispositivo' : '🔔 Activar recordatorio en mi teléfono'}</button>
-      </div>`;
-  }
+  const oldSyncBar = $('#cal-sync-bar');
+  if (oldSyncBar) oldSyncBar.remove();
 }
 
 function renderActs() {
   const a = (cfg.actividades || []).filter((x) => x && x.t);
   $('#acts-wrap').classList.toggle('hide', !a.length);
   const visible = showAllActs ? a : a.slice(0, 4);
+  const canCal = canUseGoogleCalendar();
   $('#acts').innerHTML = visible.map((x) => {
-    const gUrl = googleCalUrl({
+    const gUrl = canCal ? googleCalUrl({
       title: `JUMA Duaca · ${x.t}`,
       dateIso: x.f || '',
       desc: `${x.d ? x.d + '\n' : ''}Actividad de la Juventud Misionera Allamaniana de Duaca (JUMA Duaca).\nFecha: ${x.f || 'Por confirmar'}\nLugar: ${lugar()}`
-    });
-    return `<li><b>${esc(x.t)}</b><span class="f">${esc(x.f || '')}</span><p>${esc(x.d || '')}</p><div style="margin-top:14px"><a class="btn btn-outline btn-sm" style="padding:6px 12px;font-size:12px;color:var(--sky);border-color:rgba(142,201,255,.4)" target="_blank" rel="noopener" href="${esc(gUrl)}">📅 Agendar en Google Calendar</a></div></li>`;
+    }) : '';
+    return `<li><b>${esc(x.t)}</b><span class="f">${esc(x.f || '')}</span><p>${esc(x.d || '')}</p>${canCal ? `<div style="margin-top:14px"><a class="btn btn-outline btn-sm" style="padding:6px 12px;font-size:12px;color:var(--sky);border-color:rgba(142,201,255,.4)" target="_blank" rel="noopener" href="${esc(gUrl)}">📅 Agendar en Google Calendar</a></div>` : ''}</li>`;
   }).join('');
   let moreActBtn = $('#btn-more-acts');
   if (a.length > 4) {
@@ -533,30 +514,81 @@ function mediaHtml(p, idx) {
   return '';
 }
 let postMediaObserver = null;
+let audioGestureBound = false;
+
+function stopAndMuteVideo(box) {
+  const vid = box ? box.querySelector('video') : null;
+  const sndBtn = box ? box.querySelector('[data-toggle-post-sound]') : null;
+  if (!vid) return;
+  vid.muted = true;
+  if (!vid.paused) {
+    try { vid.pause(); } catch (e) {}
+  }
+  if (sndBtn) sndBtn.textContent = '🔇 Activar sonido';
+}
+
 function playWithSound(box) {
   const vid = box ? box.querySelector('video') : null;
   const sndBtn = box ? box.querySelector('[data-toggle-post-sound]') : null;
   if (!vid || !vid.getAttribute('src')) return;
+  /* Silencia y pausa cualquier otro video para que solo suene el que se está viendo */
+  $$('[data-post-media]').forEach((other) => {
+    if (other !== box) stopAndMuteVideo(other);
+  });
   vid.muted = false;
   vid.volume = 1;
   if (sndBtn) sndBtn.textContent = '🔊 Con sonido';
   vid.play().then(() => {
+    if (box.dataset.inView !== '1') {
+      stopAndMuteVideo(box);
+      return;
+    }
     vid.muted = false;
+    vid.volume = 1;
     if (sndBtn) sndBtn.textContent = '🔊 Con sonido';
   }).catch(() => {
-    /* Si el navegador aún espera el primer toque en pantalla para liberar el audio, empieza a reproducir y activa el audio apenas el usuario toque o deslice */
+    /* Si el navegador aún no ha recibido el primer toque en la página, inicia el video de inmediato y enciende el audio al primer toque o deslizamiento */
+    if (box.dataset.inView !== '1') return;
     vid.muted = true;
     vid.play().catch(() => {});
-    const unlock = () => {
-      vid.muted = false;
-      vid.volume = 1;
-      if (sndBtn) sndBtn.textContent = '🔊 Con sonido';
-      if (box.dataset.inView === '1' && vid.paused) vid.play().catch(() => {});
-      ['pointerdown', 'touchstart', 'click', 'keydown'].forEach((ev) => document.removeEventListener(ev, unlock, true));
-    };
-    ['pointerdown', 'touchstart', 'click', 'keydown'].forEach((ev) => document.addEventListener(ev, unlock, { capture: true, passive: true, once: true }));
   });
 }
+
+function bindGlobalAudioUnlock() {
+  if (audioGestureBound) return;
+  audioGestureBound = true;
+  const onUserGesture = () => {
+    $$('[data-post-media]').forEach((b) => {
+      const vid = b.querySelector('video');
+      const sndBtn = b.querySelector('[data-toggle-post-sound]');
+      if (!vid || !vid.getAttribute('src')) return;
+      if (b.dataset.inView === '1') {
+        if (b.dataset.userMuted !== '1') {
+          vid.muted = false;
+          vid.volume = 1;
+          if (sndBtn) sndBtn.textContent = '🔊 Con sonido';
+        }
+        if (vid.paused) vid.play().catch(() => {});
+      } else if (!vid.dataset.unlocked) {
+        /* Desbloquea el canal de audio del elemento de video en segundo plano durante el primer toque del usuario */
+        vid.dataset.unlocked = '1';
+      }
+    });
+  };
+  ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown'].forEach((ev) => {
+    document.addEventListener(ev, onUserGesture, { capture: true, passive: true });
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      $$('[data-post-media]').forEach((b) => stopAndMuteVideo(b));
+    } else {
+      $$('[data-post-media]').forEach((b) => {
+        if (b.dataset.inView === '1') playWithSound(b);
+      });
+    }
+  });
+}
+
 function preloadPostVideoFiles(list) {
   (list || []).forEach((p) => {
     const v = p && p.video;
@@ -577,6 +609,7 @@ function preloadPostVideoFiles(list) {
   });
 }
 function setupPostVideos() {
+  bindGlobalAudioUnlock();
   if (postMediaObserver) { try { postMediaObserver.disconnect(); } catch (e) {} postMediaObserver = null; }
   const boxes = $$('[data-post-media]');
   if (!boxes.length) return;
@@ -595,16 +628,19 @@ function setupPostVideos() {
   if ('IntersectionObserver' in globalThis) {
     postMediaObserver = new IntersectionObserver((entries) => {
       entries.forEach((en) => {
-        const vid = en.target.querySelector('video');
+        const box = en.target;
+        const vid = box.querySelector('video');
         if (!vid) return;
-        en.target.dataset.inView = en.isIntersecting ? '1' : '0';
-        if (en.isIntersecting) {
-          playWithSound(en.target);
-        } else if (!vid.paused) {
-          vid.pause();
+        const visibleNow = en.isIntersecting && en.intersectionRatio >= 0.08;
+        box.dataset.inView = visibleNow ? '1' : '0';
+        if (visibleNow) {
+          box.dataset.userMuted = '0';
+          playWithSound(box);
+        } else {
+          stopAndMuteVideo(box);
         }
       });
-    }, { threshold: 0.25 });
+    }, { threshold: [0, 0.08, 0.2, 0.5] });
     boxes.forEach((b) => postMediaObserver.observe(b));
   } else {
     boxes.forEach((b) => { b.dataset.inView = '1'; playWithSound(b); });
@@ -1081,6 +1117,8 @@ function updateAuthUI() {
     if (btnJoin) { btnJoin.textContent = 'Quiero ser parte'; }
     if (footAuth) footAuth.textContent = 'Iniciar sesión';
   }
+  renderDomingos();
+  renderActs();
 }
 
 modalRoot.addEventListener('input', (e) => {
@@ -1198,6 +1236,7 @@ document.addEventListener('click', (e) => {
     if (cover) cover.classList.add('is-hidden');
     if (vid) {
       vid.muted = !vid.muted;
+      if (box) box.dataset.userMuted = vid.muted ? '1' : '0';
       if (vid.paused) vid.play().catch(() => {});
       sndBtn.textContent = vid.muted ? '🔇 Activar sonido' : '🔊 Con sonido';
     }
@@ -1390,22 +1429,7 @@ $('#muro-form').addEventListener('submit', async (e) => {
 
 /* ===================== avisos al teléfono (notificaciones) ===================== */
 function setupPush() {
-  if (!fb || !fb.getToken || !CFG.vapidKey || !('Notification' in window) || !('serviceWorker' in navigator)) return;
-  if ($('.pushbtn')) return;
-  const b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-white pushbtn'; b.textContent = 'Recibir avisos de reuniones en este dispositivo';
-  $('dl.facts').insertAdjacentElement('afterend', b);
-  b.addEventListener('click', async () => {
-    try {
-      const perm = await Notification.requestPermission();
-      if (perm !== 'granted') { b.textContent = 'Los avisos están bloqueados en este navegador'; return; }
-      const reg = await navigator.serviceWorker.ready;
-      const token = await fb.getToken(fb.messaging, { vapidKey: CFG.vapidKey, serviceWorkerRegistration: reg });
-      if (token) {
-        try { if (fb.db) await fb.setDoc(fb.doc(fb.db, 'tokens', token), { creado: fb.serverTimestamp() }); } catch (e) {}
-        b.textContent = 'Avisos activados. Gracias'; b.disabled = true;
-      }
-    } catch (e) { b.textContent = 'No se pudieron activar los avisos'; }
-  });
+  if (!fb || !fb.onMessage || !fb.messaging) return;
   try { fb.onMessage(fb.messaging, (p) => { const n = p.notification || {}; const a = $('#aviso'); a.textContent = (n.title ? n.title + ': ' : '') + (n.body || ''); a.classList.remove('hide'); }); } catch (e) {}
 }
 
