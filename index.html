@@ -90,7 +90,7 @@ caret-color:var(--royal);accent-color:var(--royal);
 .link-lt{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:#fff;font-weight:700;text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:6px}
 
 /* ===== cabecera: la vara de la que cuelga todo ===== */
-.topbar{position:relative;z-index:6;background:#fff;color:var(--ink)}
+.topbar{position:sticky;top:0;z-index:100;background:#fff;color:var(--ink)}
 .aviso{background:var(--royal);color:#fff;text-align:center;padding:10px 16px;font-size:15px;font-weight:700;line-height:1.4}
 .topbar-in{max-width:1320px;margin:0 auto;padding:14px clamp(16px,3vw,32px) 12px;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .brand{position:relative;display:flex;align-items:center;gap:14px;min-height:56px;color:var(--ink);text-decoration:none}
@@ -582,7 +582,17 @@ body.modo-secciones .j-view.view-active { display: block; animation: fadeInView 
 @keyframes fadeInView { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 body.modo-corrido .j-view { display: block!important; }
 
-/* Barra de Navegación Única Superior con soporte móvil */
+/* Barra de Navegación Única Superior Sticky con soporte táctil */
+.topbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  box-shadow: 0 4px 16px rgba(6, 21, 54, 0.07) !important;
+  border-bottom: 1px solid var(--line) !important;
+}
 .navlink.active {
   color: var(--royal) !important;
 }
@@ -592,33 +602,46 @@ body.modo-corrido .j-view { display: block!important; }
 
 @media (max-width: 980px) {
   .topbar-in {
-    flex-wrap: wrap;
-    padding-bottom: 6px;
-    gap: 8px 12px;
+    flex-wrap: wrap !important;
+    padding: 8px 14px 6px !important;
+    gap: 8px 12px !important;
   }
+  .brand { min-height: 44px !important; }
   .navlinks {
     display: flex !important;
-    order: 3;
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 6px 0 2px;
-    gap: 4px 10px;
-    border-top: 1px solid var(--line);
-    scrollbar-width: none;
+    order: 3 !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 6px 2px 4px !important;
+    gap: 6px !important;
+    border-top: 1px solid var(--line) !important;
+    scrollbar-width: none !important;
   }
   .navlinks::-webkit-scrollbar { display: none; }
   .navlink {
-    font-size: 13.5px;
-    padding: 5px 10px;
-    white-space: nowrap;
-    border-radius: 999px;
+    display: inline-flex !important;
+    align-items: center !important;
+    font-size: 13.5px !important;
+    padding: 6px 12px !important;
+    white-space: nowrap !important;
+    border-radius: 999px !important;
+    background: #F1F5F9 !important;
+    color: var(--ink) !important;
   }
   .navlink.active {
-    background: #E8F1FF;
-    color: var(--royal) !important;
+    background: var(--royal) !important;
+    color: #fff !important;
+    box-shadow: 0 3px 10px rgba(36,82,200,.28) !important;
   }
-  .navlink:after { display: none; }
+  .navlink:after { display: none !important; }
+}
+
+@media (max-width: 640px) {
+  .topbar-actions { gap: 6px !important; }
+  .btn-user-pill { padding: 4px 10px 4px 4px !important; font-size: 13px !important; }
+  .topbar-user-photo, .topbar-user-initial { width: 28px !important; height: 28px !important; }
+  .topbar-user-name { max-width: 95px !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px !important; }
 }
 
 /* Pie de navegación de cada sección */
@@ -651,10 +674,106 @@ body.modo-corrido .j-view { display: block!important; }
   .btn-user-pill { padding: 2px 10px 2px 3px; font-size: 12.5px; }
   .topbar-user-photo, .topbar-user-initial { width: 26px; height: 26px; }
   .topbar-user-name { max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .social-dock { bottom: 14px; right: 14px; padding: 5px 8px; }
-  .dock-btn { width: 40px; height: 40px; font-size: 17px; }
+  .social-dock { display: none !important; }
   .subnav-in { gap: 4px; padding: 6px 10px; }
   .subnav-btn { padding: 6px 11px; font-size: 12.5px; }
+}
+
+/* ===== Barra de Navegación estilo Facebook ===== */
+.fb-tabbar {
+  display: flex;
+  align-items: stretch;
+  background: #ffffff;
+  border-top: 1px solid var(--line);
+  box-shadow: 0 3px 12px rgba(6, 21, 54, 0.05);
+  position: relative;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.fb-tabbar::-webkit-scrollbar { display: none; }
+.fb-tab {
+  flex: 1 1 0;
+  min-width: 48px;
+  min-height: 52px;
+  padding: 6px 2px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 0;
+  background: transparent;
+  color: #64748B;
+  cursor: pointer;
+  position: relative;
+  transition: all 160ms var(--ease-out);
+  border-bottom: 3px solid transparent;
+  text-decoration: none;
+}
+.fb-tab:hover {
+  background: rgba(36, 82, 200, 0.04);
+  color: var(--navy);
+}
+.fb-tab.active {
+  color: var(--royal);
+  border-bottom-color: var(--royal);
+}
+.fb-tab-icon {
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.fb-tab-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .01em;
+  white-space: nowrap;
+}
+.fb-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  background: #E11D48;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  min-width: 17px;
+  height: 17px;
+  line-height: 17px;
+  border-radius: 99px;
+  padding: 0 4px;
+  text-align: center;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 5px rgba(225,29,72,.4);
+}
+.fb-tab-user-img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--royal);
+}
+.fb-tab-user-init {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--royal), var(--navy));
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (max-width: 980px) {
+  .navlinks { display: none !important; }
 }
 </style>
 </head>
@@ -696,6 +815,42 @@ body.modo-corrido .j-view { display: block!important; }
 </div>
 </div>
 <div class="rod-wrap"><div class="rod" aria-hidden="true"></div></div>
+<nav class="fb-tabbar" id="fb-tabbar" aria-label="Navegación principal">
+  <button type="button" class="fb-tab active" data-fb-tab="inicio" title="Inicio">
+    <span class="fb-tab-icon">🏠</span>
+    <span class="fb-tab-label">Inicio</span>
+  </button>
+  <button type="button" class="fb-tab" data-fb-tab="comunidad" title="Amigos y Miembros de JUMA">
+    <span class="fb-tab-icon">👥</span>
+    <span class="fb-tab-label">Amigos</span>
+  </button>
+  <button type="button" class="fb-tab" data-fb-action="chat" title="Mensajes y Chat Comunitario">
+    <span class="fb-tab-icon">
+      💬
+      <span class="fb-badge hide" id="fb-badge-chat"></span>
+    </span>
+    <span class="fb-tab-label">Chat</span>
+  </button>
+  <button type="button" class="fb-tab" data-fb-tab="novedades" title="Noticias y Videos de JUMA">
+    <span class="fb-tab-icon">📰</span>
+    <span class="fb-tab-label">Noticias</span>
+  </button>
+  <button type="button" class="fb-tab" data-fb-tab="domingos" title="Eventos y Próximos Encuentros">
+    <span class="fb-tab-icon">📅</span>
+    <span class="fb-tab-label">Eventos</span>
+  </button>
+  <button type="button" class="fb-tab" data-fb-action="notif" title="Notificaciones y Avisos">
+    <span class="fb-tab-icon">
+      🔔
+      <span class="fb-badge hide" id="fb-badge-notif"></span>
+    </span>
+    <span class="fb-tab-label">Avisos</span>
+  </button>
+  <button type="button" class="fb-tab" data-fb-action="profile" id="fb-tab-profile" title="Mi Carnet y Perfil">
+    <span class="fb-tab-icon" id="fb-tab-profile-icon">👤</span>
+    <span class="fb-tab-label" id="fb-tab-profile-label">Perfil</span>
+  </button>
+</nav>
 </header>
 
 
@@ -716,7 +871,7 @@ body.modo-corrido .j-view { display: block!important; }
           <p class="hero-by rise" style="animation-delay: 480ms">San José Allamano</p>
           <p class="hero-sub rise" style="animation-delay: 560ms">Somos el movimiento juvenil de los Misioneros de la Consolata en Duaca. Cada domingo nos reunimos para orar, formarnos y salir a la misión.</p>
           <div class="hero-actions rise" style="animation-delay: 640ms">
-            <button type="button" class="btn btn-white" data-open-form>Quiero ser parte</button>
+            <button type="button" class="btn btn-white" data-open-form id="hero-btn-join">Quiero ser parte</button>
             <a class="link-lt" href="#domingos" data-view-target="domingos">Ver los próximos domingos</a>
             <a class="link-lt" href="#novedades" data-view-target="novedades">📰 Noticias</a>
           </div>
@@ -1295,8 +1450,8 @@ body.modo-corrido .j-view { display: block!important; }
 </div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=48"></script>
-<script type="module" src="js/fe.js?v=48"></script>
+<script type="module" src="js/app.js?v=52"></script>
+<script type="module" src="js/fe.js?v=52"></script>
 <div class="social-dock" id="social-dock"></div>
 </body>
 </html>

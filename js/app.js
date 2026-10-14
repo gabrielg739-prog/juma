@@ -48,7 +48,7 @@ let yearSel = 0;
 let showAllEnc = false;
 let showAllActs = false;
 function renderAll() {
-  renderAviso(); renderDomingos(); renderActs(); renderFormacion(); renderPosts(); renderGalExtra(); renderGalFija(); renderGalOrden(); renderTes();
+  renderAviso(); renderDomingos(); renderActs(); renderFormacion(); renderPosts(); renderGalExtra(); renderGalFija(); renderGalOrden(); renderTes(); renderComunidadView();
 }
 function renderAviso() {
   const el = $('#aviso'); const t = String(cfg.aviso || '').trim();
@@ -1020,6 +1020,14 @@ function summaryRows(src) {
 }
 function validate(st) {
   const d = form.d;
+  if (d.tipoRegistro === 'visitante') {
+    if (!d.foto || !String(d.foto).trim()) return '⚠️ La foto de perfil es obligatoria para tu identificación en la comunidad JUMA. Tómate una foto o sube una de tu galería.';
+    if (!(d.nombres || '').trim() || !(d.apellidos || '').trim()) return 'Escribe tus nombres y apellidos completos.';
+    if (!(d.cedula || '').trim()) return 'Escribe tu número de cédula de identidad.';
+    if (!(d.correo || '').trim() && !(d.celular || '').trim()) return 'Escribe tu correo electrónico o celular de contacto.';
+    if (!currentUser && !form.isUpdate && d.correo && String(d.password || '').length < 6) return 'Crea una contraseña de al menos 6 caracteres para tu acceso.';
+    return '';
+  }
   if (st === 1) {
     if (!d.foto || !String(d.foto).trim()) return '⚠️ La foto de perfil es obligatoria para generar tu carnet misionero. Tómate una foto o elige una de tu galería para continuar.';
     if (!(d.nombres || '').trim() || !(d.apellidos || '').trim()) return 'Escribe tus nombres y apellidos.';
@@ -1184,16 +1192,10 @@ async function saveNewProfilePhoto(url, extraFields = {}) {
 
 function needsMandatoryPhoto(rec) {
   if (!rec) return false;
-  if (isMasterAccount()) return false;
-  const d = rec.datos || {};
-  const em = String(rec.correo || d.correo || (currentUser && currentUser.email) || '').trim().toLowerCase();
-  const nom = String(rec.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')) || '').trim().toLowerCase();
-  if (!em && !nom) return false;
-  const foto = String(rec.foto || d.foto || '').trim();
-  const isTargetUser = /lismar|juli/i.test(nom) || /lismar|juli/i.test(em);
-  if (isTargetUser && !foto) return true;
-  if (!foto && (rec.id || rec.uid || d.nombres)) return true;
-  return false;
+  const isGoogle = currentUser && currentUser.providerData && currentUser.providerData.some((p) => p.providerId === 'google.com');
+  if (isGoogle) return false;
+  const foto = (rec && (rec.foto || (rec.datos && rec.datos.foto))) || '';
+  return !foto || !String(foto).trim();
 }
 
 function forcePhotoModalHtml() {
@@ -1207,7 +1209,7 @@ function forcePhotoModalHtml() {
     foto: previewFoto,
     datos: Object.assign({}, d, { foto: previewFoto, cedula: curCed, sexo: curSexo })
   });
-  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="fp-t"><div class="sheet" style="max-width:620px">${sheetHeadNoClose('Actualización Obligatoria · JUMA Duaca', 'Foto para tu Carnet Misionero', 'fp-t')}<div style="padding:clamp(22px,4vw,36px)">
+  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="fp-t"><div class="sheet" style="max-width:620px">${sheetHead('Carnet Misionero · JUMA Duaca', 'Foto para tu Carnet Misionero', 'fp-t')}<div style="padding:clamp(22px,4vw,36px)">
     <div style="padding:16px 18px;border-radius:14px;background:#FFF8E1;border:2px solid #F5C518;color:#5C4300;margin-bottom:20px;line-height:1.55;font-size:15px">
       <b style="display:block;font-size:16.5px;color:#7A5200;margin-bottom:4px">⚠️ ¡Hola, ${esc(primerNombre)}! Falta tu foto de perfil para tu Carnet</b>
       Como ya estás registrada en <b>JUMA Duaca</b>, necesitamos tu foto de perfil para generar tu <b>Carnet Misionero Digital con Código QR</b>.<br>
@@ -1694,6 +1696,11 @@ async function renderCarnetToCanvas(rec) {
 
 async function downloadCarnetPng(rec, mode = 'carnet', forcedGender = '') {
   const targetRec = rec || myProfile || { datos: form.d, foto: form.d.foto };
+  const rol = userRole(targetRec);
+  if (rol !== 'coordinador' && rol !== 'asesor' && rol !== 'participante') {
+    showToast('Los visitantes y colaboradores no poseen carnet misionero.');
+    return;
+  }
   const info = getCarnetDisplayData(targetRec);
   const slug = info.shortNom.replace(/[^A-Z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'Misionero';
   const carnetCv = await renderCarnetToCanvas(targetRec);
@@ -1748,8 +1755,8 @@ function userRole(rec) {
   if (!rec) return 'participante';
   const em = String(rec.correo || (rec.datos && rec.datos.correo) || '').trim().toLowerCase();
   if (em && isMasterEmail(em)) return 'coordinador';
-  const r = String(rec.rol || (rec.datos && rec.datos.rol) || '').trim().toLowerCase();
-  if (r === 'coordinador' || r === 'asesor' || r === 'participante') return r;
+  const r = String(rec.rol || (rec.datos && rec.datos.rol) || (rec.datos && rec.datos.tipoRegistro) || '').trim().toLowerCase();
+  if (r === 'coordinador' || r === 'asesor' || r === 'participante' || r === 'visitante' || r === 'colaborador') return r;
   const cList = ((cfg && cfg.coordinadoresEmails) || []).map((x) => String(x).toLowerCase());
   if (em && cList.includes(em)) return 'coordinador';
   const aList = ((cfg && cfg.asesoresEmails) || []).map((x) => String(x).toLowerCase());
@@ -1759,12 +1766,16 @@ function userRole(rec) {
 function roleLabel(rol) {
   if (rol === 'coordinador') return 'Coordinador(a)';
   if (rol === 'asesor') return 'Asesor(a)';
+  if (rol === 'visitante') return 'Visitante / Oyente';
+  if (rol === 'colaborador') return 'Colaborador(a)';
   return 'Participante';
 }
 function roleBadgeHtml(rol) {
-  if (rol === 'coordinador') return '<span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12.5px;font-weight:800;background:#E8F1FF;color:#0C2D74;border:1px solid #2452C8">★ Coordinador(a)</span>';
-  if (rol === 'asesor') return '<span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12.5px;font-weight:800;background:#FFF3CD;color:#7A5200;border:1px solid #F5C518">◆ Asesor(a)</span>';
-  return '<span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12.5px;font-weight:800;background:#E4F5EA;color:#14532D;border:1px solid #17824A">● Participante</span>';
+  if (rol === 'coordinador') return '<span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:800;background:#E8F1FF;color:#0C2D74;border:1px solid #2452C8">★ Coordinador(a)</span>';
+  if (rol === 'asesor') return '<span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:800;background:#FFF3CD;color:#7A5200;border:1px solid #F5C518">◆ Asesor(a)</span>';
+  if (rol === 'visitante') return '<span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:800;background:#F1F5F9;color:#334155;border:1px solid #94A3B8">👁 Visitante</span>';
+  if (rol === 'colaborador') return '<span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:800;background:#FDF4FF;color:#86198F;border:1px solid #C084FC">🤝 Colaborador(a)</span>';
+  return '<span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:800;background:#E4F5EA;color:#14532D;border:1px solid #17824A">● Participante</span>';
 }
 function qrPayloadFor(rec) {
   const id = (rec && (rec.uid || rec.id)) || (currentUser && currentUser.uid) || ('juma-' + sha256(String((rec && rec.correo) || 'juma')).slice(0, 16));
@@ -1801,16 +1812,49 @@ function downloadPlanillaHtml(src, recFull) {
 function formHtml() {
   const st = form.step, d = form.d;
   if (form.done) {
+    const isVis = d.tipoRegistro === 'visitante';
+    if (isVis) {
+      return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t">
+        <div class="sheet">
+          ${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', 'Registro de Visitante / Colaborador', 'pl-t')}
+          <div style="padding:clamp(24px,4vw,44px);text-align:center">
+            <div class="u-badge" style="background:#E4F5EA;color:#14532D;margin-bottom:14px">✔ Registro completado con éxito</div>
+            <div style="display:flex;justify-content:center;margin-bottom:14px">
+              ${d.foto ? `<img src="${esc(d.foto)}" alt="" style="width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid var(--royal)">` : ''}
+            </div>
+            <h3 class="h-display h-lg" style="margin:0 0 10px">¡Bienvenido(a) a la comunidad, ${esc((d.nombres || '').trim().split(' ')[0] || 'amigo(a)')}!</h3>
+            <p class="body" style="margin:0 auto 20px;max-width:54ch">Tu registro como <b>${esc(d.categoriaVisitante || 'Visitante / Colaborador')}</b> ha quedado guardado. Ya puedes interactuar en el chat y estar al tanto de las actividades de JUMA Duaca.</p>
+            <div style="display:flex;justify-content:center;gap:12px;margin-top:20px;flex-wrap:wrap">
+              <button type="button" class="btn btn-blue" data-go-profile>Ir a mi perfil</button>
+              <button type="button" class="btn btn-soft" data-open-chat>💬 Abrir Chat</button>
+              <button type="button" class="btn btn-soft" data-close>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
     const wa = waNums();
     const recDone = myProfile || { datos: d, foto: d.foto, correo: d.correo, nombre: ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() };
     return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', 'Registro y Carnet Misionero', 'pl-t')}<div style="padding:clamp(24px,4vw,44px)"><div class="u-badge" style="background:#E4F5EA;color:#14532D;margin-bottom:12px">✔ Cuenta, planilla y carnet listos</div><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px">${d.foto ? `<img src="${esc(d.foto)}" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--royal)">` : ''}<h3 class="h-display h-lg" style="margin:0">¡Bienvenido(a) a JUMA, ${esc((d.nombres || '').trim().split(' ')[0] || 'misionero')}!</h3></div><p class="body" style="margin:0 0 18px;max-width:58ch">${form.saved ? 'Tu registro, tu planilla y tu Carnet Misionero con Código QR ya quedaron guardados en la nube de JUMA. ' : 'Tu planilla y tu Carnet Misionero quedaron guardados. '}Aquí puedes ver cómo queda tu carnet en el mockup y descargarlo en alta calidad:</p>${carnetInteractiveSectionHtml(recDone, 'done')}<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:22px"><button type="button" class="btn btn-blue" data-go-profile>Ir a mi perfil misionero</button>${wa.map((n) => `<a class="btn btn-soft" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${encodeURIComponent(planillaTexto())}">Enviar planilla por WhatsApp (${esc(waLabel(n))})</a>`).join('')}<button type="button" class="btn btn-soft" data-dl>Descargar planilla</button><button type="button" class="btn btn-soft" data-close>Cerrar</button></div></div></div></div>`;
   }
-  const names = ['Cuenta y datos', 'Representante', 'Salud', 'Confirmar'];
-  const prog = names.map((l, i) => `<div class="${i + 1 === st ? 'on' : (i + 1 < st ? 'ok' : '')}"><i aria-hidden="true"></i><span>${l}</span></div>`).join('');
+  const isVisitante = d.tipoRegistro === 'visitante';
+  const names = isVisitante ? ['Visitante / Colaborador'] : ['Cuenta y datos', 'Representante', 'Salud', 'Confirmar'];
+  const prog = isVisitante
+    ? `<div class="on"><i aria-hidden="true"></i><span>Registro de Visitante / Colaborador</span></div>`
+    : names.map((l, i) => `<div class="${i + 1 === st ? 'on' : (i + 1 < st ? 'ok' : '')}"><i aria-hidden="true"></i><span>${l}</span></div>`).join('');
   let body = '';
   if (st === 1) {
     const loginBanner = !currentUser ? `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;margin-bottom:20px;border-radius:12px;background:var(--mist);font-size:14.5px"><span>¿Ya te registraste antes en la app?</span><button type="button" class="btn btn-soft btn-sm" data-switch-login style="min-height:36px;padding:0 14px;background:#fff">Iniciar sesión</button></div>` : `<div style="padding:12px 16px;margin-bottom:20px;border-radius:12px;background:#E4F5EA;color:#14532D;font-size:14.5px;font-weight:700">Sesión activa como ${esc(currentUser.email)} · Actualizando tu planilla</div>`;
     const googleQuickBtn = !currentUser ? `<div style="margin-bottom:14px"><button type="button" class="btn btn-soft btn-sm" data-google-form style="width:100%;background:#fff;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;gap:10px"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Conectar con mi cuenta de Google</span></button></div>` : '';
+    const tipoSelector = !form.isUpdate ? `
+      <div style="margin-bottom:18px;padding:12px 14px;border-radius:14px;background:#F0F4FA;border:1.5px solid var(--line)">
+        <span style="display:block;font-size:12.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--navy);margin-bottom:8px">¿Cómo deseas registrarte?</span>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button type="button" class="chip" data-chip="tipoRegistro" data-v="participante" aria-pressed="${!isVisitante}" style="flex:1 1 140px;min-height:42px;border:2px solid ${!isVisitante ? '#2452C8' : '#B9C8E4'};background:${!isVisitante ? '#2452C8' : '#fff'};color:${!isVisitante ? '#fff' : '#0A1B3F'};font-weight:700">👦 Joven Misionero</button>
+          <button type="button" class="chip" data-chip="tipoRegistro" data-v="visitante" aria-pressed="${isVisitante}" style="flex:1 1 140px;min-height:42px;border:2px solid ${isVisitante ? '#2452C8' : '#B9C8E4'};background:${isVisitante ? '#2452C8' : '#fff'};color:${isVisitante ? '#fff' : '#0A1B3F'};font-weight:700">🤝 Visitante / Colaborador</button>
+        </div>
+      </div>
+    ` : '';
     const accountFields = `<div style="width:100%;padding:16px 18px;margin-bottom:14px;border-radius:14px;background:#fff;border:1.5px solid var(--line)"><div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--royal);margin-bottom:12px">Datos de tu cuenta en la App</div>${googleQuickBtn}<div style="display:flex;flex-wrap:wrap;gap:16px">${inputHtml('correo', 'Correo electrónico *', 'email', 'email', '', 'tucorreo@ejemplo.com')}${!currentUser ? inputHtml('password', 'Contraseña para la app * (mín. 6 caracteres)', 'password', 'new-password', '', 'Mínimo 6 caracteres') : ''}</div></div>`;
     const photoField = `<div style="width:100%;padding:16px 18px;margin-bottom:14px;border-radius:14px;background:${d.foto ? '#F2FAF5' : '#FFFDF5'};border:2px solid ${d.foto ? '#17824A' : '#F5C518'};display:flex;flex-wrap:wrap;align-items:center;gap:16px">
       <div style="width:82px;height:82px;border-radius:50%;background:var(--mist);border:3px solid ${d.foto ? '#17824A' : 'var(--royal)'};display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto">
@@ -1818,10 +1862,10 @@ function formHtml() {
       </div>
       <div style="flex:1 1 220px">
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
-          <b style="font-size:16px;color:var(--ink)">Foto para tu Carnet y Perfil * (Obligatoria)</b>
+          <b style="font-size:16px;color:var(--ink)">Foto para tu Perfil e Identificación * (Obligatoria)</b>
           <span style="padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:800;background:${d.foto ? '#E4F5EA;color:#14532D' : '#FCE8E7;color:#8A1C1C'}">${d.foto ? '✔ Foto cargada' : 'Requerida para continuar'}</span>
         </div>
-        <p style="margin:4px 0 10px;font-size:13.5px;color:var(--muted)">Esta foto aparecerá en tu <b>Carnet Misionero Digital</b>. Puedes tomarte una foto ahora mismo o elegir una de tu galería.</p>
+        <p style="margin:4px 0 10px;font-size:13.5px;color:var(--muted)">Esta foto identificará tu perfil en la comunidad JUMA. Puedes tomarte una foto en vivo o elegir una de tu galería.</p>
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
           <button type="button" class="btn btn-blue btn-sm" data-start-selfie="form" style="min-height:38px;padding:0 14px">📸 Tomarme una foto</button>
           <label class="btn btn-soft btn-sm" style="min-height:38px;padding:0 14px;cursor:pointer;margin:0"><span>🖼️ ${d.foto ? 'Cambiar de galería' : 'Usar de la galería'}</span><input type="file" accept="image/*" id="f-avatar" style="display:none"></label>
@@ -1831,8 +1875,29 @@ function formHtml() {
       </div>
       ${selfieBoxHtml('form')}
     </div>`;
-    const sexoField = `<div class="fld" style="flex:1 1 220px"><span class="flabel">Sexo (para el diseño del mockup de tu carnet) *</span><div style="display:flex;gap:10px">${chips('sexo', ['Hombre', 'Mujer'])}</div></div>`;
-    body = loginBanner + '<h3 class="h-display h-md">Tus datos personales y foto de carnet</h3><p class="body" style="margin:8px 0 18px;font-size:15px">Con estos datos creamos tu perfil, tu planilla y tu Carnet Misionero en JUMA. Los campos con * son obligatorios.</p>' + accountFields + photoField + '<div style="display:flex;flex-wrap:wrap;gap:18px;margin-top:14px">' + sexoField + FLD[1].map((f) => f[0] === '@edad' ? `<div class="fld"><span class="flabel">Edad</span><div class="fake num" id="edad-box">${edadDe() ? edadDe() + ' años' : 'Se calcula sola'}</div></div>` : inputHtml(f[0], f[1], f[2], f[3], f[4], f[5])).join('') + '</div>';
+
+    if (isVisitante) {
+      const catChips = ['Hermana Religiosa', 'Representante / Familiar', 'Sacerdote / Asesor', 'Colaborador(a)', 'Visitante / Oyente'];
+      body = loginBanner + tipoSelector + `
+        <h3 class="h-display h-md">Registro de Visitante / Colaborador</h3>
+        <p class="body" style="margin:8px 0 16px;font-size:15px">Registro simplificado para hermanas religiosas, sacerdotes, representantes y miembros que acompañan a JUMA Duaca.</p>
+        ${accountFields}
+        ${photoField}
+        <div style="width:100%;padding:14px 16px;margin-bottom:14px;border-radius:14px;background:#fff;border:1.5px solid var(--line)">
+          <span class="flabel" style="margin-bottom:8px">¿Cuál es tu rol o vínculo con la comunidad?</span>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">${chips('categoriaVisitante', catChips)}</div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:16px">
+          ${inputHtml('nombres', 'Nombres *', 'text', 'given-name')}
+          ${inputHtml('apellidos', 'Apellidos *', 'text', 'family-name')}
+          ${inputHtml('cedula', 'Cédula de identidad *', 'text', '', '', 'Ej.: 12.345.678')}
+          ${inputHtml('celular', 'Teléfono / Celular de contacto', 'tel', 'tel')}
+        </div>
+      `;
+    } else {
+      const sexoField = `<div class="fld" style="flex:1 1 220px"><span class="flabel">Sexo (para el diseño del mockup de tu carnet) *</span><div style="display:flex;gap:10px">${chips('sexo', ['Hombre', 'Mujer'])}</div></div>`;
+      body = loginBanner + tipoSelector + '<h3 class="h-display h-md">Tus datos personales y foto de carnet</h3><p class="body" style="margin:8px 0 18px;font-size:15px">Con estos datos creamos tu perfil, tu planilla y tu Carnet Misionero en JUMA. Los campos con * son obligatorios.</p>' + accountFields + photoField + '<div style="display:flex;flex-wrap:wrap;gap:18px;margin-top:14px">' + sexoField + FLD[1].map((f) => f[0] === '@edad' ? `<div class="fld"><span class="flabel">Edad</span><div class="fake num" id="edad-box">${edadDe() ? edadDe() + ' años' : 'Se calcula sola'}</div></div>` : inputHtml(f[0], f[1], f[2], f[3], f[4], f[5])).join('') + '</div>';
+    }
   } else if (st === 2) {
     const intro = `<h3 class="h-display h-md">Representante</h3><p class="body" style="margin:8px 0 24px;font-size:15px">${esMenor() ? 'Eres menor de edad: necesitamos los datos de tu representante.' : 'Si eres menor de edad, completa los datos de tu representante.'}</p>`;
     body = intro + '<div style="display:flex;flex-wrap:wrap;gap:18px">' + FLD[2].map((f) => inputHtml(f[0], f[1], f[2], f[3], f[4])).join('') + '</div>';
@@ -1854,7 +1919,17 @@ function formHtml() {
 <div style="margin-top:16px;padding:14px 18px;border-radius:12px;background:#FFF8E1;border:1.5px solid #F5C518;color:#5C4300;font-size:14.5px;line-height:1.5"><b>⏳ Importante:</b> Al pulsar el botón de registro, este proceso puede tardar un momento según tu conexión a internet. <b>Por favor espera y no cierres la planilla</b> hasta ver la confirmación.</div>`;
   }
   const sendingBanner = form.sending ? `<div role="status" style="margin:18px 0 0;padding:16px 18px;border-radius:12px;background:#E8F1FF;border:1.5px solid var(--royal);color:var(--navy);font-size:15px;font-weight:700;line-height:1.5">⏳ Guardando tu registro en JUMA… Este proceso puede tardar unos momentos, por favor espera y no cierres la planilla.</div>` : '';
-  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', form.isUpdate ? 'Actualizar mi planilla' : 'Registro e inscripción misionera', 'pl-t')}<div style="padding:clamp(22px,4vw,40px)"><div class="progress" role="group" aria-label="Paso ${st} de 4">${prog}</div>${body}${sendingBanner}${form.err ? `<p role="alert" style="margin:20px 0 0;padding:14px 18px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:15px;font-weight:700">${esc(form.err)}</p>` : ''}<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-top:30px"><div>${st > 1 && !form.sending ? '<button type="button" class="btn btn-soft" data-back>Atrás</button>' : ''}</div><div>${st < 4 ? '<button type="button" class="btn btn-blue" data-next>Siguiente</button>' : `<button type="button" class="btn btn-blue" data-submit ${form.sending ? 'disabled' : ''}>${form.sending ? 'Guardando… Por favor espera' : (form.isUpdate ? 'Guardar cambios' : 'Registrarme y generar mi carnet')}</button>`}</div></div></div></div></div>`;
+  const bottomActionButtons = isVisitante ? `
+    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:30px">
+      <button type="button" class="btn btn-blue" data-submit ${form.sending ? 'disabled' : ''}>${form.sending ? 'Guardando… Por favor espera' : '✅ Guardar mi registro de Visitante / Colaborador'}</button>
+    </div>
+  ` : `
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-top:30px">
+      <div>${st > 1 && !form.sending ? '<button type="button" class="btn btn-soft" data-back>Atrás</button>' : ''}</div>
+      <div>${st < 4 ? '<button type="button" class="btn btn-blue" data-next>Siguiente</button>' : `<button type="button" class="btn btn-blue" data-submit ${form.sending ? 'disabled' : ''}>${form.sending ? 'Guardando… Por favor espera' : (form.isUpdate ? 'Guardar cambios' : 'Registrarme y generar mi carnet')}</button>`}</div>
+    </div>
+  `;
+  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', form.isUpdate ? 'Actualizar mi planilla' : (isVisitante ? 'Registro de Visitante / Colaborador' : 'Registro e inscripción misionera'), 'pl-t')}<div style="padding:clamp(22px,4vw,40px)">${prog}${body}${sendingBanner}${form.err ? `<p role="alert" style="margin:20px 0 0;padding:14px 18px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:15px;font-weight:700">${esc(form.err)}</p>` : ''}${bottomActionButtons}</div></div></div>`;
 }
 
 function openForm(editExisting = false) {
@@ -1911,9 +1986,10 @@ async function saveRegistration() {
   }
   if (!uid) uid = 'juma-' + sha256(email || ((d.nombres || '') + (d.celular || ''))).slice(0, 20);
 
+  const isVisitante = d.tipoRegistro === 'visitante';
   const prevRol = isMasterEmail(email)
     ? 'coordinador'
-    : ((form.isUpdate && myProfile && myProfile.rol) ? myProfile.rol : 'participante');
+    : (isVisitante ? (d.categoriaVisitante === 'Colaborador(a)' ? 'colaborador' : 'visitante') : ((form.isUpdate && myProfile && myProfile.rol) ? myProfile.rol : 'participante'));
   const prevAsistencias = (myProfile && Array.isArray(myProfile.asistencias)) ? myProfile.asistencias : [];
 
   const rec = {
@@ -1925,7 +2001,9 @@ async function saveRegistration() {
     sexo: d.sexo || detectGender({ datos: d }),
     foto: d.foto || '',
     fotoCarnetOk: true,
-    rol: prevRol || 'participante',
+    rol: prevRol || (isVisitante ? 'visitante' : 'participante'),
+    tipoRegistro: isVisitante ? 'visitante' : 'participante',
+    categoriaVisitante: d.categoriaVisitante || '',
     asistencias: prevAsistencias,
     celular: d.celular || '',
     edad: edadDe(d),
@@ -2048,7 +2126,6 @@ async function loadUserProfile(user) {
           localStorage.setItem('juma-ultimo-perfil', JSON.stringify(data));
         } catch (e) {}
         updateAuthUI();
-        checkMandatoryPhotoGate();
         setTimeout(() => checkBirthdayCelebration(), 500);
         return data;
       }
@@ -2061,7 +2138,6 @@ async function loadUserProfile(user) {
           if (userRole(data) === 'coordinador') { isAdmin = true; try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {} }
           try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(data)); } catch (e) {}
           updateAuthUI();
-          checkMandatoryPhotoGate();
           setTimeout(() => checkBirthdayCelebration(), 500);
           return data;
         }
@@ -2073,7 +2149,6 @@ async function loadUserProfile(user) {
     try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {}
   }
   updateAuthUI();
-  checkMandatoryPhotoGate();
   setTimeout(() => checkBirthdayCelebration(), 500);
   return myProfile || null;
 }
@@ -2124,6 +2199,15 @@ function switchSection(sectionId, updateHash = true) {
     const target = link.dataset.viewTarget || (link.getAttribute('href') || '').replace('#', '');
     link.classList.toggle('active', target === sectionId);
   });
+
+  document.querySelectorAll('.fb-tab').forEach((tab) => {
+    const isTarget = tab.dataset.fbTab === sectionId;
+    tab.classList.toggle('active', isTarget);
+  });
+
+  if (sectionId === 'comunidad') {
+    renderComunidadView();
+  }
 
   if (updateHash && location.hash !== '#' + sectionId) {
     history.pushState(null, '', '#' + sectionId);
@@ -2182,7 +2266,7 @@ function getInternalNotifications() {
   });
 
   // 3. Novedades y Noticias del Muro
-  const posts = (dr && dr.posts) || (pub && pub.posts) || [];
+  const posts = (pub && pub.posts) || (cfg && cfg.posts) || [];
   posts.slice(0, 3).forEach((post) => {
     if (!post) return;
     notifs.push({
@@ -2238,7 +2322,8 @@ function updateNotifBadge() {
 
   const topEl = $('#top-notif-badge');
   const dockEl = $('#dock-notif-badge');
-  [topEl, dockEl].forEach((el) => {
+  const fbNotifEl = $('#fb-badge-notif');
+  [topEl, dockEl, fbNotifEl].forEach((el) => {
     if (el) {
       if (count > 0) { el.textContent = txt; el.classList.remove('hide'); }
       else { el.classList.add('hide'); }
@@ -2347,6 +2432,103 @@ function openChatWithMember(targetUid) {
   }
 }
 
+let comunidadFilter = 'todos';
+let comunidadSearch = '';
+
+function renderComunidadMembersList() {
+  const container = $('#comunidad-members-list');
+  if (!container) return;
+  const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
+  const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
+  const members = getRegisteredMembersForDm(myUid, myEmail);
+
+  const filtered = members.filter((m) => {
+    if (comunidadFilter !== 'todos') {
+      if (comunidadFilter === 'visitante') {
+        if (m.rol !== 'visitante' && m.rol !== 'colaborador') return false;
+      } else if (m.rol !== comunidadFilter) {
+        return false;
+      }
+    }
+    if (!comunidadSearch) return true;
+    const q = comunidadSearch.toLowerCase();
+    return (m.nombre && m.nombre.toLowerCase().includes(q)) ||
+      (m.correo && m.correo.toLowerCase().includes(q)) ||
+      (m.parroquia && m.parroquia.toLowerCase().includes(q)) ||
+      (m.rol && m.rol.toLowerCase().includes(q));
+  });
+
+  document.querySelectorAll('[data-comunidad-filter]').forEach((btn) => {
+    const isAct = btn.dataset.comunidadFilter === comunidadFilter;
+    btn.setAttribute('aria-pressed', isAct ? 'true' : 'false');
+    btn.style.background = isAct ? 'var(--royal)' : '#fff';
+    btn.style.color = isAct ? '#fff' : 'var(--ink)';
+    btn.style.borderColor = isAct ? 'var(--royal)' : 'var(--line)';
+  });
+
+  const countEl = $('#comunidad-members-count');
+  if (countEl) countEl.textContent = `${filtered.length} miembro${filtered.length === 1 ? '' : 's'} disponible${filtered.length === 1 ? '' : 's'}`;
+
+  if (!filtered.length) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:32px 14px;background:#F8FAFD;border-radius:14px;border:1px dashed var(--line)">
+        <span style="font-size:32px;display:block;margin-bottom:6px">👥</span>
+        <b style="font-size:14.5px;color:var(--navy);display:block">No se encontraron miembros</b>
+        <p style="margin:4px 0 0;font-size:13px;color:var(--muted)">Intenta con otro término de búsqueda o selecciona «Todos» en los filtros.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map((m) => {
+    const rBadge = roleBadgeHtml(m.rol);
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:#fff;border:1.5px solid var(--line);box-shadow:0 2px 6px rgba(0,0,0,.03)">
+        <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">
+          <div style="width:42px;height:42px;border-radius:50%;overflow:hidden;background:var(--mist);display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:2px solid ${m.rol === 'coordinador' ? '#F5C518' : 'var(--royal)'}">
+            ${m.foto ? `<img src="${esc(m.foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:17px;color:var(--royal)">${esc(m.primerNombre.charAt(0).toUpperCase())}</b>`}
+          </div>
+          <div style="min-width:0;flex:1">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">
+              <b style="font-size:14.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.nombre)}</b>
+              ${rBadge}
+            </div>
+            <small style="display:block;font-size:12px;color:var(--muted)">${esc(m.parroquia || 'JUMA Duaca')}</small>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex:0 0 auto">
+          ${(m.rol === 'coordinador' || m.rol === 'asesor' || m.rol === 'participante') ? `<button type="button" class="btn btn-soft btn-sm" data-view-member-carnet="${esc(m.uid)}" style="min-height:34px;padding:0 10px;font-size:12px;background:#F1F5F9;color:var(--navy);border:1px solid var(--line)" title="Ver carnet misionero">🪪 Carnet</button>` : ''}
+          <button type="button" class="btn btn-blue btn-sm" data-open-dm="${esc(m.uid)}" style="min-height:34px;padding:0 12px;font-size:12px" title="Enviar mensaje">💬 Escribir</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openMemberCarnetModal(targetUid) {
+  const target = (allInscripciones || []).find((x) => x && (x.id === targetUid || x.uid === targetUid));
+  if (!target) return;
+  const targetRole = userRole(target);
+  if (targetRole !== 'coordinador' && targetRole !== 'asesor' && targetRole !== 'participante') {
+    showToast('Los visitantes y colaboradores no poseen carnet misionero.');
+    return;
+  }
+  const d = target.datos || {};
+  const nom = target.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Misionero';
+  const html = `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="mc-t">
+    <div class="sheet" style="max-width:620px">
+      ${sheetHead('Carnet Misionero · JUMA Duaca', 'Carnet de ' + nom, 'mc-t')}
+      <div style="padding:clamp(20px,4vw,32px);text-align:center">
+        ${carnetInteractiveSectionHtml(target, target.uid || target.id)}
+        <div style="display:flex;justify-content:center;gap:10px;margin-top:20px;flex-wrap:wrap">
+          <button type="button" class="btn btn-blue btn-sm" data-open-dm="${esc(target.uid || target.id)}">💬 Escribir mensaje</button>
+          <button type="button" class="btn btn-soft btn-sm" data-close>Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  openModal(html);
+}
+
 function renderComunidadView() {
   const el = $('#view-comunidad');
   if (!el) return;
@@ -2356,7 +2538,7 @@ function renderComunidadView() {
       <div class="wrap" style="padding:60px 20px;text-align:center">
         <span style="font-size:48px;display:block;margin-bottom:12px">🔒</span>
         <h2 class="h-display h-lg">Espacio Exclusivo para Miembros de JUMA</h2>
-        <p class="body" style="max-width:54ch;margin:12px auto 24px">Inicia sesión con tu cuenta o llena tu planilla de inscripción para acceder al chat comunitario, los mensajes directos y tus notificaciones.</p>
+        <p class="body" style="max-width:54ch;margin:12px auto 24px">Inicia sesión con tu cuenta o llena tu planilla de inscripción para acceder al directorio de hermanos, el chat comunitario, mensajes directos y avisos.</p>
         <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
           <button type="button" class="btn btn-blue" data-open-auth>Iniciar sesión</button>
           <button type="button" class="btn btn-white" data-open-form>Quiero ser parte</button>
@@ -2370,15 +2552,22 @@ function renderComunidadView() {
   const primerNombre = (d.nombres ? d.nombres.trim().split(' ')[0] : nombre.split(' ')[0]) || 'Misionero';
   const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
   const role = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : 'participante');
-  const roleLabel = role === 'coordinador' ? '★ Coordinador(a)' : (role === 'asesor' ? '◆ Asesor(a)' : 'Participante');
+  const isJumaMember = role === 'coordinador' || role === 'asesor' || role === 'participante';
+  const roleLabelTxt = roleLabel(role);
 
   const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
   const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
   const members = getRegisteredMembersForDm(myUid, myEmail);
   const nextDom = (cfg && cfg.domingos && cfg.domingos[0]) || { f: 'Próximo domingo', t: 'Encuentro Misionero' };
+  const lastPost = (pub && pub.posts && pub.posts[0]) || (cfg && cfg.posts && cfg.posts[0]);
+
+  const countCoord = members.filter((m) => m.rol === 'coordinador').length;
+  const countAsesor = members.filter((m) => m.rol === 'asesor').length;
+  const countPart = members.filter((m) => m.rol === 'participante').length;
+  const countVis = members.filter((m) => m.rol === 'visitante' || m.rol === 'colaborador').length;
 
   el.innerHTML = `
-    <div class="wrap" style="padding:40px clamp(16px,3vw,32px)">
+    <div class="wrap" style="padding:32px clamp(16px,3vw,32px)">
       <!-- Banner estilo Facebook -->
       <div style="padding:24px 28px;border-radius:20px;background:linear-gradient(135deg,var(--navy) 0%,var(--cloth) 100%);color:#fff;box-shadow:0 12px 30px rgba(6,21,54,.15);margin-bottom:28px">
         <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px">
@@ -2387,13 +2576,13 @@ function renderComunidadView() {
               ${foto ? `<img src="${esc(foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:28px;color:#fff">${esc(primerNombre.charAt(0).toUpperCase())}</b>`}
             </div>
             <div>
-              <span class="u-badge" style="background:rgba(255,255,255,.18);color:#fff;margin-bottom:4px">${esc(roleLabel)}</span>
+              <span class="u-badge" style="background:rgba(255,255,255,.18);color:#fff;margin-bottom:4px">${esc(roleLabelTxt)}</span>
               <h2 class="h-display h-md" style="margin:2px 0 0;color:#fff">¡Hola, ${esc(primerNombre)}!</h2>
               <p style="margin:4px 0 0;font-size:14px;color:var(--sky)">${d.parroquia ? esc(d.parroquia) : 'Juventud Misionera Allamaniana · Duaca'}</p>
             </div>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:10px">
-            <button type="button" class="btn btn-white btn-sm" data-open-auth>🪪 Mi Carnet con QR</button>
+            ${isJumaMember ? `<button type="button" class="btn btn-white btn-sm" data-open-auth>🪪 Mi Carnet con QR</button>` : `<button type="button" class="btn btn-white btn-sm" data-open-auth>👤 Mi Perfil</button>`}
             <button type="button" class="btn btn-blue btn-sm" data-open-chat>💬 Abrir Chat</button>
             <button type="button" class="btn btn-soft btn-sm" data-open-notifs style="background:rgba(255,255,255,.2);color:#fff">🔔 Notificaciones</button>
           </div>
@@ -2401,32 +2590,33 @@ function renderComunidadView() {
       </div>
 
       <!-- Cuadrícula estilo Red Social -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px">
-        <!-- Columna 1: Directorio de Hermanos de JUMA (Mensajes directos) -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;align-items:start">
+        <!-- Columna 1: Directorio Dinámico de Hermanos de JUMA -->
         <div style="background:#fff;border-radius:18px;border:1.5px solid var(--line);padding:22px;box-shadow:0 4px 16px rgba(0,0,0,.04)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
             <div>
-              <b style="font-size:17px;color:var(--navy);display:flex;align-items:gap:8px"><span>👥</span> Hermanos Misioneros</b>
-              <small style="color:var(--muted);font-size:12.5px;display:block">${members.length} miembros registrados</small>
+              <b style="font-size:17px;color:var(--navy);display:flex;align-items:center;gap:8px"><span>👥</span> Hermanos Misioneros</b>
+              <small id="comunidad-members-count" style="color:var(--muted);font-size:12.5px;display:block">${members.length} miembros registrados</small>
             </div>
-            <button type="button" class="btn btn-blue btn-sm" data-open-chat style="min-height:34px;padding:0 12px;font-size:12.5px">Ver todos</button>
+            <button type="button" class="btn btn-soft btn-sm" data-open-chat style="min-height:34px;padding:0 12px;font-size:12.5px">💬 Abrir Chat</button>
           </div>
-          <div style="display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;padding-right:4px">
-            ${members.slice(0, 8).map((m) => `
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:#F8FAFD;border:1px solid var(--line)">
-                <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">
-                  <div style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:var(--mist);display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:1.5px solid var(--royal)">
-                    ${m.foto ? `<img src="${esc(m.foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:15px;color:var(--royal)">${esc(m.primerNombre.charAt(0).toUpperCase())}</b>`}
-                  </div>
-                  <div style="min-width:0;flex:1">
-                    <b style="display:block;font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.nombre)}</b>
-                    <small style="display:block;font-size:11.5px;color:var(--muted)">${esc(m.parroquia || 'JUMA Duaca')}</small>
-                  </div>
-                </div>
-                <button type="button" class="btn btn-soft btn-sm" data-open-dm="${esc(m.uid)}" style="min-height:32px;padding:0 10px;font-size:12px;flex:0 0 auto;background:#fff;border:1px solid var(--royal);color:var(--royal)">💬 Escribir</button>
-              </div>
-            `).join('')}
+
+          <!-- Buscador en vivo -->
+          <div style="margin-bottom:12px">
+            <input type="search" id="comunidad-search-in" value="${esc(comunidadSearch)}" placeholder="🔍 Buscar por nombre, apellido o parroquia..." class="chat-input" style="width:100%;min-height:42px;background:#F8FAFD">
           </div>
+
+          <!-- Filtros por rol -->
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">
+            <button type="button" class="chip" data-comunidad-filter="todos" aria-pressed="${comunidadFilter === 'todos'}" style="min-height:34px;padding:0 10px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:99px">Todos (${members.length})</button>
+            <button type="button" class="chip" data-comunidad-filter="coordinador" aria-pressed="${comunidadFilter === 'coordinador'}" style="min-height:34px;padding:0 10px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:99px">★ Coord. (${countCoord})</button>
+            <button type="button" class="chip" data-comunidad-filter="asesor" aria-pressed="${comunidadFilter === 'asesor'}" style="min-height:34px;padding:0 10px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:99px">◆ Asesores (${countAsesor})</button>
+            <button type="button" class="chip" data-comunidad-filter="participante" aria-pressed="${comunidadFilter === 'participante'}" style="min-height:34px;padding:0 10px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:99px">● Participantes (${countPart})</button>
+            <button type="button" class="chip" data-comunidad-filter="visitante" aria-pressed="${comunidadFilter === 'visitante'}" style="min-height:34px;padding:0 10px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:99px">🤝 Visitantes (${countVis})</button>
+          </div>
+
+          <!-- Lista de miembros -->
+          <div id="comunidad-members-list" style="display:flex;flex-direction:column;gap:10px;max-height:480px;overflow-y:auto;padding-right:4px"></div>
         </div>
 
         <!-- Columna 2: Próximo Encuentro y Novedades -->
@@ -2448,11 +2638,11 @@ function renderComunidadView() {
           <!-- Tarjeta de Noticias Recientes -->
           <div style="background:#fff;border-radius:18px;border:1.5px solid var(--line);padding:22px;box-shadow:0 4px 16px rgba(0,0,0,.04)">
             <b style="font-size:16px;color:var(--navy);display:flex;align-items:center;gap:8px;margin-bottom:12px"><span>📰</span> Última Noticia de JUMA</b>
-            ${dr && dr.posts && dr.posts[0] ? `
+            ${lastPost ? `
               <div>
-                ${dr.posts[0].foto ? `<img src="${esc(dr.posts[0].foto)}" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;margin-bottom:10px">` : ''}
-                <b style="display:block;font-size:15px;color:var(--ink);margin-bottom:4px">${esc(dr.posts[0].t || 'Novedad')}</b>
-                <p style="margin:0 0 10px;font-size:13.5px;color:var(--muted);line-height:1.4">${esc((dr.posts[0].x || '').slice(0, 120))}${(dr.posts[0].x || '').length > 120 ? '…' : ''}</p>
+                ${lastPost.foto ? `<img src="${esc(lastPost.foto)}" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;margin-bottom:10px">` : ''}
+                <b style="display:block;font-size:15px;color:var(--ink);margin-bottom:4px">${esc(lastPost.t || 'Novedad')}</b>
+                <p style="margin:0 0 10px;font-size:13.5px;color:var(--muted);line-height:1.4">${esc((lastPost.x || '').slice(0, 120))}${(lastPost.x || '').length > 120 ? '…' : ''}</p>
                 <button type="button" class="btn btn-soft btn-sm" data-view-target="novedades">Ver más noticias</button>
               </div>
             ` : `<p style="font-size:14px;color:var(--muted);margin:0">No hay noticias publicadas aún.</p>`}
@@ -2461,11 +2651,14 @@ function renderComunidadView() {
       </div>
     </div>
   `;
+
+  renderComunidadMembersList();
 }
 
 function updateAuthUI() {
   const btnAuth = $('#btn-auth');
   const btnJoin = $('#btn-join');
+  const heroBtnJoin = $('#hero-btn-join');
   const footAuth = $('#lnk-perfil-foot');
   const fab = $('#fab-edit');
   const lAdmin = $('#lnk-admin');
@@ -2473,6 +2666,8 @@ function updateAuthUI() {
   const btnTopChat = $('#btn-top-chat');
   const navComunidad = $('#nav-comunidad');
   const subnavComunidad = $('#subnav-comunidad');
+  const fbTabIcon = $('#fb-tab-profile-icon');
+  const fbTabLabel = $('#fb-tab-profile-label');
 
   if (!myProfile && currentUser) {
     myProfile = findProfileRecord(currentUser.uid, currentUser.email);
@@ -2506,10 +2701,19 @@ function updateAuthUI() {
       btnAuth.setAttribute('aria-label', 'Ver perfil de ' + fullName);
     }
     if (btnJoin) {
-      btnJoin.textContent = '🪪 Mi Carnet';
+      btnJoin.classList.add('hide'); // Ocultar Quiero ser parte al iniciar sesión
       btnJoin.setAttribute('data-open-auth', '');
       btnJoin.removeAttribute('data-open-form');
     }
+    if (heroBtnJoin) {
+      heroBtnJoin.style.display = 'none'; // Ocultar Quiero ser parte en el inicio una vez iniciada sesión
+    }
+    if (fbTabIcon) {
+      fbTabIcon.innerHTML = foto
+        ? `<img src="${esc(foto)}" alt="" class="fb-tab-user-img">`
+        : `<span class="fb-tab-user-init">${esc(nombreCorto.charAt(0).toUpperCase())}</span>`;
+    }
+    if (fbTabLabel) fbTabLabel.textContent = nombreCorto;
     if (footAuth) footAuth.textContent = nombreCorto + ' (Mi perfil)';
     if (btnTopNotif) btnTopNotif.classList.remove('hide');
     if (btnTopChat) btnTopChat.classList.remove('hide');
@@ -2523,10 +2727,16 @@ function updateAuthUI() {
       btnAuth.setAttribute('aria-label', 'Iniciar sesión');
     }
     if (btnJoin) {
+      btnJoin.classList.remove('hide');
       btnJoin.textContent = 'Quiero ser parte';
       btnJoin.setAttribute('data-open-form', '');
       btnJoin.removeAttribute('data-open-auth');
     }
+    if (heroBtnJoin) {
+      heroBtnJoin.style.display = 'inline-flex';
+    }
+    if (fbTabIcon) fbTabIcon.textContent = '👤';
+    if (fbTabLabel) fbTabLabel.textContent = 'Perfil';
     if (footAuth) footAuth.textContent = 'Iniciar sesión';
     if (btnTopNotif) btnTopNotif.classList.add('hide');
     if (btnTopChat) btnTopChat.classList.add('hide');
@@ -2542,10 +2752,15 @@ function updateAuthUI() {
   updateChatBadge();
   updateNotifBadge();
   updateSocialDock();
-  renderComunidadView();
-  renderDomingos();
-  renderActs();
 }
+
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'comunidad-search-in') {
+    comunidadSearch = e.target.value.toLowerCase().trim();
+    renderComunidadMembersList();
+    return;
+  }
+});
 
 modalRoot.addEventListener('input', (e) => {
   if (e.target.id === 'chat-dm-search-in') {
@@ -2718,14 +2933,13 @@ modalRoot.addEventListener('click', async (e) => {
 });
 
 modalRoot.addEventListener('click', async (e) => {
-  if (!$('#pl-t')) return;
   if (e.target.id === 'btn-fast-cedula-login') {
     const inEl = $('#fast-cedula-in');
     const errEl = $('#fast-cedula-err');
     const val = (inEl ? inEl.value : '').trim().toLowerCase();
     if (!val) { if (errEl) errEl.textContent = 'Escribe tu cédula o correo.'; return; }
     const cleanNum = val.replace(/[^0-9]/g, '');
-    const found = (allInscripciones || []).find((rec) => {
+    let found = (allInscripciones || []).find((rec) => {
       if (!rec) return false;
       const d = rec.datos || {};
       const c1 = String(rec.cedula || d.cedula || '').replace(/[^0-9]/g, '');
@@ -2736,8 +2950,44 @@ modalRoot.addEventListener('click', async (e) => {
       if (cleanNum && cel && cel === cleanNum) return true;
       return false;
     });
+
+    if (!found) {
+      try {
+        const loc = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]');
+        found = loc.find((rec) => {
+          if (!rec) return false;
+          const d = rec.datos || {};
+          const c1 = String(rec.cedula || d.cedula || '').replace(/[^0-9]/g, '');
+          if (cleanNum && c1 && c1 === cleanNum) return true;
+          const em = String(rec.correo || d.correo || '').trim().toLowerCase();
+          if (em && em === val) return true;
+          return false;
+        });
+      } catch (x) {}
+    }
+
+    if (!found && fb && fb.db) {
+      if (errEl) errEl.textContent = 'Buscando en la nube…';
+      try {
+        if (cleanNum) {
+          const q = fb.query(fb.collection(fb.db, 'inscripciones'), fb.where('cedula', '==', cleanNum), fb.limit(1));
+          const qs = await withTimeout(fb.getDocs(q), 4000);
+          if (!qs.empty) found = Object.assign({ id: qs.docs[0].id }, qs.docs[0].data());
+        }
+        if (!found && val.includes('@')) {
+          const q = fb.query(fb.collection(fb.db, 'inscripciones'), fb.where('correo', '==', val), fb.limit(1));
+          const qs = await withTimeout(fb.getDocs(q), 4000);
+          if (!qs.empty) found = Object.assign({ id: qs.docs[0].id }, qs.docs[0].data());
+        }
+      } catch (x) {}
+    }
+
     if (found) {
       myProfile = found;
+      if (userRole(found) === 'coordinador') {
+        isAdmin = true;
+        try { sessionStorage.setItem('juma-ed', '1'); } catch (x) {}
+      }
       try {
         localStorage.setItem('juma-ultimo-perfil', JSON.stringify(found));
         if (found.uid) localStorage.setItem('juma-perfil-' + found.uid, JSON.stringify(found));
@@ -2745,9 +2995,10 @@ modalRoot.addEventListener('click', async (e) => {
       updateAuthUI();
       closeModal();
       switchSection('comunidad');
-      showToast('¡Hola, ' + (found.nombre || 'Misionero') + '! Sesión iniciada.');
+      const nom = (found.nombre || (found.datos && (found.datos.nombres ? found.datos.nombres.split(' ')[0] : '')) || 'Misionero');
+      showToast('¡Hola, ' + nom + '! Sesión iniciada.');
     } else {
-      if (errEl) errEl.textContent = 'No encontramos una inscripción con esa cédula o correo.';
+      if (errEl) errEl.textContent = 'No encontramos una inscripción con esa cédula o correo. Si aún no te has registrado, pulsa en «Quiero ser parte».';
     }
     return;
   }
@@ -2803,6 +3054,34 @@ modalRoot.addEventListener('click', async (e) => {
   if (e.target.closest('[data-dl]')) downloadPlanillaHtml(form.d);
 });
 document.addEventListener('click', (e) => {
+  const fbTab = e.target.closest('[data-fb-tab]');
+  if (fbTab) {
+    e.preventDefault();
+    switchSection(fbTab.dataset.fbTab);
+    return;
+  }
+  const fbAct = e.target.closest('[data-fb-action]');
+  if (fbAct) {
+    e.preventDefault();
+    const act = fbAct.dataset.fbAction;
+    if (act === 'chat') openChatModal();
+    else if (act === 'notif') openNotificationsModal();
+    else if (act === 'profile') openAuthModal();
+    return;
+  }
+  const carnetBtn = e.target.closest('[data-view-member-carnet]');
+  if (carnetBtn) {
+    e.preventDefault();
+    openMemberCarnetModal(carnetBtn.dataset.viewMemberCarnet);
+    return;
+  }
+  const filterBtn = e.target.closest('[data-comunidad-filter]');
+  if (filterBtn) {
+    e.preventDefault();
+    comunidadFilter = filterBtn.dataset.comunidadFilter;
+    renderComunidadMembersList();
+    return;
+  }
   const dockBtn = e.target.closest('[data-dock-action]');
   if (dockBtn) {
     const act = dockBtn.dataset.dockAction;
@@ -2940,6 +3219,7 @@ function isMasterAccount() {
 
 function authModalHtml() {
   const role = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : 'participante');
+  const isJumaMember = role === 'coordinador' || role === 'asesor' || role === 'participante';
   const masterOn = isAdmin || isEditor() || role === 'coordinador';
   const trueMaster = isMasterAccount();
   if (currentUser || myProfile) {
@@ -2947,7 +3227,7 @@ function authModalHtml() {
       myProfile = findProfileRecord(currentUser.uid, currentUser.email);
     }
     const d = (myProfile && myProfile.datos) || {};
-    const nombre = (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) || (currentUser && currentUser.displayName) || (currentUser && currentUser.email) || 'Joven Misionero';
+    const nombre = (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) || (currentUser && currentUser.displayName) || (currentUser && currentUser.email) || (isJumaMember ? 'Joven Misionero' : 'Colaborador(a) / Visitante');
     const email = (currentUser && currentUser.email) || (myProfile && (myProfile.correo || d.correo)) || '';
     const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
     const rows = d.nombres ? summaryRows(d) : [];
@@ -2957,8 +3237,8 @@ function authModalHtml() {
     const misAsistencias = asistenciasUltimos6Meses(myProfile);
     const proxEventos = allUpcomingCalendarEvents().slice(0, 4);
     const remOn = remindersEnabled();
-    const badgeTxt = trueMaster ? '★ Perfil Maestro · JUMA Duaca' : (role === 'coordinador' ? '★ Coordinador(a) · JUMA Duaca' : (role === 'asesor' ? '◆ Asesor(a) · JUMA Duaca' : '● Participante · JUMA Duaca'));
-    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="au-t"><div class="sheet" style="max-width:740px">${sheetHead('Juventud Misionera Allamaniana · Duaca', 'Mi perfil misionero', 'au-t')}<div style="padding:clamp(22px,4vw,40px)">
+    const badgeTxt = trueMaster ? '★ Perfil Maestro · JUMA Duaca' : (role === 'coordinador' ? '★ Coordinador(a) · JUMA Duaca' : (role === 'asesor' ? '◆ Asesor(a) · JUMA Duaca' : (role === 'visitante' ? '👁 Visitante · JUMA Duaca' : (role === 'colaborador' ? '🤝 Colaborador(a) · JUMA Duaca' : '● Participante · JUMA Duaca'))));
+    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="au-t"><div class="sheet" style="max-width:740px">${sheetHead('Juventud Misionera Allamaniana · Duaca', isJumaMember ? 'Mi perfil misionero' : 'Mi perfil comunitario', 'au-t')}<div style="padding:clamp(22px,4vw,40px)">
       <div class="u-card" style="display:flex;flex-wrap:wrap;align-items:center;gap:18px">
         <div class="ribbon" style="position:absolute;top:0;left:0;right:0"></div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto">
@@ -3012,7 +3292,8 @@ function authModalHtml() {
         </div>
       </details>` : ''}
 
-      <!-- 2. Carnet Misionero Digital y Mockup (Desplegable) -->
+      ${isJumaMember ? `
+      <!-- 2. Carnet Misionero Digital y Mockup (Solo para participantes de JUMA) -->
       <details class="profile-acc" open>
         <summary>
           <div style="display:flex;align-items:center;gap:10px">
@@ -3029,7 +3310,7 @@ function authModalHtml() {
         </div>
       </details>
 
-      <!-- 3. Mi código QR de asistencia (Desplegable) -->
+      <!-- 3. Mi código QR de asistencia (Solo para participantes de JUMA) -->
       <details class="profile-acc">
         <summary>
           <div style="display:flex;align-items:center;gap:10px">
@@ -3057,7 +3338,34 @@ function authModalHtml() {
             </div>
           </div>
         </div>
-      </details>
+      </details>` : `
+      <!-- Datos de registro para Visitantes y Colaboradores (sin carnet de participante) -->
+      <details class="profile-acc" open>
+        <summary>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">🤝</span>
+            <div style="text-align:left">
+              <b style="color:var(--navy);font-size:15.5px;display:block">Datos de mi registro comunitario</b>
+              <small style="color:var(--muted);font-size:12px;font-weight:600">${esc(d.categoriaVisitante || 'Colaborador(a) / Visitante de la Comunidad')}</small>
+            </div>
+          </div>
+          <span class="profile-acc-arrow">▾</span>
+        </summary>
+        <div class="profile-acc-content" style="padding-top:16px">
+          <div style="padding:16px 18px;border-radius:14px;background:#F8FAFD;border:1.5px solid var(--line);line-height:1.6">
+            <p style="margin:0 0 12px;font-size:14.5px;color:var(--ink)">
+              Estás registrado(a) como <b>${esc(roleLabel(role))}</b> en la comunidad de JUMA Duaca.
+            </p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 18px;font-size:13.5px">
+              ${d.nombres ? `<div><span style="color:var(--muted)">Nombre:</span> <b>${esc(d.nombres)} ${esc(d.apellidos || '')}</b></div>` : ''}
+              ${d.cedula ? `<div><span style="color:var(--muted)">Cédula:</span> <b>${esc(d.cedula)}</b></div>` : ''}
+              ${d.celular ? `<div><span style="color:var(--muted)">Celular:</span> <b>${esc(d.celular)}</b></div>` : ''}
+              ${email ? `<div><span style="color:var(--muted)">Correo:</span> <b>${esc(email)}</b></div>` : ''}
+              ${d.categoriaVisitante ? `<div><span style="color:var(--muted)">Categoría:</span> <b>${esc(d.categoriaVisitante)}</b></div>` : ''}
+            </div>
+          </div>
+        </div>
+      </details>`}
 
       <!-- 4. Próximas actividades y recordatorios (Desplegable) -->
       <details class="profile-acc">
@@ -3086,7 +3394,8 @@ function authModalHtml() {
         </div>
       </details>
 
-      <!-- 5. Datos de mi planilla guardada (Desplegable) -->
+      ${isJumaMember ? `
+      <!-- 5. Datos de mi planilla guardada (Desplegable - Solo para participantes) -->
       <details class="profile-acc">
         <summary>
           <div style="display:flex;align-items:center;gap:10px">
@@ -3106,7 +3415,7 @@ function authModalHtml() {
             ${rows.length && wa.length ? `<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="https://wa.me/${wa[0]}?text=${encodeURIComponent(planillaTexto(d))}">Enviar por WhatsApp</a>` : ''}
           </div>
         </div>
-      </details>
+      </details>` : ''}
 
       <div style="display:flex;justify-content:flex-end;margin-top:20px">
         <button type="button" class="btn btn-danger btn-sm" data-logout>Cerrar sesión</button>
@@ -3145,8 +3454,8 @@ function authModalHtml() {
     </div>
   </div></div></div>`;
 }
-function openAuthModal() { if (checkMandatoryPhotoGate()) return; openModal(authModalHtml()); }
-function repaintAuth() { if (checkMandatoryPhotoGate()) return; modalRoot.innerHTML = authModalHtml(); const ov = $('.overlay', modalRoot); if (ov) { ov.style.animation = 'none'; const sh = $('.sheet', modalRoot); if (sh) sh.style.animation = 'none'; } }
+function openAuthModal() { openModal(authModalHtml()); }
+function repaintAuth() { modalRoot.innerHTML = authModalHtml(); const ov = $('.overlay', modalRoot); if (ov) { ov.style.animation = 'none'; const sh = $('.sheet', modalRoot); if (sh) sh.style.animation = 'none'; } }
 
 /* ===================== Chat Comunitario, Mensajes Directos y Avisos Sociales ===================== */
 let chatChannel = 'general'; // 'general' | 'coord' | 'dm'
@@ -3277,11 +3586,12 @@ function updateChatBadge() {
   const countEl = $('#chat-badge-count');
   const topChatEl = $('#top-chat-badge');
   const dockChatEl = $('#dock-chat-badge');
+  const fbChatEl = $('#fb-badge-chat');
   const profBadge = $('#profile-chat-badge');
   const unread = getUnreadChatCount();
 
   const txt = unread > 99 ? '99+' : String(unread);
-  [countEl, topChatEl, dockChatEl].forEach((el) => {
+  [countEl, topChatEl, dockChatEl, fbChatEl].forEach((el) => {
     if (el) {
       if (unread > 0) { el.textContent = txt; el.classList.remove('hide'); }
       else { el.classList.add('hide'); }
@@ -3743,8 +4053,21 @@ async function loadPublicInscripciones() {
       if (arr.length) {
         allInscripciones = arr;
         try { localStorage.setItem('juma-inscripciones-local', JSON.stringify(arr)); } catch (e) {}
+        if (currentSection === 'comunidad') renderComunidadView();
       }
     }
+    try {
+      fb.onSnapshot(fb.collection(fb.db, 'inscripciones'), (s) => {
+        if (!s || s.empty) return;
+        const liveArr = [];
+        s.docs.forEach((d) => liveArr.push(Object.assign({ id: d.id }, d.data())));
+        if (liveArr.length) {
+          allInscripciones = liveArr;
+          try { localStorage.setItem('juma-inscripciones-local', JSON.stringify(liveArr)); } catch (e) {}
+          if (currentSection === 'comunidad') renderComunidadView();
+        }
+      }, () => {});
+    } catch (e) {}
   } catch (e) {}
 }
 
@@ -3835,6 +4158,26 @@ modalRoot.addEventListener('click', async (e) => {
         isAdmin = true;
         try { sessionStorage.setItem('juma-ed', '1'); if (isMasterEmail(currentUser.email)) localStorage.setItem('juma-master-device', '1'); } catch (x) {}
         authBusy = false; showFab(); updateAuthUI(); closeModal(); switchSection('comunidad'); showToast('¡Bienvenido(a), Coordinación JUMA!'); return;
+      }
+      if (!myProfile || !myProfile.foto) {
+        authBusy = false;
+        closeModal();
+        form.step = 1;
+        form.isUpdate = false;
+        form.done = false;
+        form.err = '';
+        form.d.correo = currentUser.email || '';
+        if (currentUser.displayName && !form.d.nombres) {
+          const parts = currentUser.displayName.trim().split(/\s+/);
+          form.d.nombres = parts.slice(0, Math.ceil(parts.length / 2)).join(' ');
+          if (parts.length > 1 && !form.d.apellidos) form.d.apellidos = parts.slice(Math.ceil(parts.length / 2)).join(' ');
+        }
+        if (currentUser.photoURL && !form.d.foto) {
+          form.d.foto = currentUser.photoURL;
+        }
+        openForm(false);
+        showToast('¡Hola! Completa tu foto y planilla para activar tu carnet.');
+        return;
       }
       if (myProfile) { try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile)); } catch (x) {} }
       authBusy = false; updateAuthUI(); closeModal(); switchSection('comunidad'); showToast('¡Hola, ' + ((myProfile && myProfile.nombre) || 'Misionero') + '! Sesión iniciada.');
@@ -3978,7 +4321,12 @@ modalRoot.addEventListener('submit', async (e) => {
         else throw new Error('no-local');
       }
       if (myProfile) { try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile)); } catch (x) {} }
-      authBusy = false; updateAuthUI(); repaintAuth();
+      authBusy = false; updateAuthUI();
+      if (needsMandatoryPhoto(myProfile)) {
+        openForcePhotoModal();
+        return;
+      }
+      repaintAuth();
     } catch (err) {
       authBusy = false;
       const loc = findProfileRecord(null, em) || (localStorage.getItem('juma-perfil-email-' + em) && JSON.parse(localStorage.getItem('juma-perfil-email-' + em)));
@@ -3986,7 +4334,12 @@ modalRoot.addEventListener('submit', async (e) => {
         myProfile = loc;
         if (userRole(myProfile) === 'coordinador') { isAdmin = true; try { sessionStorage.setItem('juma-ed', '1'); } catch (x) {} showFab(); }
         try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(loc)); } catch (x) {}
-        updateAuthUI(); repaintAuth(); return;
+        updateAuthUI();
+        if (needsMandatoryPhoto(myProfile)) {
+          openForcePhotoModal();
+          return;
+        }
+        repaintAuth(); return;
       }
       authErr = 'Correo o contraseña incorrectos, o aún no te has registrado con la planilla.';
       repaintAuth();
@@ -6469,7 +6822,7 @@ async function loadContenido() {
   window.addEventListener('hashchange', () => {
     if (location.hash) switchSection(location.hash.slice(1), false);
   });
-  setTimeout(() => checkMandatoryPhotoGate(), 300);
+  // Photo gate disabled
   setTimeout(() => checkBirthdayCelebration(), 750);
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
   loadContenido();
