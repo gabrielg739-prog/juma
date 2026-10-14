@@ -1185,16 +1185,67 @@ function carnetMockupHtml(rec, forcedGender) {
   </div>`;
 }
 
+const mockupPreviewDataUrlMap = new Map();
+
+async function generateMockupDataUrl(rec, forcedGender) {
+  const targetRec = rec || myProfile || { datos: form.d, foto: form.d.foto };
+  const info = getCarnetDisplayData(targetRec);
+  const uid = String((targetRec && (targetRec.id || targetRec.uid)) || 'me');
+  const g = forcedGender || mockupGenderMap.get(uid) || carnetGenderOverride || info.gender;
+  const cacheKey = `${uid}__${g}`;
+  if (mockupPreviewDataUrlMap.has(cacheKey)) {
+    return mockupPreviewDataUrlMap.get(cacheKey);
+  }
+  try {
+    const isMujer = g === 'Mujer';
+    const bgImg = await loadImageSafe(isMujer ? 'img/mockup-mujer.jpg' : 'img/mockup-hombre.jpg');
+    const carnetCv = await renderCarnetToCanvas(targetRec);
+    if (bgImg && carnetCv) {
+      const mCv = document.createElement('canvas');
+      mCv.width = bgImg.width;
+      mCv.height = bgImg.height;
+      const mCtx = mCv.getContext('2d');
+      mCtx.drawImage(bgImg, 0, 0);
+
+      const bx = Math.round(bgImg.width * (isMujer ? 0.4222 : 0.4236));
+      const by = Math.round(bgImg.height * (isMujer ? 0.5488 : 0.5425));
+      const bw = Math.round(bgImg.width * (isMujer ? 0.1708 : 0.1694));
+      const bh = Math.round(bgImg.height * (isMujer ? 0.2163 : 0.1878));
+
+      mCtx.save();
+      roundRectPath(mCtx, bx, by, bw, bh, 10);
+      mCtx.clip();
+      mCtx.drawImage(carnetCv, bx, by, bw, bh);
+      const gloss = mCtx.createLinearGradient(bx, by, bx + bw, by + bh);
+      gloss.addColorStop(0, 'rgba(255,255,255,0.22)');
+      gloss.addColorStop(0.45, 'rgba(255,255,255,0)');
+      gloss.addColorStop(1, 'rgba(255,255,255,0.08)');
+      mCtx.fillStyle = gloss;
+      mCtx.fillRect(bx, by, bw, bh);
+      mCtx.restore();
+
+      const dataUrl = mCv.toDataURL('image/png');
+      mockupPreviewDataUrlMap.set(cacheKey, dataUrl);
+      return dataUrl;
+    }
+  } catch (e) {
+    console.warn('Error generando imagen de mockup', e);
+  }
+  return null;
+}
+
 function carnetInteractiveSectionHtml(rec, contextKey = 'profile') {
   const info = getCarnetDisplayData(rec);
   const uid = String((rec && (rec.id || rec.uid)) || 'me');
   const g = mockupGenderMap.get(uid) || carnetGenderOverride || info.gender;
   const isMockupReady = generatedMockups.has(uid);
+  const cacheKey = `${uid}__${g}`;
+  const previewDataUrl = mockupPreviewDataUrlMap.get(cacheKey);
 
-  return `<div style="padding:22px;margin-bottom:20px;border-radius:18px;background:linear-gradient(180deg,#F2F7FF 0%,#FFFFFF 100%);border:2px solid var(--royal);box-shadow:0 10px 30px rgba(36,82,200,0.08)">
-    <div style="margin-bottom:14px">
-      <b style="display:block;font-size:18.5px;color:var(--navy)">🪪 Carnet Misionero Digital JUMA</b>
-      <p style="margin:4px 0 0;font-size:14px;color:var(--muted)">Tu carnet oficial con código QR y opción de generar el mockup realista en la franela misionera.</p>
+  return `<div style="padding:18px;margin-bottom:6px;border-radius:18px;background:linear-gradient(180deg,#F2F7FF 0%,#FFFFFF 100%);border:2px solid var(--royal);box-shadow:0 10px 30px rgba(36,82,200,0.08)">
+    <div style="margin-bottom:14px;text-align:left">
+      <b style="display:block;font-size:17.5px;color:var(--navy)">🪪 Carnet Misionero Digital JUMA</b>
+      <p style="margin:4px 0 0;font-size:13.5px;color:var(--muted)">Tu carnet oficial con código QR y opción de generar el mockup realista en la franela misionera.</p>
     </div>
 
     <!-- 1. VISTA DEL CARNET -->
@@ -1212,7 +1263,7 @@ function carnetInteractiveSectionHtml(rec, contextKey = 'profile') {
     <div style="padding:18px;border-radius:16px;background:${isMockupReady ? '#FFFFFF' : '#EBF3FF'};border:${isMockupReady ? '2px solid var(--royal)' : '1.5px dashed var(--royal)'};text-align:center">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
         <div>
-          <b style="font-size:15.5px;color:var(--navy);display:block;text-align:left">👕 Mockup en Franela Oficial JUMA (${esc(g)})</b>
+          <b style="font-size:15px;color:var(--navy);display:block;text-align:left">👕 Mockup en Franela Oficial JUMA (${esc(g)})</b>
           <span style="font-size:12.5px;color:var(--muted);display:block;text-align:left">${isMockupReady ? '¡Mockup generado con éxito! Revísalo abajo y descárgalo cuando quieras.' : 'Toca «Generar» para ver el diseño en pantalla primero sin tener que descargarlo.'}</span>
         </div>
         <div style="display:flex;gap:6px">
@@ -1232,8 +1283,8 @@ function carnetInteractiveSectionHtml(rec, contextKey = 'profile') {
         </div>
       ` : `
         <!-- SE MUESTRA EL MOCKUP EN PANTALLA PRIMERO -->
-        <div style="margin-bottom:16px;box-shadow:0 8px 24px rgba(6,21,54,0.12);border-radius:14px;overflow:hidden">
-          ${carnetMockupHtml(rec, g)}
+        <div style="margin-bottom:16px;box-shadow:0 8px 24px rgba(6,21,54,0.14);border-radius:14px;overflow:hidden;background:#0A1B3F;max-width:360px;margin-left:auto;margin-right:auto">
+          ${previewDataUrl ? `<img src="${previewDataUrl}" alt="Mockup en Franela Oficial JUMA (${esc(g)})" style="width:100%;height:auto;display:block">` : carnetMockupHtml(rec, g)}
         </div>
         <!-- SOLO ASI LUEGO DE MOSTRARSE APARECE LA OPCION DE DESCARGAR -->
         <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px">
@@ -1930,20 +1981,35 @@ modalRoot.addEventListener('click', async (e) => {
     setTimeout(() => { dlMockupBtn.innerHTML = orig; }, 1200);
     return;
   }
-  if (e.target.closest('[data-save-quick-carnet]')) {
-    const ciVal = (($('#au-quick-ci') || {}).value || '').trim();
-    const sxVal = (($('#au-quick-sexo') || {}).value || '').trim();
-    if (myProfile) {
-      myProfile.cedula = ciVal;
-      myProfile.sexo = sxVal;
-      myProfile.datos = myProfile.datos || {};
-      myProfile.datos.cedula = ciVal;
-      myProfile.datos.sexo = sxVal;
-      carnetGenderOverride = sxVal;
-      const fotoActual = myProfile.foto || myProfile.datos.foto || '';
-      await saveNewProfilePhoto(fotoActual, { cedula: ciVal, sexo: sxVal });
-      repaintAuth();
+  const genMockBtn = e.target.closest('[data-action-generate-mockup]');
+  if (genMockBtn) {
+    const uidTarget = genMockBtn.dataset.actionGenerateMockup;
+    const recTarget = uidTarget === 'me' ? (myProfile || { datos: form.d, foto: form.d.foto }) : (allInscripciones.find((x) => x && (x.id === uidTarget || x.uid === uidTarget)) || myProfile);
+    const g = mockupGenderMap.get(uidTarget) || carnetGenderOverride || (recTarget && detectGender(recTarget)) || 'Hombre';
+    genMockBtn.innerHTML = '⏳ Generando mockup HD…';
+    genMockBtn.disabled = true;
+    generatedMockups.add(uidTarget);
+    await generateMockupDataUrl(recTarget, g);
+    if ($('#au-t')) repaintAuth();
+    else if ($('#ed-t')) repaintEd();
+    else if ($('#pl-t')) repaintForm();
+    return;
+  }
+  const mockGTag = e.target.closest('[data-toggle-mock-gender]');
+  if (mockGTag) {
+    const parts = (mockGTag.dataset.toggleMockGender || '').split(':');
+    const uidTarget = parts[0] || 'me';
+    const newG = parts[1] || 'Hombre';
+    mockupGenderMap.set(uidTarget, newG);
+    if (uidTarget === 'me') carnetGenderOverride = newG;
+    const recTarget = uidTarget === 'me' ? (myProfile || { datos: form.d, foto: form.d.foto }) : (allInscripciones.find((x) => x && (x.id === uidTarget || x.uid === uidTarget)) || myProfile);
+    if (generatedMockups.has(uidTarget)) {
+      mockGTag.disabled = true;
+      await generateMockupDataUrl(recTarget, newG);
     }
+    if ($('#au-t')) repaintAuth();
+    else if ($('#ed-t')) repaintEd();
+    else if ($('#pl-t')) repaintForm();
     return;
   }
 });
@@ -2125,41 +2191,128 @@ function authModalHtml() {
         </div>
         ${selfieBoxHtml('auth')}
       </div>
-      ${masterOn ? `<div style="padding:16px 20px;margin-bottom:20px;border-radius:14px;background:#E8F1FF;border:1.5px solid var(--royal);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px"><div><b style="color:var(--navy);font-size:16px">${trueMaster ? 'Panel Maestro activo' : 'Panel de Coordinación activo'}</b><p style="margin:4px 0 0;font-size:14px;color:var(--muted)">${trueMaster ? 'Puedes modificar toda la app, asignar roles, ver el calendario de cumpleaños, descargar carnets, editar la galería y escanear QR.' : 'Puedes ver los participantes, sus carnets, el calendario de cumpleaños, escanear códigos QR de asistencia y actualizar actividades.'}</p></div><div style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="btn btn-blue btn-sm" data-open-qr-scanner>📷 Escanear QR</button><button type="button" class="btn btn-soft btn-sm" data-open-cumple-tab style="background:#fff;border:1.5px solid var(--royal);color:var(--royal)">🎂 Cumpleaños</button><button type="button" class="btn btn-outline btn-sm" data-open-master-panel>Abrir Panel y Editor</button></div></div>` : ''}
-      ${carnetInteractiveSectionHtml(myProfile || { uid: currentUser && currentUser.uid, correo: email, nombre, foto, datos: d }, 'profile')}
-      <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:center;padding:18px 20px;margin-bottom:20px;border-radius:14px;background:#fff;border:1.5px solid var(--line)">
-        <div style="flex:0 0 auto;text-align:center;margin:0 auto">
-          <img src="${esc(qrUrl)}" alt="Mi código QR JUMA" width="150" height="150" style="display:block;border-radius:12px;border:2px solid var(--royal);padding:6px;background:#fff">
-        </div>
-        <div style="flex:1 1 220px">
-          <div style="margin-bottom:6px">${roleBadgeHtml(role)}</div>
-          <b style="display:block;font-size:17px;color:var(--ink)">Mi código QR de asistencia</b>
-          <p style="margin:4px 0 12px;font-size:14px;color:var(--muted);line-height:1.45">Muéstrale este código QR (o tu Carnet Digital de arriba) a cualquiera de los coordinadores en la formación o actividad del día para registrar tu asistencia.</p>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-            <span style="padding:6px 12px;border-radius:99px;background:var(--mist);color:var(--royal);font-size:13px;font-weight:800">📋 ${misAsistencias.length} asistencia${misAsistencias.length === 1 ? '' : 's'} (últimos 6 meses)</span>
+      ${masterOn ? `
+      <details class="profile-acc profile-acc-coord">
+        <summary>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">⭐</span>
+            <div style="text-align:left">
+              <b style="color:var(--navy);font-size:15.5px;display:block">${trueMaster ? 'Panel Maestro activo' : 'Panel de Coordinación activo'}</b>
+              <small style="color:var(--muted);font-size:12px;font-weight:600">Herramientas de coordinación y gestión</small>
+            </div>
           </div>
-          ${misAsistencias.length ? `<details style="margin-top:10px"><summary style="cursor:pointer;font-size:13.5px;font-weight:700;color:var(--royal)">Ver mis formaciones y actividades asistidas</summary><ul style="margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink)">${misAsistencias.map((a) => `<li style="margin-bottom:4px"><b>${esc(a.titulo || 'Formación')}</b> — ${esc(a.fecha ? a.fecha.split('-').reverse().join('/') : '')} <span style="color:var(--muted)">(${esc(a.tipo || 'Formación')})</span></li>`).join('')}</ul></details>` : ''}
-        </div>
-      </div>
-      <div style="padding:18px 20px;margin-bottom:20px;border-radius:14px;background:#F6F9FE;border:1.5px solid var(--line)">
-        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
-          <div>
-            <b style="display:block;font-size:17px;color:var(--ink)">📅 Mis próximas actividades y recordatorios</b>
-            <p style="margin:2px 0 0;font-size:13.5px;color:var(--muted)">Vincula tus encuentros con Google Calendar o el calendario de tu teléfono con alarmas automáticas.</p>
-          </div>
+          <span class="profile-acc-arrow">▾</span>
+        </summary>
+        <div class="profile-acc-content">
+          <p style="margin:8px 0 14px;font-size:13.5px;color:var(--ink);line-height:1.5">
+            ${trueMaster ? 'Puedes modificar toda la app, asignar roles, ver el calendario de cumpleaños, descargar carnets, editar la galería y escanear QR.' : 'Puedes ver los participantes, sus carnets, el calendario de cumpleaños, escanear códigos QR de asistencia y actualizar actividades.'}
+          </p>
           <div style="display:flex;flex-wrap:wrap;gap:8px">
-            <button type="button" class="btn ${remOn ? 'btn-blue' : 'btn-outline'} btn-sm" data-toggle-rem>${remOn ? '🔔 Recordatorio activo' : '🔔 Activar recordatorio'}</button>
-            <button type="button" class="btn btn-soft btn-sm" data-dl-ics>📲 Sincronizar 3 meses (.ics)</button>
+            <button type="button" class="btn btn-blue btn-sm" data-open-qr-scanner>📷 Escanear QR</button>
+            <button type="button" class="btn btn-soft btn-sm" data-open-cumple-tab style="background:#fff;border:1.5px solid var(--royal);color:var(--royal)">🎂 Cumpleaños</button>
+            <button type="button" class="btn btn-outline btn-sm" data-open-master-panel>Abrir Panel y Editor</button>
           </div>
         </div>
-        ${proxEventos.length ? `<div style="display:grid;gap:8px">${proxEventos.map((ev) => `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-radius:10px;background:#fff;border:1px solid var(--line)"><div><b style="font-size:14.5px;color:var(--ink)">${esc(ev.title)}</b><span style="display:block;font-size:12.5px;color:var(--muted)">${esc(ev.badge)} · ${esc(hora())} · ${esc(lugar())}</span></div><a class="btn btn-outline btn-sm" style="padding:6px 12px;font-size:12px" target="_blank" rel="noopener" href="${esc(googleCalUrl(ev))}">📅 Google Calendar</a></div>`).join('')}</div>` : ''}
-      </div>
-      ${rows.length ? `<h3 class="h-display h-md" style="margin-bottom:12px">Datos de mi planilla guardada</h3><dl style="margin:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px 20px">${rows.map((r) => `<div style="display:flex;flex-wrap:wrap;gap:4px 18px;padding:10px 0;border-bottom:1px solid var(--mist)"><dt style="flex:0 0 180px;font-size:14px;font-weight:700;color:var(--royal)">${esc(r[0])}</dt><dd style="margin:0;flex:1 1 180px;font-size:15px">${esc(r[1])}</dd></div>`).join('')}</dl>` : `<div style="padding:20px;border-radius:14px;background:var(--mist);margin-bottom:18px"><p class="body" style="margin:0">Tu cuenta está activa, pero aún no has llenado tu planilla misionera.</p></div>`}
-      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px">
-        <button type="button" class="btn btn-blue" data-edit-my-form>${rows.length ? 'Actualizar mi planilla' : 'Completar mi planilla ahora'}</button>
-        ${rows.length ? `<button type="button" class="btn btn-soft" data-dl-profile>Descargar planilla con QR</button>` : ''}
-        ${rows.length && wa.length ? `<a class="btn btn-soft" target="_blank" rel="noopener" href="https://wa.me/${wa[0]}?text=${encodeURIComponent(planillaTexto(d))}">Enviar por WhatsApp</a>` : ''}
-        <button type="button" class="btn btn-danger" data-logout style="margin-left:auto">Cerrar sesión</button>
+      </details>` : ''}
+
+      <!-- 2. Carnet Misionero Digital y Mockup (Desplegable) -->
+      <details class="profile-acc" open>
+        <summary>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">🪪</span>
+            <div style="text-align:left">
+              <b style="color:var(--navy);font-size:15.5px;display:block">Carnet Misionero y Mockup Digital</b>
+              <small style="color:var(--muted);font-size:12px;font-weight:600">Carnet oficial HD y diseño en franela JUMA</small>
+            </div>
+          </div>
+          <span class="profile-acc-arrow">▾</span>
+        </summary>
+        <div class="profile-acc-content" style="padding:14px 14px 18px">
+          ${carnetInteractiveSectionHtml(myProfile || { uid: currentUser && currentUser.uid, correo: email, nombre, foto, datos: d }, 'profile')}
+        </div>
+      </details>
+
+      <!-- 3. Mi código QR de asistencia (Desplegable) -->
+      <details class="profile-acc">
+        <summary>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">📷</span>
+            <div style="text-align:left">
+              <b style="color:var(--navy);font-size:15.5px;display:block">Mi código QR de asistencia</b>
+              <small style="color:var(--muted);font-size:12px;font-weight:600">${misAsistencias.length} asistencia${misAsistencias.length === 1 ? '' : 's'} registradas (6 meses)</small>
+            </div>
+          </div>
+          <span class="profile-acc-arrow">▾</span>
+        </summary>
+        <div class="profile-acc-content" style="padding-top:16px">
+          <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:center">
+            <div style="flex:0 0 auto;text-align:center;margin:0 auto">
+              <img src="${esc(qrUrl)}" alt="Mi código QR JUMA" width="140" height="140" style="display:block;border-radius:12px;border:2px solid var(--royal);padding:6px;background:#fff">
+            </div>
+            <div style="flex:1 1 220px;text-align:left">
+              <div style="margin-bottom:6px">${roleBadgeHtml(role)}</div>
+              <b style="display:block;font-size:16px;color:var(--ink)">Código QR personal</b>
+              <p style="margin:4px 0 12px;font-size:13.5px;color:var(--muted);line-height:1.45">Muéstrale este código QR a los coordinadores al llegar a los encuentros o misiones para marcar tu asistencia.</p>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                <span style="padding:5px 12px;border-radius:99px;background:var(--mist);color:var(--royal);font-size:12.5px;font-weight:800">📋 ${misAsistencias.length} asistencia${misAsistencias.length === 1 ? '' : 's'}</span>
+              </div>
+              ${misAsistencias.length ? `<details style="margin-top:10px"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--royal)">Ver formaciones asistidas</summary><ul style="margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--ink)">${misAsistencias.map((a) => `<li style="margin-bottom:4px"><b>${esc(a.titulo || 'Formación')}</b> — ${esc(a.fecha ? a.fecha.split('-').reverse().join('/') : '')} <span style="color:var(--muted)">(${esc(a.tipo || 'Formación')})</span></li>`).join('')}</ul></details>` : ''}
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- 4. Próximas actividades y recordatorios (Desplegable) -->
+      <details class="profile-acc">
+        <summary>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">📅</span>
+            <div style="text-align:left">
+              <b style="color:var(--navy);font-size:15.5px;display:block">Próximas actividades y recordatorios</b>
+              <small style="color:var(--muted);font-size:12px;font-weight:600">${remOn ? '🔔 Recordatorio activo' : 'Alarmas y sincronización'}</small>
+            </div>
+          </div>
+          <span class="profile-acc-arrow">▾</span>
+        </summary>
+        <div class="profile-acc-content" style="padding-top:16px">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
+            <div>
+              <b style="display:block;font-size:15px;color:var(--ink)">Sincronizar con tu teléfono</b>
+              <p style="margin:2px 0 0;font-size:13px;color:var(--muted)">Guarda los encuentros con alarmas automáticas.</p>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <button type="button" class="btn ${remOn ? 'btn-blue' : 'btn-outline'} btn-sm" data-toggle-rem>${remOn ? '🔔 Recordatorio activo' : '🔔 Activar recordatorio'}</button>
+              <button type="button" class="btn btn-soft btn-sm" data-dl-ics>📲 Sincronizar (.ics)</button>
+            </div>
+          </div>
+          ${proxEventos.length ? `<div style="display:grid;gap:8px">${proxEventos.map((ev) => `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-radius:10px;background:#F6F9FE;border:1px solid var(--line)"><div><b style="font-size:14px;color:var(--ink)">${esc(ev.title)}</b><span style="display:block;font-size:12px;color:var(--muted)">${esc(ev.badge)} · ${esc(hora())} · ${esc(lugar())}</span></div><a class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:12px" target="_blank" rel="noopener" href="${esc(googleCalUrl(ev))}">📅 Google Cal</a></div>`).join('')}</div>` : ''}
+        </div>
+      </details>
+
+      <!-- 5. Datos de mi planilla guardada (Desplegable) -->
+      <details class="profile-acc">
+        <summary>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">📋</span>
+            <div style="text-align:left">
+              <b style="color:var(--navy);font-size:15.5px;display:block">Datos de mi planilla guardada</b>
+              <small style="color:var(--muted);font-size:12px;font-weight:600">${rows.length ? rows.length + ' campos registrados' : 'Planilla pendiente'}</small>
+            </div>
+          </div>
+          <span class="profile-acc-arrow">▾</span>
+        </summary>
+        <div class="profile-acc-content" style="padding-top:16px">
+          ${rows.length ? `<dl style="margin:0;background:#F6F9FE;border:1px solid var(--line);border-radius:12px;padding:6px 16px">${rows.map((r) => `<div style="display:flex;flex-wrap:wrap;gap:4px 18px;padding:8px 0;border-bottom:1px solid var(--mist)"><dt style="flex:0 0 160px;font-size:13.5px;font-weight:700;color:var(--royal)">${esc(r[0])}</dt><dd style="margin:0;flex:1 1 160px;font-size:14px">${esc(r[1])}</dd></div>`).join('')}</dl>` : `<div style="padding:16px;border-radius:12px;background:var(--mist)"><p class="body" style="margin:0">Tu cuenta está activa, pero aún no has completado tu planilla misionera.</p></div>`}
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">
+            <button type="button" class="btn btn-blue btn-sm" data-edit-my-form>${rows.length ? 'Actualizar mi planilla' : 'Completar mi planilla ahora'}</button>
+            ${rows.length ? `<button type="button" class="btn btn-soft btn-sm" data-dl-profile>Descargar planilla con QR</button>` : ''}
+            ${rows.length && wa.length ? `<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="https://wa.me/${wa[0]}?text=${encodeURIComponent(planillaTexto(d))}">Enviar por WhatsApp</a>` : ''}
+          </div>
+        </div>
+      </details>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:20px">
+        <button type="button" class="btn btn-danger btn-sm" data-logout>Cerrar sesión</button>
       </div>
     </div></div></div>`;
   }
@@ -4206,9 +4359,16 @@ document.addEventListener('click', (e) => {
         ];
       } else if (bdayList.length > 0) {
         const nombresHoy = bdayList.map((c) => c.nombre).join(', ');
+        const waChatBtns = bdayList.map((c) => {
+          const pNom = c.nombre.split(/\s+/)[0] || c.nombre;
+          const msgWa = `🎉🎂 ¡Feliz cumpleaños, *${c.nombre}*! Que Dios y Nuestra Madre la Virgen Consolata te bendigan siempre en tu camino misionero. ¡Un gran abrazo de parte de toda tu familia de JUMA Duaca! 💙✨`;
+          const link = c.waUrl || `https://wa.me/?text=${encodeURIComponent(msgWa)}`;
+          return `<div style="margin-top:8px"><a href="${esc(link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#17824A;color:#fff;font-size:13.5px;font-weight:800;padding:8px 16px;border-radius:12px;text-decoration:none;box-shadow:0 4px 14px rgba(23,130,74,0.3)">📲 Felicitar a ${esc(pNom)} por WhatsApp</a></div>`;
+        }).join('');
         jMsg = [
           `¡Hola${primerNom ? ', <b>' + esc(primerNom) + '</b>' : ''}! Soy <b>Joriel</b> 👋.`,
           `Hoy tenemos una gran fiesta misionera en JUMA: ¡<b>${esc(nombresHoy)}</b> está de cumpleaños hoy! 🎂🎈 No olvides felicitarla/o.`,
+          waChatBtns,
           'Te cuento sobre nuestros encuentros, formación, oraciones y cómo participar. ¿Qué quieres saber?'
         ];
       } else {
@@ -4249,8 +4409,21 @@ document.addEventListener('click', (e) => {
       bText = `🎉 ¡Hoy está de cumpleaños ${esc(nomCumple)}! 🎂🎈 No olvides felicitarla/o en este día tan especial.`;
     }
 
+    let bWaHtml = '';
+    if (bdayList.length > 0 && !isCelebrant) {
+      const waButtons = bdayList.map((c) => {
+        const pNom = c.nombre.split(/\s+/)[0] || c.nombre;
+        const msgWa = `🎉🎂 ¡Feliz cumpleaños, *${c.nombre}*! Que Dios y Nuestra Madre la Virgen Consolata te bendigan siempre en tu camino misionero. ¡Un gran abrazo de parte de toda tu familia de JUMA Duaca! 💙✨`;
+        const link = c.waUrl || `https://wa.me/?text=${encodeURIComponent(msgWa)}`;
+        return `<a class="jhello-wa" href="${esc(link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#17824A;color:#fff;font-size:12.5px;font-weight:800;padding:6px 14px;border-radius:99px;text-decoration:none;box-shadow:0 4px 12px rgba(23,130,74,0.35);margin-top:6px">📲 Felicitar a ${esc(pNom)} por WhatsApp</a>`;
+      }).join('');
+      if (waButtons) {
+        bWaHtml = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px">${waButtons}</div>`;
+      }
+    }
+
     hello = document.createElement('div'); hello.className = 'jhello'; hello.setAttribute('role', 'status');
-    hello.innerHTML = `<img src="${FULL}" alt="" class="jhello-img"><div class="jhello-b"><button type="button" class="jhello-x" aria-label="Cerrar saludo">✕</button><b>${bTitle}</b><p>${bText}</p><button type="button" class="jhello-go">${bBtn}</button></div>`;
+    hello.innerHTML = `<img src="${FULL}" alt="" class="jhello-img"><div class="jhello-b"><button type="button" class="jhello-x" aria-label="Cerrar saludo">✕</button><b>${bTitle}</b><p>${bText}</p>${bWaHtml}<button type="button" class="jhello-go" style="margin-top:4px">${bBtn}</button></div>`;
     document.body.appendChild(hello);
     hello.querySelector('.jhello-x').addEventListener('click', hideHello);
     hello.querySelector('.jhello-go').addEventListener('click', () => { hideHello(); open(); });

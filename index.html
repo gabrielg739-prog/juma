@@ -524,8 +524,22 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 .j-mockup-wrap{position:relative;width:100%;max-width:360px;margin:0 auto;border-radius:18px;overflow:hidden;box-shadow:0 18px 40px -14px rgba(6,21,54,.4);background:#0A1B3F;user-select:none}
 .j-mockup-bg{width:100%;height:auto;display:block}
 .j-mockup-slot{position:absolute;overflow:hidden;border-radius:5px;box-shadow:0 2px 6px rgba(0,0,0,.28)}
-.j-mockup-slot .j-carnet{width:300px;max-width:none;height:473px;aspect-ratio:auto;border-radius:14px;box-shadow:none;transform-origin:top left}
+.j-mockup-slot .j-carnet{width:300px;max-width:none;height:473px;aspect-ratio:auto;border-radius:14px;box-shadow:none;transform-origin:top left;transform:scale(0.204)}
 .j-mockup-gloss{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.26) 0%,rgba(255,255,255,0) 45%,rgba(255,255,255,.08) 100%);pointer-events:none;border-radius:5px}
+
+/* ===== menús desplegables (acordeón) del perfil misionero ===== */
+.profile-acc{border:1.5px solid var(--line);background:#fff;border-radius:16px;margin-bottom:14px;overflow:hidden;transition:border-color 160ms ease,box-shadow 160ms ease;box-shadow:0 4px 14px rgba(6,21,54,.04)}
+.profile-acc[open]{border-color:var(--royal);box-shadow:0 8px 24px rgba(36,82,200,.08)}
+.profile-acc summary{padding:14px 18px;font-size:15px;font-weight:800;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;user-select:none;background:#fff;transition:background-color 160ms ease}
+.profile-acc summary::-webkit-details-marker{display:none}
+.profile-acc summary:hover{background:#F4F8FF}
+.profile-acc-coord{border-color:var(--royal);background:#E8F1FF}
+.profile-acc-coord summary{background:#E8F1FF}
+.profile-acc-coord[open]{border-color:var(--royal);background:#E8F1FF}
+.profile-acc-arrow{font-size:18px;color:var(--royal);transition:transform 220ms ease;display:inline-block;line-height:1}
+.profile-acc[open] .profile-acc-arrow{transform:rotate(180deg)}
+.profile-acc-content{padding:4px 18px 18px;border-top:1px solid var(--line);animation:fade 180ms ease both}
+.profile-acc-coord .profile-acc-content{border-top:1px solid rgba(36,82,200,.2)}
 
 </style>
 </head>
@@ -1109,7 +1123,7 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 </div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=38"></script>
-<script type="module" src="js/fe.js?v=38"></script>
+<script type="module" src="js/app.js?v=39"></script>
+<script type="module" src="js/fe.js?v=39"></script>
 </body>
 </html>
