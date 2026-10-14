@@ -1908,17 +1908,77 @@ async function saveRegistration() {
   return cloudSaved;
 }
 
+function findProfileRecord(uid, email) {
+  const cleanEmail = String(email || '').trim().toLowerCase();
+  const cleanUid = String(uid || '').trim();
+
+  // 1. Buscar en allInscripciones (cargadas en memoria)
+  if (Array.isArray(allInscripciones) && allInscripciones.length) {
+    const match = allInscripciones.find((x) => {
+      if (!x) return false;
+      if (cleanUid && (x.id === cleanUid || x.uid === cleanUid)) return true;
+      const xEmail = String(x.correo || (x.datos && x.datos.correo) || '').trim().toLowerCase();
+      if (cleanEmail && xEmail && xEmail === cleanEmail) return true;
+      return false;
+    });
+    if (match) return match;
+  }
+
+  // 2. Buscar en el caché local de inscripciones
+  try {
+    const locArr = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]');
+    if (Array.isArray(locArr) && locArr.length) {
+      const match = locArr.find((x) => {
+        if (!x) return false;
+        if (cleanUid && (x.id === cleanUid || x.uid === cleanUid)) return true;
+        const xEmail = String(x.correo || (x.datos && x.datos.correo) || '').trim().toLowerCase();
+        if (cleanEmail && xEmail && xEmail === cleanEmail) return true;
+        return false;
+      });
+      if (match) return match;
+    }
+  } catch (e) {}
+
+  // 3. Buscar en claves de perfil específicas de localStorage
+  try {
+    if (cleanUid) {
+      const s = localStorage.getItem('juma-perfil-' + cleanUid);
+      if (s) return JSON.parse(s);
+    }
+    if (cleanEmail) {
+      const s = localStorage.getItem('juma-perfil-email-' + cleanEmail);
+      if (s) return JSON.parse(s);
+    }
+    const last = localStorage.getItem('juma-ultimo-perfil');
+    if (last) {
+      const parsed = JSON.parse(last);
+      const pEmail = String(parsed.correo || (parsed.datos && parsed.datos.correo) || '').trim().toLowerCase();
+      if (!cleanEmail || pEmail === cleanEmail) return parsed;
+    }
+  } catch (e) {}
+
+  return null;
+}
+
 async function loadUserProfile(user) {
   if (!user) return null;
   const uid = user.uid;
   const email = String(user.email || '').toLowerCase();
-  try {
-    const local = localStorage.getItem('juma-perfil-' + uid) || (email && localStorage.getItem('juma-perfil-email-' + email));
-    if (local) myProfile = JSON.parse(local);
-  } catch (e) {}
+
+  // Carga inmediata del perfil local para que la foto y el nombre aparezcan al instante
+  const localMatch = findProfileRecord(uid, email);
+  if (localMatch) {
+    myProfile = localMatch;
+    if (userRole(myProfile) === 'coordinador') {
+      isAdmin = true;
+      try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {}
+    }
+    updateAuthUI();
+  }
+
   if (fb && fb.db) {
     try {
-      const snap = await withTimeout(fb.getDoc(fb.doc(fb.db, 'inscripciones', uid)), 4000);
+      const snap = await withTimeout(fb.getDoc(fb.doc(fb.db, 'inscripciones', uid)), 3500);
       if (snap.exists()) {
         const data = Object.assign({ id: snap.id }, snap.data());
         myProfile = data;
@@ -1927,18 +1987,20 @@ async function loadUserProfile(user) {
           localStorage.setItem('juma-perfil-' + uid, JSON.stringify(data));
           localStorage.setItem('juma-ultimo-perfil', JSON.stringify(data));
         } catch (e) {}
+        updateAuthUI();
         checkMandatoryPhotoGate();
         setTimeout(() => checkBirthdayCelebration(), 500);
         return data;
       }
       if (email) {
         const q = fb.query(fb.collection(fb.db, 'inscripciones'), fb.where('correo', '==', email), fb.limit(1));
-        const qs = await withTimeout(fb.getDocs(q), 4000);
+        const qs = await withTimeout(fb.getDocs(q), 3500);
         if (!qs.empty) {
           const data = Object.assign({ id: qs.docs[0].id }, qs.docs[0].data());
           myProfile = data;
           if (userRole(data) === 'coordinador') { isAdmin = true; try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {} }
           try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(data)); } catch (e) {}
+          updateAuthUI();
           checkMandatoryPhotoGate();
           setTimeout(() => checkBirthdayCelebration(), 500);
           return data;
@@ -1950,6 +2012,7 @@ async function loadUserProfile(user) {
     isAdmin = true;
     try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {}
   }
+  updateAuthUI();
   checkMandatoryPhotoGate();
   setTimeout(() => checkBirthdayCelebration(), 500);
   return myProfile || null;
@@ -1961,6 +2024,10 @@ function updateAuthUI() {
   const footAuth = $('#lnk-perfil-foot');
   const fab = $('#fab-edit');
   const lAdmin = $('#lnk-admin');
+
+  if (!myProfile && currentUser) {
+    myProfile = findProfileRecord(currentUser.uid, currentUser.email);
+  }
   const role = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : 'participante');
   const masterOn = isAdmin || isEditor() || role === 'coordinador';
 
@@ -1968,16 +2035,28 @@ function updateAuthUI() {
   if (lAdmin) lAdmin.textContent = masterOn ? 'Panel Maestro (Activo)' : 'Acceso Maestro';
 
   if (currentUser || myProfile) {
-    const nombreCorto = (myProfile && myProfile.datos && myProfile.datos.nombres ? myProfile.datos.nombres.trim().split(' ')[0] : (currentUser && currentUser.displayName ? currentUser.displayName.split(' ')[0] : (currentUser && currentUser.email ? currentUser.email.split('@')[0] : 'Mi perfil')));
-    const foto = (myProfile && (myProfile.foto || (myProfile.datos && myProfile.datos.foto))) || (currentUser && currentUser.photoURL) || '';
+    const d = (myProfile && myProfile.datos) || {};
+    const fullName = String(
+      (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) ||
+      (currentUser && currentUser.displayName) ||
+      (currentUser && currentUser.email ? currentUser.email.split('@')[0] : '') ||
+      'Mi perfil'
+    ).trim();
+    const nombreCorto = (d.nombres ? d.nombres.trim().split(' ')[0] : (fullName ? fullName.split(' ')[0] : 'Mi perfil')) || 'Mi perfil';
+    const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
+
     if (btnAuth) {
-      btnAuth.innerHTML = (foto ? `<img src="${esc(foto)}" alt="" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:7px;border:1.5px solid #fff">` : '') + `<span>Mi perfil · ${esc(nombreCorto)}</span>`;
+      btnAuth.innerHTML = (foto
+        ? `<img src="${esc(foto)}" alt="" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:7px;border:1.5px solid #fff;display:inline-block;vertical-align:middle">`
+        : `<span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.28);color:#fff;font-weight:800;font-size:11px;line-height:22px;text-align:center;margin-right:6px;vertical-align:middle">${esc(nombreCorto.charAt(0).toUpperCase())}</span>`
+      ) + `<span style="vertical-align:middle">${esc(nombreCorto)}</span>`;
       btnAuth.className = 'btn btn-blue btn-sm';
+      btnAuth.setAttribute('title', 'Mi perfil (' + fullName + ')');
     }
     if (btnJoin) { btnJoin.textContent = myProfile ? '🪪 Mi Carnet' : 'Completar planilla'; }
     if (footAuth) footAuth.textContent = 'Mi perfil (' + nombreCorto + ')';
   } else {
-    if (btnAuth) { btnAuth.textContent = 'Iniciar sesión'; btnAuth.className = 'btn btn-outline btn-sm'; }
+    if (btnAuth) { btnAuth.textContent = 'Iniciar sesión'; btnAuth.className = 'btn btn-outline btn-sm'; btnAuth.removeAttribute('title'); }
     if (btnJoin) { btnJoin.textContent = 'Quiero ser parte'; }
     if (footAuth) footAuth.textContent = 'Iniciar sesión';
   }
@@ -2295,9 +2374,12 @@ function authModalHtml() {
   const masterOn = isAdmin || isEditor() || role === 'coordinador';
   const trueMaster = isMasterAccount();
   if (currentUser || myProfile) {
+    if (!myProfile && currentUser) {
+      myProfile = findProfileRecord(currentUser.uid, currentUser.email);
+    }
     const d = (myProfile && myProfile.datos) || {};
-    const nombre = (myProfile && myProfile.nombre) || (currentUser && currentUser.displayName) || (currentUser && currentUser.email) || 'Joven Misionero';
-    const email = (currentUser && currentUser.email) || (myProfile && myProfile.correo) || '';
+    const nombre = (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) || (currentUser && currentUser.displayName) || (currentUser && currentUser.email) || 'Joven Misionero';
+    const email = (currentUser && currentUser.email) || (myProfile && (myProfile.correo || d.correo)) || '';
     const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
     const rows = d.nombres ? summaryRows(d) : [];
     const wa = waNums();
@@ -2685,7 +2767,7 @@ modalRoot.addEventListener('click', async (e) => {
       if (isMasterEmail(currentUser.email) || (myProfile && userRole(myProfile) === 'coordinador')) {
         isAdmin = true;
         try { sessionStorage.setItem('juma-ed', '1'); if (isMasterEmail(currentUser.email)) localStorage.setItem('juma-master-device', '1'); } catch (x) {}
-        authBusy = false; showFab(); updateAuthUI(); openEditor(); return;
+        authBusy = false; showFab(); updateAuthUI(); repaintAuth(); return;
       }
       if (myProfile) { try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile)); } catch (x) {} }
       authBusy = false; updateAuthUI(); repaintAuth();
@@ -2717,16 +2799,23 @@ modalRoot.addEventListener('submit', async (e) => {
     const masterMatch = isMasterEmail(em) && checkMasterPass(pw);
     if (masterMatch) {
       isAdmin = true;
-      myProfile = myProfile || { nombre: 'Coordinación JUMA', correo: em, rol: 'coordinador', datos: { nombres: 'Coordinación', apellidos: 'JUMA Duaca', correo: em } };
+      const existing = findProfileRecord(null, em);
+      myProfile = existing || myProfile || {
+        nombre: 'Coordinación JUMA',
+        correo: em,
+        rol: 'coordinador',
+        datos: { nombres: 'Coordinación', apellidos: 'JUMA Duaca', correo: em }
+      };
+      if (existing && existing.foto && !myProfile.foto) myProfile.foto = existing.foto;
       try {
         sessionStorage.setItem('juma-ed', '1');
         localStorage.setItem('juma-master-device', '1');
         localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile));
       } catch (x) {}
-      authBusy = false; showFab(); updateAuthUI(); openEditor();
+      authBusy = false; showFab(); updateAuthUI(); repaintAuth();
       if (fb && fb.auth) {
-        fb.au.signInWithEmailAndPassword(fb.auth, em, pw).then((cred) => { currentUser = cred.user; }).catch(() => {
-          fb.au.createUserWithEmailAndPassword(fb.auth, em, pw).then((cred) => { currentUser = cred.user; }).catch(() => {});
+        fb.au.signInWithEmailAndPassword(fb.auth, em, pw).then((cred) => { currentUser = cred.user; updateAuthUI(); }).catch(() => {
+          fb.au.createUserWithEmailAndPassword(fb.auth, em, pw).then((cred) => { currentUser = cred.user; updateAuthUI(); }).catch(() => {});
         });
       }
       return;
@@ -2741,22 +2830,22 @@ modalRoot.addEventListener('submit', async (e) => {
         if (isMasterEmail(em) || (myProfile && userRole(myProfile) === 'coordinador')) {
           isAdmin = true;
           try { sessionStorage.setItem('juma-ed', '1'); if (isMasterEmail(em)) localStorage.setItem('juma-master-device', '1'); } catch (x) {}
-          authBusy = false; showFab(); updateAuthUI(); openEditor(); return;
+          authBusy = false; showFab(); updateAuthUI(); repaintAuth(); return;
         }
       } else {
-        const loc = localStorage.getItem('juma-perfil-email-' + em);
-        if (loc) myProfile = JSON.parse(loc);
+        const loc = findProfileRecord(null, em) || (localStorage.getItem('juma-perfil-email-' + em) && JSON.parse(localStorage.getItem('juma-perfil-email-' + em)));
+        if (loc) myProfile = loc;
         else throw new Error('no-local');
       }
       if (myProfile) { try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile)); } catch (x) {} }
       authBusy = false; updateAuthUI(); repaintAuth();
     } catch (err) {
       authBusy = false;
-      const loc = localStorage.getItem('juma-perfil-email-' + em);
+      const loc = findProfileRecord(null, em) || (localStorage.getItem('juma-perfil-email-' + em) && JSON.parse(localStorage.getItem('juma-perfil-email-' + em)));
       if (loc) {
-        myProfile = JSON.parse(loc);
+        myProfile = loc;
         if (userRole(myProfile) === 'coordinador') { isAdmin = true; try { sessionStorage.setItem('juma-ed', '1'); } catch (x) {} showFab(); }
-        try { localStorage.setItem('juma-ultimo-perfil', loc); } catch (x) {}
+        try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(loc)); } catch (x) {}
         updateAuthUI(); repaintAuth(); return;
       }
       authErr = 'Correo o contraseña incorrectos, o aún no te has registrado con la planilla.';
@@ -4042,7 +4131,7 @@ function editorBody() {
       <div class="stat-grid">
         <div class="stat-box" style="background:#E8F1FF;border-color:var(--royal)"><b id="stat-apk-dl-num" style="color:var(--royal)">📲 ${totalDl}</b><span style="color:var(--navy);font-weight:800">Descargaron la App</span></div>
         <div class="stat-box" style="background:#E4F5EA;border-color:#17824A"><b style="color:#14532D">✅ ${allInscripciones.length}</b><span style="color:#14532D;font-weight:800">App registrada</span></div>
-        ${sinReg > 0 ? `<div class="stat-box" style="background:#FFF8E1;border-color:#F5C518"><b style="color:#7A5200">⏳ ${sinReg}</b><span style="color:#7A5200;font-weight:800">Sin registrarse aún</span></div>` : ''}
+        <div class="stat-box" style="background:#FFF8E1;border-color:#F5C518"><b style="color:#7A5200">⏳ ${sinReg}</b><span style="color:#7A5200;font-weight:800">Sin registrarse aún</span></div>
         <div class="stat-box"><b>${totalCoord}</b><span>Coordinadores</span></div>
         <div class="stat-box"><b>${totalAses}</b><span>Asesores</span></div>
         <div class="stat-box"><b>${totalPart}</b><span>Participantes</span></div>
@@ -4438,7 +4527,7 @@ function cleanContent(src) {
   c.encuentrosExtra = (c.encuentrosExtra || []).filter((e) => e && e.fecha && e.fecha <= max3MonthsIso());
   c.cumpleanosExtra = (c.cumpleanosExtra || []).filter((x) => x && String(x.nombre || '').trim() && String(x.nac || '').trim());
   c.cumpleanosMensaje = typeof src.cumpleanosMensaje === 'string' ? src.cumpleanosMensaje.trim() : (cfg.cumpleanosMensaje || '');
-  c.posts = (c.posts || []).filter((p) => p && (String(p.t || '').trim() || String(p.x || '').trim() || p.video || p.foto));
+  c.posts = (c.posts || []).filter((p) => p && (String(p.t || '').trim() || String(p.x || '').trim() || p.video || p.foto)).slice(0, 25);
   c.galeria = (c.galeria || []).filter((g) => g && g.url);
   c.testimonios = (c.testimonios || []).filter((x) => x && String(x.x || '').trim());
   if (c.orden) { const ok = new Set(GAL_FIJA.map((g) => g.src).concat(c.galeria.map((g) => g.url))); c.orden = c.orden.filter((k) => ok.has(k)); }
@@ -4471,10 +4560,14 @@ async function openEditor() {
 }
 $('#fab-edit').addEventListener('click', openEditor);
 async function shrinkToDataUrl(file) {
-  const bmp = await createImageBitmap(file); const k = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
-  const cv = document.createElement('canvas'); cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
+  const bmp = await createImageBitmap(file);
+  const maxDim = 860;
+  const k = Math.min(1, maxDim / Math.max(bmp.width, bmp.height));
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(bmp.width * k);
+  cv.height = Math.round(bmp.height * k);
   cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
-  return cv.toDataURL('image/jpeg', 0.78);
+  return cv.toDataURL('image/jpeg', 0.72);
 }
 let edUploadMsg = '';
 async function uploadVideoToCloud(file, onProgress) {
@@ -4808,49 +4901,101 @@ async function saveAll() {
   local.actualizado = new Date(Math.max(Date.now(), (Date.parse(newestSeen) || 0) + 1000)).toISOString();
   edBusy = true; edErr = ''; edOk = ''; repaintEd();
 
-  let fbSaved = false;
-  if (fb && fb.db) {
-    try { await withTimeout(fb.setDoc(fb.doc(fb.db, 'site', 'config'), local), 4500); fbSaved = true; } catch (e) { fbSaved = true; }
-  }
-
+  // Si no hay llave de GitHub, publica directamente en Firebase y guarda borrador local
   if (!ghToken()) {
-    dr = local; draftWarn = !writeDraft(Object.assign({}, local, { _dirty: false })); pub = clone(local); cfg = clone(local); renderAll();
+    let fbSaved = false;
+    if (fb && fb.db) {
+      try {
+        await withTimeout(fb.setDoc(fb.doc(fb.db, 'site', 'config'), local), 3500);
+        fbSaved = true;
+      } catch (e) {
+        fbSaved = true;
+      }
+    }
+    dr = local;
+    draftWarn = !writeDraft(Object.assign({}, local, { _dirty: false }));
+    pub = clone(local);
+    cfg = clone(local);
+    renderAll();
     try { localStorage.setItem('juma-cfg', JSON.stringify(local)); } catch (e) {}
     edBusy = false;
     if (fbSaved) {
-      edOk = '<b>¡Publicado en tiempo real en Firebase!</b> Todos los usuarios de la app y la web ya ven los cambios al instante.';
+      edOk = '<b>✔ ¡Publicado en tiempo real en Firebase!</b> Todos los usuarios de la app y la web ya ven los cambios al instante.';
     } else {
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(local, null, 1)], { type: 'application/json' })); a.download = 'contenido.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
       edOk = '<b>Se guardó y descargó contenido.json.</b> Súbelo a GitHub o conecta tu llave en la pestaña «GitHub» para publicar sin descargar archivos.';
     }
-    repaintEd(); return;
+    repaintEd();
+    return;
   }
+
+  // Si tiene llave de GitHub, sube fotos en paralelo y sincroniza Firebase sin bloqueos
   try {
-    const out = clone(local); let n = 0;
-    const upPhoto = async (url) => {
-      if (!/^data:image\//.test(url || '')) return url;
-      if (uploaded.has(url)) return uploaded.get(url);
-      const path = 'img/subidas/' + Date.now() + '-' + (++n) + '.jpg';
-      await ghPut(path, url.split(',')[1], null, 'Foto nueva desde el editor');
-      uploaded.set(url, path); return path;
+    const out = clone(local);
+    let n = 0;
+    const photoUploads = [];
+    const collectUpload = (item, prop) => {
+      const url = item[prop];
+      if (/^data:image\//.test(url || '') && !uploaded.has(url)) {
+        const path = 'img/subidas/' + Date.now() + '-' + (++n) + '.jpg';
+        photoUploads.push(
+          ghPut(path, url.split(',')[1], null, 'Foto nueva desde el editor')
+            .then(() => { uploaded.set(url, path); })
+        );
+      }
     };
-    for (const g of out.galeria || []) g.url = await upPhoto(g.url);
-    for (const p of out.posts || []) if (p.foto) p.foto = await upPhoto(p.foto);
-    for (const x of out.testimonios || []) if (x.foto) x.foto = await upPhoto(x.foto);
+
+    (out.galeria || []).forEach((g) => collectUpload(g, 'url'));
+    (out.posts || []).forEach((p) => { if (p.foto) collectUpload(p, 'foto'); });
+    (out.testimonios || []).forEach((x) => { if (x.foto) collectUpload(x, 'foto'); });
+
+    // Sube fotos a GitHub y lee el sha actual de contenido.json en paralelo
+    const [_, cur] = await Promise.all([
+      Promise.all(photoUploads),
+      ghGet('contenido.json').catch(() => null)
+    ]);
+
+    // Aplica las rutas subidas a GitHub
+    for (const g of out.galeria || []) if (uploaded.has(g.url)) g.url = uploaded.get(g.url);
+    for (const p of out.posts || []) if (p.foto && uploaded.has(p.foto)) p.foto = uploaded.get(p.foto);
+    for (const x of out.testimonios || []) if (x.foto && uploaded.has(x.foto)) x.foto = uploaded.get(x.foto);
     if (out.orden) out.orden = out.orden.map((k) => uploaded.get(k) || k);
-    const cur = await ghGet('contenido.json');
-    await ghPut('contenido.json', enc64(JSON.stringify(out, null, 1)), cur && cur.sha, 'Actualiza la página desde el editor');
-    if (fb && fb.db) { fb.setDoc(fb.doc(fb.db, 'site', 'config'), out).catch(() => {}); }
-    pub = clone(out); newestSeen = out.actualizado;
-    dr = local; cfg = clone(local); renderAll();
+
+    // Guarda en GitHub y Firebase en paralelo
+    await Promise.all([
+      ghPut('contenido.json', enc64(JSON.stringify(out, null, 1)), cur && cur.sha, 'Actualiza la página desde el editor'),
+      fb && fb.db ? fb.setDoc(fb.doc(fb.db, 'site', 'config'), out).catch(() => {}) : Promise.resolve()
+    ]);
+
+    pub = clone(out);
+    newestSeen = out.actualizado;
+    dr = local;
+    cfg = clone(local);
+    renderAll();
     try { localStorage.removeItem(DRAFT); } catch (x) {}
-    for (const f of oldFiles) { try { const o = await ghGet(f); if (o && o.sha) await ghDelete(f, o.sha); } catch (x) {} }
-    oldFiles = [];
-    edOk = '<b>¡Publicado en Firebase y en GitHub!</b> Todos lo ven al instante en la página y en la app.';
+
+    // Limpia archivos viejos en segundo plano para no demorar al usuario
+    if (oldFiles.length) {
+      const toClean = oldFiles.slice();
+      oldFiles = [];
+      setTimeout(async () => {
+        for (const f of toClean) {
+          try {
+            const o = await ghGet(f);
+            if (o && o.sha) await ghDelete(f, o.sha);
+          } catch (x) {}
+        }
+      }, 500);
+    }
+
+    edOk = '<b>✔ ¡Publicado en Firebase y en GitHub!</b> Todos lo ven al instante en la página y en la app.';
   } catch (x) {
-    edErr = x && (x.status === 401 || x.status === 403 || x.status === 404) ? 'GitHub no aceptó la llave (pero en Firebase sí se guardó si estaba activo). Revísala en la pestaña «GitHub».' : 'No se pudo subir a GitHub, revisa tu conexión.';
+    edErr = x && (x.status === 401 || x.status === 403 || x.status === 404)
+      ? 'GitHub no aceptó la llave (pero en Firebase sí se guardó si estaba activo). Revísala en la pestaña «GitHub».'
+      : 'No se pudo subir a GitHub, revisa tu conexión.';
   }
-  edBusy = false; repaintEd();
+  edBusy = false;
+  repaintEd();
 }
 
 /* ===================== entrada secreta: 5 toques en María Consolata ===================== */
