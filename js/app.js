@@ -2113,31 +2113,17 @@ function switchSection(sectionId, updateHash = true) {
   if (!validSections.includes(sectionId)) sectionId = 'inicio';
   currentSection = sectionId;
 
-  if (viewMode === 'secciones') {
-    document.body.classList.add('modo-secciones');
-    document.body.classList.remove('modo-corrido');
-    document.querySelectorAll('.j-view').forEach((el) => {
-      const isTarget = el.id === 'view-' + sectionId;
-      el.classList.toggle('view-active', isTarget);
-    });
-  } else {
-    document.body.classList.remove('modo-secciones');
-    document.body.classList.add('modo-corrido');
-    document.querySelectorAll('.j-view').forEach((el) => {
-      el.classList.remove('view-active');
-    });
-  }
-
-  document.querySelectorAll('.subnav-btn').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.viewTarget === sectionId);
+  document.body.classList.add('modo-secciones');
+  document.body.classList.remove('modo-corrido');
+  document.querySelectorAll('.j-view').forEach((el) => {
+    const isTarget = el.id === 'view-' + sectionId;
+    el.classList.toggle('view-active', isTarget);
   });
+
   document.querySelectorAll('.navlink').forEach((link) => {
-    const href = link.getAttribute('href') || '';
-    link.classList.toggle('active', href === '#' + sectionId || link.dataset.view === sectionId);
+    const target = link.dataset.viewTarget || (link.getAttribute('href') || '').replace('#', '');
+    link.classList.toggle('active', target === sectionId);
   });
-
-  const modeBtnTxt = $('#txt-view-mode');
-  if (modeBtnTxt) modeBtnTxt.textContent = viewMode === 'secciones' ? '🗂️ Secciones' : '📄 Modo Corrido';
 
   if (updateHash && location.hash !== '#' + sectionId) {
     history.pushState(null, '', '#' + sectionId);

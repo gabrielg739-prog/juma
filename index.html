@@ -582,21 +582,44 @@ body.modo-secciones .j-view.view-active { display: block; animation: fadeInView 
 @keyframes fadeInView { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 body.modo-corrido .j-view { display: block!important; }
 
-/* Barra de Subnavegación de Secciones */
-.subnav-bar { position: sticky; top: 0; z-index: 10; background: #fff; border-bottom: 1px solid var(--line); box-shadow: 0 4px 12px rgba(6,21,54,.04); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.subnav-in { max-width: 1320px; margin: 0 auto; display: flex; align-items: center; gap: 6px; padding: 6px clamp(12px, 2vw, 24px); }
-.subnav-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; border: 1.5px solid transparent; background: transparent; font-size: 13.5px; font-weight: 700; color: var(--muted); cursor: pointer; white-space: nowrap; transition: all .15s ease; text-decoration: none; }
-.subnav-btn:hover { background: var(--mist); color: var(--navy); }
-.subnav-btn.active { background: var(--royal); color: #fff; box-shadow: 0 4px 12px rgba(36,82,200,.25); }
-.subnav-mode-toggle { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--muted); background: var(--mist); border-radius: 999px; padding: 5px 12px; border: 1px solid var(--line); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; flex: 0 0 auto; }
-.subnav-mode-toggle:hover { color: var(--navy); background: #E8F1FF; }
+/* Barra de Navegación Única Superior con soporte móvil */
+.navlink.active {
+  color: var(--royal) !important;
+}
+.navlink.active:after {
+  transform: scaleX(1) !important;
+}
 
-/* Atajos visuales de portada */
-.hero-shortcuts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 26px; }
-.hero-sc-card { padding: 16px 18px; border-radius: 14px; background: rgba(255,255,255,.12); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1.5px solid rgba(255,255,255,.2); color: #fff; text-decoration: none; display: flex; flex-direction: column; gap: 6px; transition: transform .15s ease, background .15s ease; cursor: pointer; text-align: left; }
-.hero-sc-card:hover { transform: translateY(-2px); background: rgba(255,255,255,.22); }
-.hero-sc-card b { font-size: 15px; color: #fff; display: flex; align-items: center; gap: 8px; }
-.hero-sc-card p { margin: 0; font-size: 13px; color: #DCE7F8; line-height: 1.4; }
+@media (max-width: 980px) {
+  .topbar-in {
+    flex-wrap: wrap;
+    padding-bottom: 6px;
+    gap: 8px 12px;
+  }
+  .navlinks {
+    display: flex !important;
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 6px 0 2px;
+    gap: 4px 10px;
+    border-top: 1px solid var(--line);
+    scrollbar-width: none;
+  }
+  .navlinks::-webkit-scrollbar { display: none; }
+  .navlink {
+    font-size: 13.5px;
+    padding: 5px 10px;
+    white-space: nowrap;
+    border-radius: 999px;
+  }
+  .navlink.active {
+    background: #E8F1FF;
+    color: var(--royal) !important;
+  }
+  .navlink:after { display: none; }
+}
 
 /* Pie de navegación de cada sección */
 .view-foot-nav { max-width: 960px; margin: 32px auto 16px; padding: 18px clamp(16px, 3vw, 24px); border-radius: 16px; background: var(--mist); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
@@ -649,15 +672,15 @@ body.modo-corrido .j-view { display: block!important; }
 <span><b>JUMA Duaca</b><small>Juventud Misionera Allamaniana</small></span>
 </a>
 <nav class="navlinks" aria-label="Principal">
-<a class="navlink" href="#inicio" data-view="inicio">Inicio</a>
-<a class="navlink" href="#quienes" data-view="quienes">Quiénes somos</a>
-<a class="navlink" href="#domingos" data-view="domingos">Domingos</a>
-<a class="navlink" href="#formacion" data-view="formacion">Formación</a>
-<a class="navlink" href="#fe" data-view="fe">Oración</a>
-<a class="navlink" href="#consolata" data-view="consolata">Consolata</a>
-<a class="navlink" id="nav-nov" href="#novedades" data-view="novedades">Noticias</a>
-<a class="navlink" href="#galeria" data-view="galeria">Galería</a>
-<a class="navlink hide" href="#comunidad" data-view="comunidad" id="nav-comunidad">👥 Comunidad</a>
+<a class="navlink active" href="#inicio" data-view-target="inicio">Inicio</a>
+<a class="navlink" href="#quienes" data-view-target="quienes">Quiénes somos</a>
+<a class="navlink" href="#domingos" data-view-target="domingos">Domingos</a>
+<a class="navlink" href="#formacion" data-view-target="formacion">Formación</a>
+<a class="navlink" href="#fe" data-view-target="fe">Oración</a>
+<a class="navlink" href="#consolata" data-view-target="consolata">Consolata</a>
+<a class="navlink" id="nav-nov" href="#novedades" data-view-target="novedades">Noticias</a>
+<a class="navlink" href="#galeria" data-view-target="galeria">Galería</a>
+<a class="navlink hide" href="#comunidad" data-view-target="comunidad" id="nav-comunidad">👥 Comunidad</a>
 </nav>
 <div class="topbar-actions">
 <button type="button" class="btn btn-soft btn-sm hide" id="btn-top-notif" data-open-notifs title="Notificaciones internas de JUMA" style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;min-height:38px;padding:0;border-radius:50%;background:#fff;border:1.5px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.06)">
@@ -675,84 +698,37 @@ body.modo-corrido .j-view { display: block!important; }
 <div class="rod-wrap"><div class="rod" aria-hidden="true"></div></div>
 </header>
 
-<nav class="subnav-bar" id="subnav-bar" aria-label="Secciones de la página">
-  <div class="subnav-in">
-    <button type="button" class="subnav-btn active" data-view-target="inicio">🏠 Inicio</button>
-    <button type="button" class="subnav-btn" data-view-target="quienes">🤝 Quiénes somos</button>
-    <button type="button" class="subnav-btn" data-view-target="domingos">📅 Domingos</button>
-    <button type="button" class="subnav-btn" data-view-target="formacion">🎓 Formación</button>
-    <button type="button" class="subnav-btn" data-view-target="fe">🙏 Oración</button>
-    <button type="button" class="subnav-btn" data-view-target="consolata">🌍 Consolata</button>
-    <button type="button" class="subnav-btn" data-view-target="novedades">📰 Noticias</button>
-    <button type="button" class="subnav-btn" data-view-target="galeria">🖼️ Galería</button>
-    <button type="button" class="subnav-btn hide" data-view-target="comunidad" id="subnav-comunidad">👥 Comunidad</button>
-    <button type="button" class="subnav-mode-toggle" id="btn-toggle-view-mode" title="Alternar entre modo por secciones y página corrida">
-      <span id="txt-view-mode">🗂️ Secciones</span>
-    </button>
-  </div>
-</nav>
+
 
 <main id="main">
 
 <!-- ============ SECCIÓN: INICIO ============ -->
 <div class="j-view view-active" id="view-inicio">
   <section id="inicio" class="hero-wrap" aria-label="Portada">
-<div class="hero tail">
-<img fetchpriority="high" class="photo" src="img/hero-2200.jpg" srcset="img/hero-900.jpg 900w, img/hero-2200.jpg 2200w" sizes="100vw" alt="Jóvenes de JUMA Duaca con sus franelas frente al monumento de la Virgen de Coromoto">
-<div class="hero-veil" aria-hidden="true"></div>
-<div class="ribbon" aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0"></div>
+    <div class="hero tail">
+      <img fetchpriority="high" class="photo" src="img/hero-2200.jpg" srcset="img/hero-900.jpg 900w, img/hero-2200.jpg 2200w" sizes="100vw" alt="Jóvenes de JUMA Duaca con sus franelas frente al monumento de la Virgen de Coromoto">
+      <div class="hero-veil" aria-hidden="true"></div>
+      <div class="ribbon" aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0"></div>
 
-<div class="hero-in">
-<div class="hero-copy">
-<h1 class="h-display hero-h rise" style="animation-delay: 380ms">Misioneros en la cabeza, en la boca y en el corazón.</h1>
-<p class="hero-by rise" style="animation-delay: 480ms">San José Allamano</p>
-<p class="hero-sub rise" style="animation-delay: 560ms">Somos el movimiento juvenil de los Misioneros de la Consolata en Duaca. Cada domingo nos reunimos para orar, formarnos y salir a la misión.</p>
-<div class="hero-actions rise" style="animation-delay: 640ms">
-<button type="button" class="btn btn-white" data-open-form>Quiero ser parte</button>
-<a class="link-lt" href="#domingos">Ver los próximos domingos</a>
-<a class="link-lt" href="#novedades">📰 Noticias</a>
-</div>
-<div class="hero-chips rise" style="animation-delay: 720ms"><span>Domingos de encuentro</span><span>Formación de 5 años</span><span>Misión en Duaca</span></div>
-<nav class="hero-links rise" style="animation-delay: 800ms" aria-label="Redes de JUMA"><a href="https://www.instagram.com/juma_duaca/" target="_blank" rel="noopener">Instagram</a><a href="https://www.tiktok.com/@juma.duaca" target="_blank" rel="noopener">TikTok</a><a href="https://whatsapp.com/channel/0029VaqbBJ972WTqOwLsLL0u" target="_blank" rel="noopener">Canal de WhatsApp</a></nav>
-<div class="hero-shortcuts rise" style="animation-delay: 840ms">
-  <a class="hero-sc-card" data-view-target="quienes">
-    <b><span>🤝</span> Quiénes somos</b>
-    <p>Una gran familia joven con corazón misionero y carisma Allamano.</p>
-  </a>
-  <a class="hero-sc-card" data-view-target="domingos">
-    <b><span>📅</span> Domingos de Encuentro</b>
-    <p>Próximos temas y ubicación exacta con Google Maps para llegar fácil.</p>
-  </a>
-  <a class="hero-sc-card" data-view-target="formacion">
-    <b><span>🎓</span> Plan de Formación</b>
-    <p>El camino misionero de 5 años para crecer y evangelizar.</p>
-  </a>
-  <a class="hero-sc-card" data-view-target="fe">
-    <b><span>🙏</span> Oración y Rosario</b>
-    <p>Santo Rosario Misionero interactivo por los 5 continentes.</p>
-  </a>
-  <a class="hero-sc-card" data-view-target="consolata">
-    <b><span>🌍</span> Familia Consolata</b>
-    <p>San José Allamano y la presencia misionera en Duaca y el mundo.</p>
-  </a>
-  <a class="hero-sc-card" data-view-target="novedades">
-    <b><span>📰</span> Noticias y Muro</b>
-    <p>Publicaciones con fotos, novedades y avisos de la comunidad.</p>
-  </a>
-  <a class="hero-sc-card" data-view-target="galeria">
-    <b><span>🖼️</span> Galería Fotográfica</b>
-    <p>Momentos especiales de retiros, pascuas y misiones.</p>
-  </a>
-</div>
-
-</div>
-</div>
-</div>
-</section>
-  <div class="view-foot-nav">
-    <span style="font-size:13.5px;color:var(--muted);font-weight:700">Explora las secciones de JUMA Duaca</span>
-    <button type="button" class="btn btn-blue btn-sm" data-view-target="quienes">Siguiente: Quiénes somos →</button>
-  </div>
+      <div class="hero-in">
+        <div class="hero-copy">
+          <h1 class="h-display hero-h rise" style="animation-delay: 380ms">Misioneros en la cabeza, en la boca y en el corazón.</h1>
+          <p class="hero-by rise" style="animation-delay: 480ms">San José Allamano</p>
+          <p class="hero-sub rise" style="animation-delay: 560ms">Somos el movimiento juvenil de los Misioneros de la Consolata en Duaca. Cada domingo nos reunimos para orar, formarnos y salir a la misión.</p>
+          <div class="hero-actions rise" style="animation-delay: 640ms">
+            <button type="button" class="btn btn-white" data-open-form>Quiero ser parte</button>
+            <a class="link-lt" href="#domingos" data-view-target="domingos">Ver los próximos domingos</a>
+            <a class="link-lt" href="#novedades" data-view-target="novedades">📰 Noticias</a>
+          </div>
+          <nav class="hero-links rise" style="animation-delay: 800ms" aria-label="Redes de JUMA">
+            <a href="https://www.instagram.com/juma_duaca/" target="_blank" rel="noopener">Instagram</a>
+            <a href="https://www.tiktok.com/@juma.duaca" target="_blank" rel="noopener">TikTok</a>
+            <a href="https://whatsapp.com/channel/0029VaqbBJ972WTqOwLsLL0u" target="_blank" rel="noopener">Canal de WhatsApp</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <!-- ============ SECCIÓN: QUIÉNES SOMOS ============ -->

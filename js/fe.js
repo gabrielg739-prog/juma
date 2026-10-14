@@ -827,38 +827,8 @@ function videos() {
 /* ---------- atajos: subtítulos que llevan a cada parte de la página ---------- */
 const ATAJOS = [['quienes', 'Quiénes somos'], ['vive', 'Así se vive'], ['domingos', 'Domingos'], ['pilares', 'Pilares'], ['consolata', 'La Consolata'], ['mapa', 'Mapa'], ['identidad', 'Ser misionero'], ['formacion', 'Formación'], ['fe', 'Oración'], ['areas', 'Servicio'], ['novedades', 'Novedades'], ['testimonios', 'Testimonios'], ['galeria', 'Galería'], ['muro-sec', 'Escríbenos'], ['logo', 'Nuestro logo'], ['unete', 'Únete']];
 function atajos() {
-  const suave = !matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const lista = () => ATAJOS.filter(([id]) => { const s = document.getElementById(id); return s && !s.classList.contains('hide'); });
-  const chip = ([id, t], i) => `<a href="#${id}" data-at="${id}" style="--dot:var(--c${(i % 4) + 1})">${t}</a>`;
-  const hero = document.querySelector('.hero-chips');
-  const bar = document.createElement('nav'); bar.className = 'atbar'; bar.setAttribute('aria-label', 'Atajos de la página');
-  bar.innerHTML = '<a class="atbar-logo" href="#inicio" aria-label="Ir al inicio"><img src="img/logo.png" alt=""></a><div class="atbar-rail"></div><button type="button" class="btn btn-blue btn-sm atbar-cta" data-open-form>Quiero ser parte</button>';
-  (document.getElementById('root') || document.body).appendChild(bar);
-  const rail = bar.querySelector('.atbar-rail');
-  let actual = '';
-  const marcar = (mover) => {
-    rail.querySelectorAll('[data-at]').forEach((a) => {
-      const on = a.dataset.at === actual; a.classList.toggle('on', on);
-      if (on) { a.setAttribute('aria-current', 'location'); if (mover && bar.classList.contains('on')) rail.scrollTo({ left: Math.max(0, a.offsetLeft - (rail.clientWidth - a.offsetWidth) / 2), behavior: suave ? 'smooth' : 'auto' }); } else a.removeAttribute('aria-current');
-    });
-  };
-  const pintar = () => {
-    const l = lista();
-    if (hero) hero.innerHTML = l.map(chip).join('');
-    rail.innerHTML = l.map(chip).join(''); marcar(false);
-  };
-  if (hero) hero.insertAdjacentHTML('beforebegin', '<p class="hero-at rise" style="animation-delay: 700ms">Ir directo a <span>· desliza para ver más</span></p>');
-  pintar();
-  /* si aparecen Novedades o Testimonios, se agregan solos */
-  const mo = new MutationObserver(pintar);
-  ['novedades', 'testimonios'].forEach((id) => { const s = document.getElementById(id); if (s) mo.observe(s, { attributes: true, attributeFilter: ['class'] }); });
-  /* la barra aparece al pasar la portada */
-  const ini = document.getElementById('inicio');
-  if (ini) new IntersectionObserver((es) => { const ver = !es[0].isIntersecting; bar.classList.toggle('on', ver); if (ver) marcar(true); }).observe(ini);
-  else bar.classList.add('on');
-  /* resalta la parte de la página donde estás */
-  const spy = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting && en.target.id !== actual) { actual = en.target.id; marcar(true); } }), { rootMargin: '-38% 0px -58% 0px' });
-  ATAJOS.forEach(([id]) => { const s = document.getElementById(id); if (s) spy.observe(s); });
+  // Desactivado: ahora se navega exclusivamente con la barra principal superior para evitar duplicados
+  return;
 }
 
 /* abanico de los videos al desplazarse (solo en pantallas grandes) */
