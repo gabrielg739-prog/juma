@@ -422,6 +422,29 @@ function getPostsList(src = cfg) {
 const postVideoFileCache = new Map();
 const postVideoBlobUrlCache = new Map();
 const postVideoPromiseCache = new Map();
+const postMediaFileCache = new Map();
+
+function dataUrlToFile(dataUrl, filename = 'Noticia-JUMA.jpg') {
+  try {
+    const s = String(dataUrl || '');
+    const parts = s.split(',');
+    if (parts.length < 2) return null;
+    const mimeMatch = parts[0].match(/:(.*?);/);
+    const mime = (mimeMatch && mimeMatch[1]) || 'image/jpeg';
+    const ext = mime.includes('png') ? 'png' : (mime.includes('webp') ? 'webp' : 'jpg');
+    const safeName = filename.endsWith('.' + ext) ? filename : (filename.replace(/\.[^.]+$/, '') + '.' + ext);
+    const byteString = atob(parts[1]);
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ia], { type: mime });
+    return new File([blob], safeName, { type: mime });
+  } catch (e) {
+    return null;
+  }
+}
 
 function u8ToB64(u8) {
   let s = '';
@@ -589,9 +612,75 @@ function bindGlobalAudioUnlock() {
   });
 }
 
-function preloadPostVideoFiles(list) {
-  (list || []).forEach((p) => {
-    const v = p && p.video;
+async function postMediaToFile(p) {
+  if (!p) return null;
+  const cacheKey = p.id || String(p.t || '');
+  if (postMediaFileCache.has(cacheKey)) {
+    const hit = postMediaFileCache.get(cacheKey);
+    if (hit instanceof File) return hit;
+  }
+  if (p.foto) {
+    if (postMediaFileCache.has(p.foto)) {
+      const hit = postMediaFileCache.get(p.foto);
+      if (hit instanceof File) return hit;
+    }
+    const slug = (p.t || 'Noticia-JUMA').replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]+/g, '-').slice(0, 30) || 'Noticia-JUMA';
+    if (String(p.foto).startsWith('data:')) {
+      const f = dataUrlToFile(p.foto, `${slug}.jpg`);
+      if (f) {
+        postMediaFileCache.set(cacheKey, f);
+        postMediaFileCache.set(p.foto, f);
+        return f;
+      }
+    }
+    try {
+      const res = await fetch(p.foto, { mode: 'cors' });
+      if (res.ok) {
+        const blob = await res.blob();
+        const mime = blob.type || 'image/jpeg';
+        const ext = mime.includes('png') ? 'png' : (mime.includes('webp') ? 'webp' : 'jpg');
+        const f = new File([blob], `${slug}.${ext}`, { type: mime });
+        postMediaFileCache.set(cacheKey, f);
+        postMediaFileCache.set(p.foto, f);
+        return f;
+      }
+    } catch (e) {}
+  }
+  if (p.video) {
+    const cachedVid = postVideoFileCache.get(p.video);
+    if (cachedVid instanceof File) return cachedVid;
+  }
+  return null;
+}
+
+function preloadPostMediaFiles(list) {
+  (list || []).forEach((p, idx) => {
+    if (!p) return;
+    const cacheKey = p.id || String(idx);
+
+    // Pre-cargar archivo de imagen para compartir al instante en WhatsApp
+    if (p.foto && !postMediaFileCache.has(cacheKey) && !postMediaFileCache.has(p.foto)) {
+      if (String(p.foto).startsWith('data:')) {
+        const slug = (p.t || 'Noticia-JUMA').replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]+/g, '-').slice(0, 30) || 'Noticia-JUMA';
+        const f = dataUrlToFile(p.foto, `${slug}.jpg`);
+        if (f) {
+          postMediaFileCache.set(cacheKey, f);
+          postMediaFileCache.set(p.foto, f);
+        }
+      } else if ('fetch' in globalThis) {
+        fetch(p.foto).then((r) => (r.ok ? r.blob() : null)).then((blob) => {
+          if (blob) {
+            const ext = blob.type.includes('png') ? 'png' : (blob.type.includes('webp') ? 'webp' : 'jpg');
+            const f = new File([blob], `Noticia-JUMA.${ext}`, { type: blob.type || 'image/jpeg' });
+            postMediaFileCache.set(cacheKey, f);
+            postMediaFileCache.set(p.foto, f);
+          }
+        }).catch(() => {});
+      }
+    }
+
+    // Pre-cargar video
+    const v = p.video;
     if (!v || /^(https?:)?\/\/(?:www\.)?(?:youtube\.com|youtu\.be)/i.test(v)) return;
     if (String(v).startsWith('juma-vid:')) {
       resolveCloudVideo(v).catch(() => {});
@@ -601,93 +690,135 @@ function preloadPostVideoFiles(list) {
     postVideoFileCache.set(v, 'loading');
     fetch(v).then((r) => (r.ok ? r.blob() : null)).then((blob) => {
       if (blob) {
-        postVideoFileCache.set(v, new File([blob], 'Doblete-de-Amor-JUMA.mp4', { type: blob.type || 'video/mp4' }));
+        const vidFile = new File([blob], 'Doblete-de-Amor-JUMA.mp4', { type: blob.type || 'video/mp4' });
+        postVideoFileCache.set(v, vidFile);
+        postMediaFileCache.set(cacheKey, vidFile);
       } else {
         postVideoFileCache.delete(v);
       }
     }).catch(() => { postVideoFileCache.delete(v); });
   });
 }
-function setupPostVideos() {
-  bindGlobalAudioUnlock();
-  if (postMediaObserver) { try { postMediaObserver.disconnect(); } catch (e) {} postMediaObserver = null; }
-  const boxes = $$('[data-post-media]');
-  if (!boxes.length) return;
-  boxes.forEach((b) => {
-    const cloudRef = b.dataset.cloudVid;
-    if (cloudRef) {
-      resolveCloudVideo(cloudRef).then((url) => {
-        const vid = b.querySelector('video');
-        if (vid && url && vid.getAttribute('src') !== url) {
-          vid.src = url;
-          if (b.dataset.inView === '1') playWithSound(b);
-        }
-      }).catch(() => {});
-    }
-  });
-  if ('IntersectionObserver' in globalThis) {
-    postMediaObserver = new IntersectionObserver((entries) => {
-      entries.forEach((en) => {
-        const box = en.target;
-        const vid = box.querySelector('video');
-        if (!vid) return;
-        const visibleNow = en.isIntersecting && en.intersectionRatio >= 0.08;
-        box.dataset.inView = visibleNow ? '1' : '0';
-        if (visibleNow) {
-          box.dataset.userMuted = '0';
-          playWithSound(box);
-        } else {
-          stopAndMuteVideo(box);
-        }
-      });
-    }, { threshold: [0, 0.08, 0.2, 0.5] });
-    boxes.forEach((b) => postMediaObserver.observe(b));
-  } else {
-    boxes.forEach((b) => { b.dataset.inView = '1'; playWithSound(b); });
+
+function showPostShareModal(p, file, fullText) {
+  const modal = document.createElement('div');
+  modal.className = 'overlay';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.style.zIndex = '999999';
+
+  const imgSrc = p.foto;
+  const title = p.t || 'Noticia JUMA Duaca';
+  const slug = (p.t || 'Noticia-JUMA').replace(/[^a-zA-Z0-9]+/g, '-').slice(0, 30) || 'Noticia-JUMA';
+
+  modal.innerHTML = `
+    <div class="sheet" style="max-width:480px;background:#061536;color:#fff;border:2.5px solid #F5C518;border-radius:24px;box-shadow:0 24px 70px rgba(0,0,0,0.85)">
+      <div style="padding:16px 20px;border-bottom:1.5px solid rgba(245,197,24,0.3);display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <b style="font-size:16px;color:#F5C518;display:block">📰 Compartir Noticia con Foto</b>
+          <span style="font-size:12.5px;color:#DCE7F8">${esc(title.slice(0, 40))}${title.length > 40 ? '…' : ''}</span>
+        </div>
+        <button type="button" class="jchat-x" data-close-post-modal aria-label="Cerrar" style="color:#fff;border-color:rgba(255,255,255,0.4)">✕</button>
+      </div>
+
+      <div style="padding:20px;text-align:center;overflow-y:auto;max-height:75vh">
+        <div style="border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.5);border:1.5px solid rgba(255,255,255,0.2);margin-bottom:16px;max-width:320px;margin-left:auto;margin-right:auto">
+          <img src="${esc(imgSrc)}" alt="${esc(title)}" style="width:100%;height:auto;display:block;max-height:260px;object-fit:cover">
+        </div>
+
+        <p style="font-size:13.5px;color:#DCE7F8;line-height:1.5;margin:0 0 16px">
+          ¡El texto de la noticia ya se copió automáticamente al portapapeles! Puedes descargar la foto y adjuntarla en tu grupo o chat de WhatsApp.
+        </p>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button type="button" class="btn btn-sm" data-action-download-post-img style="min-height:44px;font-size:14px;font-weight:800;background:#F5C518;color:#061536;border:0;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 18px rgba(245,197,24,0.4);border-radius:14px;cursor:pointer">
+            📥 Descargar Foto de la Noticia
+          </button>
+
+          <a class="btn btn-blue" href="https://wa.me/?text=${encodeURIComponent(fullText)}" target="_blank" rel="noopener" style="min-height:44px;font-size:14px;font-weight:800;background:#17824A;color:#fff;border:0;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 16px rgba(23,130,74,0.4);border-radius:14px;text-decoration:none">
+            💬 Abrir WhatsApp con el Texto
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const closeFn = () => modal.remove();
+  modal.querySelectorAll('[data-close-post-modal]').forEach((b) => b.addEventListener('click', closeFn));
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeFn(); });
+
+  const dlBtn = modal.querySelector('[data-action-download-post-img]');
+  if (dlBtn) {
+    dlBtn.addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = imgSrc;
+      a.download = `${slug}.jpg`;
+      a.click();
+    });
   }
 }
+
 async function sharePostWhatsApp(idx, btnEl) {
   const list = getPostsList();
   const p = list[idx];
   if (!p) return;
   const fullText = [p.t, p.x].filter((s) => String(s || '').trim()).join('\n\n');
+  const origHtml = btnEl ? btnEl.innerHTML : '';
+  if (btnEl) btnEl.innerHTML = '<span>⏳ Preparando…</span>';
+
+  /* 1. Siempre copia el texto al portapapeles como respaldo */
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(fullText).catch(() => {});
     }
   } catch (e) {}
 
-  /* Si el archivo de video ya está pre-cargado en memoria, se comparte de inmediato (0 ms de espera) con el video + texto */
-  const cachedFile = p.video ? postVideoFileCache.get(p.video) : null;
-  if (cachedFile && cachedFile !== 'loading' && navigator.share && navigator.canShare) {
+  /* 2. Obtiene el archivo multimedia (foto o video) */
+  let fileToShare = await postMediaToFile(p);
+
+  /* 3. En teléfonos móviles: comparte el ARCHIVO (foto o video) junto con el texto a través del menú nativo de WhatsApp */
+  if (fileToShare && navigator.share && navigator.canShare) {
     try {
-      if (navigator.canShare({ files: [cachedFile] })) {
+      if (navigator.canShare({ files: [fileToShare] })) {
+        if (btnEl) btnEl.innerHTML = origHtml;
         await navigator.share({
-          files: [cachedFile],
+          files: [fileToShare],
           title: p.t || 'Noticia JUMA',
           text: fullText
         });
         return;
       }
     } catch (err) {
+      if (btnEl) btnEl.innerHTML = origHtml;
       if (err && err.name === 'AbortError') return;
+      console.warn('navigator.share con archivo falló, usando método alternativo:', err);
     }
   }
 
-  /* Apertura instantánea en WhatsApp (sin esperas de descarga) con todo el texto y enlace directo al video o sección de noticias */
+  if (btnEl) btnEl.innerHTML = origHtml;
+
+  /* 4. Si tiene foto pero el navegador no soporta compartir archivos directamente (computadoras de escritorio): muestra modal con descarga de foto + texto copiado */
+  if (p.foto && !p.video) {
+    showPostShareModal(p, fileToShare, fullText);
+    return;
+  }
+
+  /* 5. Apertura directa en WhatsApp (para publicaciones solo de texto o enlaces a video) */
   const isCloud = p.video && String(p.video).startsWith('juma-vid:');
   const videoAbsUrl = p.video ? (isCloud ? (location.origin + location.pathname + '#novedades') : new URL(p.video, location.href).href) : location.href;
   const waMsg = fullText + (p.video ? '\n\n🎥 Ver video aquí: ' + videoAbsUrl : '');
-  const origHtml = btnEl ? btnEl.innerHTML : '';
   if (btnEl) {
     btnEl.innerHTML = '<span>✔ Abriendo WhatsApp…</span>';
     setTimeout(() => { btnEl.innerHTML = origHtml; }, 2200);
   }
   window.open('https://wa.me/?text=' + encodeURIComponent(waMsg), '_blank', 'noopener');
 }
+
 function renderPosts() {
   const list = getPostsList();
-  preloadPostVideoFiles(list);
+  preloadPostMediaFiles(list);
   $('#novedades').classList.toggle('hide', !list.length);
   $('#nav-nov').classList.toggle('hide', !list.length);
   $('#posts').innerHTML = list.map((p, idx) => {
@@ -4441,7 +4572,14 @@ modalRoot.addEventListener('change', async (e) => {
       for (const f of files) {
         const url = await shrinkToDataUrl(f);
         if (kind === 'gal') dr.galeria = (dr.galeria || []).concat([{ url, cap: '' }]);
-        else if (kind === 'foto') dr.posts[i].foto = url;
+        else if (kind === 'foto') {
+          dr.posts[i].foto = url;
+          try {
+            const fObj = new File([f], f.name || 'Noticia-JUMA.jpg', { type: f.type || 'image/jpeg' });
+            if (dr.posts[i].id) postMediaFileCache.set(dr.posts[i].id, fObj);
+            postMediaFileCache.set(url, fObj);
+          } catch (e) {}
+        }
         else if (kind === 'tes') dr.testimonios[i].foto = url;
       }
     }
