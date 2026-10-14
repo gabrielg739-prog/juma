@@ -3109,14 +3109,17 @@ function getCumpleanosList(src = dr) {
 const JUMA_WA_GROUP_URL = 'https://chat.whatsapp.com/CJWfGx4mZzJCK3O9jJJRyQ?s=cl&p=a&mlu=4&ilr=4&iam=0';
 const JUMA_WA_CHANNEL_URL = 'https://whatsapp.com/channel/0029VaqbBJ972WTqOwLsLL0u';
 
-function isCoordinatorOrMaster() {
+function isCoordinatorOrAdvisor() {
   if (isMasterAccount() || isAdmin || isEditor()) return true;
   const reg = (typeof getRegisteredUserRecord === 'function') ? getRegisteredUserRecord() : myProfile;
   if ((typeof isGabrielGomez === 'function') && (isGabrielGomez(reg) || isGabrielGomez(myProfile) || isGabrielGomez(currentUser))) return true;
-  if (myProfile && userRole(myProfile) === 'coordinador') return true;
-  if (reg && userRole(reg) === 'coordinador') return true;
+  const rProfile = myProfile ? userRole(myProfile) : '';
+  if (rProfile === 'coordinador' || rProfile === 'asesor') return true;
+  const rReg = reg ? userRole(reg) : '';
+  if (rReg === 'coordinador' || rReg === 'asesor') return true;
   return false;
 }
+const isCoordinatorOrMaster = isCoordinatorOrAdvisor;
 
 function getCelebrantRecord(targetRecOrId) {
   if (targetRecOrId && typeof targetRecOrId === 'object') return targetRecOrId;
@@ -3438,26 +3441,7 @@ async function renderBirthdayFlyerCanvas(rec, customMessage) {
   ctx.fill();
   ctx.restore();
 
-  /* ── 12. TARJETA ELEGANTE PARA EL MENSAJE FRATERNO (espacio estructurado) ── */
-  const cardX = 90;
-  const cardY = 955;
-  const cardW = W - 180; // 900px
-  const cardH = 260;
-  const cardR = 24;
-
-  ctx.save();
-  /* Fondo tarjeta traslúcido azul nocturno */
-  roundRectPath(ctx, cardX, cardY, cardW, cardH, cardR);
-  ctx.fillStyle = 'rgba(6, 21, 54, 0.72)';
-  ctx.fill();
-
-  /* Borde dorado suave de la tarjeta */
-  ctx.strokeStyle = 'rgba(245, 197, 24, 0.42)';
-  ctx.lineWidth = 1.8;
-  ctx.stroke();
-  ctx.restore();
-
-  /* Texto del mensaje según género */
+  /* ── 12. MENSAJE MISIONERO FRATERNO (directo sobre el fondo, sin cuadro) ── */
   const msgDefaultGender = isFem
     ? `Hoy celebramos con alegría la vida de nuestra querida hermana misionera.\n¡Que Dios y la Virgen Consolata guíen siempre tus pasos,\nllenando tu corazón de bendiciones, amor y santidad!`
     : `Hoy celebramos con alegría la vida de nuestro querido hermano misionero.\n¡Que Dios y la Virgen Consolata guíen siempre tus pasos,\nllenando tu corazón de bendiciones, amor y santidad!`
@@ -3472,22 +3456,22 @@ async function renderBirthdayFlyerCanvas(rec, customMessage) {
   }
 
   ctx.save();
-  ctx.fillStyle = '#E3EEFC';
-  ctx.font = '500 27px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.fillStyle = '#E8F1FC';
+  ctx.font = '500 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  let mY = cardY + 58;
+  let mY = 980;
   msgLines.forEach((line) => {
     ctx.fillText(line.trim(), cx, mY);
     mY += 46;
   });
   ctx.restore();
 
-  /* Emojis dentro de la tarjeta */
-  ctx.font = '34px sans-serif';
+  /* Emojis fraternos */
+  ctx.font = '36px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('💙   ✨   🙏   🎂', cx, cardY + cardH - 42);
+  ctx.fillText('💙   ✨   🙏   🎂', cx, mY + 24);
 
   /* ── 13. PIE DE PÁGINA INSTITUCIONAL ── */
   ctx.save();
@@ -3613,6 +3597,10 @@ function showBirthdayFlyerShareModal(rec, dataUrl, shareText, slug) {
 }
 
 async function shareBirthdayFlyer(targetRecOrId, btnEl) {
+  if (!isCoordinatorOrAdvisor()) {
+    alert('Esta función para compartir en el grupo está reservada exclusivamente para Coordinadores y Asesores de JUMA Duaca.');
+    return;
+  }
   const rec = getCelebrantRecord(targetRecOrId);
   const origHtml = btnEl ? btnEl.innerHTML : '';
   if (btnEl) btnEl.innerHTML = '⏳ Generando imagen…';
