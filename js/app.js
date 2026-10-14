@@ -56,6 +56,15 @@ function renderAviso() {
 }
 function hora() { return cfg.hora || 'Hora por confirmar'; }
 function lugar() { const l = cfg.lugar; return l ? l + (/duaca/i.test(l) ? '' : ', Duaca') : 'Lugar por confirmar, Duaca'; }
+function mapsUrl() {
+  const u = String((cfg && cfg.mapsUrl) || '').trim();
+  if (u && (/^https?:\/\//i.test(u) || /^geo:/i.test(u))) return u;
+  if (u && /^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(u)) {
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(u);
+  }
+  const l = lugar();
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(l);
+}
 function todayIso() { const n = new Date(); return n.getFullYear() + '-' + pad2(n.getMonth() + 1) + '-' + pad2(n.getDate()); }
 function max3MonthsIso() { const n = new Date(); n.setDate(n.getDate() + 92); return n.getFullYear() + '-' + pad2(n.getMonth() + 1) + '-' + pad2(n.getDate()); }
 
@@ -319,17 +328,23 @@ function canUseGoogleCalendar() {
 
 function renderDomingos() {
   $('#f-hora').textContent = hora(); $('#f-lugar').textContent = lugar();
+  const mapsLnk = $('#lnk-maps-lugar');
+  if (mapsLnk) {
+    mapsLnk.href = mapsUrl();
+    mapsLnk.setAttribute('title', 'Ver en Google Maps cómo llegar a: ' + lugar());
+  }
   const all = encuentrosProgramados(cfg);
   const visible = showAllEnc ? all : all.slice(0, 4);
   const canCal = canUseGoogleCalendar();
+  const mUrl = mapsUrl();
   $('#tags').innerHTML = visible.map((s) => {
     const canAgendar = canCal && s.tema !== 'Sin reunión';
     const gUrl = canAgendar ? googleCalUrl({
       title: `JUMA Duaca · ${s.tema}`,
       dateIso: s.key,
-      desc: `Encuentro de formación y comunidad de la Juventud Misionera Allamaniana de Duaca (JUMA Duaca).\nTema: ${s.tema}\nHora: ${hora()}\nLugar: ${lugar()}`
+      desc: `Encuentro de formación y comunidad de la Juventud Misionera Allamaniana de Duaca (JUMA Duaca).\nTema: ${s.tema}\nHora: ${hora()}\nLugar: ${lugar()}\nUbicación en Google Maps: ${mUrl}`
     }) : '';
-    return `<li class="dtag"><i aria-hidden="true"></i><div class="dcard${s.first ? ' first' : ''}"><span class="flag" style="${!s.first ? 'background:var(--mist);color:var(--royal)' : ''}">${esc(s.badge)}</span><span class="d num">${s.dia}</span><span class="m">${s.mes}</span><span class="t">${esc(s.tema)}</span>${canAgendar ? `<a class="gcal-chip" target="_blank" rel="noopener" href="${esc(gUrl)}" title="Agregar este encuentro a Google Calendar" style="display:inline-flex;align-items:center;gap:5px;margin-top:10px;padding:5px 10px;border-radius:99px;background:${s.first ? 'rgba(6,21,54,.14)' : 'var(--mist)'};color:${s.first ? 'var(--navy)' : 'var(--royal)'};font-size:12px;font-weight:800;text-decoration:none">📅 Agendar en Google</a>` : ''}</div></li>`;
+    return `<li class="dtag"><i aria-hidden="true"></i><div class="dcard${s.first ? ' first' : ''}"><span class="flag" style="${!s.first ? 'background:var(--mist);color:var(--royal)' : ''}">${esc(s.badge)}</span><span class="d num">${s.dia}</span><span class="m">${s.mes}</span><span class="t">${esc(s.tema)}</span><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">${canAgendar ? `<a class="gcal-chip" target="_blank" rel="noopener" href="${esc(gUrl)}" title="Agregar este encuentro a Google Calendar" style="display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:99px;background:${s.first ? 'rgba(6,21,54,.14)' : 'var(--mist)'};color:${s.first ? 'var(--navy)' : 'var(--royal)'};font-size:11.5px;font-weight:800;text-decoration:none">📅 Agendar</a>` : ''}<a class="gcal-chip" target="_blank" rel="noopener" href="${esc(mUrl)}" title="Ver cómo llegar en Google Maps" style="display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:99px;background:${s.first ? 'rgba(6,21,54,.14)' : 'var(--mist)'};color:${s.first ? 'var(--navy)' : 'var(--royal)'};font-size:11.5px;font-weight:800;text-decoration:none">📍 Cómo llegar</a></div></div></li>`;
   }).join('');
   let moreBtn = $('#btn-more-enc');
   if (all.length > 4) {
@@ -644,7 +659,28 @@ async function postMediaToFile(p) {
         postMediaFileCache.set(p.foto, f);
         return f;
       }
-    } catch (e) {}
+    } catch (e) {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = p.foto;
+        });
+        const cv = document.createElement('canvas');
+        cv.width = img.naturalWidth || img.width || 800;
+        cv.height = img.naturalHeight || img.height || 600;
+        cv.getContext('2d').drawImage(img, 0, 0);
+        const dataUrl = cv.toDataURL('image/jpeg', 0.85);
+        const f = dataUrlToFile(dataUrl, `${slug}.jpg`);
+        if (f) {
+          postMediaFileCache.set(cacheKey, f);
+          postMediaFileCache.set(p.foto, f);
+          return f;
+        }
+      } catch (e2) {}
+    }
   }
   if (p.video) {
     const cachedVid = postVideoFileCache.get(p.video);
@@ -731,6 +767,10 @@ function showPostShareModal(p, file, fullText) {
         </p>
 
         <div style="display:flex;flex-direction:column;gap:10px">
+          ${file && navigator.canShare && navigator.canShare({ files: [file] }) ? `
+          <button type="button" class="btn btn-sm" data-action-share-native-post-img style="min-height:44px;font-size:14px;font-weight:800;background:#25D366;color:#fff;border:0;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 18px rgba(37,211,102,0.4);border-radius:14px;cursor:pointer">
+            📲 Compartir Foto directamente en WhatsApp
+          </button>` : ''}
           <button type="button" class="btn btn-sm" data-action-download-post-img style="min-height:44px;font-size:14px;font-weight:800;background:#F5C518;color:#061536;border:0;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 18px rgba(245,197,24,0.4);border-radius:14px;cursor:pointer">
             📥 Descargar Foto de la Noticia
           </button>
@@ -748,6 +788,15 @@ function showPostShareModal(p, file, fullText) {
   const closeFn = () => modal.remove();
   modal.querySelectorAll('[data-close-post-modal]').forEach((b) => b.addEventListener('click', closeFn));
   modal.addEventListener('click', (e) => { if (e.target === modal) closeFn(); });
+
+  const shareImgBtn = modal.querySelector('[data-action-share-native-post-img]');
+  if (shareImgBtn && file) {
+    shareImgBtn.addEventListener('click', async () => {
+      try {
+        await navigator.share({ files: [file], title: title });
+      } catch (err) {}
+    });
+  }
 
   const dlBtn = modal.querySelector('[data-action-download-post-img]');
   if (dlBtn) {
@@ -778,17 +827,28 @@ async function sharePostWhatsApp(idx, btnEl) {
   /* 2. Obtiene el archivo multimedia (foto o video) */
   let fileToShare = await postMediaToFile(p);
 
-  /* 3. En teléfonos móviles: comparte el ARCHIVO (foto o video) junto con el texto a través del menú nativo de WhatsApp */
+  /* 3. En teléfonos móviles: comparte el ARCHIVO (foto o video) a través de la interfaz nativa del teléfono */
   if (fileToShare && navigator.share && navigator.canShare) {
     try {
       if (navigator.canShare({ files: [fileToShare] })) {
         if (btnEl) btnEl.innerHTML = origHtml;
-        await navigator.share({
-          files: [fileToShare],
-          title: p.t || 'Noticia JUMA',
-          text: fullText
-        });
-        return;
+        try {
+          /* En WhatsApp Android, si se pasa "text" y "files" a la vez, WhatsApp a veces omite la foto.
+             Compartiendo primero el archivo (o con texto como respaldo) WhatsApp abre la pantalla de la imagen */
+          await navigator.share({
+            files: [fileToShare],
+            title: p.t || 'Noticia JUMA Duaca'
+          });
+          return;
+        } catch (shareErr) {
+          if (shareErr && shareErr.name === 'AbortError') return;
+          await navigator.share({
+            files: [fileToShare],
+            title: p.t || 'Noticia JUMA',
+            text: fullText
+          });
+          return;
+        }
       }
     } catch (err) {
       if (btnEl) btnEl.innerHTML = origHtml;
@@ -799,7 +859,7 @@ async function sharePostWhatsApp(idx, btnEl) {
 
   if (btnEl) btnEl.innerHTML = origHtml;
 
-  /* 4. Si tiene foto pero el navegador no soporta compartir archivos directamente (computadoras de escritorio): muestra modal con descarga de foto + texto copiado */
+  /* 4. Si tiene foto: muestra modal interactivo para descargar la foto o abrir WhatsApp */
   if (p.foto && !p.video) {
     showPostShareModal(p, fileToShare, fullText);
     return;
@@ -2047,24 +2107,46 @@ function updateAuthUI() {
 
     if (btnAuth) {
       btnAuth.innerHTML = (foto
-        ? `<img src="${esc(foto)}" alt="" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:7px;border:1.5px solid #fff;display:inline-block;vertical-align:middle">`
-        : `<span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.28);color:#fff;font-weight:800;font-size:11px;line-height:22px;text-align:center;margin-right:6px;vertical-align:middle">${esc(nombreCorto.charAt(0).toUpperCase())}</span>`
-      ) + `<span style="vertical-align:middle">${esc(nombreCorto)}</span>`;
-      btnAuth.className = 'btn btn-blue btn-sm';
-      btnAuth.setAttribute('title', 'Mi perfil (' + fullName + ')');
+        ? `<img src="${esc(foto)}" alt="" class="topbar-user-photo">`
+        : `<span class="topbar-user-initial">${esc(nombreCorto.charAt(0).toUpperCase())}</span>`
+      ) + `<span class="topbar-user-name">${esc(nombreCorto)}</span>`;
+      btnAuth.className = 'btn btn-user-pill';
+      btnAuth.setAttribute('title', fullName);
+      btnAuth.setAttribute('aria-label', 'Ver perfil de ' + fullName);
     }
     if (btnJoin) { btnJoin.textContent = myProfile ? '🪪 Mi Carnet' : 'Completar planilla'; }
-    if (footAuth) footAuth.textContent = 'Mi perfil (' + nombreCorto + ')';
+    if (footAuth) footAuth.textContent = nombreCorto + ' (Mi perfil)';
   } else {
-    if (btnAuth) { btnAuth.textContent = 'Iniciar sesión'; btnAuth.className = 'btn btn-outline btn-sm'; btnAuth.removeAttribute('title'); }
+    if (btnAuth) {
+      btnAuth.innerHTML = 'Iniciar sesión';
+      btnAuth.className = 'btn btn-outline btn-sm';
+      btnAuth.removeAttribute('title');
+      btnAuth.setAttribute('aria-label', 'Iniciar sesión');
+    }
     if (btnJoin) { btnJoin.textContent = 'Quiero ser parte'; }
     if (footAuth) footAuth.textContent = 'Iniciar sesión';
   }
+  const isAuth = !!(currentUser || myProfile);
+  const btnChat = $('#btn-chat');
+  const navChat = $('#nav-chat');
+  if (btnChat) btnChat.classList.toggle('hide', !isAuth);
+  if (navChat) navChat.classList.toggle('hide', !isAuth);
+  if (typeof updateChatBadge === 'function') updateChatBadge();
   renderDomingos();
   renderActs();
 }
 
 modalRoot.addEventListener('input', (e) => {
+  if (e.target.id === 'chat-dm-search-in') {
+    chatDmSearch = e.target.value.toLowerCase().trim();
+    const listEl = $('#chat-dm-list');
+    if (listEl) {
+      const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
+      const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
+      listEl.innerHTML = renderDmMembersList(myUid, myEmail);
+    }
+    return;
+  }
   if (e.target.id === 'fp-cedula') { forceCedulaTemp = e.target.value; return; }
   const k = e.target.dataset && e.target.dataset.k; if (!k || !$('#pl-t')) return;
   form.d[k] = e.target.value;
@@ -2410,6 +2492,14 @@ function authModalHtml() {
         </div>
         ${selfieBoxHtml('auth')}
       </div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <button type="button" class="btn btn-blue btn-sm" data-open-chat style="flex:1 1 200px;display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;font-size:14px;box-shadow:0 4px 12px rgba(36,82,200,.15)">
+          <span aria-hidden="true" style="font-size:18px">💬</span>
+          <span>Abrir Chat Comunitario y Avisos</span>
+          <span class="chat-badge hide" id="profile-chat-badge" style="position:static;margin-left:4px"></span>
+        </button>
+      </div>
+
       ${masterOn ? `
       <details class="profile-acc profile-acc-coord">
         <summary>
@@ -2427,7 +2517,8 @@ function authModalHtml() {
             ${trueMaster ? 'Puedes modificar toda la app, asignar roles, ver el calendario de cumpleaños, descargar carnets, editar la galería y escanear QR.' : 'Puedes ver los participantes, sus carnets, el calendario de cumpleaños, escanear códigos QR de asistencia y actualizar actividades.'}
           </p>
           <div style="display:flex;flex-wrap:wrap;gap:8px">
-            <button type="button" class="btn btn-blue btn-sm" data-open-qr-scanner>📷 Escanear QR</button>
+            <button type="button" class="btn btn-blue btn-sm" data-open-chat>💬 Chat y Avisos</button>
+            <button type="button" class="btn btn-soft btn-sm" data-open-qr-scanner style="background:#fff;border:1.5px solid var(--royal);color:var(--royal)">📷 Escanear QR</button>
             <button type="button" class="btn btn-soft btn-sm" data-open-cumple-tab style="background:#fff;border:1.5px solid var(--royal);color:var(--royal)">🎂 Cumpleaños</button>
             <button type="button" class="btn btn-outline btn-sm" data-open-master-panel>Abrir Panel y Editor</button>
           </div>
@@ -2561,6 +2652,496 @@ function authModalHtml() {
 function openAuthModal() { if (checkMandatoryPhotoGate()) return; openModal(authModalHtml()); }
 function repaintAuth() { if (checkMandatoryPhotoGate()) return; modalRoot.innerHTML = authModalHtml(); const ov = $('.overlay', modalRoot); if (ov) { ov.style.animation = 'none'; const sh = $('.sheet', modalRoot); if (sh) sh.style.animation = 'none'; } }
 
+/* ===================== Chat Comunitario, Mensajes Directos y Avisos Sociales ===================== */
+let chatChannel = 'general'; // 'general' | 'coord' | 'dm'
+let chatActiveTab = 'chat'; // 'chat' | 'notif'
+let chatMessages = [];
+let lastReadChatTime = Number(localStorage.getItem('juma-last-read-chat') || 0);
+let chatDmTarget = null; // Destinatario seleccionado para mensajes directos
+let chatDmSearch = '';
+
+function normalizeMember(x) {
+  if (!x) return null;
+  const d = x.datos || {};
+  const rawNom = x.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Misionero JUMA';
+  const nombre = String(rawNom).trim();
+  const primerNombre = (d.nombres ? d.nombres.trim().split(' ')[0] : nombre.split(' ')[0]) || 'Misionero';
+  const foto = x.foto || d.foto || '';
+  const correo = String(x.correo || d.correo || '').trim().toLowerCase();
+  const uid = String(x.uid || x.id || correo || ('m-' + Math.random().toString(36).slice(2, 8))).trim();
+  const rol = userRole(x);
+  const parroquia = x.parroquia || d.parroquia || '';
+  return { id: x.id || uid, uid, nombre, primerNombre, foto, correo, rol, parroquia, raw: x };
+}
+
+function getRegisteredMembersForDm(myUid, myEmail) {
+  const normMyEmail = String(myEmail || '').trim().toLowerCase();
+  const list = [];
+  const seen = new Set();
+  (allInscripciones || []).forEach((rec) => {
+    const m = normalizeMember(rec);
+    if (!m) return;
+    if ((myUid && m.uid === myUid) || (normMyEmail && m.correo === normMyEmail)) return; // Excluirme a mí mismo
+    if (seen.has(m.uid) || (m.correo && seen.has(m.correo))) return;
+    seen.add(m.uid);
+    if (m.correo) seen.add(m.correo);
+    list.push(m);
+  });
+  const rank = { coordinador: 1, asesor: 2, participante: 3 };
+  return list.sort((a, b) => {
+    const rA = rank[a.rol] || 9;
+    const rB = rank[b.rol] || 9;
+    if (rA !== rB) return rA - rB;
+    return a.nombre.localeCompare(b.nombre, 'es');
+  });
+}
+
+function renderDmMembersList(myUid, myEmail) {
+  const members = getRegisteredMembersForDm(myUid, myEmail);
+  const q = String(chatDmSearch || '').trim().toLowerCase();
+  const filtered = members.filter((m) => {
+    if (!q) return true;
+    return m.nombre.toLowerCase().includes(q) ||
+      m.correo.toLowerCase().includes(q) ||
+      m.parroquia.toLowerCase().includes(q) ||
+      m.rol.toLowerCase().includes(q);
+  });
+
+  if (!filtered.length) {
+    return `<div class="chat-empty" style="padding:24px 14px">
+      <span style="font-size:36px;display:block;margin-bottom:6px">🔍</span>
+      <b style="font-size:15px;color:var(--ink)">No se encontraron misioneros</b>
+      <p style="margin:4px 0 0;font-size:13px;color:var(--muted)">Intenta con otro nombre, apellido o parroquia.</p>
+    </div>`;
+  }
+
+  return filtered.map((m) => {
+    const targetUid = m.uid;
+    const targetEmail = m.correo;
+    const lastMsg = chatMessages.slice().reverse().find((msg) => {
+      if (msg.canal !== 'dm') return false;
+      return (
+        (msg.uid === myUid && (msg.paraUid === targetUid || (targetEmail && msg.paraEmail === targetEmail))) ||
+        (msg.uid === targetUid && (msg.paraUid === myUid || (myEmail && msg.paraEmail === myEmail))) ||
+        (msg.dmKey && msg.dmKey === [myUid, targetUid].sort().join('_'))
+      );
+    });
+
+    const unreadFromThis = chatMessages.filter((msg) => {
+      if (msg.canal !== 'dm') return false;
+      const t = Date.parse(msg.fecha || '') || 0;
+      const isFromTarget = msg.uid === targetUid || (targetEmail && msg.correo && String(msg.correo).toLowerCase() === targetEmail);
+      const isForMe = (myUid && msg.paraUid === myUid) || (myEmail && msg.paraEmail && String(msg.paraEmail).toLowerCase() === myEmail);
+      return isFromTarget && isForMe && t > lastReadChatTime;
+    }).length;
+
+    const rolBadge = m.rol === 'coordinador' ? '★ Coordinador' : (m.rol === 'asesor' ? '◆ Asesor' : 'Participante');
+    const rolBg = m.rol === 'coordinador' ? '#FEF3C7' : (m.rol === 'asesor' ? '#E0E7FF' : '#E8F1FF');
+    const rolColor = m.rol === 'coordinador' ? '#92400E' : (m.rol === 'asesor' ? '#3730A3' : 'var(--royal)');
+
+    return `<div class="chat-dm-member-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:#fff;border:1.5px solid ${unreadFromThis > 0 ? 'var(--royal)' : 'var(--line)'};box-shadow:0 2px 6px rgba(0,0,0,.03)">
+      <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">
+        <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;background:var(--mist);display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:2px solid ${m.rol === 'coordinador' ? '#F5C518' : 'var(--royal)'}">
+          ${m.foto ? `<img src="${esc(m.foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:18px;color:var(--royal)">${esc(m.primerNombre.charAt(0).toUpperCase())}</b>`}
+        </div>
+        <div style="min-width:0;flex:1">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">
+            <b style="font-size:15px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.nombre)}</b>
+            <span style="font-size:10.5px;padding:1px 7px;border-radius:99px;background:${rolBg};color:${rolColor};font-weight:800">${esc(rolBadge)}</span>
+            ${unreadFromThis > 0 ? `<span class="chat-badge" style="position:static;display:inline-block;padding:2px 7px">${unreadFromThis} nuevo${unreadFromThis === 1 ? '' : 's'}</span>` : ''}
+          </div>
+          <div style="font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            ${m.parroquia ? esc(m.parroquia) : 'Misionero JUMA'}
+            ${lastMsg ? ` · <span style="color:var(--ink);font-weight:600">“${esc(lastMsg.texto.slice(0, 32))}${lastMsg.texto.length > 32 ? '…' : ''}”</span>` : ''}
+          </div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-blue btn-sm" data-select-dm="${esc(m.uid)}" style="min-height:36px;padding:0 14px;font-size:13px;flex:0 0 auto">
+        💬 Escribir
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function fmtChatTime(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    const timeStr = d.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', hour12: true });
+    if (isToday) return timeStr;
+    const mesNom = (typeof MESES !== 'undefined' && MESES[d.getMonth()]) ? MESES[d.getMonth()].slice(0, 3) : '';
+    return d.getDate() + ' ' + mesNom + ' · ' + timeStr;
+  } catch (e) { return ''; }
+}
+
+function updateChatBadge() {
+  const countEl = $('#chat-badge-count');
+  const profBadge = $('#profile-chat-badge');
+  const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
+  const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
+  const isCoord = isCoordinatorOrAdvisor();
+
+  const unread = chatMessages.filter((m) => {
+    const t = Date.parse(m.fecha || '') || 0;
+    const isMine = (myUid && m.uid === myUid) || (myEmail && m.correo && String(m.correo).toLowerCase() === myEmail);
+    if (isMine) return false;
+    if (m.canal === 'dm') {
+      const isForMe = (myUid && m.paraUid === myUid) || (myEmail && m.paraEmail && String(m.paraEmail).toLowerCase() === myEmail);
+      return isForMe && t > lastReadChatTime;
+    }
+    if (m.canal === 'coord') {
+      return isCoord && t > lastReadChatTime;
+    }
+    return t > lastReadChatTime;
+  }).length;
+
+  const txt = unread > 99 ? '99+' : String(unread);
+  if (countEl) {
+    if (unread > 0) { countEl.textContent = txt; countEl.classList.remove('hide'); }
+    else { countEl.classList.add('hide'); }
+  }
+  if (profBadge) {
+    if (unread > 0) { profBadge.textContent = txt + ' nuevos'; profBadge.classList.remove('hide'); }
+    else { profBadge.classList.add('hide'); }
+  }
+}
+
+function scrollChatBottom() {
+  setTimeout(() => {
+    const box = $('#chat-msgs-box');
+    if (box) box.scrollTop = box.scrollHeight;
+  }, 60);
+}
+
+function openChatModal(targetTab) {
+  if (!currentUser && !myProfile) {
+    openAuthModal();
+    return;
+  }
+  if (targetTab) chatActiveTab = targetTab;
+  lastReadChatTime = Date.now();
+  try { localStorage.setItem('juma-last-read-chat', String(lastReadChatTime)); } catch (e) {}
+  updateChatBadge();
+  openModal(chatModalHtml(), 'chat');
+  scrollChatBottom();
+}
+
+function repaintChat() {
+  if (modalKey !== 'chat') return;
+  const scrollBox = $('#chat-msgs-box');
+  const wasNearBottom = scrollBox ? (scrollBox.scrollHeight - scrollBox.scrollTop - scrollBox.clientHeight < 140) : true;
+  modalRoot.innerHTML = chatModalHtml();
+  const ov = $('.overlay', modalRoot);
+  if (ov) { ov.style.animation = 'none'; const sh = $('.sheet', modalRoot); if (sh) sh.style.animation = 'none'; }
+  if (wasNearBottom) scrollChatBottom();
+}
+
+function chatModalHtml() {
+  const isCoord = isCoordinatorOrAdvisor();
+  if (chatChannel === 'coord' && !isCoord) chatChannel = 'general';
+
+  const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
+  const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
+
+  const unreadDms = chatMessages.filter((m) => {
+    if (m.canal !== 'dm') return false;
+    const t = Date.parse(m.fecha || '') || 0;
+    const isMine = (myUid && m.uid === myUid) || (myEmail && m.correo && String(m.correo).toLowerCase() === myEmail);
+    if (isMine) return false;
+    const isForMe = (myUid && m.paraUid === myUid) || (myEmail && m.paraEmail && String(m.paraEmail).toLowerCase() === myEmail);
+    return isForMe && t > lastReadChatTime;
+  }).length;
+
+  let filteredMsgs = [];
+  if (chatChannel === 'coord') {
+    filteredMsgs = chatMessages.filter((m) => m.canal === 'coord');
+  } else if (chatChannel === 'dm') {
+    if (chatDmTarget) {
+      const targetUid = chatDmTarget.uid || chatDmTarget.id || '';
+      const targetEmail = String(chatDmTarget.correo || '').trim().toLowerCase();
+      filteredMsgs = chatMessages.filter((m) => {
+        if (m.canal !== 'dm') return false;
+        const between = (
+          (m.uid === myUid && (m.paraUid === targetUid || (targetEmail && m.paraEmail === targetEmail))) ||
+          (m.uid === targetUid && (m.paraUid === myUid || (myEmail && m.paraEmail === myEmail))) ||
+          (m.dmKey && m.dmKey === [myUid, targetUid].sort().join('_'))
+        );
+        return between;
+      });
+    }
+  } else {
+    filteredMsgs = chatMessages.filter((m) => !m.canal || m.canal === 'general');
+  }
+
+  const cumples = getCumpleanosList().filter((c) => c.diasFaltan <= 7);
+  const postsList = (pub && Array.isArray(pub.posts)) ? pub.posts.slice(0, 3) : [];
+  const allSun = domingos(2);
+  const proxEncuentro = allSun[0] || null;
+
+  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="chat-t"><div class="sheet chat-sheet">
+    <div class="chat-top">
+      <div style="display:flex;align-items:center;gap:12px;min-width:0">
+        <img src="img/logo-juma-allamano.png" alt="" style="width:36px;height:36px;border-radius:50%;background:#fff;padding:2px;flex:0 0 auto">
+        <div style="min-width:0">
+          <div style="font-size:12px;color:var(--sky);font-weight:700;text-transform:uppercase;letter-spacing:.04em">Red Social Misionera</div>
+          <h2 id="chat-t" style="margin:0;font-size:18px;font-family:var(--display);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Comunidad JUMA Duaca</h2>
+        </div>
+      </div>
+      <button type="button" data-close aria-label="Cerrar chat" style="width:40px;height:40px;border-radius:10px;border:1.5px solid rgba(255,255,255,.3);background:transparent;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+
+    <!-- Pestañas: Chat vs Notificaciones -->
+    <div class="chat-tabs">
+      <button type="button" class="chat-tab ${chatActiveTab === 'chat' ? 'active' : ''}" data-chat-tab="chat">
+        <span style="font-size:16px">💬</span><span>Chat y Mensajes</span>
+      </button>
+      <button type="button" class="chat-tab ${chatActiveTab === 'notif' ? 'active' : ''}" data-chat-tab="notif">
+        <span style="font-size:16px">🔔</span><span>Avisos y Novedades</span>
+      </button>
+    </div>
+
+    ${chatActiveTab === 'chat' ? `
+      <!-- Selector de Canales y Mensajes Directos -->
+      <div class="chat-channels">
+        <button type="button" class="chat-channel-btn ${chatChannel === 'general' ? 'active' : ''}" data-switch-channel="general">
+          <span>💬 Comunidad</span>
+          <small style="opacity:.75">(${chatMessages.filter((m) => !m.canal || m.canal === 'general').length})</small>
+        </button>
+        ${isCoord ? `
+        <button type="button" class="chat-channel-btn ${chatChannel === 'coord' ? 'active' : ''}" data-switch-channel="coord" style="border-color:${chatChannel === 'coord' ? 'var(--royal)' : '#F5C518'};color:${chatChannel === 'coord' ? 'var(--royal)' : '#7A5200'}">
+          <span>⭐ Coordinación</span>
+          <small style="opacity:.75">(${chatMessages.filter((m) => m.canal === 'coord').length})</small>
+        </button>` : ''}
+        <button type="button" class="chat-channel-btn ${chatChannel === 'dm' ? 'active' : ''}" data-switch-channel="dm">
+          <span>✉️ Mensajes Directos</span>
+          ${unreadDms > 0 ? `<span class="chat-badge" style="position:static;display:inline-block;padding:2px 7px;margin-left:4px">${unreadDms}</span>` : ''}
+        </button>
+      </div>
+
+      ${chatChannel === 'dm' && !chatDmTarget ? `
+        <!-- Directorio de Misioneros para Mensajes Directos -->
+        <div style="padding:10px 16px;background:#F6F9FE;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div>
+              <b style="font-size:14px;color:var(--navy);display:block">✉️ Escribir a un misionero</b>
+              <small style="font-size:12px;color:var(--muted)">Selecciona a un participante, coordinador o asesor para chatear en privado:</small>
+            </div>
+          </div>
+          <input type="search" id="chat-dm-search-in" class="chat-input" placeholder="Buscar misionero por nombre, rol o parroquia…" value="${esc(chatDmSearch)}" style="width:100%;min-height:38px;padding:8px 12px;border-radius:10px;background:#fff;font-size:14px">
+        </div>
+
+        <div class="chat-msgs-wrap" id="chat-dm-list" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;background:#FAFBFD">
+          ${renderDmMembersList(myUid, myEmail)}
+        </div>
+      ` : `
+        <!-- Si está en DM con alguien seleccionado, muestra cabecera de la persona -->
+        ${chatChannel === 'dm' && chatDmTarget ? `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#F0F4F9;border-bottom:1.5px solid var(--line);gap:10px">
+            <button type="button" class="btn btn-soft btn-sm" data-clear-dm style="padding:5px 12px;font-size:12.5px;display:inline-flex;align-items:center;gap:4px">
+              ← Lista de misioneros
+            </button>
+            <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;justify-content:flex-end">
+              <div style="width:34px;height:34px;border-radius:50%;overflow:hidden;background:var(--mist);display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:2px solid var(--royal)">
+                ${chatDmTarget.foto ? `<img src="${esc(chatDmTarget.foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:14px;color:var(--royal)">${esc(chatDmTarget.primerNombre.charAt(0).toUpperCase())}</b>`}
+              </div>
+              <div style="min-width:0;text-align:right">
+                <b style="font-size:14px;color:var(--navy);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(chatDmTarget.nombre)}</b>
+                <span style="font-size:11px;color:var(--muted)">Mensaje privado</span>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Contenedor de Mensajes (Comunidad, Coord o DM activo) -->
+        <div class="chat-msgs-wrap" id="chat-msgs-box">
+          ${!filteredMsgs.length ? `
+            <div class="chat-empty">
+              <span style="font-size:42px;display:block;margin-bottom:8px">${chatChannel === 'dm' ? '✉️' : '💬'}</span>
+              <b style="font-size:16px;color:var(--navy);display:block">
+                ${chatChannel === 'dm' ? `Inicia la conversación con ${esc(chatDmTarget ? chatDmTarget.primerNombre : 'el misionero')}` : (chatChannel === 'coord' ? '¡Bienvenido al Chat de Coordinación!' : '¡Bienvenido al Chat de la Comunidad!')}
+              </b>
+              <p style="margin:6px 0 0;color:var(--muted);font-size:13.5px">
+                ${chatChannel === 'dm' ? 'Los mensajes enviados en esta conversación son privados y solo ustedes dos pueden verlos.' : 'Sé el primero en enviar un saludo o mensaje a los misioneros.'}
+              </p>
+            </div>` : filteredMsgs.map((m) => {
+              const isMine = (myUid && (m.uid === myUid)) || (myEmail && m.correo && String(m.correo).toLowerCase() === myEmail);
+              const author = m.autor || 'Misionero JUMA';
+              const firstLetter = author.charAt(0).toUpperCase() || 'M';
+              const fotoUrl = m.foto || '';
+              const time = fmtChatTime(m.fecha);
+              const rolBadge = m.rol === 'coordinador' ? '★ Coordinador' : (m.rol === 'asesor' ? '◆ Asesor' : '');
+              return `<div class="chat-bubble-row ${isMine ? 'mine' : 'theirs'}">
+                ${!isMine ? (fotoUrl ? `<img src="${esc(fotoUrl)}" alt="" class="chat-avatar">` : `<span class="chat-avatar-init">${esc(firstLetter)}</span>`) : ''}
+                <div class="chat-bubble ${isMine ? 'mine' : 'theirs'}">
+                  ${!isMine ? `<div class="chat-meta">
+                    <span class="chat-author">${esc(author)}</span>
+                    ${rolBadge ? `<span style="font-size:10px;padding:1px 6px;border-radius:99px;background:#E8F1FF;color:var(--royal);font-weight:800">${esc(rolBadge)}</span>` : ''}
+                  </div>` : ''}
+                  <div style="white-space:pre-wrap">${esc(m.texto)}</div>
+                  <div class="chat-time">${esc(time)}</div>
+                </div>
+              </div>`;
+            }).join('')}
+        </div>
+
+        <!-- Entrada de Texto -->
+        <div class="chat-input-bar">
+          ${currentUser || myProfile ? `
+          <form id="chat-send-form" style="display:flex;align-items:center;gap:8px;width:100%;margin:0">
+            <input type="text" id="chat-msg-in" class="chat-input" placeholder="${chatChannel === 'dm' ? `Escribe un mensaje privado a ${esc(chatDmTarget ? chatDmTarget.primerNombre : 'misionero')}…` : (chatChannel === 'coord' ? 'Escribe a los coordinadores…' : 'Escribe un mensaje a la comunidad…')}" maxlength="1000" autocomplete="off" required>
+            <button type="submit" class="chat-send-btn" title="Enviar mensaje">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+          </form>` : `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:4px">
+            <span style="font-size:13.5px;color:var(--muted)">Inicia sesión para conversar en el chat:</span>
+            <button type="button" class="btn btn-blue btn-sm" data-open-auth>Iniciar sesión</button>
+          </div>`}
+        </div>
+      `}
+      ` : `
+      <!-- Pestaña de Notificaciones y Avisos -->
+      <div style="flex:1 1 auto;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:14px;background:#FAFBFD">
+        <div style="padding:14px 16px;border-radius:14px;background:#fff;border:1.5px solid #F5C518;box-shadow:0 2px 8px rgba(245,197,24,.1)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="font-size:20px">🎂</span>
+            <b style="font-size:15px;color:#7A5200">Cumpleaños de esta semana</b>
+          </div>
+          ${cumples.length ? `<div style="display:flex;flex-direction:column;gap:8px">${cumples.map((c) => `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;background:#FFFDF5;border-radius:10px;border:1px solid #FDE68A">
+              <div>
+                <b style="font-size:14px;color:var(--ink)">${esc(c.nombre)}</b>
+                <div style="font-size:12px;color:var(--muted)">${c.esHoy ? '🎉 ¡HOY ES SU CUMPLEAÑOS!' : (c.esManana ? 'Mañana ' : '') + c.dia + ' de ' + c.mesNombre}</div>
+              </div>
+              ${c.waUrl ? `<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="${esc(c.waUrl)}" style="min-height:30px;padding:0 10px;font-size:12px">Felicitar 📲</a>` : ''}
+            </div>`).join('')}</div>` : `<p style="margin:0;font-size:13px;color:var(--muted)">No hay cumpleaños en los próximos 7 días.</p>`}
+        </div>
+
+        ${proxEncuentro ? `
+        <div style="padding:14px 16px;border-radius:14px;background:#fff;border:1.5px solid var(--royal);box-shadow:0 2px 8px rgba(36,82,200,.08)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:20px">📅</span>
+            <b style="font-size:15px;color:var(--navy)">Próximo Domingo de Formación</b>
+          </div>
+          <p style="margin:0 0 6px;font-size:14.5px;color:var(--ink)"><b>${esc(proxEncuentro.tema)}</b></p>
+          <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">${esc(proxEncuentro.fmt)} · ${esc(hora())} · ${esc(lugar())}</div>
+          <a class="btn btn-outline btn-sm" target="_blank" rel="noopener" href="${esc(mapsUrl())}" style="display:inline-flex;align-items:center;gap:6px;font-weight:800;color:var(--royal);border-color:var(--royal)">
+            <span>📍 Cómo llegar en Google Maps</span>
+          </a>
+        </div>` : ''}
+
+        ${postsList.length ? `
+        <div style="padding:14px 16px;border-radius:14px;background:#fff;border:1.5px solid var(--line)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span style="font-size:20px">📰</span>
+            <b style="font-size:15px;color:var(--navy)">Últimas Publicaciones de JUMA</b>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            ${postsList.map((p) => `
+              <div style="padding:10px 12px;border-radius:10px;background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <div style="min-width:0">
+                  <b style="display:block;font-size:13.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.t || 'Publicación JUMA')}</b>
+                  <span style="font-size:11.5px;color:var(--muted)">${p.fecha ? fmtF(p.fecha) : 'Reciente'}</span>
+                </div>
+                <button type="button" class="btn btn-soft btn-sm" data-close onclick="location.hash='#novedades'" style="min-height:30px;padding:0 10px;font-size:12px;flex:0 0 auto">Ver</button>
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
+      </div>`}
+  </div></div>`;
+}
+
+async function sendChatMessage(texto) {
+  const clean = String(texto || '').trim();
+  if (!clean) return;
+  if (!currentUser && !myProfile) { openAuthModal(); return; }
+
+  const d = (myProfile && myProfile.datos) || {};
+  const fullName = String(
+    (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) ||
+    (currentUser && currentUser.displayName) ||
+    (currentUser && currentUser.email ? currentUser.email.split('@')[0] : '') ||
+    'Misionero JUMA'
+  ).trim();
+  const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
+  const rol = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : 'participante');
+  const uid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || ('juma-' + Date.now());
+  const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
+
+  const isDm = chatChannel === 'dm' && chatDmTarget;
+  const targetUid = isDm ? (chatDmTarget.uid || chatDmTarget.id || '') : '';
+  const targetEmail = isDm ? String(chatDmTarget.correo || '').trim().toLowerCase() : '';
+  const dmKey = isDm ? [uid, targetUid].sort().join('_') : '';
+
+  const msg = {
+    canal: chatChannel,
+    texto: clean.slice(0, 1000),
+    autor: fullName,
+    foto: foto || '',
+    rol: rol || 'participante',
+    uid: uid,
+    correo: myEmail,
+    fecha: new Date().toISOString()
+  };
+
+  if (isDm) {
+    msg.dmKey = dmKey;
+    msg.deUid = uid;
+    msg.deEmail = myEmail;
+    msg.deNombre = fullName;
+    msg.paraUid = targetUid;
+    msg.paraEmail = targetEmail;
+    msg.paraNombre = chatDmTarget.nombre;
+  }
+
+  chatMessages.push(msg);
+  lastReadChatTime = Date.now();
+  try { localStorage.setItem('juma-last-read-chat', String(lastReadChatTime)); } catch (e) {}
+  try { localStorage.setItem('juma-chat-cache', JSON.stringify(chatMessages.slice(-100))); } catch (e) {}
+  updateChatBadge();
+  repaintChat();
+  scrollChatBottom();
+
+  if (fb && fb.db && fb.addDoc) {
+    try {
+      await fb.addDoc(fb.collection(fb.db, 'chat_mensajes'), Object.assign({}, msg, {
+        creado: fb.serverTimestamp()
+      }));
+    } catch (e) {}
+  }
+}
+
+function setupChatListener() {
+  if (!fb || !fb.db || !fb.collection) return;
+  try {
+    const q = fb.query(
+      fb.collection(fb.db, 'chat_mensajes'),
+      fb.orderBy('fecha', 'desc'),
+      fb.limit(120)
+    );
+    fb.onSnapshot(q, (snap) => {
+      const list = [];
+      snap.forEach((doc) => {
+        list.push(Object.assign({ id: doc.id }, doc.data()));
+      });
+      list.reverse();
+      if (list.length) {
+        chatMessages = list;
+        try { localStorage.setItem('juma-chat-cache', JSON.stringify(list.slice(-60))); } catch (e) {}
+        updateChatBadge();
+        if (modalKey === 'chat') {
+          repaintChat();
+        }
+      }
+    }, () => {});
+  } catch (e) {}
+}
+
 /* ===================== muro de mensajes (moderado) ===================== */
 async function loadMuro() {
   const box = $('#muro'), sec = $('#muro-sec');
@@ -2660,6 +3241,7 @@ async function initFirebase() {
     } catch (e) {}
     loadMuro();
     loadPublicInscripciones();
+    setupChatListener();
     await authInit();
     import(base + 'firebase-messaging.js').then(async (ms) => {
       if (await ms.isSupported()) { fb.messaging = ms.getMessaging(a); fb.getToken = ms.getToken; fb.onMessage = ms.onMessage; setupPush(); }
@@ -2744,6 +3326,7 @@ const isEditor = () => { try { return sessionStorage.getItem('juma-ed') === '1' 
 /* Eventos del modal de autenticación y perfil */
 modalRoot.addEventListener('click', async (e) => {
   if (!$('#au-t')) return;
+  if (e.target.closest('[data-open-chat]')) { openChatModal(); return; }
   if (e.target.closest('[data-go-register]')) { openForm(false); return; }
   if (e.target.closest('[data-edit-my-form]')) { openForm(true); return; }
   if (e.target.closest('[data-dl-profile]')) { if (myProfile && myProfile.datos) downloadPlanillaHtml(myProfile.datos, myProfile); return; }
@@ -2789,7 +3372,80 @@ modalRoot.addEventListener('click', async (e) => {
   }
 });
 
+/* Eventos del modal de Chat Comunitario y Mensajes Directos */
+modalRoot.addEventListener('click', (e) => {
+  if (modalKey !== 'chat') return;
+  if (e.target.closest('[data-chat-tab]')) {
+    chatActiveTab = e.target.closest('[data-chat-tab]').dataset.chatTab;
+    repaintChat();
+    return;
+  }
+  if (e.target.closest('[data-switch-channel]')) {
+    chatChannel = e.target.closest('[data-switch-channel]').dataset.switchChannel;
+    repaintChat();
+    scrollChatBottom();
+    return;
+  }
+  const selectDm = e.target.closest('[data-select-dm]');
+  if (selectDm) {
+    const targetUid = selectDm.dataset.selectDm;
+    const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
+    const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
+    const members = getRegisteredMembersForDm(myUid, myEmail);
+    const target = members.find((m) => m.uid === targetUid || m.id === targetUid);
+    if (target) {
+      chatChannel = 'dm';
+      chatDmTarget = target;
+      repaintChat();
+      scrollChatBottom();
+    }
+    return;
+  }
+  if (e.target.closest('[data-clear-dm]')) {
+    chatDmTarget = null;
+    repaintChat();
+    return;
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-open-chat]')) {
+    e.preventDefault();
+    openChatModal();
+    return;
+  }
+  const openDm = e.target.closest('[data-open-dm]');
+  if (openDm) {
+    e.preventDefault();
+    if (!currentUser && !myProfile) { openAuthModal(); return; }
+    const targetId = openDm.dataset.openDm;
+    const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
+    const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
+    const members = getRegisteredMembersForDm(myUid, myEmail);
+    let target = members.find((m) => m.uid === targetId || m.id === targetId);
+    if (!target) {
+      const rec = (allInscripciones || []).find((r) => r.id === targetId || r.uid === targetId);
+      if (rec) target = normalizeMember(rec);
+    }
+    if (target) {
+      chatChannel = 'dm';
+      chatDmTarget = target;
+      openChatModal('chat');
+    }
+    return;
+  }
+});
+
 modalRoot.addEventListener('submit', async (e) => {
+  if (e.target.id === 'chat-send-form') {
+    e.preventDefault();
+    const inEl = $('#chat-msg-in');
+    const txt = (inEl ? inEl.value : '').trim();
+    if (!txt) return;
+    inEl.value = '';
+    await sendChatMessage(txt);
+    return;
+  }
   if (e.target.id === 'login-user-form') {
     e.preventDefault();
     const em = (($('#lu-email') || {}).value || '').trim().toLowerCase();
@@ -4194,6 +4850,7 @@ function editorBody() {
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:8px">
               ${waJoven.length >= 10 ? `<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="https://wa.me/${waJoven}">WhatsApp</a>` : ''}
+              <button type="button" class="btn btn-soft btn-sm" data-open-dm="${esc(x.id || x.uid)}">💬 Mensaje App</button>
               <button type="button" class="btn btn-blue btn-sm" data-dl-carnet-png="${esc(x.id || x.uid)}">🪪 Carnet PNG</button>
               <button type="button" class="btn btn-soft btn-sm" data-dl-ins="${idx}">Planilla + QR</button>
               ${trueMaster ? `<button type="button" class="btn btn-danger btn-sm" data-rm-ins="${esc(x.id)}">Borrar</button>` : ''}
@@ -4432,7 +5089,14 @@ function editorBody() {
       </div>
       ` + visSun.map((x) => `<div class="erow">${fld('Domingo ' + x.dia + ' de ' + x.mes, (dr.temas || {})[x.key] || '', (v) => { dr.temas = dr.temas || {}; dr.temas[x.key] = v; }, { ph: 'Tema del encuentro (opcional)' })}${chk('No habrá reunión', !!(dr.sinReunion || {})[x.key], (v) => { dr.sinReunion = dr.sinReunion || {}; dr.sinReunion[x.key] = v; })}</div>`).join('');
   }
-  if (tab === 'dat') return '<p class="ehint">La hora y el lugar aparecen en la sección de domingos. El aviso se muestra como una franja azul arriba de toda la página; déjalo vacío para quitarlo.</p><div style="display:flex;flex-wrap:wrap;gap:18px">' + fld('Hora de la reunión', dr.hora || '', (v) => { dr.hora = v; }, { w: 1, ph: 'Ej.: 3:00 p. m.' }) + fld('Lugar de la reunión', dr.lugar || '', (v) => { dr.lugar = v; }, { w: 1, ph: 'Ej.: Salón parroquial' }) + '<div class="w" style="flex:1 1 100%"><b style="font-size:15px">Números de WhatsApp que reciben las planillas</b><p class="ehint" style="margin:4px 0 0">Escríbelos como los marcas en Venezuela, por ejemplo 0412-054-5307. Deja vacío el que no uses.</p></div>' + waFields() + fld('Aviso en la parte de arriba de la página', dr.aviso || '', (v) => { dr.aviso = v; }, { w: 1, ph: 'Ej.: Este domingo la reunión será en el templo' }) + '</div>';
+  if (tab === 'dat') return '<p class="ehint"><b>Hora, lugar y ubicación en Google Maps:</b> Aparecen en la sección de domingos y en las notificaciones para que los jóvenes toquen «Cómo llegar en Google Maps» y se les abra la ruta en su teléfono. El aviso se muestra como una franja azul arriba de toda la página; déjalo vacío para quitarlo.</p><div style="display:flex;flex-wrap:wrap;gap:18px">' +
+    fld('Hora de la reunión', dr.hora || '', (v) => { dr.hora = v; }, { w: 1, ph: 'Ej.: 3:00 p. m.' }) +
+    fld('Lugar de la reunión (Nombre del sitio)', dr.lugar || '', (v) => { dr.lugar = v; }, { w: 1, ph: 'Ej.: Salón parroquial San Juan Bautista' }) +
+    fld('Ubicación exacta de Google Maps (Enlace o Coordenadas)', dr.mapsUrl || '', (v) => { dr.mapsUrl = v; }, { w: 1, ph: 'Ej.: https://maps.app.goo.gl/… o 10.2871,-69.1623' }) +
+    '<div class="w" style="flex:1 1 100%"><b style="font-size:15px">Números de WhatsApp que reciben las planillas</b><p class="ehint" style="margin:4px 0 0">Escríbelos como los marcas en Venezuela, por ejemplo 0412-054-5307. Deja vacío el que no uses.</p></div>' +
+    waFields() +
+    fld('Aviso en la parte de arriba de la página', dr.aviso || '', (v) => { dr.aviso = v; }, { w: 1, ph: 'Ej.: Este domingo la reunión será en el templo' }) +
+    '</div>';
   if (tab === 'act') {
     dr.actividades = Array.isArray(dr.actividades) ? dr.actividades : [];
     while (dr.actividades.length < 4) dr.actividades.push({ t: '', f: '', d: '' });
@@ -4471,11 +5135,17 @@ function editorBody() {
               <input type="file" accept="video/*" data-up="video" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0">
             </label>
             ${hasVid ? `<span style="font-size:13.5px;font-weight:800;color:#14532D;background:#E4F5EA;padding:5px 12px;border-radius:99px">✔ Video cargado ${isCloudVid ? '(Nube JUMA)' : ''}</span><button type="button" class="btn btn-soft btn-sm" data-rmvid="${i}">Quitar video</button>` : '<span style="font-size:13.5px;color:var(--muted)">Sin video</span>'}
-            <label class="btn btn-soft btn-sm" style="cursor:pointer;position:relative;margin-left:auto">
-              <span>📷 ${p.foto ? 'Cambiar foto' : 'Elegir foto'}</span>
-              <input type="file" accept="image/*" data-up="foto" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0">
-            </label>
-            ${p.foto ? `<img class="ethumb" src="${esc(p.foto)}" alt=""><button type="button" class="btn btn-soft btn-sm" data-rmfoto="${i}">Quitar foto</button>` : ''}
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto">
+              <label class="btn btn-soft btn-sm" style="cursor:pointer;position:relative" title="Tomar foto con la cámara">
+                <span>📷 Tomar foto</span>
+                <input type="file" accept="image/*" capture="environment" data-up="foto" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0">
+              </label>
+              <label class="btn btn-soft btn-sm" style="cursor:pointer;position:relative" title="Elegir foto de la galería">
+                <span>🖼️ ${p.foto ? 'Cambiar foto' : 'Elegir de galería'}</span>
+                <input type="file" accept="image/*" data-up="foto" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0">
+              </label>
+              ${p.foto ? `<div style="display:flex;align-items:center;gap:6px"><img class="ethumb" src="${esc(p.foto)}" alt="" style="width:44px;height:44px;border-radius:8px;object-fit:cover;border:1.5px solid var(--royal)"><span style="font-size:12.5px;font-weight:800;color:#14532D">✔ Foto lista</span><button type="button" class="btn btn-soft btn-sm" data-rmfoto="${i}">Quitar</button></div>` : ''}
+            </div>
           </div>
           ${!isCloudVid ? fld('O pega un enlace de YouTube / ruta de video (opcional)', p.video || '', (v) => { dr.posts[i].video = v; }, { w: 1, ph: 'https://youtu.be/… o img/mi-video.mp4' }) : ''}
         </div>`;
@@ -5116,7 +5786,7 @@ document.addEventListener('click', (e) => {
     }
     if (has(t, ['cuando', 'hora', 'dia ', 'domingo', 'reun', 'encuentro', 'donde', 'lugar', 'direccion', 'ubicacion', 'semana'])) {
       const d = domingos(); const n = d[0];
-      return P([`Nos reunimos <b>todos los domingos</b>. Hora: <b>${esc(hora())}</b>. Lugar: <b>${esc(lugar())}</b>.`, n ? `El próximo es el <b>${n.dia} de ${n.mes}</b>: ${esc(n.tema)}.` : '', 'Cada encuentro tiene oración, formación y compartir. ¡Llega temprano y trae tu alegría!']);
+      return P([`Nos reunimos <b>todos los domingos</b>. Hora: <b>${esc(hora())}</b>. Lugar: <b>${esc(lugar())}</b>.`, n ? `El próximo es el <b>${n.dia} de ${n.mes}</b>: ${esc(n.tema)}.` : '', `<a href="${esc(mapsUrl())}" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;color:var(--royal);font-weight:800;text-decoration:underline">📍 Ver cómo llegar en Google Maps</a>`, 'Cada encuentro tiene oración, formación y compartir. ¡Llega temprano y trae tu alegría!']);
     }
     if (has(t, ['frase', 'cita', 'consejo', 'mensaje', 'reflexion', 'palabra'])) return P(['Una frase de San José Allamano:', FRASES[Math.floor(Math.random() * FRASES.length)]]);
     if (has(t, ['cafasso'])) return santo(2);
@@ -5302,6 +5972,11 @@ async function loadContenido() {
     const locIns = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]');
     if (locIns && locIns.length && (!allInscripciones || !allInscripciones.length)) {
       allInscripciones = locIns;
+    }
+    const cachedChat = JSON.parse(localStorage.getItem('juma-chat-cache') || '[]');
+    if (Array.isArray(cachedChat) && cachedChat.length) {
+      chatMessages = cachedChat;
+      updateChatBadge();
     }
   } catch (e) {}
   renderAll(); setupUnroll(); updateAuthUI();

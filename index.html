@@ -539,7 +539,41 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 .profile-acc-arrow{font-size:18px;color:var(--royal);transition:transform 220ms ease;display:inline-block;line-height:1}
 .profile-acc[open] .profile-acc-arrow{transform:rotate(180deg)}
 .profile-acc-content{padding:4px 18px 18px;border-top:1px solid var(--line);animation:fade 180ms ease both}
-.profile-acc-coord .profile-acc-content{border-top:1px solid rgba(36,82,200,.2)}
+/* ===== Estilos del Botón de Perfil (Avatar + Primer Nombre) y Chat/Notificaciones JUMA ===== */
+.btn-user-pill{display:inline-flex;align-items:center;gap:7px;padding:3px 13px 3px 4px;border-radius:999px;background:#fff;color:var(--navy);border:1.5px solid var(--royal);font-weight:800;font-size:13.5px;box-shadow:0 2px 6px rgba(12,45,116,.1);transition:transform .15s ease,box-shadow .15s ease;cursor:pointer}
+.btn-user-pill:hover{transform:translateY(-1px);background:#F3F7FF;box-shadow:0 4px 10px rgba(12,45,116,.16)}
+.topbar-user-photo{width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid var(--royal);display:inline-block;flex:0 0 auto}
+.topbar-user-initial{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--royal),var(--navy));color:#fff;font-size:13px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.topbar-user-name{font-weight:800;font-size:13.5px;color:var(--navy);letter-spacing:.01em}
+.chat-badge{position:absolute;top:-4px;right:-5px;background:#E11D48;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:99px;padding:0 4px;text-align:center;border:2px solid #fff;box-shadow:0 2px 5px rgba(225,29,72,.4)}
+
+.chat-sheet{max-width:680px;height:min(88vh,720px);display:flex;flex-direction:column;padding:0;overflow:hidden;border-radius:20px}
+.chat-top{padding:14px 18px;background:linear-gradient(135deg,var(--navy) 0%,var(--cloth) 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;flex:0 0 auto}
+.chat-tabs{display:flex;gap:6px;padding:8px 16px;background:var(--mist);border-bottom:1px solid var(--line);flex:0 0 auto}
+.chat-tab{flex:1;padding:8px 12px;border-radius:10px;border:0;background:transparent;font-weight:700;font-size:13.5px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.chat-tab.active{background:#fff;color:var(--navy);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.chat-channels{display:flex;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line);flex:0 0 auto;overflow-x:auto}
+.chat-channel-btn{padding:5px 12px;border-radius:99px;border:1.5px solid var(--line);background:#fff;font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.chat-channel-btn.active{background:#E8F1FF;border-color:var(--royal);color:var(--royal)}
+.chat-msgs-wrap{flex:1 1 auto;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px;background:#FAFBFD}
+.chat-bubble-row{display:flex;gap:10px;max-width:85%}
+.chat-bubble-row.mine{align-self:flex-end;flex-direction:row-reverse}
+.chat-bubble-row.theirs{align-self:flex-start}
+.chat-avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid var(--royal);flex:0 0 auto}
+.chat-avatar-init{width:34px;height:34px;border-radius:50%;background:var(--mist);color:var(--navy);font-weight:800;font-size:14px;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid var(--royal);flex:0 0 auto}
+.chat-bubble{padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.45;position:relative;word-break:break-word}
+.chat-bubble.mine{background:var(--royal);color:#fff;border-bottom-right-radius:4px}
+.chat-bubble.theirs{background:#fff;color:var(--ink);border:1px solid var(--line);border-bottom-left-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.chat-meta{display:flex;align-items:center;gap:6px;font-size:11.5px;margin-bottom:3px}
+.chat-meta .chat-author{font-weight:800;color:var(--navy)}
+.chat-time{font-size:10.5px;opacity:.7;margin-top:4px;text-align:right}
+.chat-bubble.mine .chat-time{color:rgba(255,255,255,.8)}
+.chat-input-bar{padding:12px 16px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.chat-input{flex:1;min-height:44px;padding:10px 14px;border-radius:24px;border:1.5px solid var(--line);font-size:14.5px;font-family:inherit;outline:none;background:#F8FAFC}
+.chat-input:focus{border-color:var(--royal);background:#fff}
+.chat-send-btn{width:44px;height:44px;border-radius:50%;background:var(--royal);color:#fff;border:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;transition:transform .15s}
+.chat-send-btn:hover{transform:scale(1.05);background:var(--navy)}
+.chat-empty{text-align:center;padding:36px 16px;color:var(--muted);font-size:14px}
 
 </style>
 </head>
@@ -563,8 +597,14 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 <a class="navlink" href="#consolata">Consolata</a>
 <a class="navlink" id="nav-nov" href="#novedades">Noticias</a>
 <a class="navlink" href="#galeria">Galería</a>
+<a class="navlink hide" href="#" data-open-chat id="nav-chat">💬 Chat</a>
 </nav>
 <div class="topbar-actions">
+<button type="button" class="btn btn-soft btn-sm hide" id="btn-chat" data-open-chat title="Chat y Notificaciones JUMA" style="position:relative;display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 12px;background:#fff;border:1.5px solid var(--line)">
+  <span aria-hidden="true" style="font-size:15px">💬</span>
+  <span class="chat-btn-label" style="font-weight:700">Chat</span>
+  <span class="chat-badge hide" id="chat-badge-count"></span>
+</button>
 <button type="button" class="btn btn-outline btn-sm" id="btn-auth" data-open-auth>Iniciar sesión</button>
 <button type="button" class="btn btn-white btn-sm" id="btn-join" data-open-form>Quiero ser parte</button>
 </div>
@@ -681,7 +721,15 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 <dl class="facts">
 <div><dt>Día</dt><dd>Todos los domingos</dd></div>
 <div><dt>Hora</dt><dd id="f-hora">Hora por confirmar</dd></div>
-<div><dt>Lugar</dt><dd id="f-lugar">Lugar por confirmar, Duaca</dd></div>
+<div>
+  <dt>Lugar</dt>
+  <dd>
+    <div id="f-lugar">Lugar por confirmar, Duaca</div>
+    <a id="lnk-maps-lugar" class="btn-maps-link" target="_blank" rel="noopener" href="https://maps.google.com/?q=Duaca,Lara" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 14px;border-radius:99px;background:#E8F1FF;color:var(--royal);font-size:13px;font-weight:800;text-decoration:none;border:1.5px solid #B9C8E4;box-shadow:0 2px 6px rgba(36,82,200,.08)">
+      <span aria-hidden="true">📍</span><span>Cómo llegar en Google Maps</span>
+    </a>
+  </dd>
+</div>
 </dl>
 
 <div id="acts-wrap" class="hide">
@@ -1123,7 +1171,7 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 </div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=45"></script>
-<script type="module" src="js/fe.js?v=45"></script>
+<script type="module" src="js/app.js?v=47"></script>
+<script type="module" src="js/fe.js?v=47"></script>
 </body>
 </html>
