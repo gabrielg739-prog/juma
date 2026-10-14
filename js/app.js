@@ -3134,7 +3134,8 @@ async function renderBirthdayFlyerCanvas(rec, customMessage) {
   const d = (c && c.datos) || {};
   const nombre = String((c && c.nombre) || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Misionero(a) JUMA').toUpperCase();
   const primerNombre = nombre.split(/\s+/)[0] || 'Misionero';
-  const rol = String(c.rolTxt || (c.rol ? roleLabel(c.rol) : (c.datos ? roleLabel(userRole(c)) : 'Participante'))).toUpperCase();
+  const gender = detectGender(c);
+  const isFem = gender === 'Mujer';
   const fotoUrl = (c && c.foto) || d.foto || '';
 
   const W = 1080;
@@ -3143,179 +3144,228 @@ async function renderBirthdayFlyerCanvas(rec, customMessage) {
   cv.width = W;
   cv.height = H;
   const ctx = cv.getContext('2d');
+  const cx = W / 2;
 
-  // 1. Fondo azul misionero profundo con gradiente radial y lineal
-  const bgGrad = ctx.createRadialGradient(W / 2, H / 2, 80, W / 2, H / 2, 860);
-  bgGrad.addColorStop(0, '#0D2D72');
-  bgGrad.addColorStop(0.55, '#081D4E');
-  bgGrad.addColorStop(1, '#040F2A');
+  /* ── 1. Fondo degradado azul profundo ── */
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#040E28');
+  bgGrad.addColorStop(0.35, '#0A235C');
+  bgGrad.addColorStop(0.65, '#0D2D72');
+  bgGrad.addColorStop(1, '#040E28');
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, W, H);
 
-  // 2. Líneas geométricas sutiles de fondo
+  /* ── 2. Aureola de luz central ── */
+  const glow = ctx.createRadialGradient(cx, 620, 60, cx, 620, 620);
+  glow.addColorStop(0, 'rgba(245,197,24,0.12)');
+  glow.addColorStop(0.4, 'rgba(142,201,255,0.06)');
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  /* ── 3. Líneas diagonales sutiles ── */
   ctx.save();
-  ctx.strokeStyle = 'rgba(142, 201, 255, 0.08)';
-  ctx.lineWidth = 1.5;
-  for (let i = -W; i < W * 2; i += 70) {
-    ctx.beginPath();
-    ctx.moveTo(i, 0);
-    ctx.lineTo(i + H * 0.65, H);
-    ctx.stroke();
+  ctx.globalAlpha = 0.05;
+  ctx.strokeStyle = '#8EC9FF';
+  ctx.lineWidth = 1;
+  for (let i = -W; i < W * 2; i += 80) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + H * 0.6, H); ctx.stroke();
   }
   ctx.restore();
 
-  // 3. Destellos, estrellas y confeti festivo alrededor
-  const stars = [
-    { x: 120, y: 180, s: 8, a: 0.8 }, { x: 960, y: 190, s: 7, a: 0.75 },
-    { x: 80, y: 310, s: 12, a: 0.9 }, { x: 1000, y: 320, s: 11, a: 0.85 },
-    { x: 180, y: 440, s: 7, a: 0.6 }, { x: 900, y: 450, s: 8, a: 0.65 },
-    { x: 140, y: 880, s: 9, a: 0.7 }, { x: 940, y: 890, s: 10, a: 0.75 },
-    { x: 220, y: 980, s: 6, a: 0.5 }, { x: 860, y: 990, s: 6, a: 0.5 }
+  /* ── 4. Destellos estelares ── */
+  const sparkles = [
+    {x:90,y:140,s:10},{x:990,y:160,s:9},{x:60,y:380,s:13},{x:1020,y:400,s:11},
+    {x:150,y:580,s:7},{x:930,y:600,s:8},{x:100,y:820,s:9},{x:980,y:840,s:10},
+    {x:200,y:1050,s:6},{x:880,y:1060,s:7},{x:120,y:1250,s:8},{x:960,y:1270,s:9},
+    {x:300,y:200,s:6},{x:780,y:220,s:5},{x:250,y:1150,s:7},{x:830,y:1180,s:6}
   ];
-  stars.forEach((st) => {
+  sparkles.forEach((sp) => {
     ctx.save();
-    ctx.translate(st.x, st.y);
-    ctx.fillStyle = `rgba(255, 255, 255, ${st.a})`;
+    ctx.translate(sp.x, sp.y);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
     ctx.beginPath();
     for (let j = 0; j < 4; j++) {
       ctx.rotate(Math.PI / 2);
-      ctx.moveTo(0, 0);
-      ctx.lineTo(st.s * 0.25, st.s);
-      ctx.lineTo(0, st.s * 2.2);
-      ctx.lineTo(-st.s * 0.25, st.s);
+      ctx.moveTo(0, 0); ctx.lineTo(sp.s * 0.2, sp.s * 0.8);
+      ctx.lineTo(0, sp.s * 2); ctx.lineTo(-sp.s * 0.2, sp.s * 0.8);
       ctx.closePath();
     }
     ctx.fill();
     ctx.restore();
   });
 
-  // Confeti festivo disperso
+  /* ── 5. Confeti festivo ── */
   const confetti = [
-    { x: 260, y: 420, w: 10, h: 5, r: 25, c: '#F5C518' },
-    { x: 820, y: 410, w: 9, h: 5, r: -35, c: '#8EC9FF' },
-    { x: 200, y: 560, w: 12, h: 6, r: 45, c: '#FFFFFF' },
-    { x: 880, y: 580, w: 11, h: 5, r: -20, c: '#F5C518' },
-    { x: 170, y: 720, w: 10, h: 5, r: 15, c: '#8EC9FF' },
-    { x: 910, y: 730, w: 12, h: 6, r: -50, c: '#FFFFFF' },
-    { x: 240, y: 840, w: 9, h: 5, r: 60, c: '#F5C518' },
-    { x: 840, y: 850, w: 10, h: 5, r: -15, c: '#8EC9FF' }
+    {x:220,y:300,w:14,h:6,r:30,c:'#F5C518'},{x:860,y:280,w:12,h:5,r:-40,c:'#8EC9FF'},
+    {x:160,y:500,w:15,h:7,r:55,c:'#FFFFFF'},{x:920,y:520,w:13,h:6,r:-25,c:'#F5C518'},
+    {x:240,y:750,w:11,h:5,r:20,c:'#8EC9FF'},{x:840,y:770,w:14,h:6,r:-60,c:'#FFFFFF'},
+    {x:180,y:950,w:12,h:5,r:45,c:'#F5C518'},{x:900,y:970,w:13,h:6,r:-35,c:'#8EC9FF'},
+    {x:300,y:1200,w:10,h:5,r:15,c:'#FFFFFF'},{x:780,y:1220,w:11,h:5,r:-50,c:'#F5C518'}
   ];
   confetti.forEach((cf) => {
     ctx.save();
     ctx.translate(cf.x, cf.y);
     ctx.rotate((cf.r * Math.PI) / 180);
+    ctx.globalAlpha = 0.6;
     ctx.fillStyle = cf.c;
     ctx.fillRect(-cf.w / 2, -cf.h / 2, cf.w, cf.h);
     ctx.restore();
   });
 
-  // 4. Cinta superior de los 5 colores misioneros de la Consolata
+  /* ── 6. Cinta superior 5 colores Consolata ── */
   const ribbonCols = ['#009B48', '#F5C518', '#0057B7', '#D81E05', '#FFFFFF'];
   const segW = W / ribbonCols.length;
   ribbonCols.forEach((col, idx) => {
     ctx.fillStyle = col;
-    ctx.fillRect(idx * segW, 0, segW + 1, 16);
+    ctx.fillRect(idx * segW, 0, segW + 1, 14);
   });
 
-  // 5. Encabezado institucional
+  /* ── 7. Logo JUMA pequeño arriba ── */
+  let logoImg = null;
+  try { logoImg = await loadImageSafe('img/logo.png'); } catch (e) {}
+  if (logoImg) {
+    const lSize = 70;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, 75, lSize / 2, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(logoImg, cx - lSize / 2, 75 - lSize / 2, lSize, lSize);
+    ctx.restore();
+    /* Anillo del logo */
+    ctx.beginPath();
+    ctx.arc(cx, 75, lSize / 2 + 2, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(245,197,24,0.6)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  /* ── 8. Encabezado institucional ── */
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-  ctx.font = '800 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  try { ctx.letterSpacing = '5px'; } catch (e) {}
-  ctx.fillText('JUVENTUD MISIONERA ALLAMANIANA • DUACA', W / 2, 100);
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.font = '700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  try { ctx.letterSpacing = '4px'; } catch (e) {}
+  ctx.fillText('JUVENTUD MISIONERA ALLAMANIANA • DUACA', cx, 130);
 
-  // 6. Caligrafía "te desea un" con adornos laterales
+  /* ── 9. Separador dorado decorativo ── */
+  ctx.save();
+  ctx.strokeStyle = '#F5C518';
+  ctx.lineWidth = 1.5;
+  ctx.globalAlpha = 0.5;
+  ctx.beginPath(); ctx.moveTo(cx - 200, 158); ctx.lineTo(cx + 200, 158); ctx.stroke();
+  /* Diamante central */
+  ctx.fillStyle = '#F5C518';
+  ctx.globalAlpha = 0.7;
+  ctx.beginPath();
+  ctx.moveTo(cx, 152); ctx.lineTo(cx + 7, 158); ctx.lineTo(cx, 164); ctx.lineTo(cx - 7, 158);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+
+  /* ── 10. "te desea un" caligráfico con adornos laterales ── */
   ctx.save();
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'italic 44px "Playfair Display", Georgia, "Times New Roman", serif';
-  try { ctx.letterSpacing = '1px'; } catch (e) {}
-  ctx.fillText('te desea un', W / 2, 175);
+  ctx.font = 'italic 36px Georgia, "Times New Roman", serif';
+  try { ctx.letterSpacing = '2px'; } catch (e) {}
+  ctx.fillText('te desea un', cx, 195);
 
   const txtW = ctx.measureText('te desea un').width;
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.strokeStyle = 'rgba(245, 197, 24, 0.6)';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(W / 2 - txtW / 2 - 25, 175);
-  ctx.lineTo(W / 2 - txtW / 2 - 130, 175);
+  ctx.moveTo(cx - txtW / 2 - 20, 195); ctx.lineTo(cx - txtW / 2 - 110, 195);
   ctx.stroke();
   ctx.beginPath();
-  ctx.arc(W / 2 - txtW / 2 - 130, 175, 4, 0, Math.PI * 2);
-  ctx.stroke();
+  ctx.arc(cx - txtW / 2 - 110, 195, 3.5, 0, Math.PI * 2);
+  ctx.fillStyle = '#F5C518'; ctx.fill();
 
   ctx.beginPath();
-  ctx.moveTo(W / 2 + txtW / 2 + 25, 175);
-  ctx.lineTo(W / 2 + txtW / 2 + 130, 175);
+  ctx.moveTo(cx + txtW / 2 + 20, 195); ctx.lineTo(cx + txtW / 2 + 110, 195);
   ctx.stroke();
   ctx.beginPath();
-  ctx.arc(W / 2 + txtW / 2 + 130, 175, 4, 0, Math.PI * 2);
-  ctx.stroke();
+  ctx.arc(cx + txtW / 2 + 110, 195, 3.5, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 
-  // 7. Gran titular: ¡FELIZ CUMPLEAÑOS!
+  /* ── 11. ¡FELIZ CUMPLEAÑOS! vibrante en una sola línea (fusionado con la celebración) ── */
   ctx.save();
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = '900 68px "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-  try { ctx.letterSpacing = '3px'; } catch (e) {}
-  ctx.shadowColor = 'rgba(245, 197, 24, 0.45)';
-  ctx.shadowBlur = 24;
-  ctx.fillText('¡FELIZ CUMPLEAÑOS!', W / 2, 260);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(245, 197, 24, 0.7)';
+  ctx.shadowBlur = 35;
+  const titleGrad = ctx.createLinearGradient(cx - 360, 265, cx + 360, 265);
+  titleGrad.addColorStop(0, '#FFF1A8');
+  titleGrad.addColorStop(0.3, '#FFFFFF');
+  titleGrad.addColorStop(0.7, '#F5C518');
+  titleGrad.addColorStop(1, '#FFF1A8');
+  ctx.fillStyle = titleGrad;
+  ctx.font = '900 66px -apple-system, BlinkMacSystemFont, "Segoe UI", Impact, sans-serif';
+  try { ctx.letterSpacing = '4px'; } catch (e) {}
+  ctx.fillText('¡FELIZ CUMPLEAÑOS!', cx, 265);
   ctx.restore();
 
-  // 8. Círculo central con anillos concéntricos y foto del cumpleañero
-  const cx = W / 2;
-  const cy = 630;
-  const rPhoto = 230;
+  /* ── 12. Emojis laterales festivos alrededor del titular ── */
+  ctx.font = '38px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🎂', 75, 265);
+  ctx.fillText('✨', 135, 245);
+  ctx.fillText('🎉', 1005, 265);
+  ctx.fillText('🎈', 945, 245);
 
-  // Anillos exteriores decorativos
+  /* ── 13. Foto circular grande con anillos concéntricos dorados/azules ── */
+  const cy = 590;
+  const rPhoto = 215;
+
+  /* Anillo exterior sutil */
   ctx.save();
   ctx.beginPath();
-  ctx.arc(cx, cy, rPhoto + 38, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(142, 201, 255, 0.35)';
-  ctx.lineWidth = 2.5;
+  ctx.arc(cx, cy, rPhoto + 34, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(142,201,255,0.25)';
+  ctx.lineWidth = 2;
   ctx.stroke();
 
+  /* Anillo blanco brillante con resplandor celeste */
   ctx.beginPath();
-  ctx.arc(cx, cy, rPhoto + 22, 0, Math.PI * 2);
+  ctx.arc(cx, cy, rPhoto + 20, 0, Math.PI * 2);
   ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 5;
-  ctx.shadowColor = 'rgba(142, 201, 255, 0.5)';
-  ctx.shadowBlur = 18;
+  ctx.lineWidth = 4.5;
+  ctx.shadowColor = 'rgba(142,201,255,0.6)';
+  ctx.shadowBlur = 22;
   ctx.stroke();
   ctx.restore();
 
-  // Anillo de espacio azul
+  /* Espacio azul marino protector */
   ctx.beginPath();
   ctx.arc(cx, cy, rPhoto + 8, 0, Math.PI * 2);
   ctx.strokeStyle = '#061536';
-  ctx.lineWidth = 12;
+  ctx.lineWidth = 11;
   ctx.stroke();
 
-  // Borde interior blanco/dorado fino
+  /* Borde dorado interior */
   ctx.beginPath();
   ctx.arc(cx, cy, rPhoto, 0, Math.PI * 2);
   ctx.strokeStyle = '#F5C518';
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 5;
   ctx.stroke();
 
-  // Cargar y recortar la foto del cumpleañero
+  /* Recortar foto del cumpleañero */
   ctx.save();
   ctx.beginPath();
-  ctx.arc(cx, cy, rPhoto - 2, 0, Math.PI * 2);
+  ctx.arc(cx, cy, rPhoto - 3, 0, Math.PI * 2);
   ctx.closePath();
   ctx.clip();
 
   let imgLoaded = null;
-  if (fotoUrl) {
-    imgLoaded = await loadImageSafe(fotoUrl);
-  }
+  if (fotoUrl) { imgLoaded = await loadImageSafe(fotoUrl); }
   if (imgLoaded) {
     const sw = imgLoaded.naturalWidth || imgLoaded.width;
     const sh = imgLoaded.naturalHeight || imgLoaded.height;
     const minDim = Math.min(sw, sh);
-    const sx = (sw - minDim) / 2;
-    const sy = (sh - minDim) / 2;
-    ctx.drawImage(imgLoaded, sx, sy, minDim, minDim, cx - rPhoto, cy - rPhoto, rPhoto * 2, rPhoto * 2);
+    const sxI = (sw - minDim) / 2;
+    const syI = (sh - minDim) / 2;
+    ctx.drawImage(imgLoaded, sxI, syI, minDim, minDim, cx - rPhoto, cy - rPhoto, rPhoto * 2, rPhoto * 2);
   } else {
     const avGrad = ctx.createLinearGradient(cx - rPhoto, cy - rPhoto, cx + rPhoto, cy + rPhoto);
     avGrad.addColorStop(0, '#103D96');
@@ -3330,76 +3380,94 @@ async function renderBirthdayFlyerCanvas(rec, customMessage) {
   }
   ctx.restore();
 
-  // Corona dorada sobre la foto
-  ctx.font = '54px sans-serif';
+  /* Corona dorada descansando sobre el aro de la foto */
+  ctx.font = '52px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('👑', cx, cy - rPhoto + 8);
+  ctx.textBaseline = 'middle';
+  ctx.fillText('👑', cx, cy - rPhoto - 2);
 
-  // 9. Nombre del cumpleañero con corchetes elegantes
+  /* ── 14. NOMBRE GRANDE (sin rol ni rango) ── */
   ctx.save();
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = '900 48px "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-  try { ctx.letterSpacing = '3px'; } catch (e) {}
   ctx.textAlign = 'center';
-  ctx.fillText(`[ ${nombre} ]`, cx, 975);
-
-  // Subtítulo con rol en JUMA Duaca
-  ctx.fillStyle = '#F5C518';
-  ctx.font = '800 22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-  try { ctx.letterSpacing = '4px'; } catch (e) {}
-  ctx.fillText(`★ ${rol} · JUMA DUACA ★`, cx, 1025);
+  ctx.textBaseline = 'middle';
+  let nameSize = 72;
+  ctx.font = `900 ${nameSize}px "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  while (ctx.measureText(nombre).width > W - 120 && nameSize > 32) {
+    nameSize -= 2;
+    ctx.font = `900 ${nameSize}px "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  }
+  try { ctx.letterSpacing = '3px'; } catch (e) {}
+  ctx.shadowColor = 'rgba(245,197,24,0.55)';
+  ctx.shadowBlur = 28;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(nombre, cx, 915);
   ctx.restore();
 
-  // 10. Mensaje / Dedicación misionera
-  const msgDedication = customMessage || (dr && dr.cumpleanosMensaje) || (cfg && cfg.cumpleanosMensaje) ||
-    'Que el Señor renueve tus fuerzas y siga guiando tu vocación misionera.\n¡Gracias por ser luz en nuestra gran familia JUMA!';
+  /* Línea dorada estilizada debajo del nombre */
+  ctx.save();
+  const nameW = ctx.measureText(nombre).width;
+  ctx.strokeStyle = '#F5C518';
+  ctx.lineWidth = 3;
+  ctx.globalAlpha = 0.75;
+  const lineHalf = Math.min(nameW * 0.45, 220);
+  ctx.beginPath();
+  ctx.moveTo(cx - lineHalf, 955); ctx.lineTo(cx + lineHalf, 955);
+  ctx.stroke();
+  ctx.restore();
+
+  /* ── 15. Mensaje misionero corto y personalizado por género ── */
+  const msgDefaultGender = isFem
+    ? `Hoy celebramos con alegría la vida de nuestra querida hermana misionera.\n¡Que Dios y la Virgen Consolata guíen siempre tu camino,\nllenando tu corazón de bendiciones, gozo y santidad!`
+    : `Hoy celebramos con alegría la vida de nuestro querido hermano misionero.\n¡Que Dios y la Virgen Consolata guíen siempre tu camino,\nllenando tu corazón de bendiciones, gozo y santidad!`;
+
+  let msgLines = [];
+  if (customMessage && customMessage.trim() && customMessage !== DEFAULT_CUMPLE_MSG) {
+    const raw = customMessage.replace(/\{nombre\}/gi, primerNombre).split('\n').filter(Boolean);
+    msgLines = raw.slice(0, 3);
+  } else {
+    msgLines = msgDefaultGender.split('\n');
+  }
 
   ctx.save();
   ctx.fillStyle = '#DCE7F8';
-  ctx.font = '500 26px "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.font = '500 27px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
   ctx.textAlign = 'center';
-
-  const cleanLines = msgDedication.replace(/\{nombre\}/gi, primerNombre).split('\n').filter(Boolean);
-  let lineY = 1110;
-  cleanLines.slice(0, 4).forEach((l) => {
-    if (ctx.measureText(l).width > W - 140) {
-      const words = l.split(' ');
-      let cur = '';
-      for (const w of words) {
-        if (ctx.measureText(cur + w + ' ').width > W - 140) {
-          ctx.fillText(cur.trim(), cx, lineY);
-          lineY += 40;
-          cur = w + ' ';
-        } else {
-          cur += w + ' ';
-        }
-      }
-      if (cur.trim()) {
-        ctx.fillText(cur.trim(), cx, lineY);
-        lineY += 40;
-      }
-    } else {
-      ctx.fillText(l, cx, lineY);
-      lineY += 40;
-    }
+  ctx.textBaseline = 'middle';
+  let mY = 1015;
+  msgLines.forEach((line) => {
+    ctx.fillText(line.trim(), cx, mY);
+    mY += 44;
   });
   ctx.restore();
 
-  // 11. Pie de página institucional
-  ctx.save();
-  ctx.strokeStyle = 'rgba(142, 201, 255, 0.25)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(180, 1370);
-  ctx.lineTo(W - 180, 1370);
-  ctx.stroke();
+  /* ── 16. Emojis de bendición y fraternidad ── */
+  ctx.font = '36px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('💙  ✨  🙏  🎂', cx, mY + 22);
 
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+  /* ── 17. Separador institucional inferior ── */
+  ctx.save();
+  ctx.strokeStyle = 'rgba(142,201,255,0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(200, 1260); ctx.lineTo(W - 200, 1260); ctx.stroke();
+  ctx.restore();
+
+  /* ── 18. Pie de página misionero ── */
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
   ctx.font = '700 17px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
   try { ctx.letterSpacing = '3px'; } catch (e) {}
   ctx.textAlign = 'center';
-  ctx.fillText('MISIONEROS DE LA CONSOLATA • DUACA, VENEZUELA', cx, 1405);
+  ctx.textBaseline = 'middle';
+  ctx.fillText('MISIONEROS DE LA CONSOLATA • DUACA, VENEZUELA', cx, 1315);
   ctx.restore();
+
+  /* ── 19. Cinta inferior 5 colores Consolata ── */
+  ribbonCols.forEach((col, idx) => {
+    ctx.fillStyle = col;
+    ctx.fillRect(idx * segW, H - 16, segW + 1, 16);
+  });
 
   return cv;
 }
@@ -3409,7 +3477,10 @@ async function generateBirthdayFlyerData(rec) {
   const d = (c && c.datos) || {};
   const nombre = (c && c.nombre) || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Misionero JUMA';
   const slug = nombre.replace(/[^A-Z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'Misionero';
-  const rolTxt = c.rolTxt || (c.rol ? roleLabel(c.rol) : (c.datos ? roleLabel(userRole(c)) : 'Participante'));
+  const gender = detectGender(c);
+  const isFem = gender === 'Mujer';
+  const hermano = isFem ? 'hermana' : 'hermano';
+  const nuestro = isFem ? 'nuestra querida' : 'nuestro querido';
 
   const cv = await renderBirthdayFlyerCanvas(c);
   const dataUrl = cv.toDataURL('image/png');
@@ -3422,7 +3493,7 @@ async function generateBirthdayFlyerData(rec) {
     }
   } catch (e) {}
 
-  const shareText = `🎉🎂 *¡HOY CELEBRAMOS EN JUMA DUACA!* 🎂🎉\n\nHoy toda nuestra familia misionera felicita con inmensa alegría a nuestro(a) hermano(a) *${nombre}* (${rolTxt}).\n\nQue Dios y Nuestra Madre la Virgen Consolata bendigan siempre tu vida y tu misión. ¡Déjale tus felicitaciones y bendiciones!\n\n👥 Grupo de WhatsApp JUMA: ${JUMA_WA_GROUP_URL}\n📢 Canal Oficial: ${JUMA_WA_CHANNEL_URL}`;
+  const shareText = `🎉🎂 *¡FELIZ CUMPLEAÑOS!* 🎂🎉\n\nHoy toda la familia misionera de JUMA Duaca celebra con inmensa alegría la vida de ${nuestro} ${hermano} *${nombre}*.\n\nQue Dios y Nuestra Madre la Virgen Consolata ${isFem ? 'la' : 'lo'} bendigan siempre con salud, alegría y santidad. ¡${isFem ? 'Felicítala' : 'Felicítalo'} con mucho amor! 💙✨🙏`;
 
   return { cv, dataUrl, file, shareText, nombre, slug };
 }
@@ -3439,10 +3510,10 @@ function showBirthdayFlyerShareModal(rec, dataUrl, shareText, slug) {
   modal.style.zIndex = '999999';
 
   modal.innerHTML = `
-    <div class="sheet" style="max-width:540px;background:#061536;color:#fff;border:2.5px solid #F5C518;border-radius:24px;box-shadow:0 24px 70px rgba(0,0,0,0.85)">
-      <div style="padding:18px 22px;border-bottom:1.5px solid rgba(245,197,24,0.3);display:flex;align-items:center;justify-content:space-between">
+    <div class="sheet" style="max-width:480px;background:#061536;color:#fff;border:2.5px solid #F5C518;border-radius:24px;box-shadow:0 24px 70px rgba(0,0,0,0.85)">
+      <div style="padding:16px 20px;border-bottom:1.5px solid rgba(245,197,24,0.3);display:flex;align-items:center;justify-content:space-between">
         <div>
-          <b style="font-size:17px;color:#F5C518;display:block">🎉 Felicitación Oficial para el Grupo</b>
+          <b style="font-size:17px;color:#F5C518;display:block">🎉 Felicitación Oficial</b>
           <span style="font-size:12.5px;color:#DCE7F8">Cumpleaños de ${esc(nombre)}</span>
         </div>
         <button type="button" class="jchat-x" data-close-flyer-modal aria-label="Cerrar" style="color:#fff;border-color:rgba(255,255,255,0.4)">✕</button>
@@ -3454,20 +3525,12 @@ function showBirthdayFlyerShareModal(rec, dataUrl, shareText, slug) {
         </div>
 
         <p style="font-size:13.5px;color:#DCE7F8;line-height:1.5;margin:0 0 16px">
-          ¡Imagen oficial generada con éxito! Puedes enviarla directamente al <b>Grupo de WhatsApp</b> o al <b>Canal Oficial</b> de JUMA Duaca.
+          ¡Imagen generada con éxito! Descárgala y compártela donde quieras. El texto de felicitación se copió automáticamente.
         </p>
 
         <div style="display:flex;flex-direction:column;gap:10px">
-          <a class="btn btn-blue" href="${esc(JUMA_WA_GROUP_URL)}" target="_blank" rel="noopener" data-action-copy-share style="min-height:46px;font-size:14px;font-weight:800;background:#17824A;color:#fff;border:0;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 20px rgba(23,130,74,0.4)">
-            👥 Abrir Grupo de WhatsApp y Compartir
-          </a>
-
-          <a class="btn btn-soft" href="${esc(JUMA_WA_CHANNEL_URL)}" target="_blank" rel="noopener" data-action-copy-share style="min-height:44px;font-size:13.5px;font-weight:800;background:rgba(255,255,255,0.12);color:#fff;border:1.5px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;gap:8px">
-            📢 Abrir Canal Oficial de JUMA
-          </a>
-
-          <button type="button" class="btn btn-white btn-sm" data-action-download-flyer style="min-height:40px;font-size:13px;font-weight:800;color:var(--navy)">
-            📥 Descargar Foto en Alta Definición (PNG)
+          <button type="button" class="btn btn-sm" data-action-download-flyer style="min-height:46px;font-size:14px;font-weight:800;background:#F5C518;color:#061536;border:0;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 18px rgba(245,197,24,0.4);border-radius:14px;cursor:pointer">
+            📥 Descargar Imagen HD (PNG)
           </button>
         </div>
       </div>
@@ -3480,15 +3543,11 @@ function showBirthdayFlyerShareModal(rec, dataUrl, shareText, slug) {
   modal.querySelectorAll('[data-close-flyer-modal]').forEach((b) => b.addEventListener('click', closeFn));
   modal.addEventListener('click', (e) => { if (e.target === modal) closeFn(); });
 
-  modal.querySelectorAll('[data-action-copy-share]').forEach((b) => {
-    b.addEventListener('click', () => {
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(shareText);
-        }
-      } catch (e) {}
-    });
-  });
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareText).catch(() => {});
+    }
+  } catch (e) {}
 
   const dlBtn = modal.querySelector('[data-action-download-flyer]');
   if (dlBtn) {
@@ -4802,9 +4861,13 @@ document.addEventListener('click', (e) => {
       } else if (bdayList.length > 0) {
         const nombresHoy = bdayList.map((c) => c.nombre).join(', ');
         const isCoord = isCoordinatorOrMaster();
+        const firstIsFem = detectGender(bdayList[0]) === 'Mujer';
+        const pronFelicitar = bdayList.length === 1 ? (firstIsFem ? 'felicitarla' : 'felicitarlo') : 'felicitarles';
         const waChatBtns = bdayList.map((c) => {
           const pNom = c.nombre.split(/\s+/)[0] || c.nombre;
-          const msgWa = `🎉🎂 ¡Feliz cumpleaños, *${c.nombre}*! Que Dios y Nuestra Madre la Virgen Consolata te bendigan siempre en tu camino misionero. ¡Un gran abrazo de parte de toda tu familia de JUMA Duaca! 💙✨`;
+          const isCFem = detectGender(c) === 'Mujer';
+          const hermanoTxt = isCFem ? 'hermana' : 'hermano';
+          const msgWa = `🎉🎂 ¡Feliz cumpleaños, *${c.nombre}*! Que Dios y Nuestra Madre la Virgen Consolata te bendigan siempre en tu camino como ${hermanoTxt} misionero(a). ¡Un gran abrazo de parte de toda tu familia de JUMA Duaca! 💙✨`;
           const link = c.waUrl || `https://wa.me/?text=${encodeURIComponent(msgWa)}`;
           const cId = c.id || ('extra-' + (c.extraIdx !== undefined ? c.extraIdx : ''));
           return `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
@@ -4814,7 +4877,7 @@ document.addEventListener('click', (e) => {
         }).join('');
         jMsg = [
           `¡Hola${primerNom ? ', <b>' + esc(primerNom) + '</b>' : ''}! Soy <b>Joriel</b> 👋.`,
-          `Hoy tenemos una gran fiesta misionera en JUMA: ¡<b>${esc(nombresHoy)}</b> está de cumpleaños hoy! 🎂🎈 No olvides felicitarla/o.`,
+          `Hoy tenemos una gran fiesta misionera en JUMA: ¡<b>${esc(nombresHoy)}</b> está de cumpleaños hoy! 🎂🎈 No olvides ${pronFelicitar}.`,
           waChatBtns,
           'Te cuento sobre nuestros encuentros, formación, oraciones y cómo participar. ¿Qué quieres saber?'
         ];
@@ -4847,13 +4910,17 @@ document.addEventListener('click', (e) => {
     let bBtn = 'Hablar con Joriel';
 
     if (isCelebrant) {
-      bTitle = `🎉 ¡Feliz cumpleaños, ${esc(primerNom || 'misionero(a)')}! 🎂`;
+      const isFemMe = reg ? (detectGender(reg) === 'Mujer') : false;
+      const termMe = isFemMe ? 'misionera' : 'misionero';
+      bTitle = `🎉 ¡Feliz cumpleaños, ${esc(primerNom || termMe)}! 🎂`;
       bText = '¡Soy Joriel! Hoy es tu día especial y toda la familia JUMA Duaca celebramos tu vida. ¡Que Dios te bendiga siempre! 🙏✨';
       bBtn = 'Hablar con Joriel';
     } else if (bdayList.length > 0) {
       const nomCumple = bdayList.map((c) => c.nombre).join(', ');
+      const firstIsFem = detectGender(bdayList[0]) === 'Mujer';
+      const pronFelicitar = bdayList.length === 1 ? (firstIsFem ? 'felicitarla' : 'felicitarlo') : 'felicitarles';
       bTitle = primerNom ? `¡Hola, ${esc(primerNom)}! Soy Joriel 👋` : '¡Hola! Soy Joriel 👋';
-      bText = `🎉 ¡Hoy está de cumpleaños ${esc(nomCumple)}! 🎂🎈 No olvides felicitarla/o en este día tan especial.`;
+      bText = `🎉 ¡Hoy está de cumpleaños ${esc(nomCumple)}! 🎂🎈 No olvides ${pronFelicitar} en este día tan especial.`;
     }
 
     let bWaHtml = '';
@@ -4861,7 +4928,9 @@ document.addEventListener('click', (e) => {
       const isCoord = isCoordinatorOrMaster();
       const waButtons = bdayList.map((c) => {
         const pNom = c.nombre.split(/\s+/)[0] || c.nombre;
-        const msgWa = `🎉🎂 ¡Feliz cumpleaños, *${c.nombre}*! Que Dios y Nuestra Madre la Virgen Consolata te bendigan siempre en tu camino misionero. ¡Un gran abrazo de parte de toda tu familia de JUMA Duaca! 💙✨`;
+        const isCFem = detectGender(c) === 'Mujer';
+        const hermanoTxt = isCFem ? 'hermana' : 'hermano';
+        const msgWa = `🎉🎂 ¡Feliz cumpleaños, *${c.nombre}*! Que Dios y Nuestra Madre la Virgen Consolata te bendigan siempre en tu camino como ${hermanoTxt} misionero(a). ¡Un gran abrazo de parte de toda tu familia de JUMA Duaca! 💙✨`;
         const link = c.waUrl || `https://wa.me/?text=${encodeURIComponent(msgWa)}`;
         const cId = c.id || ('extra-' + (c.extraIdx !== undefined ? c.extraIdx : ''));
         return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
