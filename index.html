@@ -575,35 +575,98 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 .chat-send-btn:hover{transform:scale(1.05);background:var(--navy)}
 .chat-empty{text-align:center;padding:36px 16px;color:var(--muted);font-size:14px}
 
+
+/* ===== Modo Secciones SPA y Transiciones ===== */
+body.modo-secciones .j-view { display: none; }
+body.modo-secciones .j-view.view-active { display: block; animation: fadeInView 240ms cubic-bezier(.16,1,.3,1) both; }
+@keyframes fadeInView { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+body.modo-corrido .j-view { display: block!important; }
+
+/* Barra de Subnavegación de Secciones */
+.subnav-bar { position: sticky; top: 0; z-index: 10; background: #fff; border-bottom: 1px solid var(--line); box-shadow: 0 4px 12px rgba(6,21,54,.04); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.subnav-in { max-width: 1320px; margin: 0 auto; display: flex; align-items: center; gap: 6px; padding: 6px clamp(12px, 2vw, 24px); }
+.subnav-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; border: 1.5px solid transparent; background: transparent; font-size: 13.5px; font-weight: 700; color: var(--muted); cursor: pointer; white-space: nowrap; transition: all .15s ease; text-decoration: none; }
+.subnav-btn:hover { background: var(--mist); color: var(--navy); }
+.subnav-btn.active { background: var(--royal); color: #fff; box-shadow: 0 4px 12px rgba(36,82,200,.25); }
+.subnav-mode-toggle { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--muted); background: var(--mist); border-radius: 999px; padding: 5px 12px; border: 1px solid var(--line); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; flex: 0 0 auto; }
+.subnav-mode-toggle:hover { color: var(--navy); background: #E8F1FF; }
+
+/* Atajos visuales de portada */
+.hero-shortcuts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 26px; }
+.hero-sc-card { padding: 16px 18px; border-radius: 14px; background: rgba(255,255,255,.12); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1.5px solid rgba(255,255,255,.2); color: #fff; text-decoration: none; display: flex; flex-direction: column; gap: 6px; transition: transform .15s ease, background .15s ease; cursor: pointer; text-align: left; }
+.hero-sc-card:hover { transform: translateY(-2px); background: rgba(255,255,255,.22); }
+.hero-sc-card b { font-size: 15px; color: #fff; display: flex; align-items: center; gap: 8px; }
+.hero-sc-card p { margin: 0; font-size: 13px; color: #DCE7F8; line-height: 1.4; }
+
+/* Pie de navegación de cada sección */
+.view-foot-nav { max-width: 960px; margin: 32px auto 16px; padding: 18px clamp(16px, 3vw, 24px); border-radius: 16px; background: var(--mist); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* Barra / Dock Flotante Social estilo Facebook */
+.social-dock { position: fixed; bottom: 22px; right: 22px; z-index: 50; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.95); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding: 6px 10px; border-radius: 999px; box-shadow: 0 10px 30px rgba(6,21,54,.18), 0 0 0 1.5px rgba(36,82,200,.16); animation: slideUpDock 300ms cubic-bezier(.16,1,.3,1) both; }
+@keyframes slideUpDock { from { opacity: 0; transform: translateY(24px) scale(.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.dock-btn { position: relative; width: 44px; height: 44px; border-radius: 50%; border: 0; background: #F0F4FA; color: var(--navy); display: inline-flex; align-items: center; justify-content: center; font-size: 19px; cursor: pointer; transition: transform .15s ease, background .15s ease, box-shadow .15s ease; }
+.dock-btn:hover { transform: scale(1.08); background: var(--royal); color: #fff; }
+.dock-btn:active { transform: scale(.95); }
+.dock-btn-user { padding: 0; overflow: hidden; border: 2px solid var(--royal); background: #fff; }
+.dock-btn-user img { width: 100%; height: 100%; object-fit: cover; }
+.dock-badge { position: absolute; top: -3px; right: -3px; background: #E11D48; color: #fff; font-size: 10px; font-weight: 900; min-width: 18px; height: 18px; line-height: 18px; border-radius: 99px; padding: 0 4px; text-align: center; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(225,29,72,.4); }
+.social-dock-guest { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px; background: linear-gradient(135deg, var(--royal), var(--navy)); color: #fff; font-size: 13.5px; font-weight: 800; border: 0; cursor: pointer; box-shadow: 0 6px 22px rgba(36,82,200,.38); transition: transform .15s, box-shadow .15s; }
+.social-dock-guest:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(36,82,200,.48); }
+
+/* Centro de Notificaciones Internas */
+.notif-sheet { max-width: 540px; height: min(85vh, 650px); display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: 20px; }
+.notif-list { flex: 1 1 auto; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: #FAFBFD; }
+.notif-item { display: flex; gap: 12px; padding: 12px 14px; border-radius: 14px; background: #fff; border: 1.5px solid var(--line); transition: border-color .15s, box-shadow .15s; }
+.notif-icon { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 19px; flex: 0 0 auto; }
+
+@media (max-width: 640px) {
+  .topbar-in { padding: 10px 14px 8px; gap: 8px; }
+  .brand-logo { width: 48px; height: 40px; }
+  .brand b { font-size: 18px; }
+  .brand small { font-size: 11px; }
+  .topbar-actions { gap: 6px; }
+  .btn-user-pill { padding: 2px 10px 2px 3px; font-size: 12.5px; }
+  .topbar-user-photo, .topbar-user-initial { width: 26px; height: 26px; }
+  .topbar-user-name { max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .social-dock { bottom: 14px; right: 14px; padding: 5px 8px; }
+  .dock-btn { width: 40px; height: 40px; font-size: 17px; }
+  .subnav-in { gap: 4px; padding: 6px 10px; }
+  .subnav-btn { padding: 6px 11px; font-size: 12.5px; }
+}
 </style>
 </head>
-<body>
+<body class="modo-secciones">
 <div class="jm" id="root" style="width:100%;font-family:var(--body);background:var(--paper);color:var(--ink)">
 <a class="skip" href="#main">Saltar al contenido</a>
 
 <div class="aviso hide" id="aviso" role="status"></div>
 
+
 <header class="topbar">
 <div class="topbar-in">
-<a class="brand" href="#inicio" aria-label="JUMA Duaca, ir al inicio">
+<a class="brand" href="#inicio" data-view-target="inicio" aria-label="JUMA Duaca, ir al inicio">
 <img class="brand-logo" src="img/logo.png" alt="">
 <span><b>JUMA Duaca</b><small>Juventud Misionera Allamaniana</small></span>
 </a>
 <nav class="navlinks" aria-label="Principal">
-<a class="navlink" href="#quienes">Quiénes somos</a>
-<a class="navlink" href="#domingos">Domingos</a>
-<a class="navlink" href="#formacion">Formación</a>
-<a class="navlink" href="#fe">Oración</a>
-<a class="navlink" href="#consolata">Consolata</a>
-<a class="navlink" id="nav-nov" href="#novedades">Noticias</a>
-<a class="navlink" href="#galeria">Galería</a>
-<a class="navlink hide" href="#" data-open-chat id="nav-chat">💬 Chat</a>
+<a class="navlink" href="#inicio" data-view="inicio">Inicio</a>
+<a class="navlink" href="#quienes" data-view="quienes">Quiénes somos</a>
+<a class="navlink" href="#domingos" data-view="domingos">Domingos</a>
+<a class="navlink" href="#formacion" data-view="formacion">Formación</a>
+<a class="navlink" href="#fe" data-view="fe">Oración</a>
+<a class="navlink" href="#consolata" data-view="consolata">Consolata</a>
+<a class="navlink" id="nav-nov" href="#novedades" data-view="novedades">Noticias</a>
+<a class="navlink" href="#galeria" data-view="galeria">Galería</a>
+<a class="navlink hide" href="#comunidad" data-view="comunidad" id="nav-comunidad">👥 Comunidad</a>
 </nav>
 <div class="topbar-actions">
-<button type="button" class="btn btn-soft btn-sm hide" id="btn-chat" data-open-chat title="Chat y Notificaciones JUMA" style="position:relative;display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 12px;background:#fff;border:1.5px solid var(--line)">
-  <span aria-hidden="true" style="font-size:15px">💬</span>
-  <span class="chat-btn-label" style="font-weight:700">Chat</span>
-  <span class="chat-badge hide" id="chat-badge-count"></span>
+<button type="button" class="btn btn-soft btn-sm hide" id="btn-top-notif" data-open-notifs title="Notificaciones internas de JUMA" style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;min-height:38px;padding:0;border-radius:50%;background:#fff;border:1.5px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.06)">
+  <span aria-hidden="true" style="font-size:16px">🔔</span>
+  <span class="chat-badge hide" id="top-notif-badge"></span>
+</button>
+<button type="button" class="btn btn-soft btn-sm hide" id="btn-top-chat" data-open-chat title="Chat y Mensajes Directos" style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;min-height:38px;padding:0;border-radius:50%;background:#fff;border:1.5px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.06)">
+  <span aria-hidden="true" style="font-size:16px">💬</span>
+  <span class="chat-badge hide" id="top-chat-badge"></span>
 </button>
 <button type="button" class="btn btn-outline btn-sm" id="btn-auth" data-open-auth>Iniciar sesión</button>
 <button type="button" class="btn btn-white btn-sm" id="btn-join" data-open-form>Quiero ser parte</button>
@@ -612,9 +675,28 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 <div class="rod-wrap"><div class="rod" aria-hidden="true"></div></div>
 </header>
 
+<nav class="subnav-bar" id="subnav-bar" aria-label="Secciones de la página">
+  <div class="subnav-in">
+    <button type="button" class="subnav-btn active" data-view-target="inicio">🏠 Inicio</button>
+    <button type="button" class="subnav-btn" data-view-target="quienes">🤝 Quiénes somos</button>
+    <button type="button" class="subnav-btn" data-view-target="domingos">📅 Domingos</button>
+    <button type="button" class="subnav-btn" data-view-target="formacion">🎓 Formación</button>
+    <button type="button" class="subnav-btn" data-view-target="fe">🙏 Oración</button>
+    <button type="button" class="subnav-btn" data-view-target="consolata">🌍 Consolata</button>
+    <button type="button" class="subnav-btn" data-view-target="novedades">📰 Noticias</button>
+    <button type="button" class="subnav-btn" data-view-target="galeria">🖼️ Galería</button>
+    <button type="button" class="subnav-btn hide" data-view-target="comunidad" id="subnav-comunidad">👥 Comunidad</button>
+    <button type="button" class="subnav-mode-toggle" id="btn-toggle-view-mode" title="Alternar entre modo por secciones y página corrida">
+      <span id="txt-view-mode">🗂️ Secciones</span>
+    </button>
+  </div>
+</nav>
+
 <main id="main">
-<!-- ============ PORTADA: el gran estandarte ============ -->
-<section id="inicio" class="hero-wrap" aria-label="Portada">
+
+<!-- ============ SECCIÓN: INICIO ============ -->
+<div class="j-view view-active" id="view-inicio">
+  <section id="inicio" class="hero-wrap" aria-label="Portada">
 <div class="hero tail">
 <img fetchpriority="high" class="photo" src="img/hero-2200.jpg" srcset="img/hero-900.jpg 900w, img/hero-2200.jpg 2200w" sizes="100vw" alt="Jóvenes de JUMA Duaca con sus franelas frente al monumento de la Virgen de Coromoto">
 <div class="hero-veil" aria-hidden="true"></div>
@@ -632,13 +714,50 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 </div>
 <div class="hero-chips rise" style="animation-delay: 720ms"><span>Domingos de encuentro</span><span>Formación de 5 años</span><span>Misión en Duaca</span></div>
 <nav class="hero-links rise" style="animation-delay: 800ms" aria-label="Redes de JUMA"><a href="https://www.instagram.com/juma_duaca/" target="_blank" rel="noopener">Instagram</a><a href="https://www.tiktok.com/@juma.duaca" target="_blank" rel="noopener">TikTok</a><a href="https://whatsapp.com/channel/0029VaqbBJ972WTqOwLsLL0u" target="_blank" rel="noopener">Canal de WhatsApp</a></nav>
+<div class="hero-shortcuts rise" style="animation-delay: 840ms">
+  <a class="hero-sc-card" data-view-target="quienes">
+    <b><span>🤝</span> Quiénes somos</b>
+    <p>Una gran familia joven con corazón misionero y carisma Allamano.</p>
+  </a>
+  <a class="hero-sc-card" data-view-target="domingos">
+    <b><span>📅</span> Domingos de Encuentro</b>
+    <p>Próximos temas y ubicación exacta con Google Maps para llegar fácil.</p>
+  </a>
+  <a class="hero-sc-card" data-view-target="formacion">
+    <b><span>🎓</span> Plan de Formación</b>
+    <p>El camino misionero de 5 años para crecer y evangelizar.</p>
+  </a>
+  <a class="hero-sc-card" data-view-target="fe">
+    <b><span>🙏</span> Oración y Rosario</b>
+    <p>Santo Rosario Misionero interactivo por los 5 continentes.</p>
+  </a>
+  <a class="hero-sc-card" data-view-target="consolata">
+    <b><span>🌍</span> Familia Consolata</b>
+    <p>San José Allamano y la presencia misionera en Duaca y el mundo.</p>
+  </a>
+  <a class="hero-sc-card" data-view-target="novedades">
+    <b><span>📰</span> Noticias y Muro</b>
+    <p>Publicaciones con fotos, novedades y avisos de la comunidad.</p>
+  </a>
+  <a class="hero-sc-card" data-view-target="galeria">
+    <b><span>🖼️</span> Galería Fotográfica</b>
+    <p>Momentos especiales de retiros, pascuas y misiones.</p>
+  </a>
+</div>
+
 </div>
 </div>
 </div>
 </section>
+  <div class="view-foot-nav">
+    <span style="font-size:13.5px;color:var(--muted);font-weight:700">Explora las secciones de JUMA Duaca</span>
+    <button type="button" class="btn btn-blue btn-sm" data-view-target="quienes">Siguiente: Quiénes somos →</button>
+  </div>
+</div>
 
-<!-- ============ QUIÉNES SOMOS ============ -->
-<section id="quienes" class="sec" style="background: var(--paper)">
+<!-- ============ SECCIÓN: QUIÉNES SOMOS ============ -->
+<div class="j-view" id="view-quienes">
+  <section id="quienes" class="sec" style="background: var(--paper)">
 <div class="wrap">
 
 <div class="split">
@@ -687,9 +806,7 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 
 </div>
 </section>
-
-<!-- ============ ASÍ SE VIVE JUMA (videos) ============ -->
-<section id="vive" class="sec vive" aria-labelledby="vive-t">
+  <section id="vive" class="sec vive" aria-labelledby="vive-t">
 <div class="wrap">
 <div class="vive-head">
 <h2 class="h-display h-xl" id="vive-t">Así se vive JUMA</h2>
@@ -702,10 +819,109 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 </div>
 </div>
 </section>
+  <section id="pilares" class="sec" style="background: var(--paper)">
+<div class="wrap">
+<div class="split">
+<h2 class="h-display h-xl">Cuatro pilares sostienen cada mes</h2>
+<p class="body">Así organizamos nuestra formación mensual: crecer en la fe, salir a la misión, animar la comunidad y compartir con alegría.</p>
+</div>
+</div>
+<div style="max-width: 1240px; margin: 0 auto">
+<div class="rod standards-rod" aria-hidden="true"></div>
+<div class="standards">
+<article class="standard tail" data-unroll="tail">
+<img loading="lazy" decoding="async" class="photo" src="img/new-charla-pasillo.jpg" alt="Persona dando formación a jóvenes en un pasillo" style="object-position: 50% 35%">
+<div class="standard-veil" aria-hidden="true"></div>
+<div class="bar" aria-hidden="true" style="background: var(--c1)"></div>
+<h3>Formación</h3>
+<p>Crecemos en la fe, la doctrina, la Biblia, la misión y el plan vocacional, para descubrir quiénes somos como hijos de Dios.</p>
+</article>
+<article class="standard tail" data-unroll="tail" style="transition-delay: 90ms">
+<img loading="lazy" decoding="async" class="photo" src="img/calle.jpg" alt="Misionera de JUMA conversando con un vecino en la calle" style="object-position: 50% 45%">
+<div class="standard-veil" aria-hidden="true"></div>
+<div class="bar" aria-hidden="true" style="background: var(--c2)"></div>
+<h3>Evangelización</h3>
+<p>Llevamos la alegría del Evangelio con nuestro testimonio, sirviendo a los demás y mostrando el amor de Cristo.</p>
+</article>
+<article class="standard tail" data-unroll="tail" style="transition-delay: 180ms">
+<img loading="lazy" decoding="async" class="photo" src="img/new-grupo-presbiterio.jpg" alt="Jóvenes celebrando junto al presbiterio de la iglesia" style="object-position: 50% 30%">
+<div class="standard-veil" aria-hidden="true"></div>
+<div class="bar" aria-hidden="true" style="background: var(--c3)"></div>
+<h3>Animación</h3>
+<p>Nutrimos la vida comunitaria con oración en grupo, reflexión, música y celebraciones litúrgicas.</p>
+</article>
+<article class="standard tail" data-unroll="tail" style="transition-delay: 270ms">
+<img loading="lazy" decoding="async" class="photo" src="img/alegria.jpg" alt="Jóvenes celebrando con alegría durante una reunión" style="object-position: 50% 30%">
+<div class="standard-veil" aria-hidden="true"></div>
+<div class="bar" aria-hidden="true" style="background: var(--c4)"></div>
+<h3>Recreación y compartir</h3>
+<p>Juegos, deporte y convivencia para forjar amistades sinceras. La fe también es alegría.</p>
+</article>
+</div>
+</div>
+</section>
+  <section id="identidad" class="sec" style="background: var(--mist)">
+<div class="wrap">
+<div class="ident">
 
+<div class="poster">
+<div class="rod" aria-hidden="true"></div>
+<div class="poster-cloth tail" data-unroll="tail">
+<img src="img/poster-virgen.jpg" alt="Ilustración de la Virgen Consolata con el Niño Jesús sobre la silueta del templo, con el nombre Juventud Misionera Allamaniana">
+</div>
+</div>
 
-<!-- ============ DOMINGOS ============ -->
-<section id="domingos" class="sec cloth">
+<div class="ident-txt">
+<h2 class="h-display h-xl">Un misionero de JUMA es…</h2>
+<ol class="idlist">
+<li>Una persona católica que vive los sacramentos.</li>
+<li>Alguien a quien Dios ha llamado a ser misionero en el mundo juvenil. Su corazón arde por la misión: la ama y vive en constante misión.</li>
+<li>Alguien que se reconoce por su profundo amor a María Santísima, bajo la advocación de la Consolata, y a nuestro fundador, San José Allamano.</li>
+</ol>
+</div>
+
+</div>
+<blockquote class="quote quote-wide">
+<p>“Si tu corazón no arde de amor cuando haces misión, no te emocionas, permaneces indiferente, deberías cuestionarte si este carisma es para ti.”</p>
+<footer>San José Allamano</footer>
+</blockquote>
+<div class="patrons-head">
+<h3 class="h-display h-md" style="color: var(--royal)">Nuestra madre, nuestro fundador y nuestros santos</h3>
+<p class="body">Toca cada uno para conocer su historia.</p>
+</div>
+<div class="patrons">
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/consolata.jpg" alt="Ícono de la Virgen Consolata con el Niño Jesús"><div><b>María Consolata</b><span>Nuestra madre y patrona</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/consolata.jpg" alt="Ícono de la Virgen Consolata con el Niño Jesús"><div class="pd-txt"><p><b>Consolata</b> significa «la que consuela». Así llaman en Turín (Italia) a la Virgen María con el Niño que se venera en su santuario. De ella toman su nombre los Misioneros y las Misioneras de la Consolata, y por eso es la madre y patrona de JUMA.</p><p><b>El origen.</b> La devoción nace en la antigua iglesia de San Andrés, en Turín, adonde llegaron monjes benedictinos a comienzos del siglo X. Según la tradición, allí se halló una antigua imagen de la Virgen con el Niño, y un joven ciego que vino a buscarla recobró la vista. Desde entonces la devoción se extendió por toda la ciudad.</p><p><b>El cuadro.</b> La pintura que hoy se venera sobre el altar mayor es una copia de una imagen de la Virgen con el Niño de la iglesia de Santa María del Popolo, en Roma.</p><p><b>Patrona de Turín.</b> En 1706, durante el sitio francés de la ciudad, la gente se refugió en el santuario. Después de la liberación, la ciudad levantó pilares con su imagen y el Senado la confirmó como patrona de Turín. En 1714 se oficializó su fiesta, que se celebra cada <b>20 de junio</b>.</p><p><b>Con Allamano.</b> San José Allamano fue rector del santuario de la Consolata desde 1880. Bajo su mirada fundó en 1901 a los Misioneros y en 1910 a las Misioneras de la Consolata, para llevar el consuelo de María y el Evangelio a los pueblos que aún no lo conocen.</p></div></div></details>
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/allamano.jpg" alt="Ícono de San José Allamano"><div><b>San José Allamano</b><span>Fundador de los Misioneros de la Consolata</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/allamano.jpg" alt="Ícono de San José Allamano"><div class="pd-txt"><p>Nació el <b>21 de enero de 1851</b> en Castelnuovo, en el Piamonte (Italia). Su madre, María Cafasso, era hermana de San José Cafasso. De joven fue alumno de San Juan Bosco.</p><p>Fue ordenado sacerdote el 20 de septiembre de 1873. Desde <b>1880</b> fue rector del santuario de la Consolata, en Turín, donde formó a muchos sacerdotes y renovó el santuario.</p><p>El <b>29 de enero de 1901</b> fundó el Instituto de los Misioneros de la Consolata, y el 29 de enero de 1910, el de las Hermanas Misioneras de la Consolata, para anunciar el Evangelio a los pueblos que aún no lo conocen (la misión <i>ad gentes</i>).</p><p>Murió en Turín el 16 de febrero de 1926. Fue beatificado por San Juan Pablo II el 7 de octubre de 1990 y <b>canonizado por el papa Francisco el 20 de octubre de 2024</b>, por un milagro ocurrido en la Amazonía de Brasil.</p><p>Enseñaba la santidad de la vida diaria: «Sed santos sin ruido» y «No basta hacer el bien, hay que hacerlo bien».</p></div></div></details>
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-cafasso.jpg" alt="Pintura de San José Cafasso"><div><b>San José Cafasso</b><span>Tío de Allamano, guía de sacerdotes</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-cafasso.jpg" alt="Pintura de San José Cafasso"><div class="pd-txt"><p>Nació el <b>15 de enero de 1811</b> en Castelnuovo d’Asti, el mismo pueblo de San Juan Bosco y de San José Allamano, en el Piamonte (Italia). Su hermana fue la madre de San José Allamano.</p><p>Fue profesor y luego rector del Convictorio Eclesiástico de Turín, donde formó a muchos sacerdotes. Amaba profundamente la Eucaristía y la confesión.</p><p>Fue capellán de las cárceles de Turín. Acompañó a más de sesenta condenados a muerte hasta el último momento, por eso lo llamaron «el sacerdote de la horca».</p><p>Conoció a Juan Bosco en 1827. Fue su confesor y guía espiritual, lo ayudó en sus estudios y lo apoyó en su obra con los niños pobres y abandonados.</p><p>Murió en Turín el 23 de junio de 1860. Fue <b>canonizado por el papa Pío XII el 22 de junio de 1947</b>.</p></div></div></details>
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-leonella.jpg" alt="Pintura de la beata Leonella Sgorbati con un papel que dice Perdono"><div><b>Beata Leonella Sgorbati</b><span>Misionera de la Consolata, mártir del perdón</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-leonella.jpg" alt="Pintura de la beata Leonella Sgorbati con un papel que dice Perdono"><div class="pd-txt"><p>Se llamaba Rosa María Sgorbati. Nació el <b>9 de diciembre de 1940</b> en Gazzola (Piacenza, Italia). En 1963 entró en las Misioneras de la Consolata y tomó el nombre de Leonella. Estudió enfermería en Inglaterra.</p><p>Desde 1972 sirvió en Kenia como enfermera en los hospitales de Nyeri y Kiambu. Desde 1985 dirigió la formación en la escuela de enfermería de Nkubu, y desde 1993 fue superiora de su congregación en Kenia.</p><p>Después fue a Mogadiscio (Somalia), donde abrió en 2002 una escuela de enfermería en el hospital infantil. En 2006 se graduaron las primeras 34 enfermeras.</p><p>El <b>17 de septiembre de 2006</b> le dispararon por la espalda frente al hospital. También murió su guardaespaldas. Antes de morir dijo: <b>«Perdono, perdono, perdono»</b>.</p><p>Fue beatificada el <b>26 de mayo de 2018</b> en Piacenza (Italia).</p></div></div></details>
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-irene.jpg" alt="Foto de la beata Irene Stefani con hábito blanco"><div><b>Beata Irene Stefani</b><span>«Nyaatha», madre de la misericordia</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-irene.jpg" alt="Foto de la beata Irene Stefani con hábito blanco"><div class="pd-txt"><p>Se llamaba Aurelia Mercede Stefani. Nació en <b>agosto de 1891</b> en Anfo (Brescia, Italia). En 1911 entró en las Misioneras de la Consolata, fundadas por San José Allamano, y el 29 de enero de 1914 hizo sus votos con el nombre de Irene.</p><p>A fines de 1914 llegó a Kenia. Durante la Primera Guerra Mundial, hasta 1920, cuidó a los heridos y enfermos en hospitales militares de Kenia y Tanzania.</p><p>Desde 1920 vivió en Gikondi (Kenia): enseñaba, visitaba a las familias y cuidaba a los enfermos y a los pobres. La gente la llamó <b>«Nyaatha»</b>, que significa madre de la misericordia.</p><p>Murió el <b>31 de octubre de 1930</b> en Gikondi, contagiada de peste mientras cuidaba a un enfermo.</p><p>Fue beatificada el <b>23 de mayo de 2015</b> en Nyeri (Kenia).</p></div></div></details>
+</div>
+</div>
+</section>
+  <section id="logo" class="sec" style="background: var(--paper)">
+<div class="wrap logo-sec">
+<img class="logo-big" src="img/logo.png" alt="Logo de JUMA Duaca: un globo terráqueo, la J en forma de cruz con tres estrellas, San José Allamano con los brazos abiertos y huellas de colores">
+<div>
+<h2 class="h-display h-xl">Cada detalle de nuestro logo dice algo</h2>
+<ol class="meanings">
+<li><span class="num">1</span>Las letras llevan los colores de la vestimenta de la imagen de la Consolata.</li>
+<li><span class="num">2</span>La J tiene la forma de la cruz del Resucitado, con las tres estrellas y el anillo de la Consolata.</li>
+<li><span class="num">3</span>Al final de la palabra aparece San José Allamano, nuestro maestro de espiritualidad, santidad y misión.</li>
+<li><span class="num">4</span>Las huellas dibujan un camino: la misión, salir y anunciar la gloria de Dios a las naciones.</li>
+<li><span class="num">5</span>Sus colores son los cinco continentes, junto a la silueta del mundo: una mirada universal.</li>
+</ol>
+</div>
+</div>
+</section>
+  <div class="view-foot-nav">
+    <button type="button" class="btn btn-soft btn-sm" data-view-target="inicio">← Inicio</button>
+    <button type="button" class="btn btn-blue btn-sm" data-view-target="domingos">Siguiente: Domingos →</button>
+  </div>
+</div>
+
+<!-- ============ SECCIÓN: DOMINGOS ============ -->
+<div class="j-view" id="view-domingos">
+  <section id="domingos" class="sec cloth">
 <div class="wrap">
 
 <div class="dom-head">
@@ -774,52 +990,82 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 
 </div>
 </section>
+  <div class="view-foot-nav">
+    <button type="button" class="btn btn-soft btn-sm" data-view-target="quienes">← Quiénes somos</button>
+    <button type="button" class="btn btn-blue btn-sm" data-view-target="formacion">Siguiente: Formación →</button>
+  </div>
+</div>
 
-<!-- ============ PILARES: cuatro estandartes ============ -->
-<section id="pilares" class="sec" style="background: var(--paper)">
+<!-- ============ SECCIÓN: FORMACIÓN ============ -->
+<div class="j-view" id="view-formacion">
+  <section id="formacion" class="sec night">
 <div class="wrap">
 <div class="split">
-<h2 class="h-display h-xl">Cuatro pilares sostienen cada mes</h2>
-<p class="body">Así organizamos nuestra formación mensual: crecer en la fe, salir a la misión, animar la comunidad y compartir con alegría.</p>
+<h2 class="h-display h-xl">Cinco años, cinco continentes</h2>
+<p class="lead lt" style="margin: 0">Cada año de formación tiene un color y una franela que representa un continente. Toca un banderín para ver sus temas.</p>
 </div>
 </div>
 <div style="max-width: 1240px; margin: 0 auto">
-<div class="rod standards-rod" aria-hidden="true"></div>
-<div class="standards">
-<article class="standard tail" data-unroll="tail">
-<img loading="lazy" decoding="async" class="photo" src="img/new-charla-pasillo.jpg" alt="Persona dando formación a jóvenes en un pasillo" style="object-position: 50% 35%">
-<div class="standard-veil" aria-hidden="true"></div>
-<div class="bar" aria-hidden="true" style="background: var(--c1)"></div>
-<h3>Formación</h3>
-<p>Crecemos en la fe, la doctrina, la Biblia, la misión y el plan vocacional, para descubrir quiénes somos como hijos de Dios.</p>
-</article>
-<article class="standard tail" data-unroll="tail" style="transition-delay: 90ms">
-<img loading="lazy" decoding="async" class="photo" src="img/calle.jpg" alt="Misionera de JUMA conversando con un vecino en la calle" style="object-position: 50% 45%">
-<div class="standard-veil" aria-hidden="true"></div>
-<div class="bar" aria-hidden="true" style="background: var(--c2)"></div>
-<h3>Evangelización</h3>
-<p>Llevamos la alegría del Evangelio con nuestro testimonio, sirviendo a los demás y mostrando el amor de Cristo.</p>
-</article>
-<article class="standard tail" data-unroll="tail" style="transition-delay: 180ms">
-<img loading="lazy" decoding="async" class="photo" src="img/new-grupo-presbiterio.jpg" alt="Jóvenes celebrando junto al presbiterio de la iglesia" style="object-position: 50% 30%">
-<div class="standard-veil" aria-hidden="true"></div>
-<div class="bar" aria-hidden="true" style="background: var(--c3)"></div>
-<h3>Animación</h3>
-<p>Nutrimos la vida comunitaria con oración en grupo, reflexión, música y celebraciones litúrgicas.</p>
-</article>
-<article class="standard tail" data-unroll="tail" style="transition-delay: 270ms">
-<img loading="lazy" decoding="async" class="photo" src="img/alegria.jpg" alt="Jóvenes celebrando con alegría durante una reunión" style="object-position: 50% 30%">
-<div class="standard-veil" aria-hidden="true"></div>
-<div class="bar" aria-hidden="true" style="background: var(--c4)"></div>
-<h3>Recreación y compartir</h3>
-<p>Juegos, deporte y convivencia para forjar amistades sinceras. La fe también es alegría.</p>
-</article>
+<div class="rod pennants-rod" aria-hidden="true"></div>
+<div class="pennants" id="pennants" role="group" aria-label="Años de formación"></div>
+<div class="fpanel" id="fpanel">
+<div>
+<h3 id="fp-title"></h3>
+<p id="fp-text"></p>
+<ol class="topics" id="fp-topics"></ol>
+</div>
+<div class="fphoto"><img loading="lazy" decoding="async" class="photo" id="fp-img" src="" alt=""></div>
 </div>
 </div>
 </section>
+  <div class="view-foot-nav">
+    <button type="button" class="btn btn-soft btn-sm" data-view-target="domingos">← Domingos</button>
+    <button type="button" class="btn btn-blue btn-sm" data-view-target="fe">Siguiente: Oración →</button>
+  </div>
+</div>
 
-<!-- ============ MISIONEROS DE LA CONSOLATA ============ -->
-<section id="consolata" class="sec cloth">
+<!-- ============ SECCIÓN: ORACIÓN ============ -->
+<div class="j-view" id="view-fe">
+  <section id="fe" class="sec" style="background: var(--mist)">
+<div class="wrap">
+<div class="split"><h2 class="h-display h-xl">Vida de fe</h2><p class="body">El día litúrgico, las oraciones, el rosario y la misa, para rezar en grupo o en casa.</p></div>
+<div id="fe-app"></div>
+</div>
+</section>
+  <section id="areas" class="sec" style="background: var(--paper)">
+<div class="wrap">
+<div class="split">
+<h2 class="h-display h-xl">Cada joven tiene un lugar donde servir</h2>
+<p class="body">Cada área cuenta con un encargado y un auxiliar, para que el trabajo sea ordenado y siempre tenga continuidad.</p>
+</div>
+<figure class="band areas-pic" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/grupo-iglesia.jpg" alt="Jóvenes de JUMA y misioneros reunidos en grupo dentro de un templo" style="object-position: 50% 35%"><figcaption>Cada área suma: juntos somos el movimiento.</figcaption></figure>
+<ul class="areas">
+<li><h3>Espiritualidad</h3><p>Retiros, oración y meditación, charlas de fe y devoción a los sacramentos, en especial la Eucaristía y la Reconciliación.</p></li>
+<li><h3>Liturgia</h3><p>Prepara la Santa Misa: lecturas, oraciones y ministros, para que cada celebración sea un encuentro con Cristo.</p></li>
+<li><h3>Coro juvenil</h3><p>Anima liturgias, encuentros y eventos especiales con cantos que se vuelven oración.</p></li>
+<li><h3>Recreación</h3><p>Juegos, dinámicas, paseos y deporte que fortalecen la amistad y muestran que la fe también es gozo.</p></li>
+<li><h3>Visita a hogares</h3><p>Visitamos a jóvenes y familias para escuchar y acompañar, y para que el movimiento sea un segundo hogar.</p></li>
+<li><h3>Servicio social</h3><p>Voluntariado y caridad: asilos, hospitales, recolección de alimentos y proyectos comunitarios.</p></li>
+<li><h3>Metodología</h3><p>Diseña el plan de formación de reuniones y talleres, y prepara a los líderes del grupo.</p></li>
+<li><h3>Logística</h3><p>La columna del movimiento: espacios, sonido, alimentos, transporte y materiales.</p></li>
+<li><h3>Ambientación</h3><p>Decora los espacios con telas, luces y símbolos para que todos se sientan bienvenidos.</p></li>
+<li><h3>Redes sociales</h3><p>La voz digital del movimiento: evangelizar con imágenes, videos y textos.</p></li>
+</ul>
+<div class="org">
+<h3 class="h-display h-md">Cómo nos organizamos</h3>
+<p class="body" style="color: var(--ink)">Un asesor general acompaña al movimiento. La coordinación general, la subcoordinación, la secretaría, la tesorería y la animación forman la directiva, que se renueva cada tres años por elección.</p>
+</div>
+</div>
+</section>
+  <div class="view-foot-nav">
+    <button type="button" class="btn btn-soft btn-sm" data-view-target="formacion">← Formación</button>
+    <button type="button" class="btn btn-blue btn-sm" data-view-target="consolata">Siguiente: Consolata →</button>
+  </div>
+</div>
+
+<!-- ============ SECCIÓN: CONSOLATA ============ -->
+<div class="j-view" id="view-consolata">
+  <section id="consolata" class="sec cloth">
 <div class="wrap">
 <div class="split">
 <h2 class="h-display h-xl">Los Misioneros de la Consolata</h2>
@@ -857,114 +1103,21 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 </div>
 </div>
 </section>
-
-<!-- ============ IDENTIDAD ============ -->
-<!-- ============ MAPA CONSOLATA ============ -->
-<section id="mapa" class="sec night">
+  <section id="mapa" class="sec night">
 <div class="wrap">
 <div class="split"><h2 class="h-display h-xl">La Consolata en el mundo</h2><p class="lead lt" style="margin:0">Desde Turín, en 1901, los Misioneros de la Consolata salieron a anunciar el Evangelio. Hoy están en cuatro continentes, y nosotros somos parte de esa familia.</p></div>
 <div id="mapa-app"></div>
 </div>
 </section>
-
-<section id="identidad" class="sec" style="background: var(--mist)">
-<div class="wrap">
-<div class="ident">
-
-<div class="poster">
-<div class="rod" aria-hidden="true"></div>
-<div class="poster-cloth tail" data-unroll="tail">
-<img src="img/poster-virgen.jpg" alt="Ilustración de la Virgen Consolata con el Niño Jesús sobre la silueta del templo, con el nombre Juventud Misionera Allamaniana">
-</div>
+  <div class="view-foot-nav">
+    <button type="button" class="btn btn-soft btn-sm" data-view-target="fe">← Oración</button>
+    <button type="button" class="btn btn-blue btn-sm" data-view-target="novedades">Siguiente: Noticias →</button>
+  </div>
 </div>
 
-<div class="ident-txt">
-<h2 class="h-display h-xl">Un misionero de JUMA es…</h2>
-<ol class="idlist">
-<li>Una persona católica que vive los sacramentos.</li>
-<li>Alguien a quien Dios ha llamado a ser misionero en el mundo juvenil. Su corazón arde por la misión: la ama y vive en constante misión.</li>
-<li>Alguien que se reconoce por su profundo amor a María Santísima, bajo la advocación de la Consolata, y a nuestro fundador, San José Allamano.</li>
-</ol>
-</div>
-
-</div>
-<blockquote class="quote quote-wide">
-<p>“Si tu corazón no arde de amor cuando haces misión, no te emocionas, permaneces indiferente, deberías cuestionarte si este carisma es para ti.”</p>
-<footer>San José Allamano</footer>
-</blockquote>
-<div class="patrons-head">
-<h3 class="h-display h-md" style="color: var(--royal)">Nuestra madre, nuestro fundador y nuestros santos</h3>
-<p class="body">Toca cada uno para conocer su historia.</p>
-</div>
-<div class="patrons">
-<details class="patron-d" name="santos"><summary class="patron"><img src="img/consolata.jpg" alt="Ícono de la Virgen Consolata con el Niño Jesús"><div><b>María Consolata</b><span>Nuestra madre y patrona</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/consolata.jpg" alt="Ícono de la Virgen Consolata con el Niño Jesús"><div class="pd-txt"><p><b>Consolata</b> significa «la que consuela». Así llaman en Turín (Italia) a la Virgen María con el Niño que se venera en su santuario. De ella toman su nombre los Misioneros y las Misioneras de la Consolata, y por eso es la madre y patrona de JUMA.</p><p><b>El origen.</b> La devoción nace en la antigua iglesia de San Andrés, en Turín, adonde llegaron monjes benedictinos a comienzos del siglo X. Según la tradición, allí se halló una antigua imagen de la Virgen con el Niño, y un joven ciego que vino a buscarla recobró la vista. Desde entonces la devoción se extendió por toda la ciudad.</p><p><b>El cuadro.</b> La pintura que hoy se venera sobre el altar mayor es una copia de una imagen de la Virgen con el Niño de la iglesia de Santa María del Popolo, en Roma.</p><p><b>Patrona de Turín.</b> En 1706, durante el sitio francés de la ciudad, la gente se refugió en el santuario. Después de la liberación, la ciudad levantó pilares con su imagen y el Senado la confirmó como patrona de Turín. En 1714 se oficializó su fiesta, que se celebra cada <b>20 de junio</b>.</p><p><b>Con Allamano.</b> San José Allamano fue rector del santuario de la Consolata desde 1880. Bajo su mirada fundó en 1901 a los Misioneros y en 1910 a las Misioneras de la Consolata, para llevar el consuelo de María y el Evangelio a los pueblos que aún no lo conocen.</p></div></div></details>
-<details class="patron-d" name="santos"><summary class="patron"><img src="img/allamano.jpg" alt="Ícono de San José Allamano"><div><b>San José Allamano</b><span>Fundador de los Misioneros de la Consolata</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/allamano.jpg" alt="Ícono de San José Allamano"><div class="pd-txt"><p>Nació el <b>21 de enero de 1851</b> en Castelnuovo, en el Piamonte (Italia). Su madre, María Cafasso, era hermana de San José Cafasso. De joven fue alumno de San Juan Bosco.</p><p>Fue ordenado sacerdote el 20 de septiembre de 1873. Desde <b>1880</b> fue rector del santuario de la Consolata, en Turín, donde formó a muchos sacerdotes y renovó el santuario.</p><p>El <b>29 de enero de 1901</b> fundó el Instituto de los Misioneros de la Consolata, y el 29 de enero de 1910, el de las Hermanas Misioneras de la Consolata, para anunciar el Evangelio a los pueblos que aún no lo conocen (la misión <i>ad gentes</i>).</p><p>Murió en Turín el 16 de febrero de 1926. Fue beatificado por San Juan Pablo II el 7 de octubre de 1990 y <b>canonizado por el papa Francisco el 20 de octubre de 2024</b>, por un milagro ocurrido en la Amazonía de Brasil.</p><p>Enseñaba la santidad de la vida diaria: «Sed santos sin ruido» y «No basta hacer el bien, hay que hacerlo bien».</p></div></div></details>
-<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-cafasso.jpg" alt="Pintura de San José Cafasso"><div><b>San José Cafasso</b><span>Tío de Allamano, guía de sacerdotes</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-cafasso.jpg" alt="Pintura de San José Cafasso"><div class="pd-txt"><p>Nació el <b>15 de enero de 1811</b> en Castelnuovo d’Asti, el mismo pueblo de San Juan Bosco y de San José Allamano, en el Piamonte (Italia). Su hermana fue la madre de San José Allamano.</p><p>Fue profesor y luego rector del Convictorio Eclesiástico de Turín, donde formó a muchos sacerdotes. Amaba profundamente la Eucaristía y la confesión.</p><p>Fue capellán de las cárceles de Turín. Acompañó a más de sesenta condenados a muerte hasta el último momento, por eso lo llamaron «el sacerdote de la horca».</p><p>Conoció a Juan Bosco en 1827. Fue su confesor y guía espiritual, lo ayudó en sus estudios y lo apoyó en su obra con los niños pobres y abandonados.</p><p>Murió en Turín el 23 de junio de 1860. Fue <b>canonizado por el papa Pío XII el 22 de junio de 1947</b>.</p></div></div></details>
-<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-leonella.jpg" alt="Pintura de la beata Leonella Sgorbati con un papel que dice Perdono"><div><b>Beata Leonella Sgorbati</b><span>Misionera de la Consolata, mártir del perdón</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-leonella.jpg" alt="Pintura de la beata Leonella Sgorbati con un papel que dice Perdono"><div class="pd-txt"><p>Se llamaba Rosa María Sgorbati. Nació el <b>9 de diciembre de 1940</b> en Gazzola (Piacenza, Italia). En 1963 entró en las Misioneras de la Consolata y tomó el nombre de Leonella. Estudió enfermería en Inglaterra.</p><p>Desde 1972 sirvió en Kenia como enfermera en los hospitales de Nyeri y Kiambu. Desde 1985 dirigió la formación en la escuela de enfermería de Nkubu, y desde 1993 fue superiora de su congregación en Kenia.</p><p>Después fue a Mogadiscio (Somalia), donde abrió en 2002 una escuela de enfermería en el hospital infantil. En 2006 se graduaron las primeras 34 enfermeras.</p><p>El <b>17 de septiembre de 2006</b> le dispararon por la espalda frente al hospital. También murió su guardaespaldas. Antes de morir dijo: <b>«Perdono, perdono, perdono»</b>.</p><p>Fue beatificada el <b>26 de mayo de 2018</b> en Piacenza (Italia).</p></div></div></details>
-<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-irene.jpg" alt="Foto de la beata Irene Stefani con hábito blanco"><div><b>Beata Irene Stefani</b><span>«Nyaatha», madre de la misericordia</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-irene.jpg" alt="Foto de la beata Irene Stefani con hábito blanco"><div class="pd-txt"><p>Se llamaba Aurelia Mercede Stefani. Nació en <b>agosto de 1891</b> en Anfo (Brescia, Italia). En 1911 entró en las Misioneras de la Consolata, fundadas por San José Allamano, y el 29 de enero de 1914 hizo sus votos con el nombre de Irene.</p><p>A fines de 1914 llegó a Kenia. Durante la Primera Guerra Mundial, hasta 1920, cuidó a los heridos y enfermos en hospitales militares de Kenia y Tanzania.</p><p>Desde 1920 vivió en Gikondi (Kenia): enseñaba, visitaba a las familias y cuidaba a los enfermos y a los pobres. La gente la llamó <b>«Nyaatha»</b>, que significa madre de la misericordia.</p><p>Murió el <b>31 de octubre de 1930</b> en Gikondi, contagiada de peste mientras cuidaba a un enfermo.</p><p>Fue beatificada el <b>23 de mayo de 2015</b> en Nyeri (Kenia).</p></div></div></details>
-</div>
-</div>
-</section>
-
-<!-- ============ CAMINO DE FORMACIÓN: cinco banderines ============ -->
-<section id="formacion" class="sec night">
-<div class="wrap">
-<div class="split">
-<h2 class="h-display h-xl">Cinco años, cinco continentes</h2>
-<p class="lead lt" style="margin: 0">Cada año de formación tiene un color y una franela que representa un continente. Toca un banderín para ver sus temas.</p>
-</div>
-</div>
-<div style="max-width: 1240px; margin: 0 auto">
-<div class="rod pennants-rod" aria-hidden="true"></div>
-<div class="pennants" id="pennants" role="group" aria-label="Años de formación"></div>
-<div class="fpanel" id="fpanel">
-<div>
-<h3 id="fp-title"></h3>
-<p id="fp-text"></p>
-<ol class="topics" id="fp-topics"></ol>
-</div>
-<div class="fphoto"><img loading="lazy" decoding="async" class="photo" id="fp-img" src="" alt=""></div>
-</div>
-</div>
-</section>
-
-<!-- ============ ÁREAS ============ -->
-<!-- ============ VIDA DE FE ============ -->
-<section id="fe" class="sec" style="background: var(--mist)">
-<div class="wrap">
-<div class="split"><h2 class="h-display h-xl">Vida de fe</h2><p class="body">El día litúrgico, las oraciones, el rosario y la misa, para rezar en grupo o en casa.</p></div>
-<div id="fe-app"></div>
-</div>
-</section>
-
-<section id="areas" class="sec" style="background: var(--paper)">
-<div class="wrap">
-<div class="split">
-<h2 class="h-display h-xl">Cada joven tiene un lugar donde servir</h2>
-<p class="body">Cada área cuenta con un encargado y un auxiliar, para que el trabajo sea ordenado y siempre tenga continuidad.</p>
-</div>
-<figure class="band areas-pic" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/grupo-iglesia.jpg" alt="Jóvenes de JUMA y misioneros reunidos en grupo dentro de un templo" style="object-position: 50% 35%"><figcaption>Cada área suma: juntos somos el movimiento.</figcaption></figure>
-<ul class="areas">
-<li><h3>Espiritualidad</h3><p>Retiros, oración y meditación, charlas de fe y devoción a los sacramentos, en especial la Eucaristía y la Reconciliación.</p></li>
-<li><h3>Liturgia</h3><p>Prepara la Santa Misa: lecturas, oraciones y ministros, para que cada celebración sea un encuentro con Cristo.</p></li>
-<li><h3>Coro juvenil</h3><p>Anima liturgias, encuentros y eventos especiales con cantos que se vuelven oración.</p></li>
-<li><h3>Recreación</h3><p>Juegos, dinámicas, paseos y deporte que fortalecen la amistad y muestran que la fe también es gozo.</p></li>
-<li><h3>Visita a hogares</h3><p>Visitamos a jóvenes y familias para escuchar y acompañar, y para que el movimiento sea un segundo hogar.</p></li>
-<li><h3>Servicio social</h3><p>Voluntariado y caridad: asilos, hospitales, recolección de alimentos y proyectos comunitarios.</p></li>
-<li><h3>Metodología</h3><p>Diseña el plan de formación de reuniones y talleres, y prepara a los líderes del grupo.</p></li>
-<li><h3>Logística</h3><p>La columna del movimiento: espacios, sonido, alimentos, transporte y materiales.</p></li>
-<li><h3>Ambientación</h3><p>Decora los espacios con telas, luces y símbolos para que todos se sientan bienvenidos.</p></li>
-<li><h3>Redes sociales</h3><p>La voz digital del movimiento: evangelizar con imágenes, videos y textos.</p></li>
-</ul>
-<div class="org">
-<h3 class="h-display h-md">Cómo nos organizamos</h3>
-<p class="body" style="color: var(--ink)">Un asesor general acompaña al movimiento. La coordinación general, la subcoordinación, la secretaría, la tesorería y la animación forman la directiva, que se renueva cada tres años por elección.</p>
-</div>
-</div>
-</section>
-
-<!-- ============ NOTICIAS Y NOVEDADES (blog) ============ -->
-<section id="novedades" class="sec" style="background: var(--paper)">
+<!-- ============ SECCIÓN: NOTICIAS Y MURO ============ -->
+<div class="j-view" id="view-novedades">
+  <section id="novedades" class="sec" style="background: var(--paper)">
 <div class="wrap">
 <div class="split">
 <h2 class="h-display h-xl">Noticias de JUMA</h2>
@@ -973,16 +1126,36 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 <div class="posts" id="posts"></div>
 </div>
 </section>
-<!-- ============ GALERÍA ============ -->
-<!-- ============ TESTIMONIOS ============ -->
-<section id="testimonios" class="sec hide" style="background: var(--paper)">
+  <section id="testimonios" class="sec hide" style="background: var(--paper)">
 <div class="wrap">
 <div class="split"><h2 class="h-display h-xl">Experiencias que nos marcaron</h2><p class="body">Testimonios de jóvenes, familias y misioneros de JUMA.</p></div>
 <div id="testimonios-list" class="tes-grid"></div>
 </div>
 </section>
+  <section id="muro-sec" class="sec" style="background: var(--mist)">
+<div class="wrap">
+<div class="split">
+<h2 class="h-display h-xl">Escríbenos, comparte una intención</h2>
+<p class="body">Deja un saludo, una petición de oración o un testimonio. Un coordinador lo revisa antes de publicarlo.</p>
+</div>
+<div class="muro" id="muro"></div>
+<form class="muro-form" id="muro-form" autocomplete="off">
+<div class="fld"><label for="m-nombre">Tu nombre</label><input id="m-nombre" maxlength="60" required></div>
+<div class="fld w"><label for="m-texto">Tu mensaje</label><textarea id="m-texto" rows="3" maxlength="400" required></textarea></div>
+<button type="submit" class="btn btn-blue">Enviar mensaje</button>
+<p id="m-msg" class="body" style="flex-basis:100%;font-size:15px"></p>
+</form>
+</div>
+</section>
+  <div class="view-foot-nav">
+    <button type="button" class="btn btn-soft btn-sm" data-view-target="consolata">← Consolata</button>
+    <button type="button" class="btn btn-blue btn-sm" data-view-target="galeria">Siguiente: Galería →</button>
+  </div>
+</div>
 
-<section id="galeria" class="sec" style="background: var(--mist)">
+<!-- ============ SECCIÓN: GALERÍA ============ -->
+<div class="j-view" id="view-galeria">
+  <section id="galeria" class="sec" style="background: var(--mist)">
 <div class="wrap">
 <div class="split">
 <h2 class="h-display h-xl">Una Iglesia joven que camina</h2>
@@ -1093,43 +1266,7 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 </div>
 </div>
 </section>
-
-<!-- ============ MURO ============ -->
-<section id="muro-sec" class="sec" style="background: var(--mist)">
-<div class="wrap">
-<div class="split">
-<h2 class="h-display h-xl">Escríbenos, comparte una intención</h2>
-<p class="body">Deja un saludo, una petición de oración o un testimonio. Un coordinador lo revisa antes de publicarlo.</p>
-</div>
-<div class="muro" id="muro"></div>
-<form class="muro-form" id="muro-form" autocomplete="off">
-<div class="fld"><label for="m-nombre">Tu nombre</label><input id="m-nombre" maxlength="60" required></div>
-<div class="fld w"><label for="m-texto">Tu mensaje</label><textarea id="m-texto" rows="3" maxlength="400" required></textarea></div>
-<button type="submit" class="btn btn-blue">Enviar mensaje</button>
-<p id="m-msg" class="body" style="flex-basis:100%;font-size:15px"></p>
-</form>
-</div>
-</section>
-
-<!-- ============ EL LOGO ============ -->
-<section id="logo" class="sec" style="background: var(--paper)">
-<div class="wrap logo-sec">
-<img class="logo-big" src="img/logo.png" alt="Logo de JUMA Duaca: un globo terráqueo, la J en forma de cruz con tres estrellas, San José Allamano con los brazos abiertos y huellas de colores">
-<div>
-<h2 class="h-display h-xl">Cada detalle de nuestro logo dice algo</h2>
-<ol class="meanings">
-<li><span class="num">1</span>Las letras llevan los colores de la vestimenta de la imagen de la Consolata.</li>
-<li><span class="num">2</span>La J tiene la forma de la cruz del Resucitado, con las tres estrellas y el anillo de la Consolata.</li>
-<li><span class="num">3</span>Al final de la palabra aparece San José Allamano, nuestro maestro de espiritualidad, santidad y misión.</li>
-<li><span class="num">4</span>Las huellas dibujan un camino: la misión, salir y anunciar la gloria de Dios a las naciones.</li>
-<li><span class="num">5</span>Sus colores son los cinco continentes, junto a la silueta del mundo: una mirada universal.</li>
-</ol>
-</div>
-</div>
-</section>
-
-<!-- ============ CIERRE: únete ============ -->
-<section id="unete" class="closing-wrap" aria-label="Únete">
+  <section id="unete" class="closing-wrap" aria-label="Únete">
 <div class="closing tail" data-unroll="tail">
 <img decoding="async" class="photo" src="img/ourem.jpg" alt="Jóvenes de muchos países con sus banderas frente a una iglesia en Portugal">
 <video class="vclip vover vbg" data-src="video/v-salon.mp4?v=2" muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true"></video><button type="button" class="vsnd" aria-label="Activar sonido" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M3 9.5v5h4l5 4.5v-14L7 9.5H3z"/><path class="w" d="M15.5 8.8a4.5 4.5 0 0 1 0 6.4M18.3 6a8.5 8.5 0 0 1 0 12"/><path class="x" d="M16 9.5l5 5M21 9.5l-5 5"/></svg><span>Activar sonido</span></button><button type="button" class="vbtn" aria-label="Pausar video" aria-pressed="false"><span aria-hidden="true"></span></button><div class="closing-veil" aria-hidden="true"></div>
@@ -1149,9 +1286,20 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 </div>
 </div>
 </section>
+  <div class="view-foot-nav">
+    <button type="button" class="btn btn-soft btn-sm" data-view-target="novedades">← Noticias</button>
+    <button type="button" class="btn btn-blue btn-sm" data-view-target="inicio">Volver al Inicio 🏠</button>
+  </div>
+</div>
 
-
+<!-- ============ SECCIÓN: COMUNIDAD (MIEMBROS REGISTRADOS) ============ -->
+<div class="j-view hide" id="view-comunidad">
+  <div class="wrap" style="padding:40px 20px;text-align:center">
+    <p class="body">Cargando tu espacio comunitario…</p>
+  </div>
+</div>
 </main>
+
 
 <footer class="foot">
 <div class="foot-in">
@@ -1171,7 +1319,8 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 </div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=47"></script>
-<script type="module" src="js/fe.js?v=47"></script>
+<script type="module" src="js/app.js?v=48"></script>
+<script type="module" src="js/fe.js?v=48"></script>
+<div class="social-dock" id="social-dock"></div>
 </body>
 </html>

@@ -2078,12 +2078,415 @@ async function loadUserProfile(user) {
   return myProfile || null;
 }
 
+
+/* ===================== Modo Secciones SPA, Notificaciones Internas y Dock Social ===================== */
+let currentSection = 'inicio';
+let viewMode = localStorage.getItem('juma-view-mode') || 'secciones'; // 'secciones' | 'corrido'
+let lastReadNotifTime = Number(localStorage.getItem('juma-last-read-notif-time') || 0);
+
+function showToast(msg) {
+  const existing = $('#juma-toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.id = 'juma-toast';
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;background:rgba(6,21,54,.94);color:#fff;padding:12px 22px;border-radius:999px;font-size:14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.3);backdrop-filter:blur(8px);pointer-events:none;animation:fadeInView 200ms ease both;text-align:center;max-width:90vw';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { if (t.parentNode) t.remove(); }, 3200);
+}
+
+function timeAgo(iso) {
+  const d = Date.parse(iso || '');
+  if (!d) return 'Reciente';
+  const diffSec = Math.floor((Date.now() - d) / 1000);
+  if (diffSec < 60) return 'Hace un momento';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `Hace ${diffMin} min`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `Hace ${diffHr} hora${diffHr === 1 ? '' : 's'}`;
+  const diffDay = Math.floor(diffHr / 24);
+  return `Hace ${diffDay} día${diffDay === 1 ? '' : 's'}`;
+}
+
+function switchSection(sectionId, updateHash = true) {
+  const validSections = ['inicio', 'quienes', 'domingos', 'formacion', 'fe', 'consolata', 'novedades', 'galeria', 'comunidad'];
+  if (!validSections.includes(sectionId)) sectionId = 'inicio';
+  currentSection = sectionId;
+
+  if (viewMode === 'secciones') {
+    document.body.classList.add('modo-secciones');
+    document.body.classList.remove('modo-corrido');
+    document.querySelectorAll('.j-view').forEach((el) => {
+      const isTarget = el.id === 'view-' + sectionId;
+      el.classList.toggle('view-active', isTarget);
+    });
+  } else {
+    document.body.classList.remove('modo-secciones');
+    document.body.classList.add('modo-corrido');
+    document.querySelectorAll('.j-view').forEach((el) => {
+      el.classList.remove('view-active');
+    });
+  }
+
+  document.querySelectorAll('.subnav-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.viewTarget === sectionId);
+  });
+  document.querySelectorAll('.navlink').forEach((link) => {
+    const href = link.getAttribute('href') || '';
+    link.classList.toggle('active', href === '#' + sectionId || link.dataset.view === sectionId);
+  });
+
+  const modeBtnTxt = $('#txt-view-mode');
+  if (modeBtnTxt) modeBtnTxt.textContent = viewMode === 'secciones' ? '🗂️ Secciones' : '📄 Modo Corrido';
+
+  if (updateHash && location.hash !== '#' + sectionId) {
+    history.pushState(null, '', '#' + sectionId);
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function getUnreadChatCount() {
+  const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
+  const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
+  const isCoord = isCoordinatorOrAdvisor();
+  return (chatMessages || []).filter((m) => {
+    const t = Date.parse(m.fecha || '') || 0;
+    const isMine = (myUid && m.uid === myUid) || (myEmail && m.correo && String(m.correo).toLowerCase() === myEmail);
+    if (isMine) return false;
+    if (m.canal === 'dm') {
+      const isForMe = (myUid && m.paraUid === myUid) || (myEmail && m.paraEmail && String(m.paraEmail).toLowerCase() === myEmail);
+      return isForMe && t > lastReadChatTime;
+    }
+    if (m.canal === 'coord') {
+      return isCoord && t > lastReadChatTime;
+    }
+    return t > lastReadChatTime;
+  }).length;
+}
+
+function getInternalNotifications() {
+  const notifs = [];
+
+  // 1. Cumpleaños de hoy
+  const hoyList = (typeof cumpleanosHoy === 'function') ? cumpleanosHoy(allInscripciones) : [];
+  hoyList.forEach((p) => {
+    const isF = p.sexo === 'Mujer' || (p.datos && p.datos.sexo === 'Mujer');
+    notifs.push({
+      id: 'cumple-' + (p.uid || p.id),
+      icon: '🎂',
+      iconBg: '#FEF3C7',
+      title: isF ? '🎉 ¡Cumpleaños de una hermana misionera!' : '🎉 ¡Cumpleaños de un hermano misionero!',
+      body: `Hoy <b>${esc(p.nombre)}</b> está de cumpleaños. ¡Felicítale en su día!`,
+      time: 'Hoy',
+      action: { type: 'dm', uid: p.uid || p.id, label: '💬 Felicitar por Chat' }
+    });
+  });
+
+  // 2. Próximo Encuentro Dominical
+  const nextDom = (cfg && cfg.domingos && cfg.domingos[0]) || { f: 'Próximo domingo', t: 'Encuentro Misionero' };
+  notifs.push({
+    id: 'encuentro-' + (nextDom.f || 'prox'),
+    icon: '📍',
+    iconBg: '#E0E7FF',
+    title: 'Próximo Encuentro de JUMA',
+    body: `<b>${esc(nextDom.t || 'Encuentro')}</b> · ${esc(nextDom.f || '')} a las ${esc(hora())} en ${esc(lugar())}.`,
+    time: 'Esta semana',
+    action: { type: 'maps', url: mapsUrl(), label: '📍 Cómo llegar en Google Maps' }
+  });
+
+  // 3. Novedades y Noticias del Muro
+  const posts = (dr && dr.posts) || (pub && pub.posts) || [];
+  posts.slice(0, 3).forEach((post) => {
+    if (!post) return;
+    notifs.push({
+      id: 'post-' + (post.id || post.t),
+      icon: '📰',
+      iconBg: '#E4F5EA',
+      title: post.t ? esc(post.t) : 'Novedad de JUMA Duaca',
+      body: post.x ? esc(post.x.slice(0, 100)) + (post.x.length > 100 ? '…' : '') : 'Publicación en el muro de JUMA.',
+      time: post.fecha ? timeAgo(post.fecha) : 'Reciente',
+      action: { type: 'section', section: 'novedades', label: 'Ver noticia' }
+    });
+  });
+
+  // 4. Mensajes no leídos en Chat
+  const unreadChat = getUnreadChatCount();
+  if (unreadChat > 0) {
+    notifs.push({
+      id: 'chat-unread',
+      icon: '💬',
+      iconBg: '#FCE7F3',
+      title: 'Mensajes sin leer',
+      body: `Tienes <b>${unreadChat} mensaje${unreadChat === 1 ? '' : 's'} nuevo${unreadChat === 1 ? '' : 's'}</b> en la app.`,
+      time: 'Ahora',
+      action: { type: 'chat', label: 'Abrir Chat' }
+    });
+  }
+
+  // 5. Carnet Misionero listo
+  if (myProfile) {
+    notifs.push({
+      id: 'carnet-ok',
+      icon: '🪪',
+      iconBg: '#E8F1FF',
+      title: 'Carnet Misionero Digital Activo',
+      body: 'Tu Carnet Misionero oficial con Código QR está disponible para presentar o descargar.',
+      time: 'Siempre activo',
+      action: { type: 'profile', label: 'Ver mi carnet' }
+    });
+  }
+
+  return notifs;
+}
+
+function getUnreadNotifCount() {
+  const notifs = getInternalNotifications();
+  const hasUnread = Date.now() - lastReadNotifTime > 6 * 3600 * 1000 && notifs.length > 0;
+  return hasUnread ? notifs.length : 0;
+}
+
+function updateNotifBadge() {
+  const count = getUnreadNotifCount();
+  const txt = count > 9 ? '9+' : String(count);
+
+  const topEl = $('#top-notif-badge');
+  const dockEl = $('#dock-notif-badge');
+  [topEl, dockEl].forEach((el) => {
+    if (el) {
+      if (count > 0) { el.textContent = txt; el.classList.remove('hide'); }
+      else { el.classList.add('hide'); }
+    }
+  });
+}
+
+function openNotificationsModal() {
+  const notifs = getInternalNotifications();
+  lastReadNotifTime = Date.now();
+  try { localStorage.setItem('juma-last-read-notif-time', String(lastReadNotifTime)); } catch (e) {}
+  updateNotifBadge();
+
+  const html = `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="notif-t">
+    <div class="sheet notif-sheet">
+      <div class="chat-top">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:20px">🔔</span>
+          <div>
+            <b style="font-size:16px;display:block">Notificaciones y Novedades</b>
+            <small style="opacity:.8;font-size:12px">Novedades internas de JUMA Duaca</small>
+          </div>
+        </div>
+        <button type="button" class="btn btn-soft btn-sm" data-close style="min-height:34px;padding:0 12px;background:rgba(255,255,255,.2);color:#fff;border:0">✕</button>
+      </div>
+      <div class="notif-list">
+        ${!notifs.length ? `<div class="chat-empty">No hay notificaciones nuevas por ahora.</div>` : notifs.map((n) => `
+          <div class="notif-item">
+            <div class="notif-icon" style="background:${n.iconBg}">${n.icon}</div>
+            <div style="flex:1 1 auto;min-width:0">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">
+                <b style="font-size:14.5px;color:var(--navy)">${n.title}</b>
+                <span style="font-size:11px;color:var(--muted)">${n.time}</span>
+              </div>
+              <p style="margin:0 0 8px;font-size:13.5px;color:var(--ink);line-height:1.4">${n.body}</p>
+              ${n.action ? (
+                n.action.type === 'maps'
+                  ? `<a class="btn btn-soft btn-sm" href="${esc(n.action.url)}" target="_blank" rel="noopener" style="min-height:32px;padding:0 12px;font-size:12.5px;background:#E8F1FF;color:var(--royal);font-weight:700">${n.action.label}</a>`
+                  : `<button type="button" class="btn btn-soft btn-sm" data-notif-act="${esc(n.action.type)}" data-notif-val="${esc(n.action.uid || n.action.section || '')}" style="min-height:32px;padding:0 12px;font-size:12.5px;background:#E8F1FF;color:var(--royal);font-weight:700">${n.action.label}</button>`
+              ) : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="padding:12px 16px;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:var(--muted)">Notificaciones internas de la app</span>
+        <button type="button" class="btn btn-blue btn-sm" data-close style="min-height:36px;padding:0 16px">Entendido</button>
+      </div>
+    </div>
+  </div>`;
+  openModal(html);
+}
+
+function updateSocialDock() {
+  const dock = $('#social-dock');
+  if (!dock) return;
+  const isAuth = !!(currentUser || myProfile);
+
+  if (!isAuth) {
+    dock.innerHTML = `<button type="button" class="social-dock-guest" data-open-auth>
+      <span aria-hidden="true" style="font-size:16px">🔑</span>
+      <span>Miembros · Iniciar sesión</span>
+    </button>`;
+    return;
+  }
+
+  const unreadChat = getUnreadChatCount();
+  const unreadNotif = getUnreadNotifCount();
+  const d = (myProfile && myProfile.datos) || {};
+  const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
+  const initial = esc(((myProfile && myProfile.nombre) || (currentUser && currentUser.displayName) || 'M').charAt(0).toUpperCase());
+
+  dock.innerHTML = `
+    <button type="button" class="dock-btn" data-dock-action="chat" title="Mensajes y Chat" aria-label="Abrir Mensajes">
+      <span aria-hidden="true">💬</span>
+      ${unreadChat > 0 ? `<span class="dock-badge">${unreadChat}</span>` : ''}
+    </button>
+    <button type="button" class="dock-btn" data-dock-action="notif" title="Notificaciones" aria-label="Abrir Notificaciones">
+      <span aria-hidden="true">🔔</span>
+      ${unreadNotif > 0 ? `<span class="dock-badge">${unreadNotif}</span>` : ''}
+    </button>
+    <button type="button" class="dock-btn" data-dock-action="comunidad" title="Comunidad JUMA" aria-label="Ir a Comunidad">
+      <span aria-hidden="true">👥</span>
+    </button>
+    <button type="button" class="dock-btn dock-btn-user" data-dock-action="profile" title="Mi Carnet y Perfil" aria-label="Mi Perfil">
+      ${foto ? `<img src="${esc(foto)}" alt="">` : `<span style="font-weight:900;font-size:15px;color:var(--navy)">${initial}</span>`}
+    </button>
+  `;
+}
+
+function openChatWithMember(targetUid) {
+  if (!currentUser && !myProfile) {
+    openAuthModal();
+    return;
+  }
+  const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
+  const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
+  const members = getRegisteredMembersForDm(myUid, myEmail);
+  const target = members.find((m) => m.uid === targetUid || m.id === targetUid);
+  if (target) {
+    chatChannel = 'dm';
+    chatDmTarget = target;
+    openChatModal('chat');
+  } else {
+    openChatModal('chat');
+  }
+}
+
+function renderComunidadView() {
+  const el = $('#view-comunidad');
+  if (!el) return;
+  const isAuth = !!(currentUser || myProfile);
+  if (!isAuth) {
+    el.innerHTML = `
+      <div class="wrap" style="padding:60px 20px;text-align:center">
+        <span style="font-size:48px;display:block;margin-bottom:12px">🔒</span>
+        <h2 class="h-display h-lg">Espacio Exclusivo para Miembros de JUMA</h2>
+        <p class="body" style="max-width:54ch;margin:12px auto 24px">Inicia sesión con tu cuenta o llena tu planilla de inscripción para acceder al chat comunitario, los mensajes directos y tus notificaciones.</p>
+        <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
+          <button type="button" class="btn btn-blue" data-open-auth>Iniciar sesión</button>
+          <button type="button" class="btn btn-white" data-open-form>Quiero ser parte</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const d = (myProfile && myProfile.datos) || {};
+  const nombre = (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) || (currentUser && currentUser.displayName) || 'Misionero';
+  const primerNombre = (d.nombres ? d.nombres.trim().split(' ')[0] : nombre.split(' ')[0]) || 'Misionero';
+  const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
+  const role = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : 'participante');
+  const roleLabel = role === 'coordinador' ? '★ Coordinador(a)' : (role === 'asesor' ? '◆ Asesor(a)' : 'Participante');
+
+  const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
+  const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
+  const members = getRegisteredMembersForDm(myUid, myEmail);
+  const nextDom = (cfg && cfg.domingos && cfg.domingos[0]) || { f: 'Próximo domingo', t: 'Encuentro Misionero' };
+
+  el.innerHTML = `
+    <div class="wrap" style="padding:40px clamp(16px,3vw,32px)">
+      <!-- Banner estilo Facebook -->
+      <div style="padding:24px 28px;border-radius:20px;background:linear-gradient(135deg,var(--navy) 0%,var(--cloth) 100%);color:#fff;box-shadow:0 12px 30px rgba(6,21,54,.15);margin-bottom:28px">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px">
+          <div style="display:flex;align-items:center;gap:16px;flex:1 1 280px">
+            <div style="width:72px;height:72px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.15);border:3px solid var(--sky);display:flex;align-items:center;justify-content:center;flex:0 0 auto">
+              ${foto ? `<img src="${esc(foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:28px;color:#fff">${esc(primerNombre.charAt(0).toUpperCase())}</b>`}
+            </div>
+            <div>
+              <span class="u-badge" style="background:rgba(255,255,255,.18);color:#fff;margin-bottom:4px">${esc(roleLabel)}</span>
+              <h2 class="h-display h-md" style="margin:2px 0 0;color:#fff">¡Hola, ${esc(primerNombre)}!</h2>
+              <p style="margin:4px 0 0;font-size:14px;color:var(--sky)">${d.parroquia ? esc(d.parroquia) : 'Juventud Misionera Allamaniana · Duaca'}</p>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <button type="button" class="btn btn-white btn-sm" data-open-auth>🪪 Mi Carnet con QR</button>
+            <button type="button" class="btn btn-blue btn-sm" data-open-chat>💬 Abrir Chat</button>
+            <button type="button" class="btn btn-soft btn-sm" data-open-notifs style="background:rgba(255,255,255,.2);color:#fff">🔔 Notificaciones</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cuadrícula estilo Red Social -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px">
+        <!-- Columna 1: Directorio de Hermanos de JUMA (Mensajes directos) -->
+        <div style="background:#fff;border-radius:18px;border:1.5px solid var(--line);padding:22px;box-shadow:0 4px 16px rgba(0,0,0,.04)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div>
+              <b style="font-size:17px;color:var(--navy);display:flex;align-items:gap:8px"><span>👥</span> Hermanos Misioneros</b>
+              <small style="color:var(--muted);font-size:12.5px;display:block">${members.length} miembros registrados</small>
+            </div>
+            <button type="button" class="btn btn-blue btn-sm" data-open-chat style="min-height:34px;padding:0 12px;font-size:12.5px">Ver todos</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;padding-right:4px">
+            ${members.slice(0, 8).map((m) => `
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:#F8FAFD;border:1px solid var(--line)">
+                <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">
+                  <div style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:var(--mist);display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:1.5px solid var(--royal)">
+                    ${m.foto ? `<img src="${esc(m.foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:15px;color:var(--royal)">${esc(m.primerNombre.charAt(0).toUpperCase())}</b>`}
+                  </div>
+                  <div style="min-width:0;flex:1">
+                    <b style="display:block;font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.nombre)}</b>
+                    <small style="display:block;font-size:11.5px;color:var(--muted)">${esc(m.parroquia || 'JUMA Duaca')}</small>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-soft btn-sm" data-open-dm="${esc(m.uid)}" style="min-height:32px;padding:0 10px;font-size:12px;flex:0 0 auto;background:#fff;border:1px solid var(--royal);color:var(--royal)">💬 Escribir</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Columna 2: Próximo Encuentro y Novedades -->
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <!-- Tarjeta Próximo Encuentro con Google Maps -->
+          <div style="background:#fff;border-radius:18px;border:1.5px solid var(--line);padding:22px;box-shadow:0 4px 16px rgba(0,0,0,.04)">
+            <span class="u-badge" style="background:#E0E7FF;color:var(--royal);margin-bottom:8px">📅 Próximo Domingo</span>
+            <h3 class="h-display h-md" style="margin:4px 0 8px;font-size:22px">${esc(nextDom.t || 'Encuentro Formativo')}</h3>
+            <p style="margin:0 0 14px;font-size:14.5px;color:var(--muted)">
+              ${esc(nextDom.f || '')} · Hora: <b>${esc(hora())}</b><br>
+              Lugar: <b>${esc(lugar())}</b>
+            </p>
+            <div style="display:flex;flex-wrap:wrap;gap:10px">
+              <a class="btn btn-blue btn-sm" href="${esc(mapsUrl())}" target="_blank" rel="noopener">📍 Cómo llegar en Google Maps</a>
+              <button type="button" class="btn btn-soft btn-sm" data-view-target="domingos">Ver calendario completo</button>
+            </div>
+          </div>
+
+          <!-- Tarjeta de Noticias Recientes -->
+          <div style="background:#fff;border-radius:18px;border:1.5px solid var(--line);padding:22px;box-shadow:0 4px 16px rgba(0,0,0,.04)">
+            <b style="font-size:16px;color:var(--navy);display:flex;align-items:center;gap:8px;margin-bottom:12px"><span>📰</span> Última Noticia de JUMA</b>
+            ${dr && dr.posts && dr.posts[0] ? `
+              <div>
+                ${dr.posts[0].foto ? `<img src="${esc(dr.posts[0].foto)}" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;margin-bottom:10px">` : ''}
+                <b style="display:block;font-size:15px;color:var(--ink);margin-bottom:4px">${esc(dr.posts[0].t || 'Novedad')}</b>
+                <p style="margin:0 0 10px;font-size:13.5px;color:var(--muted);line-height:1.4">${esc((dr.posts[0].x || '').slice(0, 120))}${(dr.posts[0].x || '').length > 120 ? '…' : ''}</p>
+                <button type="button" class="btn btn-soft btn-sm" data-view-target="novedades">Ver más noticias</button>
+              </div>
+            ` : `<p style="font-size:14px;color:var(--muted);margin:0">No hay noticias publicadas aún.</p>`}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function updateAuthUI() {
   const btnAuth = $('#btn-auth');
   const btnJoin = $('#btn-join');
   const footAuth = $('#lnk-perfil-foot');
   const fab = $('#fab-edit');
   const lAdmin = $('#lnk-admin');
+  const btnTopNotif = $('#btn-top-notif');
+  const btnTopChat = $('#btn-top-chat');
+  const navComunidad = $('#nav-comunidad');
+  const subnavComunidad = $('#subnav-comunidad');
 
   if (!myProfile && currentUser) {
     myProfile = findProfileRecord(currentUser.uid, currentUser.email);
@@ -2094,7 +2497,9 @@ function updateAuthUI() {
   if (fab) fab.classList.toggle('hide', !masterOn);
   if (lAdmin) lAdmin.textContent = masterOn ? 'Panel Maestro (Activo)' : 'Acceso Maestro';
 
-  if (currentUser || myProfile) {
+  const isAuth = !!(currentUser || myProfile);
+
+  if (isAuth) {
     const d = (myProfile && myProfile.datos) || {};
     const fullName = String(
       (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) ||
@@ -2114,8 +2519,16 @@ function updateAuthUI() {
       btnAuth.setAttribute('title', fullName);
       btnAuth.setAttribute('aria-label', 'Ver perfil de ' + fullName);
     }
-    if (btnJoin) { btnJoin.textContent = myProfile ? '🪪 Mi Carnet' : 'Completar planilla'; }
+    if (btnJoin) {
+      btnJoin.textContent = '🪪 Mi Carnet';
+      btnJoin.setAttribute('data-open-auth', '');
+      btnJoin.removeAttribute('data-open-form');
+    }
     if (footAuth) footAuth.textContent = nombreCorto + ' (Mi perfil)';
+    if (btnTopNotif) btnTopNotif.classList.remove('hide');
+    if (btnTopChat) btnTopChat.classList.remove('hide');
+    if (navComunidad) navComunidad.classList.remove('hide');
+    if (subnavComunidad) subnavComunidad.classList.remove('hide');
   } else {
     if (btnAuth) {
       btnAuth.innerHTML = 'Iniciar sesión';
@@ -2123,15 +2536,27 @@ function updateAuthUI() {
       btnAuth.removeAttribute('title');
       btnAuth.setAttribute('aria-label', 'Iniciar sesión');
     }
-    if (btnJoin) { btnJoin.textContent = 'Quiero ser parte'; }
+    if (btnJoin) {
+      btnJoin.textContent = 'Quiero ser parte';
+      btnJoin.setAttribute('data-open-form', '');
+      btnJoin.removeAttribute('data-open-auth');
+    }
     if (footAuth) footAuth.textContent = 'Iniciar sesión';
+    if (btnTopNotif) btnTopNotif.classList.add('hide');
+    if (btnTopChat) btnTopChat.classList.add('hide');
+    if (navComunidad) navComunidad.classList.add('hide');
+    if (subnavComunidad) subnavComunidad.classList.add('hide');
   }
-  const isAuth = !!(currentUser || myProfile);
+
   const btnChat = $('#btn-chat');
   const navChat = $('#nav-chat');
   if (btnChat) btnChat.classList.toggle('hide', !isAuth);
   if (navChat) navChat.classList.toggle('hide', !isAuth);
-  if (typeof updateChatBadge === 'function') updateChatBadge();
+
+  updateChatBadge();
+  updateNotifBadge();
+  updateSocialDock();
+  renderComunidadView();
   renderDomingos();
   renderActs();
 }
@@ -2308,6 +2733,49 @@ modalRoot.addEventListener('click', async (e) => {
 
 modalRoot.addEventListener('click', async (e) => {
   if (!$('#pl-t')) return;
+  if (e.target.id === 'btn-fast-cedula-login') {
+    const inEl = $('#fast-cedula-in');
+    const errEl = $('#fast-cedula-err');
+    const val = (inEl ? inEl.value : '').trim().toLowerCase();
+    if (!val) { if (errEl) errEl.textContent = 'Escribe tu cédula o correo.'; return; }
+    const cleanNum = val.replace(/[^0-9]/g, '');
+    const found = (allInscripciones || []).find((rec) => {
+      if (!rec) return false;
+      const d = rec.datos || {};
+      const c1 = String(rec.cedula || d.cedula || '').replace(/[^0-9]/g, '');
+      if (cleanNum && c1 && c1 === cleanNum) return true;
+      const em = String(rec.correo || d.correo || '').trim().toLowerCase();
+      if (em && em === val) return true;
+      const cel = String(rec.celular || d.celular || '').replace(/[^0-9]/g, '');
+      if (cleanNum && cel && cel === cleanNum) return true;
+      return false;
+    });
+    if (found) {
+      myProfile = found;
+      try {
+        localStorage.setItem('juma-ultimo-perfil', JSON.stringify(found));
+        if (found.uid) localStorage.setItem('juma-perfil-' + found.uid, JSON.stringify(found));
+      } catch (x) {}
+      updateAuthUI();
+      closeModal();
+      switchSection('comunidad');
+      showToast('¡Hola, ' + (found.nombre || 'Misionero') + '! Sesión iniciada.');
+    } else {
+      if (errEl) errEl.textContent = 'No encontramos una inscripción con esa cédula o correo.';
+    }
+    return;
+  }
+  const notifAct = e.target.closest('[data-notif-act]');
+  if (notifAct) {
+    const act = notifAct.dataset.notifAct;
+    const val = notifAct.dataset.notifVal;
+    closeModal();
+    if (act === 'dm') openChatWithMember(val);
+    else if (act === 'chat') openChatModal();
+    else if (act === 'section') switchSection(val);
+    else if (act === 'profile') openAuthModal();
+    return;
+  }
   if (e.target.closest('[data-switch-login]')) { authTab = 'user'; authErr = ''; authOk = ''; openAuthModal(); return; }
   if (e.target.closest('[data-go-profile]')) { openAuthModal(); return; }
   if (e.target.closest('[data-rm-avatar]')) { delete form.d.foto; repaintForm(); return; }
@@ -2349,6 +2817,39 @@ modalRoot.addEventListener('click', async (e) => {
   if (e.target.closest('[data-dl]')) downloadPlanillaHtml(form.d);
 });
 document.addEventListener('click', (e) => {
+  const dockBtn = e.target.closest('[data-dock-action]');
+  if (dockBtn) {
+    const act = dockBtn.dataset.dockAction;
+    if (act === 'chat') openChatModal();
+    else if (act === 'notif') openNotificationsModal();
+    else if (act === 'comunidad') switchSection('comunidad');
+    else if (act === 'profile') openAuthModal();
+    return;
+  }
+  if (e.target.closest('#btn-toggle-view-mode')) {
+    viewMode = viewMode === 'secciones' ? 'corrido' : 'secciones';
+    try { localStorage.setItem('juma-view-mode', viewMode); } catch (x) {}
+    switchSection(currentSection, false);
+    return;
+  }
+  const viewTarget = e.target.closest('[data-view-target]');
+  if (viewTarget) {
+    e.preventDefault();
+    const target = viewTarget.dataset.viewTarget;
+    switchSection(target);
+    return;
+  }
+  if (e.target.closest('[data-open-notifs]')) {
+    e.preventDefault();
+    openNotificationsModal();
+    return;
+  }
+  const openDmBtn = e.target.closest('[data-open-dm]');
+  if (openDmBtn) {
+    e.preventDefault();
+    openChatWithMember(openDmBtn.dataset.openDm);
+    return;
+  }
   const moreBtn = e.target.closest('[data-toggle-post-more]');
   if (moreBtn) {
     e.preventDefault();
@@ -2643,6 +3144,15 @@ function authModalHtml() {
         <button type="button" class="btn btn-soft btn-sm" data-reset-pw>Olvidé mi contraseña</button>
       </div>
     </form>
+    <div style="margin-top:18px;padding:14px 16px;border-radius:14px;background:#F0F6FF;border:1.5px solid #C7DCFF">
+      <b style="display:block;font-size:14px;color:var(--navy);margin-bottom:4px">⚡ ¿Ya llenaste tu planilla antes? Acceso directo:</b>
+      <p style="margin:0 0 10px;font-size:12.5px;color:var(--muted)">Ingresa tu número de cédula o correo para entrar a tu perfil sin contraseña.</p>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="fast-cedula-in" placeholder="Ej.: 30123456 o tu correo" style="flex:1;min-height:38px;padding:6px 12px;border-radius:8px;border:1.5px solid var(--line);font-size:14px">
+        <button type="button" class="btn btn-blue btn-sm" id="btn-fast-cedula-login" style="min-height:38px;padding:0 14px">Entrar</button>
+      </div>
+      <div id="fast-cedula-err" style="margin-top:6px;font-size:12.5px;color:#8A1C1C;font-weight:700"></div>
+    </div>
     <div style="margin-top:26px;padding-top:20px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
       <div><b style="font-size:16px;color:var(--ink)">¿Aún no tienes cuenta?</b><p style="margin:2px 0 0;font-size:14px;color:var(--muted)">Llena tu planilla y queda registrado en la app.</p></div>
       <button type="button" class="btn btn-outline btn-sm" data-go-register>Quiero ser parte (Planilla)</button>
@@ -2779,30 +3289,18 @@ function fmtChatTime(iso) {
 
 function updateChatBadge() {
   const countEl = $('#chat-badge-count');
+  const topChatEl = $('#top-chat-badge');
+  const dockChatEl = $('#dock-chat-badge');
   const profBadge = $('#profile-chat-badge');
-  const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
-  const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
-  const isCoord = isCoordinatorOrAdvisor();
-
-  const unread = chatMessages.filter((m) => {
-    const t = Date.parse(m.fecha || '') || 0;
-    const isMine = (myUid && m.uid === myUid) || (myEmail && m.correo && String(m.correo).toLowerCase() === myEmail);
-    if (isMine) return false;
-    if (m.canal === 'dm') {
-      const isForMe = (myUid && m.paraUid === myUid) || (myEmail && m.paraEmail && String(m.paraEmail).toLowerCase() === myEmail);
-      return isForMe && t > lastReadChatTime;
-    }
-    if (m.canal === 'coord') {
-      return isCoord && t > lastReadChatTime;
-    }
-    return t > lastReadChatTime;
-  }).length;
+  const unread = getUnreadChatCount();
 
   const txt = unread > 99 ? '99+' : String(unread);
-  if (countEl) {
-    if (unread > 0) { countEl.textContent = txt; countEl.classList.remove('hide'); }
-    else { countEl.classList.add('hide'); }
-  }
+  [countEl, topChatEl, dockChatEl].forEach((el) => {
+    if (el) {
+      if (unread > 0) { el.textContent = txt; el.classList.remove('hide'); }
+      else { el.classList.add('hide'); }
+    }
+  });
   if (profBadge) {
     if (unread > 0) { profBadge.textContent = txt + ' nuevos'; profBadge.classList.remove('hide'); }
     else { profBadge.classList.add('hide'); }
@@ -3350,10 +3848,10 @@ modalRoot.addEventListener('click', async (e) => {
       if (isMasterEmail(currentUser.email) || (myProfile && userRole(myProfile) === 'coordinador')) {
         isAdmin = true;
         try { sessionStorage.setItem('juma-ed', '1'); if (isMasterEmail(currentUser.email)) localStorage.setItem('juma-master-device', '1'); } catch (x) {}
-        authBusy = false; showFab(); updateAuthUI(); repaintAuth(); return;
+        authBusy = false; showFab(); updateAuthUI(); closeModal(); switchSection('comunidad'); showToast('¡Bienvenido(a), Coordinación JUMA!'); return;
       }
       if (myProfile) { try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile)); } catch (x) {} }
-      authBusy = false; updateAuthUI(); repaintAuth();
+      authBusy = false; updateAuthUI(); closeModal(); switchSection('comunidad'); showToast('¡Hola, ' + ((myProfile && myProfile.nombre) || 'Misionero') + '! Sesión iniciada.');
     } catch (x) {
       authBusy = false;
       authErr = 'No se completó el acceso con Google. Puedes intentar de nuevo o usar correo y contraseña.';
@@ -5980,6 +6478,11 @@ async function loadContenido() {
     }
   } catch (e) {}
   renderAll(); setupUnroll(); updateAuthUI();
+  const initHash = location.hash ? location.hash.slice(1) : 'inicio';
+  switchSection(initHash, false);
+  window.addEventListener('hashchange', () => {
+    if (location.hash) switchSection(location.hash.slice(1), false);
+  });
   setTimeout(() => checkMandatoryPhotoGate(), 300);
   setTimeout(() => checkBirthdayCelebration(), 750);
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
