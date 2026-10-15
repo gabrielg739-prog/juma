@@ -977,8 +977,10 @@ function closeModal() {
   ov.classList.add('is-out'); setTimeout(done, 180);
 }
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalRoot.firstChild && modalKey !== 'force-photo') closeModal(); });
-const closeBtn = `<button type="button" data-close aria-label="Cerrar" style="flex:0 0 auto;width:46px;height:46px;border-radius:10px;border:1.5px solid rgba(255,255,255,.35);background:transparent;color:#fff;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"></path></svg></button>`;
-modalRoot.addEventListener('click', (e) => { if (e.target.closest('[data-close]') && modalKey !== 'force-photo') closeModal(); });
+modalRoot.addEventListener('click', (e) => {
+  if (modalKey === 'force-photo') return;
+  if (e.target.closest('[data-close]') || e.target.classList.contains('overlay')) closeModal();
+});
 const sheetHead = (kicker, title, id) => `<div class="sheet-head"><div class="ribbon" aria-hidden="true" style="position:absolute;top:0;left:0;right:0"></div><div style="display:flex;align-items:center;gap:16px"><div style="flex:1 1 auto;min-width:0"><div style="font-size:13px;color:var(--muted-lt)">${esc(kicker)}</div><h2 id="${id}" class="h-display" style="margin-top:4px;font-size:clamp(28px,4vw,38px)">${esc(title)}</h2></div>${closeBtn}</div></div>`;
 const sheetHeadNoClose = (kicker, title, id) => `<div class="sheet-head"><div class="ribbon" aria-hidden="true" style="position:absolute;top:0;left:0;right:0"></div><div style="display:flex;align-items:center;gap:16px"><div style="flex:1 1 auto;min-width:0"><div style="font-size:13px;color:var(--muted-lt)">${esc(kicker)}</div><h2 id="${id}" class="h-display" style="margin-top:4px;font-size:clamp(28px,4vw,38px)">${esc(title)}</h2></div></div></div>`;
 
@@ -986,6 +988,7 @@ const sheetHeadNoClose = (kicker, title, id) => `<div class="sheet-head"><div cl
 let currentUser = null;
 let myProfile = null;
 let allInscripciones = [];
+try { allInscripciones = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]'); } catch (e) {}
 let allMensajes = [];
 let insQuery = '';
 let authTab = 'user'; // 'user' | 'master'
@@ -2184,6 +2187,9 @@ function timeAgo(iso) {
 }
 
 function switchSection(sectionId, updateHash = true) {
+  if (modalRoot && modalRoot.firstChild && modalKey !== 'force-photo') {
+    closeModal();
+  }
   const validSections = ['inicio', 'quienes', 'domingos', 'formacion', 'fe', 'consolata', 'novedades', 'galeria', 'comunidad'];
   if (!validSections.includes(sectionId)) sectionId = 'inicio';
   currentSection = sectionId;
@@ -2193,6 +2199,7 @@ function switchSection(sectionId, updateHash = true) {
   document.querySelectorAll('.j-view').forEach((el) => {
     const isTarget = el.id === 'view-' + sectionId;
     el.classList.toggle('view-active', isTarget);
+    el.classList.remove('hide');
   });
 
   document.querySelectorAll('.navlink').forEach((link) => {
@@ -2347,7 +2354,7 @@ function openNotificationsModal() {
             <small style="opacity:.8;font-size:12px">Novedades internas de JUMA Duaca</small>
           </div>
         </div>
-        <button type="button" class="btn btn-soft btn-sm" data-close style="min-height:34px;padding:0 12px;background:rgba(255,255,255,.2);color:#fff;border:0">✕</button>
+        <button type="button" data-close aria-label="Cerrar notificaciones" style="width:40px;height:40px;min-height:40px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;border:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;cursor:pointer">✕</button>
       </div>
       <div class="notif-list">
         ${!notifs.length ? `<div class="chat-empty">No hay notificaciones nuevas por ahora.</div>` : notifs.map((n) => `
@@ -2370,11 +2377,11 @@ function openNotificationsModal() {
       </div>
       <div style="padding:12px 16px;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
         <span style="font-size:12px;color:var(--muted)">Notificaciones internas de la app</span>
-        <button type="button" class="btn btn-blue btn-sm" data-close style="min-height:36px;padding:0 16px">Entendido</button>
+        <button type="button" class="btn btn-blue btn-sm" data-close style="min-height:38px;padding:0 20px;font-weight:800">Cerrar</button>
       </div>
     </div>
   </div>`;
-  openModal(html);
+  openModal(html, 'notifs');
 }
 
 function updateSocialDock() {
@@ -2532,7 +2539,8 @@ function openMemberCarnetModal(targetUid) {
 function renderComunidadView() {
   const el = $('#view-comunidad');
   if (!el) return;
-  const isAuth = !!(currentUser || myProfile);
+  const trueMaster = isMasterAccount();
+  const isAuth = !!(currentUser || myProfile || trueMaster || isAdmin);
   if (!isAuth) {
     el.innerHTML = `
       <div class="wrap" style="padding:60px 20px;text-align:center">
@@ -2545,6 +2553,16 @@ function renderComunidadView() {
         </div>
       </div>`;
     return;
+  }
+
+  if (!myProfile && trueMaster) {
+    myProfile = {
+      nombre: 'Coordinador Maestro',
+      correo: 'jumaduaca@gmail.com',
+      rol: 'coordinador',
+      foto: 'img/logo-juma-allamano.png',
+      datos: { nombres: 'Coordinador', apellidos: 'Maestro', correo: 'jumaduaca@gmail.com', tipoRegistro: 'participante' }
+    };
   }
 
   const d = (myProfile && myProfile.datos) || {};
@@ -2669,16 +2687,26 @@ function updateAuthUI() {
   const fbTabIcon = $('#fb-tab-profile-icon');
   const fbTabLabel = $('#fb-tab-profile-label');
 
+  const trueMaster = isMasterAccount();
   if (!myProfile && currentUser) {
     myProfile = findProfileRecord(currentUser.uid, currentUser.email);
   }
-  const role = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : 'participante');
-  const masterOn = isAdmin || isEditor() || role === 'coordinador';
+  if (!myProfile && trueMaster) {
+    myProfile = {
+      nombre: 'Coordinador Maestro',
+      correo: 'jumaduaca@gmail.com',
+      rol: 'coordinador',
+      foto: 'img/logo-juma-allamano.png',
+      datos: { nombres: 'Coordinador', apellidos: 'Maestro', correo: 'jumaduaca@gmail.com', tipoRegistro: 'participante' }
+    };
+  }
+  const role = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : (trueMaster ? 'coordinador' : 'participante'));
+  const masterOn = isAdmin || isEditor() || trueMaster || role === 'coordinador';
 
   if (fab) fab.classList.toggle('hide', !masterOn);
   if (lAdmin) lAdmin.textContent = masterOn ? 'Panel Maestro (Activo)' : 'Acceso Maestro';
 
-  const isAuth = !!(currentUser || myProfile);
+  const isAuth = !!(currentUser || myProfile || trueMaster || isAdmin);
 
   if (isAuth) {
     const d = (myProfile && myProfile.datos) || {};
@@ -3064,9 +3092,16 @@ document.addEventListener('click', (e) => {
   if (fbAct) {
     e.preventDefault();
     const act = fbAct.dataset.fbAction;
-    if (act === 'chat') openChatModal();
-    else if (act === 'notif') openNotificationsModal();
-    else if (act === 'profile') openAuthModal();
+    if (act === 'chat') {
+      if (modalKey === 'chat') { closeModal(); return; }
+      openChatModal();
+    } else if (act === 'notif') {
+      if (modalKey === 'notifs') { closeModal(); return; }
+      openNotificationsModal();
+    } else if (act === 'profile') {
+      if (modalKey === 'auth') { closeModal(); return; }
+      openAuthModal();
+    }
     return;
   }
   const carnetBtn = e.target.closest('[data-view-member-carnet]');
@@ -3078,7 +3113,12 @@ document.addEventListener('click', (e) => {
   const filterBtn = e.target.closest('[data-comunidad-filter]');
   if (filterBtn) {
     e.preventDefault();
-    comunidadFilter = filterBtn.dataset.comunidadFilter;
+    const targetFilter = filterBtn.dataset.comunidadFilter;
+    if (comunidadFilter === targetFilter && targetFilter !== 'todos') {
+      comunidadFilter = 'todos';
+    } else {
+      comunidadFilter = targetFilter;
+    }
     renderComunidadMembersList();
     return;
   }
@@ -3106,7 +3146,14 @@ document.addEventListener('click', (e) => {
   }
   if (e.target.closest('[data-open-notifs]')) {
     e.preventDefault();
+    if (modalKey === 'notifs') { closeModal(); return; }
     openNotificationsModal();
+    return;
+  }
+  if (e.target.closest('[data-open-chat]')) {
+    e.preventDefault();
+    if (modalKey === 'chat') { closeModal(); return; }
+    openChatModal();
     return;
   }
   const openDmBtn = e.target.closest('[data-open-dm]');
@@ -3199,6 +3246,7 @@ document.addEventListener('click', (e) => {
   }
   if (e.target.closest('[data-open-auth]')) {
     e.preventDefault();
+    if (modalKey === 'auth') { closeModal(); return; }
     authErr = ''; authOk = '';
     openAuthModal();
   }
@@ -3214,15 +3262,25 @@ function isMasterAccount() {
   if (currentUser && currentUser.email && isMasterEmail(currentUser.email)) return true;
   if (myProfile && myProfile.correo && isMasterEmail(myProfile.correo)) return true;
   try { if (localStorage.getItem('juma-master-device') === '1') return true; } catch (e) {}
+  try { if (sessionStorage.getItem('juma-ed') === '1') return true; } catch (e) {}
   return false;
 }
 
 function authModalHtml() {
-  const role = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : 'participante');
-  const isJumaMember = role === 'coordinador' || role === 'asesor' || role === 'participante';
-  const masterOn = isAdmin || isEditor() || role === 'coordinador';
   const trueMaster = isMasterAccount();
-  if (currentUser || myProfile) {
+  if (!myProfile && trueMaster) {
+    myProfile = {
+      nombre: 'Coordinador Maestro',
+      correo: 'jumaduaca@gmail.com',
+      rol: 'coordinador',
+      foto: 'img/logo-juma-allamano.png',
+      datos: { nombres: 'Coordinador', apellidos: 'Maestro', correo: 'jumaduaca@gmail.com', tipoRegistro: 'participante' }
+    };
+  }
+  const role = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : (trueMaster ? 'coordinador' : 'participante'));
+  const isJumaMember = role === 'coordinador' || role === 'asesor' || role === 'participante';
+  const masterOn = isAdmin || isEditor() || trueMaster || role === 'coordinador';
+  if (currentUser || myProfile || trueMaster) {
     if (!myProfile && currentUser) {
       myProfile = findProfileRecord(currentUser.uid, currentUser.email);
     }
@@ -3258,13 +3316,6 @@ function authModalHtml() {
           <p style="margin:6px 0 0;font-size:15px;color:var(--muted-lt)">${esc(email)}${d.parroquia ? ' · ' + esc(d.parroquia) : ''}${d.sangre ? ' · Sangre ' + esc(d.sangre) : ''}</p>
         </div>
         ${selfieBoxHtml('auth')}
-      </div>
-      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-        <button type="button" class="btn btn-blue btn-sm" data-open-chat style="flex:1 1 200px;display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;font-size:14px;box-shadow:0 4px 12px rgba(36,82,200,.15)">
-          <span aria-hidden="true" style="font-size:18px">💬</span>
-          <span>Abrir Chat Comunitario y Avisos</span>
-          <span class="chat-badge hide" id="profile-chat-badge" style="position:static;margin-left:4px"></span>
-        </button>
       </div>
 
       ${masterOn ? `
@@ -3454,7 +3505,7 @@ function authModalHtml() {
     </div>
   </div></div></div>`;
 }
-function openAuthModal() { openModal(authModalHtml()); }
+function openAuthModal() { openModal(authModalHtml(), 'auth'); }
 function repaintAuth() { modalRoot.innerHTML = authModalHtml(); const ov = $('.overlay', modalRoot); if (ov) { ov.style.animation = 'none'; const sh = $('.sheet', modalRoot); if (sh) sh.style.animation = 'none'; } }
 
 /* ===================== Chat Comunitario, Mensajes Directos y Avisos Sociales ===================== */
