@@ -984,6 +984,24 @@ modalRoot.addEventListener('click', (e) => {
   if (modalKey === 'force-photo') return;
   if (e.target.closest('[data-close]') || e.target.classList.contains('overlay') || e.target === modalRoot) closeModal();
 });
+let touchModalStartY = 0;
+modalRoot.addEventListener('touchstart', (e) => {
+  const head = e.target.closest('.sheet-head, .chat-top');
+  if (head && e.touches && e.touches[0]) {
+    touchModalStartY = e.touches[0].clientY;
+  } else {
+    touchModalStartY = 0;
+  }
+}, { passive: true });
+modalRoot.addEventListener('touchend', (e) => {
+  if (touchModalStartY > 0 && e.changedTouches && e.changedTouches[0]) {
+    const diffY = e.changedTouches[0].clientY - touchModalStartY;
+    if (diffY > 60 && modalRoot.firstChild && modalKey !== 'force-photo') {
+      closeModal();
+    }
+  }
+  touchModalStartY = 0;
+}, { passive: true });
 const closeBtn = '<button type="button" class="btn btn-soft btn-sm" data-close aria-label="Cerrar ventana" style="min-height:42px;min-width:42px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.18);color:#fff;cursor:pointer;flex:0 0 auto">✕</button>';
 const sheetHead = (kicker, title, id) => `<div class="sheet-head"><div class="ribbon" aria-hidden="true" style="position:absolute;top:0;left:0;right:0"></div><div style="display:flex;align-items:center;gap:16px"><div style="flex:1 1 auto;min-width:0"><div style="font-size:13px;color:var(--muted-lt)">${esc(kicker)}</div><h2 id="${id}" class="h-display" style="margin-top:4px;font-size:clamp(28px,4vw,38px)">${esc(title)}</h2></div>${closeBtn}</div></div>`;
 const sheetHeadNoClose = (kicker, title, id) => `<div class="sheet-head"><div class="ribbon" aria-hidden="true" style="position:absolute;top:0;left:0;right:0"></div><div style="display:flex;align-items:center;gap:16px"><div style="flex:1 1 auto;min-width:0"><div style="font-size:13px;color:var(--muted-lt)">${esc(kicker)}</div><h2 id="${id}" class="h-display" style="margin-top:4px;font-size:clamp(28px,4vw,38px)">${esc(title)}</h2></div></div></div>`;
@@ -992,16 +1010,10 @@ const sheetHeadNoClose = (kicker, title, id) => `<div class="sheet-head"><div cl
 let currentUser = null;
 let myProfile = null;
 try {
-  const last = localStorage.getItem('juma-ultimo-perfil');
-  if (last) myProfile = JSON.parse(last);
-  if (!myProfile) {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('juma-perfil-') && !k.startsWith('juma-perfil-email-')) {
-        const item = localStorage.getItem(k);
-        if (item) { myProfile = JSON.parse(item); break; }
-      }
-    }
+  const isLoggedOut = localStorage.getItem('juma-is-logged-out') === '1';
+  if (!isLoggedOut) {
+    const last = localStorage.getItem('juma-ultimo-perfil');
+    if (last) myProfile = JSON.parse(last);
   }
 } catch (e) {}
 let allInscripciones = [];
@@ -2521,90 +2533,42 @@ function renderComunidadMembersList() {
   const members = getRegisteredMembersForDm(myUid, myEmail);
 
   const filtered = members.filter((m) => {
-    if (comunidadFilter !== 'todos') {
-      if (comunidadFilter === 'visitante') {
-        if (m.rol !== 'visitante' && m.rol !== 'colaborador') return false;
-      } else if (m.rol !== comunidadFilter) {
-        return false;
-      }
-    }
     if (!comunidadSearch) return true;
     const q = comunidadSearch.toLowerCase();
     return (m.nombre && m.nombre.toLowerCase().includes(q)) ||
-      (m.correo && m.correo.toLowerCase().includes(q)) ||
-      (m.parroquia && m.parroquia.toLowerCase().includes(q)) ||
-      (m.rol && m.rol.toLowerCase().includes(q));
-  });
-
-  document.querySelectorAll('[data-comunidad-filter]').forEach((btn) => {
-    const isAct = btn.dataset.comunidadFilter === comunidadFilter;
-    btn.setAttribute('aria-pressed', isAct ? 'true' : 'false');
-    btn.style.background = isAct ? 'var(--royal)' : '#fff';
-    btn.style.color = isAct ? '#fff' : 'var(--ink)';
-    btn.style.borderColor = isAct ? 'var(--royal)' : 'var(--line)';
+      (m.primerNombre && m.primerNombre.toLowerCase().includes(q));
   });
 
   const countEl = $('#comunidad-members-count');
-  if (countEl) countEl.textContent = `${filtered.length} miembro${filtered.length === 1 ? '' : 's'} disponible${filtered.length === 1 ? '' : 's'}`;
+  if (countEl) countEl.textContent = `${filtered.length} amigo${filtered.length === 1 ? '' : 's'} en JUMA`;
 
   if (!filtered.length) {
     container.innerHTML = `
       <div style="text-align:center;padding:32px 14px;background:#F8FAFD;border-radius:14px;border:1px dashed var(--line)">
         <span style="font-size:32px;display:block;margin-bottom:6px">👥</span>
-        <b style="font-size:14.5px;color:var(--navy);display:block">No se encontraron miembros</b>
-        <p style="margin:4px 0 0;font-size:13px;color:var(--muted)">Intenta con otro término de búsqueda o selecciona «Todos» en los filtros.</p>
+        <b style="font-size:14.5px;color:var(--navy);display:block">No se encontraron amigos</b>
+        <p style="margin:4px 0 0;font-size:13px;color:var(--muted)">Intenta escribiendo otro nombre en la búsqueda.</p>
       </div>`;
     return;
   }
 
   container.innerHTML = filtered.map((m) => {
-    const rBadge = roleBadgeHtml(m.rol);
     return `
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:#fff;border:1.5px solid var(--line);box-shadow:0 2px 6px rgba(0,0,0,.03)">
         <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">
-          <div style="width:42px;height:42px;border-radius:50%;overflow:hidden;background:var(--mist);display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:2px solid ${m.rol === 'coordinador' ? '#F5C518' : 'var(--royal)'}">
+          <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;background:var(--mist);display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:2px solid var(--royal)">
             ${m.foto ? `<img src="${esc(m.foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:17px;color:var(--royal)">${esc(m.primerNombre.charAt(0).toUpperCase())}</b>`}
           </div>
           <div style="min-width:0;flex:1">
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">
-              <b style="font-size:14.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.nombre)}</b>
-              ${rBadge}
-            </div>
-            <small style="display:block;font-size:12px;color:var(--muted)">${esc(m.parroquia || 'JUMA Duaca')}</small>
+            <b style="font-size:15px;color:var(--navy);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.nombre)}</b>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex:0 0 auto">
-          ${(m.rol === 'coordinador' || m.rol === 'asesor' || m.rol === 'participante') ? `<button type="button" class="btn btn-soft btn-sm" data-view-member-carnet="${esc(m.uid)}" style="min-height:34px;padding:0 10px;font-size:12px;background:#F1F5F9;color:var(--navy);border:1px solid var(--line)" title="Ver carnet misionero">🪪 Carnet</button>` : ''}
-          <button type="button" class="btn btn-blue btn-sm" data-open-dm="${esc(m.uid)}" style="min-height:34px;padding:0 12px;font-size:12px" title="Enviar mensaje">💬 Escribir</button>
+          <button type="button" class="btn btn-blue btn-sm" data-open-dm="${esc(m.uid)}" style="min-height:36px;padding:0 14px;font-size:13px;font-weight:700;border-radius:10px" title="Escribir mensaje">💬 Escribir</button>
         </div>
       </div>
     `;
   }).join('');
-}
-
-function openMemberCarnetModal(targetUid) {
-  const target = (allInscripciones || []).find((x) => x && (x.id === targetUid || x.uid === targetUid));
-  if (!target) return;
-  const targetRole = userRole(target);
-  if (targetRole !== 'coordinador' && targetRole !== 'asesor' && targetRole !== 'participante') {
-    showToast('Los visitantes y colaboradores no poseen carnet misionero.');
-    return;
-  }
-  const d = target.datos || {};
-  const nom = target.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Misionero';
-  const html = `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="mc-t">
-    <div class="sheet" style="max-width:620px">
-      ${sheetHead('Carnet Misionero · JUMA Duaca', 'Carnet de ' + nom, 'mc-t')}
-      <div style="padding:clamp(20px,4vw,32px);text-align:center">
-        ${carnetInteractiveSectionHtml(target, target.uid || target.id)}
-        <div style="display:flex;justify-content:center;gap:10px;margin-top:20px;flex-wrap:wrap">
-          <button type="button" class="btn btn-blue btn-sm" data-open-dm="${esc(target.uid || target.id)}">💬 Escribir mensaje</button>
-          <button type="button" class="btn btn-soft btn-sm" data-close>Cerrar</button>
-        </div>
-      </div>
-    </div>
-  </div>`;
-  openModal(html);
 }
 
 function renderComunidadView() {
@@ -2682,30 +2646,21 @@ function renderComunidadView() {
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;align-items:start">
         <!-- Columna 1: Directorio Dinámico de Hermanos de JUMA -->
         <div style="background:#fff;border-radius:18px;border:1.5px solid var(--line);padding:22px;box-shadow:0 4px 16px rgba(0,0,0,.04)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
             <div>
-              <b style="font-size:17px;color:var(--navy);display:flex;align-items:center;gap:8px"><span>👥</span> Hermanos Misioneros</b>
-              <small id="comunidad-members-count" style="color:var(--muted);font-size:12.5px;display:block">${members.length} miembros registrados</small>
+              <b style="font-size:18px;color:var(--navy);display:flex;align-items:center;gap:8px"><span>👥</span> Amigos en JUMA</b>
+              <small id="comunidad-members-count" style="color:var(--muted);font-size:12.5px;display:block">${members.length} amigos registrados</small>
             </div>
             <button type="button" class="btn btn-soft btn-sm" data-open-chat style="min-height:34px;padding:0 12px;font-size:12.5px">💬 Abrir Chat</button>
           </div>
 
-          <!-- Buscador en vivo -->
-          <div style="margin-bottom:12px">
-            <input type="search" id="comunidad-search-in" value="${esc(comunidadSearch)}" placeholder="🔍 Buscar por nombre, apellido o parroquia..." class="chat-input" style="width:100%;min-height:42px;background:#F8FAFD">
+          <!-- Buscador en vivo de amigos -->
+          <div style="margin-bottom:14px">
+            <input type="search" id="comunidad-search-in" value="${esc(comunidadSearch)}" placeholder="🔍 Buscar amigos por nombre…" class="chat-input" style="width:100%;min-height:42px;background:#F8FAFD">
           </div>
 
-          <!-- Filtros por rol -->
-          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">
-            <button type="button" class="chip" data-comunidad-filter="todos" aria-pressed="${comunidadFilter === 'todos'}" style="min-height:34px;padding:0 10px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:99px">Todos (${members.length})</button>
-            <button type="button" class="chip" data-comunidad-filter="coordinador" aria-pressed="${comunidadFilter === 'coordinador'}" style="min-height:34px;padding:0 10px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:99px">★ Coord. (${countCoord})</button>
-            <button type="button" class="chip" data-comunidad-filter="asesor" aria-pressed="${comunidadFilter === 'asesor'}" style="min-height:34px;padding:0 10px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:99px">◆ Asesores (${countAsesor})</button>
-            <button type="button" class="chip" data-comunidad-filter="participante" aria-pressed="${comunidadFilter === 'participante'}" style="min-height:34px;padding:0 10px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:99px">● Participantes (${countPart})</button>
-            <button type="button" class="chip" data-comunidad-filter="visitante" aria-pressed="${comunidadFilter === 'visitante'}" style="min-height:34px;padding:0 10px;font-size:12px;font-weight:700;border:1.5px solid var(--line);border-radius:99px">🤝 Visitantes (${countVis})</button>
-          </div>
-
-          <!-- Lista de miembros -->
-          <div id="comunidad-members-list" style="display:flex;flex-direction:column;gap:10px;max-height:480px;overflow-y:auto;padding-right:4px"></div>
+          <!-- Lista de amigos -->
+          <div id="comunidad-members-list" style="display:flex;flex-direction:column;gap:10px;max-height:500px;overflow-y:auto;padding-right:4px"></div>
         </div>
 
         <!-- Columna 2: Próximo Encuentro y Novedades -->
@@ -2758,26 +2713,18 @@ function updateAuthUI() {
   const fbTabIcon = $('#fb-tab-profile-icon');
   const fbTabLabel = $('#fb-tab-profile-label');
 
-  const trueMaster = isMasterAccount();
-  if (!myProfile && currentUser) {
+  const isExplicitLogout = localStorage.getItem('juma-is-logged-out') === '1';
+  const trueMaster = !isExplicitLogout && isMasterAccount();
+  if (!isExplicitLogout && !myProfile && currentUser) {
     myProfile = findProfileRecord(currentUser.uid, currentUser.email);
   }
-  if (!myProfile) {
+  if (!isExplicitLogout && !myProfile) {
     try {
       const last = localStorage.getItem('juma-ultimo-perfil');
       if (last) myProfile = JSON.parse(last);
-      if (!myProfile) {
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (k && k.startsWith('juma-perfil-') && !k.startsWith('juma-perfil-email-')) {
-            const item = localStorage.getItem(k);
-            if (item) { myProfile = JSON.parse(item); break; }
-          }
-        }
-      }
     } catch (e) {}
   }
-  if (!myProfile && trueMaster) {
+  if (!isExplicitLogout && !myProfile && trueMaster) {
     myProfile = {
       nombre: 'Coordinador Maestro',
       correo: 'jumaduaca@gmail.com',
@@ -2786,13 +2733,15 @@ function updateAuthUI() {
       datos: { nombres: 'Coordinador', apellidos: 'Maestro', correo: 'jumaduaca@gmail.com', tipoRegistro: 'participante' }
     };
   }
+  const isAuth = !isExplicitLogout && !!(currentUser || myProfile || trueMaster || isAdmin);
+  if (!isAuth) {
+    myProfile = null;
+  }
   const role = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : (trueMaster ? 'coordinador' : 'participante'));
-  const masterOn = isAdmin || isEditor() || trueMaster || role === 'coordinador';
+  const masterOn = isAuth && (isAdmin || isEditor() || trueMaster || role === 'coordinador');
 
   if (fab) fab.classList.toggle('hide', !masterOn);
   if (lAdmin) lAdmin.textContent = masterOn ? 'Panel Maestro (Activo)' : 'Acceso Maestro';
-
-  const isAuth = !!(currentUser || myProfile || trueMaster || isAdmin);
 
   if (isAuth) {
     document.body.classList.add('is-authenticated');
@@ -3050,6 +2999,14 @@ modalRoot.addEventListener('click', async (e) => {
   }
 });
 
+modalRoot.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target && e.target.id === 'fast-cedula-in') {
+    e.preventDefault();
+    const btn = $('#btn-fast-cedula-login');
+    if (btn) btn.click();
+  }
+});
+
 modalRoot.addEventListener('click', async (e) => {
   if (e.target.id === 'btn-fast-cedula-login') {
     const inEl = $('#fast-cedula-in');
@@ -3101,6 +3058,7 @@ modalRoot.addEventListener('click', async (e) => {
     }
 
     if (found) {
+      try { localStorage.removeItem('juma-is-logged-out'); } catch (x) {}
       myProfile = found;
       if (userRole(found) === 'coordinador') {
         isAdmin = true;
@@ -3399,181 +3357,153 @@ function authModalHtml() {
     const proxEventos = allUpcomingCalendarEvents().slice(0, 4);
     const remOn = remindersEnabled();
     const badgeTxt = trueMaster ? '★ Perfil Maestro · JUMA Duaca' : (role === 'coordinador' ? '★ Coordinador(a) · JUMA Duaca' : (role === 'asesor' ? '◆ Asesor(a) · JUMA Duaca' : (role === 'visitante' ? '👁 Visitante · JUMA Duaca' : (role === 'colaborador' ? '🤝 Colaborador(a) · JUMA Duaca' : '● Participante · JUMA Duaca'))));
-    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="au-t"><div class="sheet" style="max-width:740px">${sheetHead('Juventud Misionera Allamaniana · Duaca', isJumaMember ? 'Mi perfil misionero' : 'Mi perfil comunitario', 'au-t')}<div style="padding:clamp(22px,4vw,40px)">
-      <div class="u-card" style="display:flex;flex-wrap:wrap;align-items:center;gap:18px">
-        <div class="ribbon" style="position:absolute;top:0;left:0;right:0"></div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto">
-          <div style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,.15);border:3px solid var(--sky);overflow:hidden;display:flex;align-items:center;justify-content:center">
-            ${foto ? `<img src="${esc(foto)}" alt="Foto de perfil" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-size:32px;font-weight:800;color:#fff">${esc(nombre.charAt(0).toUpperCase())}</span>`}
+    const isParticipant = role === 'participante';
+    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="au-t">
+      <div class="sheet" style="max-width:720px;background:#ffffff;border-radius:24px;overflow:hidden">
+        ${sheetHead('Juventud Misionera Allamaniana · Duaca', 'Mi Perfil JUMA', 'au-t')}
+        <div style="padding:0 0 24px">
+          <!-- Portada estilo Facebook -->
+          <div style="position:relative;height:120px;background:linear-gradient(135deg,#061536 0%,#103687 50%,#2452C8 100%);overflow:hidden;display:flex;align-items:flex-end;padding:12px 20px">
+            <div class="ribbon" style="position:absolute;top:0;left:0;right:0"></div>
+            <span style="font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,0.85);z-index:2">JUMA Duaca · Misioneros de la Consolata</span>
           </div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <button type="button" data-start-selfie="auth" style="border:0;background:transparent;padding:0;font-size:12px;font-weight:700;color:var(--sky);cursor:pointer;text-decoration:underline">📸 Cámara</button>
-            <span style="color:rgba(255,255,255,.4)">|</span>
-            <label style="font-size:12px;font-weight:700;color:var(--sky);cursor:pointer;text-decoration:underline;margin:0"><span>🖼️ Galería</span><input type="file" accept="image/*" id="au-avatar" style="display:none"></label>
-            <input type="file" accept="image/*" capture="user" id="au-cam-in" style="display:none">
-          </div>
-        </div>
-        <div style="flex:1 1 200px;min-width:0">
-          <span class="u-badge">${esc(badgeTxt)}</span>
-          <b>${esc(nombre)}</b>
-          <p style="margin:6px 0 0;font-size:15px;color:var(--muted-lt)">${esc(email)}${d.parroquia ? ' · ' + esc(d.parroquia) : ''}${d.sangre ? ' · Sangre ' + esc(d.sangre) : ''}</p>
-        </div>
-        ${selfieBoxHtml('auth')}
-      </div>
 
-      ${masterOn ? `
-      <details class="profile-acc profile-acc-coord">
-        <summary>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:20px">⭐</span>
-            <div style="text-align:left">
-              <b style="color:var(--navy);font-size:15.5px;display:block">${trueMaster ? 'Panel Maestro activo' : 'Panel de Coordinación activo'}</b>
-              <small style="color:var(--muted);font-size:12px;font-weight:600">Herramientas de coordinación y gestión</small>
-            </div>
-          </div>
-          <span class="profile-acc-arrow">▾</span>
-        </summary>
-        <div class="profile-acc-content">
-          <p style="margin:8px 0 14px;font-size:13.5px;color:var(--ink);line-height:1.5">
-            ${trueMaster ? 'Puedes modificar toda la app, asignar roles, ver el calendario de cumpleaños, descargar carnets, editar la galería y escanear QR.' : 'Puedes ver los participantes, sus carnets, el calendario de cumpleaños, escanear códigos QR de asistencia y actualizar actividades.'}
-          </p>
-          <div style="display:flex;flex-wrap:wrap;gap:8px">
-            <button type="button" class="btn btn-soft btn-sm" data-open-qr-scanner style="background:#fff;border:1.5px solid var(--royal);color:var(--royal)">📷 Escanear QR</button>
-            <button type="button" class="btn btn-soft btn-sm" data-open-cumple-tab style="background:#fff;border:1.5px solid var(--royal);color:var(--royal)">🎂 Cumpleaños</button>
-            <button type="button" class="btn btn-outline btn-sm" data-open-master-panel>Abrir Panel y Editor</button>
-          </div>
-        </div>
-      </details>` : ''}
-
-      ${isJumaMember ? `
-      <!-- 2. Carnet Misionero Digital y Mockup (Solo para participantes de JUMA) -->
-      <details class="profile-acc" open>
-        <summary>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:20px">🪪</span>
-            <div style="text-align:left">
-              <b style="color:var(--navy);font-size:15.5px;display:block">Carnet Misionero y Mockup Digital</b>
-              <small style="color:var(--muted);font-size:12px;font-weight:600">Carnet oficial HD y diseño en franela JUMA</small>
-            </div>
-          </div>
-          <span class="profile-acc-arrow">▾</span>
-        </summary>
-        <div class="profile-acc-content" style="padding:14px 14px 18px">
-          ${carnetInteractiveSectionHtml(myProfile || { uid: currentUser && currentUser.uid, correo: email, nombre, foto, datos: d }, 'profile')}
-        </div>
-      </details>
-
-      <!-- 3. Mi código QR de asistencia (Solo para participantes de JUMA) -->
-      <details class="profile-acc">
-        <summary>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:20px">📷</span>
-            <div style="text-align:left">
-              <b style="color:var(--navy);font-size:15.5px;display:block">Mi código QR de asistencia</b>
-              <small style="color:var(--muted);font-size:12px;font-weight:600">${misAsistencias.length} asistencia${misAsistencias.length === 1 ? '' : 's'} registradas (6 meses)</small>
-            </div>
-          </div>
-          <span class="profile-acc-arrow">▾</span>
-        </summary>
-        <div class="profile-acc-content" style="padding-top:16px">
-          <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:center">
-            <div style="flex:0 0 auto;text-align:center;margin:0 auto">
-              <img src="${esc(qrUrl)}" alt="Mi código QR JUMA" width="140" height="140" style="display:block;border-radius:12px;border:2px solid var(--royal);padding:6px;background:#fff">
-            </div>
-            <div style="flex:1 1 220px;text-align:left">
-              <div style="margin-bottom:6px">${roleBadgeHtml(role)}</div>
-              <b style="display:block;font-size:16px;color:var(--ink)">Código QR personal</b>
-              <p style="margin:4px 0 12px;font-size:13.5px;color:var(--muted);line-height:1.45">Muéstrale este código QR a los coordinadores al llegar a los encuentros o misiones para marcar tu asistencia.</p>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-                <span style="padding:5px 12px;border-radius:99px;background:var(--mist);color:var(--royal);font-size:12.5px;font-weight:800">📋 ${misAsistencias.length} asistencia${misAsistencias.length === 1 ? '' : 's'}</span>
+          <!-- Cabecera de Perfil: Avatar superpuesto + Nombre + Acciones -->
+          <div style="padding:0 24px;position:relative">
+            <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:-44px;margin-bottom:14px">
+              <div style="display:flex;align-items:flex-end;gap:16px">
+                <!-- Avatar Circular -->
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+                  <div style="width:88px;height:88px;border-radius:50%;background:#ffffff;border:4px solid #ffffff;box-shadow:0 6px 18px rgba(6,21,54,.2);overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative">
+                    ${foto ? `<img src="${esc(foto)}" alt="Foto de perfil" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-size:36px;font-weight:900;color:var(--royal)">${esc(nombre.charAt(0).toUpperCase())}</span>`}
+                  </div>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <button type="button" data-start-selfie="auth" class="btn btn-soft btn-sm" style="min-height:28px;padding:0 8px;font-size:11.5px;font-weight:700">📷 Foto</button>
+                    <label class="btn btn-soft btn-sm" style="min-height:28px;padding:0 8px;font-size:11.5px;font-weight:700;cursor:pointer;margin:0"><span>🖼️ Galería</span><input type="file" accept="image/*" id="au-avatar" style="display:none"></label>
+                    <input type="file" accept="image/*" capture="user" id="au-cam-in" style="display:none">
+                  </div>
+                </div>
+                <!-- Nombre y Rol -->
+                <div style="margin-bottom:8px">
+                  <span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:800;background:#E8F1FF;color:var(--royal);border:1px solid #B9C8E4;margin-bottom:4px">${esc(badgeTxt)}</span>
+                  <h3 style="margin:0;font-size:clamp(22px,3.5vw,28px);font-weight:900;color:var(--navy);line-height:1.15">${esc(nombre)}</h3>
+                  <small style="color:var(--muted);font-size:13px;display:block;margin-top:2px">Miembro activo de la comunidad</small>
+                </div>
               </div>
-              ${misAsistencias.length ? `<details style="margin-top:10px"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--royal)">Ver formaciones asistidas</summary><ul style="margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--ink)">${misAsistencias.map((a) => `<li style="margin-bottom:4px"><b>${esc(a.titulo || 'Formación')}</b> — ${esc(a.fecha ? a.fecha.split('-').reverse().join('/') : '')} <span style="color:var(--muted)">(${esc(a.tipo || 'Formación')})</span></li>`).join('')}</ul></details>` : ''}
-            </div>
-          </div>
-        </div>
-      </details>` : `
-      <!-- Datos de registro para Visitantes y Colaboradores (sin carnet de participante) -->
-      <details class="profile-acc" open>
-        <summary>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:20px">🤝</span>
-            <div style="text-align:left">
-              <b style="color:var(--navy);font-size:15.5px;display:block">Datos de mi registro comunitario</b>
-              <small style="color:var(--muted);font-size:12px;font-weight:600">${esc(d.categoriaVisitante || 'Colaborador(a) / Visitante de la Comunidad')}</small>
-            </div>
-          </div>
-          <span class="profile-acc-arrow">▾</span>
-        </summary>
-        <div class="profile-acc-content" style="padding-top:16px">
-          <div style="padding:16px 18px;border-radius:14px;background:#F8FAFD;border:1.5px solid var(--line);line-height:1.6">
-            <p style="margin:0 0 12px;font-size:14.5px;color:var(--ink)">
-              Estás registrado(a) como <b>${esc(roleLabel(role))}</b> en la comunidad de JUMA Duaca.
-            </p>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 18px;font-size:13.5px">
-              ${d.nombres ? `<div><span style="color:var(--muted)">Nombre:</span> <b>${esc(d.nombres)} ${esc(d.apellidos || '')}</b></div>` : ''}
-              ${d.cedula ? `<div><span style="color:var(--muted)">Cédula:</span> <b>${esc(d.cedula)}</b></div>` : ''}
-              ${d.celular ? `<div><span style="color:var(--muted)">Celular:</span> <b>${esc(d.celular)}</b></div>` : ''}
-              ${email ? `<div><span style="color:var(--muted)">Correo:</span> <b>${esc(email)}</b></div>` : ''}
-              ${d.categoriaVisitante ? `<div><span style="color:var(--muted)">Categoría:</span> <b>${esc(d.categoriaVisitante)}</b></div>` : ''}
-            </div>
-          </div>
-        </div>
-      </details>`}
 
-      <!-- 4. Próximas actividades y recordatorios (Desplegable) -->
-      <details class="profile-acc">
-        <summary>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:20px">📅</span>
-            <div style="text-align:left">
-              <b style="color:var(--navy);font-size:15.5px;display:block">Próximas actividades y recordatorios</b>
-              <small style="color:var(--muted);font-size:12px;font-weight:600">${remOn ? '🔔 Recordatorio activo' : 'Alarmas y sincronización'}</small>
+              <!-- Botones de Acción Estilo Facebook -->
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
+                <button type="button" class="btn btn-soft btn-sm" data-close style="min-height:38px;padding:0 14px;font-size:13px;font-weight:800;background:#E8F1FF;color:var(--royal);border:1.5px solid var(--royal)">✕ Cerrar perfil</button>
+                <button type="button" class="btn btn-soft btn-sm" data-edit-my-form style="min-height:38px;padding:0 14px;font-size:13px;font-weight:700">✏️ Editar datos</button>
+                <button type="button" class="btn btn-soft btn-sm" data-open-chat style="min-height:38px;padding:0 14px;font-size:13px;font-weight:700">💬 Mensajes</button>
+                <button type="button" class="btn btn-danger btn-sm" data-logout style="min-height:38px;padding:0 14px;font-size:13px;font-weight:700">🚪 Cerrar sesión</button>
+              </div>
             </div>
-          </div>
-          <span class="profile-acc-arrow">▾</span>
-        </summary>
-        <div class="profile-acc-content" style="padding-top:16px">
-          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
-            <div>
-              <b style="display:block;font-size:15px;color:var(--ink)">Sincronizar con tu teléfono</b>
-              <p style="margin:2px 0 0;font-size:13px;color:var(--muted)">Guarda los encuentros con alarmas automáticas.</p>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:8px">
-              <button type="button" class="btn ${remOn ? 'btn-blue' : 'btn-outline'} btn-sm" data-toggle-rem>${remOn ? '🔔 Recordatorio activo' : '🔔 Activar recordatorio'}</button>
-              <button type="button" class="btn btn-soft btn-sm" data-dl-ics>📲 Sincronizar (.ics)</button>
-            </div>
-          </div>
-          ${proxEventos.length ? `<div style="display:grid;gap:8px">${proxEventos.map((ev) => `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-radius:10px;background:#F6F9FE;border:1px solid var(--line)"><div><b style="font-size:14px;color:var(--ink)">${esc(ev.title)}</b><span style="display:block;font-size:12px;color:var(--muted)">${esc(ev.badge)} · ${esc(hora())} · ${esc(lugar())}</span></div><a class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:12px" target="_blank" rel="noopener" href="${esc(googleCalUrl(ev))}">📅 Google Cal</a></div>`).join('')}</div>` : ''}
-        </div>
-      </details>
+            ${selfieBoxHtml('auth')}
 
-      ${isJumaMember ? `
-      <!-- 5. Datos de mi planilla guardada (Desplegable - Solo para participantes) -->
-      <details class="profile-acc">
-        <summary>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:20px">📋</span>
-            <div style="text-align:left">
-              <b style="color:var(--navy);font-size:15.5px;display:block">Datos de mi planilla guardada</b>
-              <small style="color:var(--muted);font-size:12px;font-weight:600">${rows.length ? rows.length + ' campos registrados' : 'Planilla pendiente'}</small>
+            <!-- Tarjetas de Información Importante (Solo datos clave) -->
+            <div style="margin-top:16px;border-top:1.5px solid var(--line);padding-top:18px">
+              <b style="font-size:15px;color:var(--navy);display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                <span>ℹ️</span> Información personal destacada
+              </b>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px">
+                <div style="padding:12px 14px;border-radius:12px;background:#F8FAFD;border:1.5px solid var(--line)">
+                  <span style="font-size:12px;color:var(--muted);display:block">📍 Parroquia / Capilla</span>
+                  <b style="font-size:14px;color:var(--navy)">${esc(d.parroquia || 'San Juan Bautista de Duaca')}</b>
+                </div>
+                <div style="padding:12px 14px;border-radius:12px;background:#F8FAFD;border:1.5px solid var(--line)">
+                  <span style="font-size:12px;color:var(--muted);display:block">🎂 Fecha de nacimiento / Edad</span>
+                  <b style="font-size:14px;color:var(--navy)">${d.nac ? esc(d.nac.split('-').reverse().join('/')) : 'Registrado'}${edadDe(d) ? ' (' + edadDe(d) + ' años)' : ''}</b>
+                </div>
+                <div style="padding:12px 14px;border-radius:12px;background:#F8FAFD;border:1.5px solid var(--line)">
+                  <span style="font-size:12px;color:var(--muted);display:block">📱 Teléfono celular</span>
+                  <b style="font-size:14px;color:var(--navy)">${esc(d.celular || 'No registrado')}</b>
+                </div>
+                <div style="padding:12px 14px;border-radius:12px;background:#F8FAFD;border:1.5px solid var(--line)">
+                  <span style="font-size:12px;color:var(--muted);display:block">✉️ Correo electrónico</span>
+                  <b style="font-size:14px;color:var(--navy);word-break:break-all">${esc(email || 'No registrado')}</b>
+                </div>
+                <div style="padding:12px 14px;border-radius:12px;background:#F8FAFD;border:1.5px solid var(--line)">
+                  <span style="font-size:12px;color:var(--muted);display:block">🩸 Grupo sanguíneo</span>
+                  <b style="font-size:14px;color:var(--navy)">${esc(d.sangre || 'No registrado')}</b>
+                </div>
+                <div style="padding:12px 14px;border-radius:12px;background:#F8FAFD;border:1.5px solid var(--line)">
+                  <span style="font-size:12px;color:var(--muted);display:block">📋 Asistencias registradas</span>
+                  <b style="font-size:14px;color:var(--navy)">${misAsistencias.length} en últimos 6 meses</b>
+                </div>
+              </div>
+            </div>
+
+            <!-- Carnet Misionero Oficial (EXCLUSIVO para participantes de JUMA) -->
+            ${isParticipant ? `
+            <details class="profile-acc" style="margin-top:16px" open>
+              <summary>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:20px">🪪</span>
+                  <div style="text-align:left">
+                    <b style="color:var(--navy);font-size:15px;display:block">Mi Carnet Misionero Oficial y Mockup</b>
+                    <small style="color:var(--muted);font-size:12px;font-weight:600">Descarga tu carnet en HD y con Código QR</small>
+                  </div>
+                </div>
+                <span class="profile-acc-arrow">▾</span>
+              </summary>
+              <div class="profile-acc-content" style="padding:16px 14px">
+                ${carnetInteractiveSectionHtml(myProfile || { uid: currentUser && currentUser.uid, correo: email, nombre, foto, datos: d }, 'profile')}
+              </div>
+            </details>` : ''}
+
+            <!-- Próximos Encuentros y Recordatorios -->
+            <details class="profile-acc" style="margin-top:14px">
+              <summary>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:20px">📅</span>
+                  <div style="text-align:left">
+                    <b style="color:var(--navy);font-size:15px;display:block">Próximos Encuentros y Calendario</b>
+                    <small style="color:var(--muted);font-size:12px;font-weight:600">${remOn ? '🔔 Recordatorios activos' : 'Sincronizar con calendario'}</small>
+                  </div>
+                </div>
+                <span class="profile-acc-arrow">▾</span>
+              </summary>
+              <div class="profile-acc-content" style="padding:14px">
+                <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
+                  <span style="font-size:13.5px;color:var(--ink)">Guarda los encuentros dominicales en tu teléfono:</span>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    <button type="button" class="btn ${remOn ? 'btn-blue' : 'btn-outline'} btn-sm" data-toggle-rem style="min-height:36px;padding:0 12px;font-size:12.5px">${remOn ? '🔔 Recordatorio activo' : '🔔 Activar recordatorio'}</button>
+                    <button type="button" class="btn btn-soft btn-sm" data-dl-ics style="min-height:36px;padding:0 12px;font-size:12.5px">📲 Sincronizar (.ics)</button>
+                  </div>
+                </div>
+                ${proxEventos.length ? `<div style="display:grid;gap:8px">${proxEventos.map((ev) => `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-radius:10px;background:#F8FAFD;border:1px solid var(--line)"><div><b style="font-size:14px;color:var(--ink)">${esc(ev.title)}</b><span style="display:block;font-size:12px;color:var(--muted)">${esc(ev.badge)} · ${esc(hora())} · ${esc(lugar())}</span></div><a class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:12px" target="_blank" rel="noopener" href="${esc(googleCalUrl(ev))}">📅 Google Cal</a></div>`).join('')}</div>` : ''}
+              </div>
+            </details>
+
+            <!-- Herramientas de Coordinación (Solo para Coordinadores o Maestro) -->
+            ${masterOn ? `
+            <details class="profile-acc profile-acc-coord" style="margin-top:14px">
+              <summary>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:20px">⭐</span>
+                  <div style="text-align:left">
+                    <b style="color:var(--navy);font-size:15px;display:block">${trueMaster ? 'Panel Maestro Activo' : 'Panel de Coordinación Activo'}</b>
+                    <small style="color:var(--muted);font-size:12px;font-weight:600">Herramientas de gestión y asistencia</small>
+                  </div>
+                </div>
+                <span class="profile-acc-arrow">▾</span>
+              </summary>
+              <div class="profile-acc-content" style="padding:14px">
+                <div style="display:flex;flex-wrap:wrap;gap:8px">
+                  <button type="button" class="btn btn-soft btn-sm" data-open-qr-scanner style="background:#fff;border:1.5px solid var(--royal);color:var(--royal);font-weight:700">📷 Escanear QR</button>
+                  <button type="button" class="btn btn-soft btn-sm" data-open-cumple-tab style="background:#fff;border:1.5px solid var(--royal);color:var(--royal);font-weight:700">🎂 Cumpleaños</button>
+                  <button type="button" class="btn btn-outline btn-sm" data-open-master-panel style="font-weight:700">⚙️ Abrir Panel y Editor</button>
+                </div>
+              </div>
+            </details>` : ''}
+            <div style="margin-top:24px;padding:16px 0 8px;border-top:1.5px solid var(--line);display:flex;justify-content:center">
+              <button type="button" class="btn btn-blue" data-close style="min-height:44px;padding:0 32px;font-size:14.5px;font-weight:800;border-radius:99px;box-shadow:0 4px 14px rgba(36,82,200,.35)">✕ Cerrar perfil y volver a la página</button>
             </div>
           </div>
-          <span class="profile-acc-arrow">▾</span>
-        </summary>
-        <div class="profile-acc-content" style="padding-top:16px">
-          ${rows.length ? `<dl style="margin:0;background:#F6F9FE;border:1px solid var(--line);border-radius:12px;padding:6px 16px">${rows.map((r) => `<div style="display:flex;flex-wrap:wrap;gap:4px 18px;padding:8px 0;border-bottom:1px solid var(--mist)"><dt style="flex:0 0 160px;font-size:13.5px;font-weight:700;color:var(--royal)">${esc(r[0])}</dt><dd style="margin:0;flex:1 1 160px;font-size:14px">${esc(r[1])}</dd></div>`).join('')}</dl>` : `<div style="padding:16px;border-radius:12px;background:var(--mist)"><p class="body" style="margin:0">Tu cuenta está activa, pero aún no has completado tu planilla misionera.</p></div>`}
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">
-            <button type="button" class="btn btn-blue btn-sm" data-edit-my-form>${rows.length ? 'Actualizar mi planilla' : 'Completar mi planilla ahora'}</button>
-            ${rows.length ? `<button type="button" class="btn btn-soft btn-sm" data-dl-profile>Descargar planilla con QR</button>` : ''}
-            ${rows.length && wa.length ? `<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="https://wa.me/${wa[0]}?text=${encodeURIComponent(planillaTexto(d))}">Enviar por WhatsApp</a>` : ''}
-          </div>
         </div>
-      </details>` : ''}
-
-      <div style="display:flex;justify-content:flex-end;margin-top:20px">
-        <button type="button" class="btn btn-danger btn-sm" data-logout>Cerrar sesión</button>
       </div>
-    </div></div></div>`;
+    </div>`;
   }
 
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="au-t"><div class="sheet" style="max-width:520px">${sheetHead('Juventud Misionera Allamaniana · Duaca', 'Iniciar sesión', 'au-t')}<div style="padding:clamp(22px,4vw,40px)">
@@ -4303,15 +4233,26 @@ modalRoot.addEventListener('click', async (e) => {
   if (e.target.closest('[data-logout]')) {
     stopQrCamera();
     try { if (fb && fb.auth) await fb.au.signOut(fb.auth); } catch (x) {}
-    try { sessionStorage.removeItem('juma-ed'); localStorage.removeItem('juma-master-device'); localStorage.removeItem('juma-ultimo-perfil'); } catch (x) {}
+    try {
+      sessionStorage.clear();
+      localStorage.removeItem('juma-ed');
+      localStorage.removeItem('juma-master-device');
+      localStorage.removeItem('juma-ultimo-perfil');
+      localStorage.setItem('juma-is-logged-out', '1');
+    } catch (x) {}
     currentUser = null; myProfile = null; isAdmin = false;
-    updateAuthUI(); closeModal(); return;
+    updateAuthUI();
+    closeModal();
+    switchSection('inicio');
+    showToast('Has cerrado sesión.');
+    return;
   }
   if (e.target.closest('[data-google-login]')) {
     if (!fb || !fb.auth || !fb.au.GoogleAuthProvider) { authErr = 'Espera un momento a que conecte o ingresa con correo y contraseña.'; repaintAuth(); return; }
     authBusy = true; authErr = ''; authOk = ''; repaintAuth();
     try {
       const cred = await fb.au.signInWithPopup(fb.auth, new fb.au.GoogleAuthProvider());
+      try { localStorage.removeItem('juma-is-logged-out'); } catch (x) {}
       currentUser = cred.user;
       await loadUserProfile(currentUser);
       if (isMasterEmail(currentUser.email) || (myProfile && userRole(myProfile) === 'coordinador')) {
@@ -4480,7 +4421,7 @@ modalRoot.addEventListener('submit', async (e) => {
         if (loc) myProfile = loc;
         else throw new Error('no-local');
       }
-      if (myProfile) { try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile)); } catch (x) {} }
+      if (myProfile) { try { localStorage.removeItem('juma-is-logged-out'); localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile)); } catch (x) {} }
       authBusy = false; updateAuthUI();
       if (needsMandatoryPhoto(myProfile)) {
         openForcePhotoModal();
@@ -4493,7 +4434,7 @@ modalRoot.addEventListener('submit', async (e) => {
       if (loc) {
         myProfile = loc;
         if (userRole(myProfile) === 'coordinador') { isAdmin = true; try { sessionStorage.setItem('juma-ed', '1'); } catch (x) {} showFab(); }
-        try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(loc)); } catch (x) {}
+        try { localStorage.removeItem('juma-is-logged-out'); localStorage.setItem('juma-ultimo-perfil', JSON.stringify(loc)); } catch (x) {}
         updateAuthUI();
         if (needsMandatoryPhoto(myProfile)) {
           openForcePhotoModal();
@@ -5002,7 +4943,7 @@ function getCelebrantRecord(targetRecOrId) {
   if (matchCum) return matchCum;
   const matchIns = allInscripciones.find((x) => x && (x.id === id || x.uid === id));
   if (matchIns) return matchIns;
-  return myProfile || { nombre: 'Gabriel Gómez', rolTxt: 'Coordinador' };
+  return myProfile || null;
 }
 
 async function renderBirthdayFlyerCanvas(rec, customMessage) {
@@ -5680,11 +5621,12 @@ function showBirthdayCelebration(rec, isPreview = false) {
         <div class="cumple-name">${esc(nombre)} 🎉</div>
         <p class="cumple-msg-direct">${esc(msgFinal)}</p>
         ${isCoordinatorOrMaster() ? `<button type="button" class="btn btn-sm" data-share-flyer-id="${esc((rec && (rec.id || ('extra-' + (rec.extraIdx !== undefined ? rec.extraIdx : '')))) || '')}" style="margin-top:14px;min-height:38px;padding:0 18px;font-size:13.5px;font-weight:800;background:#F5C518;color:#061536;border:0;border-radius:99px;box-shadow:0 6px 18px rgba(245,197,24,0.4);cursor:pointer">🎉 Felicitar en el Grupo de WhatsApp</button>` : ''}
+        <button type="button" class="btn btn-sm" data-close-cumple style="margin-top:14px;min-height:38px;padding:0 22px;font-size:13.5px;font-weight:800;background:rgba(255,255,255,0.18);color:#fff;border:1.5px solid rgba(255,255,255,0.4);border-radius:99px;cursor:pointer">✕ Cerrar felicitación</button>
       </div>
     </div>
 
     <!-- Lluvia de emojis cayendo POR ENCIMA del texto, foto y tarjeta (z-index 20) -->
-    <div class="cumple-rain-container" id="cumple-rain"></div>
+    <div class="cumple-rain-container" id="cumple-rain" style="pointer-events:none"></div>
   `;
 
   document.body.appendChild(modal);
@@ -5705,9 +5647,15 @@ function showBirthdayCelebration(rec, isPreview = false) {
   const closeFn = () => {
     stopBirthdayAudio();
     modal.classList.add('is-out');
+    document.removeEventListener('keydown', onKeyEsc);
     setTimeout(() => modal.remove(), 200);
   };
+  const onKeyEsc = (e) => { if (e.key === 'Escape') closeFn(); };
+  document.addEventListener('keydown', onKeyEsc);
 
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal || e.target.id === 'cumple-rain') closeFn();
+  });
   modal.querySelectorAll('[data-close-cumple]').forEach((b) => b.addEventListener('click', closeFn));
   const sndBtn = modal.querySelector('[data-toggle-sound]');
   if (sndBtn) sndBtn.addEventListener('click', toggleBirthdayAudio);
@@ -6999,7 +6947,7 @@ async function loadContenido() {
       updateChatBadge();
     }
   } catch (e) {}
-  renderAll(); setupUnroll(); updateAuthUI();
+  renderAll(); setupUnroll(); updateAuthUI(); lock(false);
   const initHash = location.hash ? location.hash.slice(1) : 'inicio';
   switchSection(initHash, false);
   window.addEventListener('hashchange', () => {

@@ -36,7 +36,10 @@ body{margin:0}
 html{scroll-behavior:smooth}
 a{color:inherit}
 button{font-family:inherit;cursor:pointer}
-input,textarea{font-family:inherit}
+input,textarea,select{font-family:inherit}
+@media (max-width: 768px) {
+  input, select, textarea { font-size: 16px !important; }
+}
 
 /* ===== tokens: tela azul Consolata + cintas de los cinco continentes ===== */
 .jm{
@@ -473,7 +476,7 @@ details[open] > summary .pd-ic::after{transform:translate(-50%,-50%) rotate(0deg
 }
 
 /* ===== extras del sitio independiente + modo app nativa ===== */
-html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
+html,body{-webkit-tap-highlight-color:transparent}
 @media (display-mode:standalone),(display-mode:fullscreen){
 .topbar{padding-top:env(safe-area-inset-top,0px)}
 .topbar,.btn,.navlink,.pennant,.etab{user-select:none;-webkit-user-select:none}
@@ -569,7 +572,7 @@ html,body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 .chat-time{font-size:10.5px;opacity:.7;margin-top:4px;text-align:right}
 .chat-bubble.mine .chat-time{color:rgba(255,255,255,.8)}
 .chat-input-bar{padding:12px 16px;background:#fff;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;flex:0 0 auto}
-.chat-input{flex:1;min-height:44px;padding:10px 14px;border-radius:24px;border:1.5px solid var(--line);font-size:14.5px;font-family:inherit;outline:none;background:#F8FAFC}
+.chat-input{flex:1;min-height:44px;padding:10px 14px;border-radius:24px;border:1.5px solid var(--line);font-size:16px;font-family:inherit;outline:none;background:#F8FAFC}
 .chat-input:focus{border-color:var(--royal);background:#fff}
 .chat-send-btn{width:44px;height:44px;border-radius:50%;background:var(--royal);color:#fff;border:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;transition:transform .15s}
 .chat-send-btn:hover{transform:scale(1.05);background:var(--navy)}
@@ -657,6 +660,7 @@ body.modo-corrido .j-view { display: block!important; }
     padding: 0 !important;
     align-items: flex-end !important;
     justify-content: center !important;
+    overflow: hidden !important;
   }
   .sheet, .chat-sheet, .notif-sheet {
     width: 100% !important;
@@ -676,11 +680,13 @@ body.modo-corrido .j-view { display: block!important; }
     z-index: 30 !important;
     flex: 0 0 auto !important;
     padding: 14px 18px !important;
+    touch-action: pan-y !important;
   }
   .sheet > div:not(.sheet-head) {
     flex: 1 1 auto !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
   }
   .fb-tabbar {
     grid-template-columns: repeat(4, 1fr) !important;
@@ -827,16 +833,52 @@ body.modo-corrido .j-view { display: block!important; }
   border-radius: 50%;
   flex-shrink: 0;
   box-shadow: 0 0 0 2px rgba(255,255,255,0.8);
-.fb-tabbar { display: none !important; }
+}
+
+/* Modales y Hojas: Fondo blanco sólido y alto contraste permanente */
+.sheet, .chat-sheet, .notif-sheet {
+  background: #ffffff !important;
+  color: var(--ink) !important;
+}
+.chat-msgs-wrap, .notif-list {
+  background: #FAFBFD !important;
+}
+.chat-top, .sheet-head {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--cloth) 100%) !important;
+  color: #ffffff !important;
+}
+.chat-top *, .sheet-head * {
+  color: #ffffff;
+}
+.chat-top small, .sheet-head small {
+  color: var(--sky) !important;
+}
+.notif-item {
+  background: #ffffff !important;
+  color: var(--ink) !important;
+  border: 1.5px solid var(--line) !important;
+}
+.notif-item b {
+  color: var(--navy) !important;
+}
+
+/* Barra de navegación estilo Facebook */
+body.is-guest .fb-tabbar { display: none !important; }
+body.is-authenticated .fb-tabbar { display: flex !important; }
+
 @media (min-width: 981px) {
-  .fb-tabbar { display: none !important; }
-  body.is-authenticated .fb-tabbar { display: none !important; }
   body.is-guest #btn-top-menu { display: none !important; }
+  body.is-authenticated .fb-tabbar {
+    max-width: 640px;
+    margin: 0 auto;
+    border-radius: 0 0 16px 16px;
+    border-left: 1.5px solid var(--line);
+    border-right: 1.5px solid var(--line);
+    border-bottom: 1.5px solid var(--line);
+  }
 }
 @media (max-width: 980px) {
   .navlinks { display: none !important; }
-  body.is-authenticated .fb-tabbar { display: flex !important; }
-  body.is-guest .fb-tabbar { display: none !important; }
   body.is-guest #btn-top-menu { display: inline-flex !important; }
   body.is-authenticated #btn-top-menu { display: none !important; }
 }
@@ -1485,8 +1527,8 @@ body.modo-corrido .j-view { display: block!important; }
 <div id="modal-root"></div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=55"></script>
-<script type="module" src="js/fe.js?v=55"></script>
+<script type="module" src="js/app.js?v=58"></script>
+<script type="module" src="js/fe.js?v=58"></script>
 <div class="social-dock" id="social-dock"></div>
 </body>
 </html>
