@@ -961,7 +961,10 @@ function setupUnroll() {
 /* ===================== ventanas ===================== */
 const modalRoot = $('#modal-root');
 let modalKey = null;
-function lock(on) { document.documentElement.style.overflow = on ? 'hidden' : ''; }
+function lock(on) {
+  document.documentElement.style.overflow = on ? 'hidden' : '';
+  document.body.style.overflow = on ? 'hidden' : '';
+}
 function openModal(html, onKey) {
   modalRoot.innerHTML = html; lock(true); modalKey = onKey || null;
   setTimeout(() => { const f = modalRoot.querySelector('input,textarea'); if (f) f.focus(); }, 260);
@@ -979,14 +982,28 @@ function closeModal() {
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalRoot.firstChild && modalKey !== 'force-photo') closeModal(); });
 modalRoot.addEventListener('click', (e) => {
   if (modalKey === 'force-photo') return;
-  if (e.target.closest('[data-close]') || e.target.classList.contains('overlay')) closeModal();
+  if (e.target.closest('[data-close]') || e.target.classList.contains('overlay') || e.target === modalRoot) closeModal();
 });
+const closeBtn = '<button type="button" class="btn btn-soft btn-sm" data-close aria-label="Cerrar ventana" style="min-height:42px;min-width:42px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.18);color:#fff;cursor:pointer;flex:0 0 auto">✕</button>';
 const sheetHead = (kicker, title, id) => `<div class="sheet-head"><div class="ribbon" aria-hidden="true" style="position:absolute;top:0;left:0;right:0"></div><div style="display:flex;align-items:center;gap:16px"><div style="flex:1 1 auto;min-width:0"><div style="font-size:13px;color:var(--muted-lt)">${esc(kicker)}</div><h2 id="${id}" class="h-display" style="margin-top:4px;font-size:clamp(28px,4vw,38px)">${esc(title)}</h2></div>${closeBtn}</div></div>`;
 const sheetHeadNoClose = (kicker, title, id) => `<div class="sheet-head"><div class="ribbon" aria-hidden="true" style="position:absolute;top:0;left:0;right:0"></div><div style="display:flex;align-items:center;gap:16px"><div style="flex:1 1 auto;min-width:0"><div style="font-size:13px;color:var(--muted-lt)">${esc(kicker)}</div><h2 id="${id}" class="h-display" style="margin-top:4px;font-size:clamp(28px,4vw,38px)">${esc(title)}</h2></div></div></div>`;
 
 /* ===================== estado de usuario, registro y planilla ===================== */
 let currentUser = null;
 let myProfile = null;
+try {
+  const last = localStorage.getItem('juma-ultimo-perfil');
+  if (last) myProfile = JSON.parse(last);
+  if (!myProfile) {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('juma-perfil-') && !k.startsWith('juma-perfil-email-')) {
+        const item = localStorage.getItem(k);
+        if (item) { myProfile = JSON.parse(item); break; }
+      }
+    }
+  }
+} catch (e) {}
 let allInscripciones = [];
 try { allInscripciones = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]'); } catch (e) {}
 let allMensajes = [];
@@ -1047,12 +1064,34 @@ function waNums() { return String(cfg.whatsapp || WA_DEFAULT).split(/[,;\n]+/).m
 function waLabel(n) { const d = n.startsWith('58') ? '0' + n.slice(2) : n; return d.length === 11 ? d.slice(0, 4) + '-' + d.slice(4, 7) + '-' + d.slice(7) : d; }
 function planillaTexto(src) { return 'PLANILLA DE INSCRIPCIÓN · JUMA Duaca\n\n' + summaryRows(src).map((r) => r[0] + ': ' + r[1]).join('\n'); }
 async function shrinkAvatarDataUrl(file) {
-  const bmp = await createImageBitmap(file);
-  const s = Math.min(bmp.width, bmp.height);
-  const sx = Math.round((bmp.width - s) / 2), sy = Math.round((bmp.height - s) / 2);
-  const cv = document.createElement('canvas'); cv.width = 420; cv.height = 420;
-  cv.getContext('2d').drawImage(bmp, sx, sy, s, s, 0, 0, 420, 420);
-  return cv.toDataURL('image/jpeg', 0.84);
+  try {
+    if (typeof createImageBitmap === 'function') {
+      const bmp = await createImageBitmap(file);
+      const s = Math.min(bmp.width, bmp.height);
+      const sx = Math.round((bmp.width - s) / 2), sy = Math.round((bmp.height - s) / 2);
+      const cv = document.createElement('canvas'); cv.width = 500; cv.height = 500;
+      cv.getContext('2d').drawImage(bmp, sx, sy, s, s, 0, 0, 500, 500);
+      return cv.toDataURL('image/jpeg', 0.86);
+    }
+  } catch (e) {}
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const s = Math.min(img.naturalWidth || img.width, img.naturalHeight || img.height);
+        const sx = Math.round(((img.naturalWidth || img.width) - s) / 2);
+        const sy = Math.round(((img.naturalHeight || img.height) - s) / 2);
+        const cv = document.createElement('canvas'); cv.width = 500; cv.height = 500;
+        cv.getContext('2d').drawImage(img, sx, sy, s, s, 0, 0, 500, 500);
+        resolve(cv.toDataURL('image/jpeg', 0.86));
+      };
+      img.onerror = () => resolve(reader.result);
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 /* ===================== Cámara en vivo para foto de perfil y Alerta Obligatoria (Lismar y Juli) ===================== */
@@ -2384,6 +2423,38 @@ function openNotificationsModal() {
   openModal(html, 'notifs');
 }
 
+function openGuestMenuModal() {
+  const sections = [
+    { id: 'inicio', icon: '🏠', title: 'Inicio' },
+    { id: 'quienes', icon: '📖', title: 'Quiénes somos' },
+    { id: 'domingos', icon: '📅', title: 'Eventos y Domingos' },
+    { id: 'formacion', icon: '🎓', title: 'Formación Allamaniana' },
+    { id: 'fe', icon: '🙏', title: 'Oración y Fe' },
+    { id: 'consolata', icon: '✨', title: 'Consolata y Santos' },
+    { id: 'novedades', icon: '📰', title: 'Noticias y Muro' },
+    { id: 'galeria', icon: '📸', title: 'Galería de Fotos' },
+    { id: 'comunidad', icon: '👥', title: 'Espacio Comunitario' }
+  ];
+  const html = `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="gm-t">
+    <div class="sheet" style="max-width:440px">
+      ${sheetHead('JUMA Duaca · Menú Web', 'Secciones de la página', 'gm-t')}
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:8px">
+        ${sections.map((s) => `
+          <button type="button" class="btn btn-soft" data-guest-nav="${s.id}" style="justify-content:flex-start;min-height:48px;padding:0 16px;font-size:15px;font-weight:700;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--navy)">
+            <span style="font-size:20px;margin-right:12px">${s.icon}</span>
+            <span>${esc(s.title)}</span>
+          </button>
+        `).join('')}
+        <div style="margin-top:8px;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
+          <button type="button" class="btn btn-blue" data-open-form style="width:100%">Quiero ser parte (Inscripción)</button>
+          <button type="button" class="btn btn-soft" data-open-auth style="width:100%">Iniciar sesión</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  openModal(html, 'guest-menu');
+}
+
 function updateSocialDock() {
   const dock = $('#social-dock');
   if (!dock) return;
@@ -2691,6 +2762,21 @@ function updateAuthUI() {
   if (!myProfile && currentUser) {
     myProfile = findProfileRecord(currentUser.uid, currentUser.email);
   }
+  if (!myProfile) {
+    try {
+      const last = localStorage.getItem('juma-ultimo-perfil');
+      if (last) myProfile = JSON.parse(last);
+      if (!myProfile) {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('juma-perfil-') && !k.startsWith('juma-perfil-email-')) {
+            const item = localStorage.getItem(k);
+            if (item) { myProfile = JSON.parse(item); break; }
+          }
+        }
+      }
+    } catch (e) {}
+  }
   if (!myProfile && trueMaster) {
     myProfile = {
       nombre: 'Coordinador Maestro',
@@ -2709,6 +2795,8 @@ function updateAuthUI() {
   const isAuth = !!(currentUser || myProfile || trueMaster || isAdmin);
 
   if (isAuth) {
+    document.body.classList.add('is-authenticated');
+    document.body.classList.remove('is-guest');
     const d = (myProfile && myProfile.datos) || {};
     const fullName = String(
       (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) ||
@@ -2748,6 +2836,8 @@ function updateAuthUI() {
     if (navComunidad) navComunidad.classList.remove('hide');
     if (subnavComunidad) subnavComunidad.classList.remove('hide');
   } else {
+    document.body.classList.add('is-guest');
+    document.body.classList.remove('is-authenticated');
     if (btnAuth) {
       btnAuth.innerHTML = 'Iniciar sesión';
       btnAuth.className = 'btn btn-outline btn-sm';
@@ -3144,6 +3234,19 @@ document.addEventListener('click', (e) => {
     switchSection(target);
     return;
   }
+  if (e.target.closest('[data-open-guest-menu]')) {
+    e.preventDefault();
+    if (modalKey === 'guest-menu') { closeModal(); return; }
+    openGuestMenuModal();
+    return;
+  }
+  const guestNav = e.target.closest('[data-guest-nav]');
+  if (guestNav) {
+    e.preventDefault();
+    closeModal();
+    switchSection(guestNav.dataset.guestNav);
+    return;
+  }
   if (e.target.closest('[data-open-notifs]')) {
     e.preventDefault();
     if (modalKey === 'notifs') { closeModal(); return; }
@@ -3335,7 +3438,6 @@ function authModalHtml() {
             ${trueMaster ? 'Puedes modificar toda la app, asignar roles, ver el calendario de cumpleaños, descargar carnets, editar la galería y escanear QR.' : 'Puedes ver los participantes, sus carnets, el calendario de cumpleaños, escanear códigos QR de asistencia y actualizar actividades.'}
           </p>
           <div style="display:flex;flex-wrap:wrap;gap:8px">
-            <button type="button" class="btn btn-blue btn-sm" data-open-chat>💬 Chat y Avisos</button>
             <button type="button" class="btn btn-soft btn-sm" data-open-qr-scanner style="background:#fff;border:1.5px solid var(--royal);color:var(--royal)">📷 Escanear QR</button>
             <button type="button" class="btn btn-soft btn-sm" data-open-cumple-tab style="background:#fff;border:1.5px solid var(--royal);color:var(--royal)">🎂 Cumpleaños</button>
             <button type="button" class="btn btn-outline btn-sm" data-open-master-panel>Abrir Panel y Editor</button>
@@ -4133,7 +4235,14 @@ async function authInit() {
     currentUser = u || null;
     isAdmin = !!(u && u.email && isMasterEmail(u.email));
     if (isAdmin) { try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {} }
-    if (u) await loadUserProfile(u);
+    if (u) {
+      await loadUserProfile(u);
+    } else if (!myProfile) {
+      try {
+        const last = localStorage.getItem('juma-ultimo-perfil');
+        if (last) myProfile = JSON.parse(last);
+      } catch (e) {}
+    }
     updateAuthUI();
   });
 }
@@ -6117,15 +6226,38 @@ async function openEditor() {
   if ($('#ed-t')) repaintEd();
 }
 $('#fab-edit').addEventListener('click', openEditor);
-async function shrinkToDataUrl(file) {
-  const bmp = await createImageBitmap(file);
-  const maxDim = 860;
-  const k = Math.min(1, maxDim / Math.max(bmp.width, bmp.height));
-  const cv = document.createElement('canvas');
-  cv.width = Math.round(bmp.width * k);
-  cv.height = Math.round(bmp.height * k);
-  cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
-  return cv.toDataURL('image/jpeg', 0.72);
+async function shrinkToDataUrl(file, maxDim = 960, quality = 0.82) {
+  try {
+    if (typeof createImageBitmap === 'function') {
+      const bmp = await createImageBitmap(file);
+      const k = Math.min(1, maxDim / Math.max(bmp.width, bmp.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(bmp.width * k);
+      cv.height = Math.round(bmp.height * k);
+      cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
+      return cv.toDataURL('image/jpeg', quality);
+    }
+  } catch (e) {}
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        const k = Math.min(1, maxDim / Math.max(w, h));
+        const cv = document.createElement('canvas');
+        cv.width = Math.round(w * k);
+        cv.height = Math.round(h * k);
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        resolve(cv.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(reader.result);
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 let edUploadMsg = '';
 async function uploadVideoToCloud(file, onProgress) {
