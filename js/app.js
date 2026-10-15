@@ -1230,6 +1230,12 @@ async function saveNewProfilePhoto(url, extraFields = {}) {
     if (uid) localStorage.setItem('juma-perfil-' + uid, JSON.stringify(myProfile));
     if (myProfile.correo) localStorage.setItem('juma-perfil-email-' + myProfile.correo, JSON.stringify(myProfile));
     localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile));
+    const pEmail = String(myProfile.correo || (myProfile.datos && myProfile.datos.correo) || '').trim().toLowerCase();
+    const matchIdx = allInscripciones.findIndex((x) => x && ((uid && (x.id === uid || x.uid === uid)) || (pEmail && String(x.correo || (x.datos && x.datos.correo) || '').trim().toLowerCase() === pEmail)));
+    if (matchIdx >= 0) {
+      allInscripciones[matchIdx] = Object.assign({}, allInscripciones[matchIdx], myProfile, { foto: url });
+      localStorage.setItem('juma-inscripciones-local', JSON.stringify(allInscripciones));
+    }
   } catch (x) {}
   if (fb && fb.db && uid) {
     try {
@@ -2871,7 +2877,7 @@ modalRoot.addEventListener('change', async (e) => {
     }
     return;
   }
-  if ((e.target.id === 'au-avatar' || e.target.id === 'au-cam-in') && e.target.files && e.target.files[0]) {
+  if ((e.target.id === 'au-avatar' || e.target.id === 'au-cam-in' || e.target.id === 'au-avatar-sub') && e.target.files && e.target.files[0]) {
     try {
       stopSelfieCamera();
       const url = await shrinkAvatarDataUrl(e.target.files[0]);
@@ -3327,6 +3333,124 @@ function isMasterAccount() {
   return false;
 }
 
+let profileActiveTab = 'carnet';
+
+function renderProfileTabContent(tab, rec, user, d, email, misAsistencias, proxEventos, remOn, masterOn, trueMaster, role, isParticipant) {
+  if (tab === 'carnet' && isParticipant) {
+    return `
+      <div style="text-align:left;animation:fadeInView .2s ease">
+        <div style="font-size:13px;color:#475569;margin-bottom:12px;background:#F8FAFC;padding:10px 14px;border-radius:12px;border:1.5px solid #E2E8F0">
+          🪪 <b>Tu Carnet Oficial JUMA</b> con QR de asistencia integrado y mockup realista con la franela misionera. Puedes rotarlo o descargarlo en alta definición.
+        </div>
+        ${carnetInteractiveSectionHtml(rec || { uid: user && user.uid, correo: email, nombre: rec && rec.nombre, foto: (rec && rec.foto) || (user && user.photoURL), datos: d }, 'profile')}
+      </div>
+    `;
+  }
+
+  if (tab === 'datos') {
+    return `
+      <div style="text-align:left;animation:fadeInView .2s ease">
+        <div class="p-info-grid">
+          <div class="p-info-card">
+            <small>📍 Parroquia / Capilla</small>
+            <b>${esc(d.parroquia || 'San Juan Bautista de Duaca')}</b>
+          </div>
+          <div class="p-info-card">
+            <small>🎂 Nacimiento / Edad</small>
+            <b>${d.nac ? esc(d.nac.split('-').reverse().join('/')) : 'Registrado'}${edadDe(d) ? ' (' + edadDe(d) + ' años)' : ''}</b>
+          </div>
+          <div class="p-info-card">
+            <small>📱 Teléfono celular</small>
+            <b>${esc(d.celular || 'No registrado')}</b>
+          </div>
+          <div class="p-info-card">
+            <small>✉️ Correo electrónico</small>
+            <b>${esc(email || 'No registrado')}</b>
+          </div>
+          <div class="p-info-card">
+            <small>🩸 Grupo sanguíneo</small>
+            <b>${esc(d.sangre || 'No registrado')}</b>
+          </div>
+          <div class="p-info-card">
+            <small>📋 Asistencias dominicales</small>
+            <b>${misAsistencias.length} en últimos 6 meses</b>
+          </div>
+          ${d.direccion ? `
+          <div class="p-info-card" style="grid-column:1/-1">
+            <small>🏠 Dirección de habitación</small>
+            <b>${esc(d.direccion)}</b>
+          </div>` : ''}
+          ${d.contacto ? `
+          <div class="p-info-card" style="grid-column:1/-1">
+            <small>🆘 Contacto de emergencia</small>
+            <b>${esc(d.contacto)}</b>
+          </div>` : ''}
+        </div>
+        <div style="margin-top:16px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
+          <button type="button" class="btn btn-soft btn-sm" data-edit-my-form style="font-weight:700">✏️ Editar mis datos</button>
+          <button type="button" class="btn btn-soft btn-sm" data-dl-profile style="font-weight:700">📄 Descargar mi planilla (PDF/HTML)</button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (tab === 'encuentros') {
+    return `
+      <div style="text-align:left;animation:fadeInView .2s ease">
+        <div style="background:#F8FAFD;border:1.5px solid #E2E8F0;border-radius:14px;padding:14px;margin-bottom:14px">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px">
+            <div>
+              <b style="font-size:14px;color:#061536;display:block">Guarda los domingos en tu teléfono</b>
+              <span style="font-size:12px;color:#64748B">${remOn ? '🔔 Recordatorios de avisos activos' : 'Sincroniza con Google Calendar o Apple'}</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <button type="button" class="btn ${remOn ? 'btn-blue' : 'btn-outline'} btn-sm" data-toggle-rem style="min-height:36px;padding:0 12px;font-size:12.5px">${remOn ? '🔔 Recordatorio activo' : '🔔 Activar recordatorio'}</button>
+              <button type="button" class="btn btn-soft btn-sm" data-dl-ics style="min-height:36px;padding:0 12px;font-size:12.5px">📲 Sincronizar (.ics)</button>
+            </div>
+          </div>
+        </div>
+        ${proxEventos.length ? `
+          <div style="display:grid;gap:8px">
+            ${proxEventos.map((ev) => `
+              <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-radius:12px;background:#ffffff;border:1.5px solid #E2E8F0;box-shadow:0 2px 6px rgba(6,21,54,.04)">
+                <div>
+                  <b style="font-size:14px;color:#061536">${esc(ev.title)}</b>
+                  <span style="display:block;font-size:12px;color:#64748B">${esc(ev.badge)} · ${esc(hora())} · ${esc(lugar())}</span>
+                </div>
+                <a class="btn btn-outline btn-sm" style="padding:6px 12px;font-size:12px;font-weight:700" target="_blank" rel="noopener" href="${esc(googleCalUrl(ev))}">📅 Google Cal</a>
+              </div>
+            `).join('')}
+          </div>
+        ` : '<p style="color:#64748B;font-size:13px;text-align:center;margin:16px 0">No hay eventos próximos programados.</p>'}
+      </div>
+    `;
+  }
+
+  if (tab === 'coord' && masterOn) {
+    return `
+      <div style="text-align:left;animation:fadeInView .2s ease">
+        <div style="background:#F0F6FF;border:1.5px solid #C7DCFF;border-radius:16px;padding:16px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <span style="font-size:26px">⭐</span>
+            <div>
+              <b style="font-size:15px;color:#061536;display:block">${trueMaster ? 'Panel Maestro de Coordinación' : 'Panel de Coordinación JUMA'}</b>
+              <small style="color:#2563EB;font-size:12px;font-weight:700">Herramientas activas de gestión, escaneo y edición</small>
+            </div>
+          </div>
+          <p style="margin:0 0 14px;font-size:13px;color:#334155">Accede a las herramientas administrativas del grupo:</p>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <button type="button" class="btn btn-blue btn-sm" data-open-qr-scanner style="font-weight:800;padding:8px 16px">📷 Escanear QR de Asistencia</button>
+            <button type="button" class="btn btn-soft btn-sm" data-open-cumple-tab style="background:#ffffff;border:1.5px solid #C7DCFF;color:#1E40AF;font-weight:800;padding:8px 16px">🎂 Lista de Cumpleaños</button>
+            <button type="button" class="btn btn-outline btn-sm" data-open-master-panel style="font-weight:800;padding:8px 16px">⚙️ Abrir Panel Administrativo</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  return '';
+}
+
 function authModalHtml() {
   const trueMaster = isMasterAccount();
   if (!myProfile && trueMaster) {
@@ -3349,157 +3473,74 @@ function authModalHtml() {
     const nombre = (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) || (currentUser && currentUser.displayName) || (currentUser && currentUser.email) || (isJumaMember ? 'Joven Misionero' : 'Colaborador(a) / Visitante');
     const email = (currentUser && currentUser.email) || (myProfile && (myProfile.correo || d.correo)) || '';
     const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
-    const rows = d.nombres ? summaryRows(d) : [];
-    const wa = waNums();
-    const qrPayload = qrPayloadFor(myProfile || { uid: currentUser && currentUser.uid, correo: email });
-    const qrUrl = qrImgUrl(qrPayload, 260);
     const misAsistencias = asistenciasUltimos6Meses(myProfile);
     const proxEventos = allUpcomingCalendarEvents().slice(0, 4);
     const remOn = remindersEnabled();
     const badgeTxt = trueMaster ? '★ Perfil Maestro · JUMA Duaca' : (role === 'coordinador' ? '★ Coordinador(a) · JUMA Duaca' : (role === 'asesor' ? '◆ Asesor(a) · JUMA Duaca' : (role === 'visitante' ? '👁 Visitante · JUMA Duaca' : (role === 'colaborador' ? '🤝 Colaborador(a) · JUMA Duaca' : '● Participante · JUMA Duaca'))));
     const isParticipant = role === 'participante';
+
+    // Determinar tab efectivo
+    let activeTab = profileActiveTab;
+    if (!isParticipant && activeTab === 'carnet') activeTab = 'datos';
+    if (!masterOn && activeTab === 'coord') activeTab = isParticipant ? 'carnet' : 'datos';
+
     return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="au-t">
-      <div class="sheet" style="max-width:720px;background:#ffffff;border-radius:24px;overflow:hidden">
-        ${sheetHead('Juventud Misionera Allamaniana · Duaca', 'Mi Perfil JUMA', 'au-t')}
-        <div style="padding:0 0 24px">
-          <!-- Portada estilo Facebook -->
-          <div style="position:relative;height:120px;background:linear-gradient(135deg,#061536 0%,#103687 50%,#2452C8 100%);overflow:hidden;display:flex;align-items:flex-end;padding:12px 20px">
-            <div class="ribbon" style="position:absolute;top:0;left:0;right:0"></div>
-            <span style="font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,0.85);z-index:2">JUMA Duaca · Misioneros de la Consolata</span>
+      <div class="sheet p-modal" style="max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
+        <!-- Portada moderna con degradado y red sutil -->
+        <div class="p-cover">
+          <div class="p-cover-mesh"></div>
+          <div class="p-cover-badge">JUMA Duaca · Consolata</div>
+          <button type="button" class="p-close-btn" data-close aria-label="Cerrar perfil" title="Cerrar">✕</button>
+        </div>
+
+        <!-- Cuerpo del perfil moderno -->
+        <div class="p-body">
+          <!-- Avatar Hero Centrado -->
+          <div class="p-avatar-wrap">
+            ${foto ? `<img src="${esc(foto)}" alt="Foto de perfil" class="p-avatar-img">` : `<div class="p-avatar-init">${esc(nombre.charAt(0).toUpperCase())}</div>`}
+            <button type="button" data-start-selfie="auth" class="p-avatar-cam-badge" title="Tomar foto con cámara" aria-label="Tomar selfie">📸</button>
           </div>
 
-          <!-- Cabecera de Perfil: Avatar superpuesto + Nombre + Acciones -->
-          <div style="padding:0 24px;position:relative">
-            <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:-44px;margin-bottom:14px">
-              <div style="display:flex;align-items:flex-end;gap:16px">
-                <!-- Avatar Circular -->
-                <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-                  <div style="width:88px;height:88px;border-radius:50%;background:#ffffff;border:4px solid #ffffff;box-shadow:0 6px 18px rgba(6,21,54,.2);overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative">
-                    ${foto ? `<img src="${esc(foto)}" alt="Foto de perfil" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-size:36px;font-weight:900;color:var(--royal)">${esc(nombre.charAt(0).toUpperCase())}</span>`}
-                  </div>
-                  <div style="display:flex;gap:6px;align-items:center">
-                    <button type="button" data-start-selfie="auth" class="btn btn-soft btn-sm" style="min-height:28px;padding:0 8px;font-size:11.5px;font-weight:700">📷 Foto</button>
-                    <label class="btn btn-soft btn-sm" style="min-height:28px;padding:0 8px;font-size:11.5px;font-weight:700;cursor:pointer;margin:0"><span>🖼️ Galería</span><input type="file" accept="image/*" id="au-avatar" style="display:none"></label>
-                    <input type="file" accept="image/*" capture="user" id="au-cam-in" style="display:none">
-                  </div>
-                </div>
-                <!-- Nombre y Rol -->
-                <div style="margin-bottom:8px">
-                  <span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:800;background:#E8F1FF;color:var(--royal);border:1px solid #B9C8E4;margin-bottom:4px">${esc(badgeTxt)}</span>
-                  <h3 style="margin:0;font-size:clamp(22px,3.5vw,28px);font-weight:900;color:var(--navy);line-height:1.15">${esc(nombre)}</h3>
-                  <small style="color:var(--muted);font-size:13px;display:block;margin-top:2px">Miembro activo de la comunidad</small>
-                </div>
-              </div>
+          <!-- Nombre y Rol -->
+          <h2 id="au-t" class="p-name">${esc(nombre)}</h2>
+          <div class="p-role-badge">${esc(badgeTxt)}</div>
+          <small style="color:#64748B;font-size:12.5px;font-weight:600;margin-bottom:8px">Miembro activo de la comunidad parroquial</small>
 
-              <!-- Botones de Acción Estilo Facebook -->
-              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
-                <button type="button" class="btn btn-soft btn-sm" data-close style="min-height:38px;padding:0 14px;font-size:13px;font-weight:800;background:#E8F1FF;color:var(--royal);border:1.5px solid var(--royal)">✕ Cerrar perfil</button>
-                <button type="button" class="btn btn-soft btn-sm" data-edit-my-form style="min-height:38px;padding:0 14px;font-size:13px;font-weight:700">✏️ Editar datos</button>
-                <button type="button" class="btn btn-soft btn-sm" data-open-chat style="min-height:38px;padding:0 14px;font-size:13px;font-weight:700">💬 Mensajes</button>
-                <button type="button" class="btn btn-danger btn-sm" data-logout style="min-height:38px;padding:0 14px;font-size:13px;font-weight:700">🚪 Cerrar sesión</button>
-              </div>
-            </div>
-            ${selfieBoxHtml('auth')}
+          <!-- Botones directos de foto -->
+          <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;justify-content:center">
+            <button type="button" data-start-selfie="auth" class="btn btn-soft btn-sm" style="min-height:30px;padding:0 12px;font-size:12px;font-weight:700">📸 Tomar selfie</button>
+            <label class="btn btn-soft btn-sm" style="min-height:30px;padding:0 12px;font-size:12px;font-weight:700;cursor:pointer;margin:0">
+              <span>🖼️ Elegir foto</span>
+              <input type="file" accept="image/*" id="au-avatar" style="display:none">
+            </label>
+            <input type="file" accept="image/*" capture="user" id="au-cam-in" style="display:none">
+          </div>
 
-            <!-- Tarjetas de Información Importante (Solo datos clave) -->
-            <div style="margin-top:16px;border-top:1.5px solid var(--line);padding-top:18px">
-              <b style="font-size:15px;color:var(--navy);display:flex;align-items:center;gap:6px;margin-bottom:12px">
-                <span>ℹ️</span> Información personal destacada
-              </b>
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px">
-                <div style="padding:12px 14px;border-radius:12px;background:#F8FAFD;border:1.5px solid var(--line)">
-                  <span style="font-size:12px;color:var(--muted);display:block">📍 Parroquia / Capilla</span>
-                  <b style="font-size:14px;color:var(--navy)">${esc(d.parroquia || 'San Juan Bautista de Duaca')}</b>
-                </div>
-                <div style="padding:12px 14px;border-radius:12px;background:#F8FAFD;border:1.5px solid var(--line)">
-                  <span style="font-size:12px;color:var(--muted);display:block">🎂 Fecha de nacimiento / Edad</span>
-                  <b style="font-size:14px;color:var(--navy)">${d.nac ? esc(d.nac.split('-').reverse().join('/')) : 'Registrado'}${edadDe(d) ? ' (' + edadDe(d) + ' años)' : ''}</b>
-                </div>
-                <div style="padding:12px 14px;border-radius:12px;background:#F8FAFD;border:1.5px solid var(--line)">
-                  <span style="font-size:12px;color:var(--muted);display:block">📱 Teléfono celular</span>
-                  <b style="font-size:14px;color:var(--navy)">${esc(d.celular || 'No registrado')}</b>
-                </div>
-                <div style="padding:12px 14px;border-radius:12px;background:#F8FAFD;border:1.5px solid var(--line)">
-                  <span style="font-size:12px;color:var(--muted);display:block">✉️ Correo electrónico</span>
-                  <b style="font-size:14px;color:var(--navy);word-break:break-all">${esc(email || 'No registrado')}</b>
-                </div>
-                <div style="padding:12px 14px;border-radius:12px;background:#F8FAFD;border:1.5px solid var(--line)">
-                  <span style="font-size:12px;color:var(--muted);display:block">🩸 Grupo sanguíneo</span>
-                  <b style="font-size:14px;color:var(--navy)">${esc(d.sangre || 'No registrado')}</b>
-                </div>
-                <div style="padding:12px 14px;border-radius:12px;background:#F8FAFD;border:1.5px solid var(--line)">
-                  <span style="font-size:12px;color:var(--muted);display:block">📋 Asistencias registradas</span>
-                  <b style="font-size:14px;color:var(--navy)">${misAsistencias.length} en últimos 6 meses</b>
-                </div>
-              </div>
-            </div>
+          ${selfieBoxHtml('auth')}
 
-            <!-- Carnet Misionero Oficial (EXCLUSIVO para participantes de JUMA) -->
-            ${isParticipant ? `
-            <details class="profile-acc" style="margin-top:16px" open>
-              <summary>
-                <div style="display:flex;align-items:center;gap:10px">
-                  <span style="font-size:20px">🪪</span>
-                  <div style="text-align:left">
-                    <b style="color:var(--navy);font-size:15px;display:block">Mi Carnet Misionero Oficial y Mockup</b>
-                    <small style="color:var(--muted);font-size:12px;font-weight:600">Descarga tu carnet en HD y con Código QR</small>
-                  </div>
-                </div>
-                <span class="profile-acc-arrow">▾</span>
-              </summary>
-              <div class="profile-acc-content" style="padding:16px 14px">
-                ${carnetInteractiveSectionHtml(myProfile || { uid: currentUser && currentUser.uid, correo: email, nombre, foto, datos: d }, 'profile')}
-              </div>
-            </details>` : ''}
+          <!-- Botones de Acción Estilo App Moderna -->
+          <div class="p-actions">
+            <button type="button" class="p-act-btn" data-open-chat>💬 Mensajes</button>
+            <button type="button" class="p-act-btn" data-edit-my-form>✏️ Editar datos</button>
+            <button type="button" class="p-act-btn p-act-danger" data-logout>🚪 Cerrar sesión</button>
+          </div>
 
-            <!-- Próximos Encuentros y Recordatorios -->
-            <details class="profile-acc" style="margin-top:14px">
-              <summary>
-                <div style="display:flex;align-items:center;gap:10px">
-                  <span style="font-size:20px">📅</span>
-                  <div style="text-align:left">
-                    <b style="color:var(--navy);font-size:15px;display:block">Próximos Encuentros y Calendario</b>
-                    <small style="color:var(--muted);font-size:12px;font-weight:600">${remOn ? '🔔 Recordatorios activos' : 'Sincronizar con calendario'}</small>
-                  </div>
-                </div>
-                <span class="profile-acc-arrow">▾</span>
-              </summary>
-              <div class="profile-acc-content" style="padding:14px">
-                <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px">
-                  <span style="font-size:13.5px;color:var(--ink)">Guarda los encuentros dominicales en tu teléfono:</span>
-                  <div style="display:flex;flex-wrap:wrap;gap:8px">
-                    <button type="button" class="btn ${remOn ? 'btn-blue' : 'btn-outline'} btn-sm" data-toggle-rem style="min-height:36px;padding:0 12px;font-size:12.5px">${remOn ? '🔔 Recordatorio activo' : '🔔 Activar recordatorio'}</button>
-                    <button type="button" class="btn btn-soft btn-sm" data-dl-ics style="min-height:36px;padding:0 12px;font-size:12.5px">📲 Sincronizar (.ics)</button>
-                  </div>
-                </div>
-                ${proxEventos.length ? `<div style="display:grid;gap:8px">${proxEventos.map((ev) => `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-radius:10px;background:#F8FAFD;border:1px solid var(--line)"><div><b style="font-size:14px;color:var(--ink)">${esc(ev.title)}</b><span style="display:block;font-size:12px;color:var(--muted)">${esc(ev.badge)} · ${esc(hora())} · ${esc(lugar())}</span></div><a class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:12px" target="_blank" rel="noopener" href="${esc(googleCalUrl(ev))}">📅 Google Cal</a></div>`).join('')}</div>` : ''}
-              </div>
-            </details>
+          <!-- Barra de pestañas segmentadas -->
+          <div class="p-tabs" role="tablist">
+            ${isParticipant ? `<button type="button" role="tab" class="p-tab ${activeTab === 'carnet' ? 'active' : ''}" data-profile-tab="carnet">🪪 Mi Carnet</button>` : ''}
+            <button type="button" role="tab" class="p-tab ${activeTab === 'datos' ? 'active' : ''}" data-profile-tab="datos">👤 Mis Datos</button>
+            <button type="button" role="tab" class="p-tab ${activeTab === 'encuentros' ? 'active' : ''}" data-profile-tab="encuentros">📅 Encuentros</button>
+            ${masterOn ? `<button type="button" role="tab" class="p-tab ${activeTab === 'coord' ? 'active' : ''}" data-profile-tab="coord">⭐ Coordinación</button>` : ''}
+          </div>
 
-            <!-- Herramientas de Coordinación (Solo para Coordinadores o Maestro) -->
-            ${masterOn ? `
-            <details class="profile-acc profile-acc-coord" style="margin-top:14px">
-              <summary>
-                <div style="display:flex;align-items:center;gap:10px">
-                  <span style="font-size:20px">⭐</span>
-                  <div style="text-align:left">
-                    <b style="color:var(--navy);font-size:15px;display:block">${trueMaster ? 'Panel Maestro Activo' : 'Panel de Coordinación Activo'}</b>
-                    <small style="color:var(--muted);font-size:12px;font-weight:600">Herramientas de gestión y asistencia</small>
-                  </div>
-                </div>
-                <span class="profile-acc-arrow">▾</span>
-              </summary>
-              <div class="profile-acc-content" style="padding:14px">
-                <div style="display:flex;flex-wrap:wrap;gap:8px">
-                  <button type="button" class="btn btn-soft btn-sm" data-open-qr-scanner style="background:#fff;border:1.5px solid var(--royal);color:var(--royal);font-weight:700">📷 Escanear QR</button>
-                  <button type="button" class="btn btn-soft btn-sm" data-open-cumple-tab style="background:#fff;border:1.5px solid var(--royal);color:var(--royal);font-weight:700">🎂 Cumpleaños</button>
-                  <button type="button" class="btn btn-outline btn-sm" data-open-master-panel style="font-weight:700">⚙️ Abrir Panel y Editor</button>
-                </div>
-              </div>
-            </details>` : ''}
-            <div style="margin-top:24px;padding:16px 0 8px;border-top:1.5px solid var(--line);display:flex;justify-content:center">
-              <button type="button" class="btn btn-blue" data-close style="min-height:44px;padding:0 32px;font-size:14.5px;font-weight:800;border-radius:99px;box-shadow:0 4px 14px rgba(36,82,200,.35)">✕ Cerrar perfil y volver a la página</button>
-            </div>
+          <!-- Contenido de la pestaña activa -->
+          <div style="width:100%">
+            ${renderProfileTabContent(activeTab, myProfile, currentUser, d, email, misAsistencias, proxEventos, remOn, masterOn, trueMaster, role, isParticipant)}
+          </div>
+
+          <!-- Botón inferior para cerrar perfil -->
+          <div style="margin-top:20px;padding-top:14px;border-top:1.5px solid #E2E8F0;width:100%;display:flex;justify-content:center">
+            <button type="button" class="btn btn-soft" data-close style="min-height:40px;padding:0 26px;border-radius:99px;font-weight:800;font-size:13.5px">✕ Cerrar perfil</button>
           </div>
         </div>
       </div>
@@ -4223,6 +4264,13 @@ const isEditor = () => { try { return sessionStorage.getItem('juma-ed') === '1' 
 /* Eventos del modal de autenticación y perfil */
 modalRoot.addEventListener('click', async (e) => {
   if (!$('#au-t')) return;
+  const pTab = e.target.closest('[data-profile-tab]');
+  if (pTab) {
+    e.preventDefault();
+    profileActiveTab = pTab.dataset.profileTab;
+    repaintAuth();
+    return;
+  }
   if (e.target.closest('[data-open-chat]')) { openChatModal(); return; }
   if (e.target.closest('[data-go-register]')) { openForm(false); return; }
   if (e.target.closest('[data-edit-my-form]')) { openForm(true); return; }

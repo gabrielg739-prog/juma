@@ -847,8 +847,8 @@ body.modo-corrido .j-view { display: block!important; }
   background: linear-gradient(135deg, var(--navy) 0%, var(--cloth) 100%) !important;
   color: #ffffff !important;
 }
-.chat-top *, .sheet-head * {
-  color: #ffffff;
+.chat-top h2, .sheet-head h2, .chat-top b, .sheet-head b, .chat-top > span, .sheet-head > span {
+  color: #ffffff !important;
 }
 .chat-top small, .sheet-head small {
   color: var(--sky) !important;
@@ -860,6 +860,268 @@ body.modo-corrido .j-view { display: block!important; }
 }
 .notif-item b {
   color: var(--navy) !important;
+}
+
+/* ===== Nuevo Perfil Misionero Estilo App Moderna (Llamativo y Fluido) ===== */
+.p-modal {
+  position: relative;
+  background: #ffffff !important;
+  color: #0A1B3F !important;
+  border-radius: 28px !important;
+  overflow: hidden !important;
+  box-shadow: 0 25px 80px rgba(6, 21, 54, 0.45) !important;
+  width: 100% !important;
+  max-width: 660px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.p-cover {
+  position: relative;
+  height: 140px;
+  background: linear-gradient(135deg, #061536 0%, #103687 50%, #2452C8 100%);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 20px;
+  overflow: hidden;
+}
+.p-cover-mesh {
+  position: absolute;
+  inset: 0;
+  opacity: 0.15;
+  background-image: radial-gradient(#ffffff 1.5px, transparent 1.5px);
+  background-size: 16px 16px;
+  pointer-events: none;
+}
+.p-cover-badge {
+  position: relative;
+  z-index: 2;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #CFE2FF;
+  background: rgba(6, 21, 54, 0.6);
+  backdrop-filter: blur(8px);
+  padding: 5px 12px;
+  border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.p-close-btn {
+  position: relative;
+  z-index: 3;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  background: rgba(6, 21, 54, 0.65);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform .15s ease, background-color .15s ease;
+}
+.p-close-btn:hover {
+  transform: scale(1.08);
+  background: #B91C1C;
+  border-color: #ffffff;
+}
+.p-avatar-wrap {
+  position: relative;
+  margin: -50px auto 0;
+  width: 104px;
+  height: 104px;
+  z-index: 4;
+}
+.p-avatar-img {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #ffffff;
+  box-shadow: 0 10px 28px rgba(6, 21, 54, 0.22);
+  background: #ffffff;
+  display: block;
+}
+.p-avatar-init {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  border: 4px solid #ffffff;
+  box-shadow: 0 10px 28px rgba(6, 21, 54, 0.22);
+  background: linear-gradient(135deg, var(--royal) 0%, var(--navy) 100%);
+  color: #ffffff;
+  font-size: 44px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.p-avatar-cam-badge {
+  position: absolute;
+  bottom: 0;
+  right: -2px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--royal);
+  color: #ffffff;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform .15s ease;
+}
+.p-avatar-cam-badge:hover {
+  transform: scale(1.1);
+  background: var(--navy);
+}
+.p-body {
+  padding: 12px 20px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+.p-name {
+  font-size: clamp(22px, 4vw, 26px);
+  font-weight: 900;
+  color: #061536;
+  margin: 10px 0 4px;
+  line-height: 1.15;
+}
+.p-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 99px;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  background: #E8F1FF;
+  color: var(--royal);
+  border: 1.5px solid #C5DCFE;
+  margin-bottom: 6px;
+}
+.p-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 12px 0 18px;
+  width: 100%;
+}
+.p-act-btn {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .16s ease;
+  border: 1.5px solid var(--line);
+  background: #F8FAFD;
+  color: #0A1B3F;
+}
+.p-act-btn:hover {
+  background: #EEF4FE;
+  border-color: var(--royal);
+  color: var(--royal);
+}
+.p-act-btn.p-act-danger {
+  background: #FEF2F2;
+  border-color: #FECACA;
+  color: #991B1B;
+}
+.p-act-btn.p-act-danger:hover {
+  background: #FEE2E2;
+  border-color: #F87171;
+}
+
+/* Barra de pestañas segmentadas (Tab Bar) */
+.p-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: #F1F5F9;
+  width: 100%;
+  margin-bottom: 18px;
+  box-sizing: border-box;
+}
+.p-tab {
+  flex: 1;
+  min-height: 40px;
+  padding: 0 8px;
+  border-radius: 10px;
+  border: 0;
+  background: transparent;
+  color: #64748B;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all .16s ease;
+  white-space: nowrap;
+}
+.p-tab.active {
+  background: #ffffff;
+  color: var(--royal);
+  box-shadow: 0 3px 8px rgba(6, 21, 54, 0.08);
+}
+
+/* Tarjetas de datos limpias y de alto contraste */
+.p-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+}
+@media (max-width: 560px) {
+  .p-info-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.p-info-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #F8FAFD;
+  border: 1.5px solid #E2E8F0;
+  transition: border-color .15s ease;
+}
+.p-info-card:hover {
+  border-color: #B9C8E4;
+}
+.p-info-card small {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748B;
+  margin-bottom: 3px;
+}
+.p-info-card b {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: #061536;
+  word-break: break-word;
 }
 
 /* Barra de navegación estilo Facebook */
@@ -1527,8 +1789,8 @@ body.is-authenticated .fb-tabbar { display: flex !important; }
 <div id="modal-root"></div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=58"></script>
-<script type="module" src="js/fe.js?v=58"></script>
+<script type="module" src="js/app.js?v=59"></script>
+<script type="module" src="js/fe.js?v=59"></script>
 <div class="social-dock" id="social-dock"></div>
 </body>
 </html>
