@@ -2,6 +2,7 @@
    cada 5 minutos, y además en cuanto el editor publica contenido.json.
 
    Avisa de:
+   0. Recordatorios de reunión (2 días antes, 1 día antes y el mismo día) y cambio de hora.
    1. Agenda: un domingo con tema nuevo o cambiado, «No habrá reunión», un encuentro de lunes a sábado,
       o una actividad nueva o con fecha cambiada (a todos los miembros que activaron los avisos).
    2. Noticias y avisos: una noticia nueva o el «Aviso en la parte de arriba de la página» (a todos).
@@ -132,6 +133,94 @@ if (novedades.noticias.length) {
 }
 if (novedades.aviso) avisosContenido.push({ titulo: 'JUMA Duaca · Aviso', cuerpo: corto(novedades.aviso, 230), link: '#inicio', tag: 'juma-aviso' });
 
+/* ---------- 2b: recordatorios de reunión y cambio de hora ----------
+   Horario (hora de Venezuela, UTC−4, sin cambio de horario):
+   - 2 días antes, a las 7:00 p. m. (1 vez)
+   - 1 día antes, a las 10:00 a. m. y a las 7:00 a. m. (2 veces)
+   - El mismo día, 6, 4 y 2 horas antes de la reunión (3 veces)
+   La hora de la reunión se toma del campo «Hora de la reunión» de la configuración (site/config).
+   Cada aviso se envía una sola vez; si la hora cambia, los avisos del mismo día se recalculan
+   y se avisa del cambio. Se envía solo si la hora del aviso ya llegó (con margen de 90 minutos). */
+const VE_UTC = 4; // Venezuela = UTC−4
+const VENTANA_MS = 90 * 60 * 1000;
+/* «3:00 p. m.», «10:30 a.m.», «15:00» → minutos desde medianoche (o null) */
+function horaAMinutos(txt) {
+  const s = String(txt || '').toLowerCase().replace(/[\s.]/g, '');
+  const m = s.match(/^(\d{1,2})(?::(\d{2}))?(am|pm|a|p)?/);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const min = Number(m[2] || 0);
+  if (min > 59 || h > 23) return null;
+  const suf = m[3] || '';
+  if (suf.startsWith('p') && h < 12) h += 12;
+  if (suf.startsWith('a') && h === 12) h = 0;
+  return h * 60 + min;
+}
+/* Fecha (AAAA-MM-DD) y minutos de Venezuela → instante real en ms */
+const aInstante = (f, minutos) => {
+  const [y, mo, d] = f.split('-').map(Number);
+  return Date.UTC(y, mo - 1, d, 0, minutos) + VE_UTC * 3600 * 1000;
+};
+const sumarDias = (f, n) => {
+  const [y, mo, d] = f.split('-').map(Number);
+  return new Date(Date.UTC(y, mo - 1, d + n)).toISOString().slice(0, 10);
+};
+const claveOrdenada = (o) => JSON.stringify(Object.keys(o).sort().map((k) => [k, o[k]]));
+
+const reuniones = new Map(); // fecha -> { tema, minutos, horaTxt }
+const horaTxt = limpio(nubeConfig && nubeConfig.hora, 40);
+const minHora = horaAMinutos(horaTxt);
+const sinR = (contenido && contenido.sinReunion) || {};
+if (contenido) {
+  for (const [f, tema] of Object.entries(contenido.temas || {})) {
+    if (!esFecha(f) || f < hoy || sinR[f]) continue;
+    const t = limpio(tema, 120);
+    if (t && minHora !== null) reuniones.set(f, { tema: t, minutos: minHora, horaTxt });
+  }
+  for (const e of contenido.encuentrosExtra || []) {
+    if (!e || !esFecha(e.fecha) || e.fecha < hoy) continue;
+    const mins = horaAMinutos(e.hora) ?? minHora;
+    if (mins === null) continue;
+    reuniones.set(e.fecha, { tema: limpio(e.tema, 120) || 'Encuentro / Formación JUMA', minutos: mins, horaTxt: limpio(e.hora, 40) || horaTxt });
+  }
+}
+
+/* Cambio de hora: se avisa una vez si una reunión ya conocida cambió de hora */
+const horasVistas = estado.reunionHoras || {};
+const horasNuevas = {};
+for (const [f, r] of reuniones) {
+  horasNuevas[f] = r.minutos;
+  if (horasVistas[f] !== undefined && horasVistas[f] !== r.minutos) {
+    avisosContenido.push({ titulo: 'JUMA Duaca · Cambio de hora', cuerpo: corto(`La reunión de ${cuando(f)} cambió a las ${r.horaTxt}: ${r.tema}`, 230), link: '#domingos', tag: 'juma-cambio-' + f });
+  }
+}
+/* Solo se guarda la hora de las reuniones que siguen vigentes (las fechas pasadas se borran) */
+const horasGuardar = Object.fromEntries(Object.entries(horasNuevas).filter(([f]) => f >= hoy));
+if (claveOrdenada(horasGuardar) !== claveOrdenada(horasVistas)) nuevoEstado.reunionHoras = horasGuardar;
+
+/* Recordatorios: cada uno tiene una clave; lo ya enviado no se repite */
+const enviados_rec = Object.assign({}, estado.recordatorios || {});
+const ahoraMs = Date.now();
+for (const [f, r] of reuniones) {
+  const slots = [
+    { clave: `${f}|d2-1900`, at: aInstante(sumarDias(f, -2), 19 * 60), texto: `En 2 días, ${cuando(f)} a las ${r.horaTxt}: ${r.tema}` },
+    { clave: `${f}|d1-1000`, at: aInstante(sumarDias(f, -1), 10 * 60), texto: `Mañana, ${cuando(f)} a las ${r.horaTxt}: ${r.tema}` },
+    { clave: `${f}|d1-0700`, at: aInstante(sumarDias(f, -1), 7 * 60), texto: `Mañana, ${cuando(f)} a las ${r.horaTxt}: ${r.tema}` }
+  ];
+  const inicio = aInstante(f, r.minutos);
+  for (const h of [6, 4, 2]) {
+    slots.push({ clave: `${f}|h${h}|${r.minutos}`, at: inicio - h * 3600 * 1000, texto: `Hoy a las ${r.horaTxt}, faltan ${h} horas: ${r.tema}` });
+  }
+  for (const s of slots) {
+    if (enviados_rec[s.clave]) continue;
+    if (ahoraMs < s.at || ahoraMs > s.at + VENTANA_MS) continue;
+    enviados_rec[s.clave] = true;
+    avisosContenido.push({ titulo: 'JUMA Duaca · Recordatorio de reunión', cuerpo: corto(s.texto, 230), link: '#domingos', tag: 'juma-rec-' + s.clave.replace(/\|/g, '-') });
+  }
+}
+const recordatoriosGuardar = Object.fromEntries(Object.entries(enviados_rec).filter(([k]) => k.split('|')[0] >= hoy));
+if (claveOrdenada(recordatoriosGuardar) !== claveOrdenada(estado.recordatorios || {})) nuevoEstado.recordatorios = recordatoriosGuardar;
+
 /* ---------- 3: mensajes del chat ---------- */
 /* Primera vez: no se avisa de todo el historial, solo de los últimos 15 minutos */
 const desde = Number(estado.ultimoMs) || (Date.now() - 15 * 60 * 1000);
@@ -150,11 +239,14 @@ const estable = (o) => (o && typeof o === 'object' && !Array.isArray(o)
   : JSON.stringify(o));
 const guardarEstado = async (extra = {}) => {
   const cambiaContenido = nuevoEstado.contenido !== undefined && estable(nuevoEstado.contenido) !== estable(estado.contenido);
-  if (!cambiaContenido && nuevoEstado.ultimoMs === undefined && !Object.keys(extra).length) return; // nada nuevo: no se gasta una escritura
+  const cambiaOtros = nuevoEstado.recordatorios !== undefined || nuevoEstado.reunionHoras !== undefined;
+  if (!cambiaContenido && !cambiaOtros && nuevoEstado.ultimoMs === undefined && !Object.keys(extra).length) return; // nada nuevo: no se gasta una escritura
   /* El documento se escribe entero: así lo que ya pasó de fecha no se queda guardado */
   const doc = Object.assign({}, estado, extra, { revisado: FieldValue.serverTimestamp() });
   if (nuevoEstado.ultimoMs !== undefined) doc.ultimoMs = nuevoEstado.ultimoMs;
   if (cambiaContenido) doc.contenido = nuevoEstado.contenido;
+  if (nuevoEstado.recordatorios !== undefined) doc.recordatorios = nuevoEstado.recordatorios;
+  if (nuevoEstado.reunionHoras !== undefined) doc.reunionHoras = nuevoEstado.reunionHoras;
   await estadoRef.set(doc);
 };
 
