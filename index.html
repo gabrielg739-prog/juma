@@ -41,8 +41,10 @@ input,textarea,select{font-family:inherit}
   input, select, textarea { font-size: 16px !important; }
 }
 
-/* ===== tokens: tela azul Consolata + cintas de los cinco continentes ===== */
-.jm{
+/* ===== tokens: tela azul Consolata + cintas de los cinco continentes =====
+   Se definen también en :root para que las ventanas (#modal-root) y el dock (#social-dock),
+   que viven fuera de .jm, tengan los mismos colores y no quede texto blanco sobre blanco. */
+:root,.jm{
 --navy:#061536;--cloth:#0C2D74;--cloth-2:#103687;--royal:#2452C8;--royal-d:#1B419F;--sky:#8EC9FF;
 --paper:#F6F9FE;--mist:#E6EEFA;--ink:#0A1B3F;--muted:#3A4F75;--muted-lt:#C3D3EE;--line:#D3DEF0;--line-dk:rgba(255,255,255,.16);
 --c1:#2A5FE6;--c2:#F5C518;--c3:#17824A;--c4:#C8322D;--c5:#FFFFFF;
@@ -53,6 +55,9 @@ input,textarea,select{font-family:inherit}
 caret-color:var(--royal);accent-color:var(--royal);
 }
 .jm,.jm *{box-sizing:border-box}
+#modal-root,#modal-root *,#social-dock,#social-dock *{box-sizing:border-box}
+#modal-root,#social-dock{font-family:var(--body);color:var(--ink)}
+#social-dock:empty{display:none}
 .jm{overflow-x:clip}
 .jm ::selection{background:var(--sky);color:var(--navy)}
 .jm{scrollbar-color:#7F96C2 var(--mist)}
@@ -1126,6 +1131,7 @@ body.modo-corrido .j-view { display: block!important; }
 
 /* Barra de navegación estilo Facebook */
 body.is-guest .fb-tabbar { display: none !important; }
+body.is-guest .solo-miembros { display: none !important; }
 body.is-authenticated .fb-tabbar { display: flex !important; }
 
 @media (min-width: 981px) {
@@ -1146,7 +1152,7 @@ body.is-authenticated .fb-tabbar { display: flex !important; }
 }
 </style>
 </head>
-<body class="modo-secciones">
+<body class="modo-secciones is-guest">
 <div class="jm" id="root" style="width:100%;font-family:var(--body);background:var(--paper);color:var(--ink)">
 <a class="skip" href="#main">Saltar al contenido</a>
 
@@ -1168,7 +1174,7 @@ body.is-authenticated .fb-tabbar { display: flex !important; }
 <a class="navlink" href="#consolata" data-view-target="consolata">Consolata</a>
 <a class="navlink" id="nav-nov" href="#novedades" data-view-target="novedades">Noticias</a>
 <a class="navlink" href="#galeria" data-view-target="galeria">Galería</a>
-<a class="navlink" href="#comunidad" data-view-target="comunidad" id="nav-comunidad">👥 Amigos</a>
+<a class="navlink hide solo-miembros" href="#comunidad" data-view-target="comunidad" id="nav-comunidad">👥 Amigos</a>
 </nav>
 <div class="topbar-actions">
 <button type="button" class="btn btn-soft btn-sm hide" id="btn-top-notif" data-open-notifs title="Notificaciones internas de JUMA" style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;min-height:38px;padding:0;border-radius:50%;background:#fff;border:1.5px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.06)">
@@ -1255,7 +1261,7 @@ body.is-authenticated .fb-tabbar { display: flex !important; }
       <a href="#consolata" data-view-target="consolata" class="atajo-pill"><span class="atajo-dot" style="background:#8B5CF6"></span>Consolata y Santos</a>
       <a href="#novedades" data-view-target="novedades" class="atajo-pill"><span class="atajo-dot" style="background:#EC4899"></span>Noticias y Muro</a>
       <a href="#galeria" data-view-target="galeria" class="atajo-pill"><span class="atajo-dot" style="background:#06B6D4"></span>Galería</a>
-      <a href="#comunidad" data-view-target="comunidad" class="atajo-pill"><span class="atajo-dot" style="background:#3B82F6"></span>👥 Directorio de Amigos</a>
+      <a href="#comunidad" data-view-target="comunidad" class="atajo-pill solo-miembros"><span class="atajo-dot" style="background:#3B82F6"></span>👥 Directorio de Amigos</a>
     </div>
   </div>
 </div>

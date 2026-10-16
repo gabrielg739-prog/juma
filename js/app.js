@@ -736,6 +736,47 @@ function preloadPostMediaFiles(list) {
   });
 }
 
+/* Videos de las noticias: carga los videos de la nube y los reproduce solo cuando se ven en pantalla.
+   (Se había borrado por error en una actualización y la página dejaba de arrancar.) */
+function setupPostVideos() {
+  bindGlobalAudioUnlock();
+  if (postMediaObserver) { try { postMediaObserver.disconnect(); } catch (e) {} postMediaObserver = null; }
+  const boxes = $$('[data-post-media]');
+  if (!boxes.length) return;
+  boxes.forEach((b) => {
+    const cloudRef = b.dataset.cloudVid;
+    if (cloudRef) {
+      resolveCloudVideo(cloudRef).then((url) => {
+        const vid = b.querySelector('video');
+        if (vid && url && vid.getAttribute('src') !== url) {
+          vid.src = url;
+          if (b.dataset.inView === '1') playWithSound(b);
+        }
+      }).catch(() => {});
+    }
+  });
+  if ('IntersectionObserver' in globalThis) {
+    postMediaObserver = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        const box = en.target;
+        const vid = box.querySelector('video');
+        if (!vid) return;
+        const visibleNow = en.isIntersecting && en.intersectionRatio >= 0.08;
+        box.dataset.inView = visibleNow ? '1' : '0';
+        if (visibleNow) {
+          box.dataset.userMuted = '0';
+          playWithSound(box);
+        } else {
+          stopAndMuteVideo(box);
+        }
+      });
+    }, { threshold: [0, 0.08, 0.2, 0.5] });
+    boxes.forEach((b) => postMediaObserver.observe(b));
+  } else {
+    boxes.forEach((b) => { b.dataset.inView = '1'; playWithSound(b); });
+  }
+}
+
 function showPostShareModal(p, file, fullText) {
   const modal = document.createElement('div');
   modal.className = 'overlay';
