@@ -12,7 +12,12 @@ const reduced = () => { try { return matchMedia('(prefers-reduced-motion: reduce
 let cfg = {};      // contenido publicado (contenido.json) o el borrador del editor
 let pub = {};      // contenido publicado tal como está en GitHub
 let fb = null;      // módulos de firebase
-let isAdmin = false;
+/* Rol con permisos especiales del usuario con sesión iniciada. Solo se toma de Firestore
+   (roles/{correo}) o de la cuenta maestra verificada; nunca del perfil propio ni del navegador.
+   'admin' | 'coordinador' | 'asesor' | '' */
+let privRole = '';
+const ROLES_SIN_PERMISO = ['participante', 'visitante', 'colaborador'];
+const rolSinPermiso = (r) => (ROLES_SIN_PERMISO.includes(String(r || '').toLowerCase()) ? String(r).toLowerCase() : 'participante');
 
 /* ===================== datos por defecto: años de formación ===================== */
 const T = (arr) => arr.map((t, i) => ({ n: String(i + 1).padStart(2, '0'), t }));
@@ -277,13 +282,8 @@ async function toggleReminders() {
   if ('Notification' in window && Notification.permission !== 'granted') {
     try { await Notification.requestPermission(); } catch (e) {}
   }
-  if (fb && fb.getToken && CFG.vapidKey && 'serviceWorker' in navigator && Notification.permission === 'granted') {
-    try {
-      const reg = await navigator.serviceWorker.ready;
-      const token = await fb.getToken(fb.messaging, { vapidKey: CFG.vapidKey, serviceWorkerRegistration: reg });
-      if (token && fb.db) await fb.setDoc(fb.doc(fb.db, 'tokens', token), { creado: fb.serverTimestamp() });
-    } catch (e) {}
-  }
+  /* Avisos del servidor al teléfono: solo para miembros con sesión (tokens/{uid}) */
+  if ('Notification' in window && Notification.permission === 'granted') await registrarTokenPush(false);
   const nextEv = allUpcomingCalendarEvents().find((e) => e.dateIso);
   await notifyDevice(
     '🔔 Recordatorios de JUMA Duaca activados',
@@ -1006,7 +1006,10 @@ function lock(on) {
   document.documentElement.style.overflow = on ? 'hidden' : '';
   document.body.style.overflow = on ? 'hidden' : '';
 }
+let closeTimer = 0;
 function openModal(html, onKey) {
+  /* Si una ventana se estaba cerrando, se cancela ese cierre para no borrar la ventana nueva */
+  clearTimeout(closeTimer); closeTimer = 0;
   modalRoot.innerHTML = html; lock(true); modalKey = onKey || null;
   setTimeout(() => { const f = modalRoot.querySelector('input,textarea'); if (f) f.focus(); }, 260);
 }
@@ -1016,9 +1019,10 @@ function closeModal() {
   if (typeof stopQrCamera === 'function') stopQrCamera();
   if (typeof stopSelfieCamera === 'function') stopSelfieCamera();
   const ov = $('.overlay', modalRoot);
-  const done = () => { modalRoot.innerHTML = ''; lock(false); modalKey = null; };
+  const done = () => { closeTimer = 0; modalRoot.innerHTML = ''; lock(false); modalKey = null; };
+  clearTimeout(closeTimer);
   if (!ov || reduced()) return done();
-  ov.classList.add('is-out'); setTimeout(done, 180);
+  ov.classList.add('is-out'); closeTimer = setTimeout(done, 180);
 }
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalRoot.firstChild && modalKey !== 'force-photo') closeModal(); });
 modalRoot.addEventListener('click', (e) => {
@@ -1048,21 +1052,21 @@ const sheetHead = (kicker, title, id) => `<div class="sheet-head"><div class="ri
 const sheetHeadNoClose = (kicker, title, id) => `<div class="sheet-head"><div class="ribbon" aria-hidden="true" style="position:absolute;top:0;left:0;right:0"></div><div style="display:flex;align-items:center;gap:16px"><div style="flex:1 1 auto;min-width:0"><div style="font-size:13px;color:var(--muted-lt)">${esc(kicker)}</div><h2 id="${id}" class="h-display" style="margin-top:4px;font-size:clamp(28px,4vw,38px)">${esc(title)}</h2></div></div></div>`;
 
 /* ===================== estado de usuario, registro y planilla ===================== */
-let currentUser = null;
-let myProfile = null;
+let currentUser = null;   // usuario real de Firebase Auth (lo único que da acceso)
+let myProfile = null;     // perfil (inscripciones/{uid}) del usuario con sesión; el navegador solo lo guarda como copia para mostrarlo rápido
+let perfilEnNube = false; // true cuando el perfil existe en Firestore en inscripciones/{uid}
+let allInscripciones = []; // planillas completas: SOLO se cargan para coordinadores y la cuenta maestra
+let miembros = [];        // directorio mínimo (miembros/{uid}) visible para miembros con sesión
+/* Limpieza: versiones anteriores guardaban en cada teléfono las planillas y los chats de TODOS
+   (datos personales y mensajes privados) y banderas que daban permisos sin iniciar sesión. */
 try {
-  const isLoggedOut = localStorage.getItem('juma-is-logged-out') === '1';
-  if (!isLoggedOut) {
-    const last = localStorage.getItem('juma-ultimo-perfil');
-    if (last) myProfile = JSON.parse(last);
-  }
+  ['juma-inscripciones-local', 'juma-chat-cache', 'juma-ultimo-perfil', 'juma-master-device', 'juma-custom-master'].forEach((k) => localStorage.removeItem(k));
 } catch (e) {}
-let allInscripciones = [];
-try { allInscripciones = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]'); } catch (e) {}
 let allMensajes = [];
 let insQuery = '';
 let authTab = 'user'; // 'user' | 'master'
 let authErr = '', authOk = '', authBusy = false;
+let authEmailPrev = ''; // conserva el correo escrito si hay que repetir el intento
 
 const form = { step: 1, d: {}, consent: false, done: false, err: '', isUpdate: false };
 const FLD = {
@@ -1247,10 +1251,12 @@ function selfieBoxHtml(target) {
 }
 
 async function saveNewProfilePhoto(url, extraFields = {}) {
+  if (!currentUser) { authErr = 'Inicia sesión para guardar tu foto de perfil.'; openAuthModal(); return; }
+  const esNuevo = !myProfile || !perfilEnNube;
   if (!myProfile) {
-    const email = (currentUser && currentUser.email) || '';
-    const uid = (currentUser && currentUser.uid) || ('juma-' + sha256(email || 'user').slice(0, 20));
-    myProfile = { id: uid, uid, correo: email, nombre: (currentUser && currentUser.displayName) || 'Joven Misionero', foto: url, datos: { correo: email, foto: url } };
+    const email = String(currentUser.email || '').trim().toLowerCase();
+    const uidNew = currentUser.uid;
+    myProfile = { id: uidNew, uid: uidNew, correo: email, nombre: currentUser.displayName || 'Joven Misionero', foto: url, datos: { correo: email, foto: url } };
   } else {
     myProfile.foto = url;
     myProfile.datos = myProfile.datos || {};
@@ -1266,29 +1272,35 @@ async function saveNewProfilePhoto(url, extraFields = {}) {
   }
   myProfile.fotoCarnetOk = true;
   myProfile.actualizado = new Date().toISOString();
-  const uid = myProfile.uid || myProfile.id || (currentUser && currentUser.uid) || '';
-  try {
-    if (uid) localStorage.setItem('juma-perfil-' + uid, JSON.stringify(myProfile));
-    if (myProfile.correo) localStorage.setItem('juma-perfil-email-' + myProfile.correo, JSON.stringify(myProfile));
-    localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile));
-    const pEmail = String(myProfile.correo || (myProfile.datos && myProfile.datos.correo) || '').trim().toLowerCase();
-    const matchIdx = allInscripciones.findIndex((x) => x && ((uid && (x.id === uid || x.uid === uid)) || (pEmail && String(x.correo || (x.datos && x.datos.correo) || '').trim().toLowerCase() === pEmail)));
-    if (matchIdx >= 0) {
-      allInscripciones[matchIdx] = Object.assign({}, allInscripciones[matchIdx], myProfile, { foto: url });
-      localStorage.setItem('juma-inscripciones-local', JSON.stringify(allInscripciones));
-    }
-  } catch (x) {}
-  if (fb && fb.db && uid) {
+  const uid = currentUser.uid;
+  myProfile.uid = uid;
+  if (!myProfile.id) myProfile.id = uid;
+  guardarPerfilLocal();
+  const ix = allInscripciones.findIndex((x) => x && (x.id === uid || x.uid === uid));
+  if (ix >= 0) allInscripciones[ix] = Object.assign({}, allInscripciones[ix], { foto: url, datos: myProfile.datos });
+  if (fb && fb.db) {
+    /* Se actualizan solo estos campos (merge). Si el perfil aún no existe en la nube se crea como participante. */
+    const campos = { foto: url, fotoCarnetOk: true, datos: myProfile.datos, actualizado: myProfile.actualizado };
+    if (extraFields.cedula) campos.cedula = extraFields.cedula;
+    if (extraFields.sexo) campos.sexo = extraFields.sexo;
+    if (esNuevo) Object.assign(campos, { id: uid, uid, correo: myProfile.correo || '', nombre: myProfile.nombre || '', rol: 'participante', tipoRegistro: 'participante' });
     try {
-      await withTimeout(fb.setDoc(fb.doc(fb.db, 'inscripciones', uid), {
-        foto: url,
-        fotoCarnetOk: true,
-        datos: myProfile.datos,
-        actualizado: myProfile.actualizado
-      }, { merge: true }), 4500);
+      await withTimeout(fb.setDoc(fb.doc(fb.db, 'inscripciones', uid), campos, { merge: true }), 4500);
+      perfilEnNube = true;
+      upsertMiembro();
+      if (esNuevo) iniciarEscuchasDeMiembro();
     } catch (e) {}
   }
   updateAuthUI();
+}
+
+/* Copia del perfil propio en este teléfono (solo para mostrar nombre y foto al instante). */
+function guardarPerfilLocal() {
+  if (!currentUser || !myProfile) return;
+  try { localStorage.setItem('juma-perfil-' + currentUser.uid, JSON.stringify(myProfile)); } catch (e) {}
+}
+function leerPerfilLocal(uid) {
+  try { const s = localStorage.getItem('juma-perfil-' + uid); return s ? JSON.parse(s) : null; } catch (e) { return null; }
 }
 
 function needsMandatoryPhoto(rec) {
@@ -1852,17 +1864,21 @@ function sixMonthsAgoIso() {
   const n = new Date(); n.setDate(n.getDate() - 183);
   return n.getFullYear() + '-' + pad2(n.getMonth() + 1) + '-' + pad2(n.getDate());
 }
+/* Rol que se MUESTRA como etiqueta de una planilla. No da ningún permiso: los permisos
+   vienen solo de roles/{correo} en Firestore (privRole) y de las reglas del servidor. */
 function userRole(rec) {
   if (!rec) return 'participante';
   const em = String(rec.correo || (rec.datos && rec.datos.correo) || '').trim().toLowerCase();
   if (em && isMasterEmail(em)) return 'coordinador';
   const r = String(rec.rol || (rec.datos && rec.datos.rol) || (rec.datos && rec.datos.tipoRegistro) || '').trim().toLowerCase();
   if (r === 'coordinador' || r === 'asesor' || r === 'participante' || r === 'visitante' || r === 'colaborador') return r;
-  const cList = ((cfg && cfg.coordinadoresEmails) || []).map((x) => String(x).toLowerCase());
-  if (em && cList.includes(em)) return 'coordinador';
-  const aList = ((cfg && cfg.asesoresEmails) || []).map((x) => String(x).toLowerCase());
-  if (em && aList.includes(em)) return 'asesor';
   return 'participante';
+}
+/* Rol del usuario con sesión iniciada: el privilegiado viene de Firestore; si no, el de su planilla sin permisos. */
+function myRole() {
+  if (privRole === 'admin') return 'coordinador';
+  if (privRole === 'coordinador' || privRole === 'asesor') return privRole;
+  return rolSinPermiso(myProfile ? userRole(myProfile) : 'participante');
 }
 function roleLabel(rol) {
   if (rol === 'coordinador') return 'Coordinador(a)';
@@ -1936,7 +1952,7 @@ function formHtml() {
     }
     const wa = waNums();
     const recDone = myProfile || { datos: d, foto: d.foto, correo: d.correo, nombre: ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() };
-    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', 'Registro y Carnet Misionero', 'pl-t')}<div style="padding:clamp(24px,4vw,44px)"><div class="u-badge" style="background:#E4F5EA;color:#14532D;margin-bottom:12px">✔ Cuenta, planilla y carnet listos</div><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px">${d.foto ? `<img src="${esc(d.foto)}" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--royal)">` : ''}<h3 class="h-display h-lg" style="margin:0">¡Bienvenido(a) a JUMA, ${esc((d.nombres || '').trim().split(' ')[0] || 'misionero')}!</h3></div><p class="body" style="margin:0 0 18px;max-width:58ch">${form.saved ? 'Tu registro, tu planilla y tu Carnet Misionero con Código QR ya quedaron guardados en la nube de JUMA. ' : 'Tu planilla y tu Carnet Misionero quedaron guardados. '}Aquí puedes ver cómo queda tu carnet en el mockup y descargarlo en alta calidad:</p>${carnetInteractiveSectionHtml(recDone, 'done')}<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:22px"><button type="button" class="btn btn-blue" data-go-profile>Ir a mi perfil misionero</button>${wa.map((n) => `<a class="btn btn-soft" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${encodeURIComponent(planillaTexto())}">Enviar planilla por WhatsApp (${esc(waLabel(n))})</a>`).join('')}<button type="button" class="btn btn-soft" data-dl>Descargar planilla</button><button type="button" class="btn btn-soft" data-close>Cerrar</button></div></div></div></div>`;
+    return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pl-t"><div class="sheet">${sheetHead('Instituto Misioneros de la Consolata · Barquisimeto', 'Registro y Carnet Misionero', 'pl-t')}<div style="padding:clamp(24px,4vw,44px)"><div class="u-badge" style="background:#E4F5EA;color:#14532D;margin-bottom:12px">✔ Cuenta, planilla y carnet listos</div><div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px">${d.foto ? `<img src="${esc(d.foto)}" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--royal)">` : ''}<h3 class="h-display h-lg" style="margin:0">¡Bienvenido(a) a JUMA, ${esc((d.nombres || '').trim().split(' ')[0] || 'misionero')}!</h3></div><p class="body" style="margin:0 0 18px;max-width:58ch">${form.saved ? 'Tu registro, tu planilla y tu Carnet Misionero con Código QR ya quedaron guardados en la nube de JUMA. ' : '<b>Atención:</b> no se pudo confirmar el guardado en la nube (revisa tu internet). Envía tu planilla por WhatsApp con los botones de abajo para que no se pierda. '}Aquí puedes ver cómo queda tu carnet en el mockup y descargarlo en alta calidad:</p>${carnetInteractiveSectionHtml(recDone, 'done')}<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:22px"><button type="button" class="btn btn-blue" data-go-profile>Ir a mi perfil misionero</button>${wa.map((n) => `<a class="btn btn-soft" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${encodeURIComponent(planillaTexto())}">Enviar planilla por WhatsApp (${esc(waLabel(n))})</a>`).join('')}<button type="button" class="btn btn-soft" data-dl>Descargar planilla</button><button type="button" class="btn btn-soft" data-close>Cerrar</button></div></div></div></div>`;
   }
   const isVisitante = d.tipoRegistro === 'visitante';
   const names = isVisitante ? ['Visitante / Colaborador'] : ['Cuenta y datos', 'Representante', 'Salud', 'Confirmar'];
@@ -2040,7 +2056,7 @@ function openForm(editExisting = false) {
     if (!form.d.foto && myProfile.foto) form.d.foto = myProfile.foto;
     form.isUpdate = true;
     form.consent = true;
-  } else if (currentUser && myProfile && myProfile.datos && !editExisting) {
+  } else if (currentUser && perfilEnNube && myProfile && myProfile.datos && !editExisting) {
     openAuthModal(); return;
   } else {
     form.isUpdate = false;
@@ -2059,17 +2075,17 @@ async function saveRegistration() {
   const email = String(d.correo || '').trim().toLowerCase();
   const pass = String(d.password || '');
   delete d.password;
-  let uid = (currentUser && currentUser.uid) || '';
+  if (d.correo) d.correo = email;
 
   if (fb && fb.auth && !currentUser && email && pass) {
     try {
-      const cred = await withTimeout(fb.au.createUserWithEmailAndPassword(fb.auth, email, pass), 6000);
-      currentUser = cred.user; uid = currentUser.uid;
+      const cred = await withTimeout(fb.au.createUserWithEmailAndPassword(fb.auth, email, pass), 8000);
+      currentUser = cred.user;
     } catch (err) {
-      if (err && (err.code === 'auth/email-already-in-use' || /already-in-use/i.test(err.message))) {
+      if (err && (err.code === 'auth/email-already-in-use' || /already-in-use/i.test(err.message || ''))) {
         try {
-          const cred = await withTimeout(fb.au.signInWithEmailAndPassword(fb.auth, email, pass), 6000);
-          currentUser = cred.user; uid = currentUser.uid;
+          const cred = await withTimeout(fb.au.signInWithEmailAndPassword(fb.auth, email, pass), 8000);
+          currentUser = cred.user;
         } catch (e2) {
           throw new Error('Ese correo ya está registrado. Escribe tu contraseña correcta o entra en «Iniciar sesión».');
         }
@@ -2078,20 +2094,20 @@ async function saveRegistration() {
       } else if (err && /invalid-email/i.test(err.code || '')) {
         throw new Error('El correo electrónico no es válido.');
       } else {
-        uid = 'juma-' + sha256(email).slice(0, 20);
+        throw new Error('No se pudo crear tu cuenta en este momento. Revisa tu conexión a internet e intenta de nuevo.');
       }
     }
-    if (currentUser && fb.au.updateProfile) {
-      fb.au.updateProfile(currentUser, { displayName: ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() }).catch(() => {});
+    if (currentUser) {
+      try { localStorage.removeItem('juma-is-logged-out'); } catch (e) {}
+      if (fb.au.updateProfile) fb.au.updateProfile(currentUser, { displayName: ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() }).catch(() => {});
+      if (fb.au.sendEmailVerification && !currentUser.emailVerified) fb.au.sendEmailVerification(currentUser).catch(() => {});
     }
   }
-  if (!uid) uid = 'juma-' + sha256(email || ((d.nombres || '') + (d.celular || ''))).slice(0, 20);
-
+  /* Con sesión: la planilla se guarda en inscripciones/{uid} (uid real de Firebase).
+     Sin sesión (sin correo/contraseña): se guarda como registro nuevo con id «juma-…», como antes. */
+  const uid = currentUser ? currentUser.uid : ('juma-' + sha256(email || ((d.nombres || '') + (d.celular || ''))).slice(0, 20));
   const isVisitante = d.tipoRegistro === 'visitante';
-  const prevRol = isMasterEmail(email)
-    ? 'coordinador'
-    : (isVisitante ? (d.categoriaVisitante === 'Colaborador(a)' ? 'colaborador' : 'visitante') : ((form.isUpdate && myProfile && myProfile.rol) ? myProfile.rol : 'participante'));
-  const prevAsistencias = (myProfile && Array.isArray(myProfile.asistencias)) ? myProfile.asistencias : [];
+  const esActualizacion = !!(currentUser && perfilEnNube && myProfile && (myProfile.uid === uid || myProfile.id === uid));
 
   const rec = {
     id: uid,
@@ -2102,10 +2118,8 @@ async function saveRegistration() {
     sexo: d.sexo || detectGender({ datos: d }),
     foto: d.foto || '',
     fotoCarnetOk: true,
-    rol: prevRol || (isVisitante ? 'visitante' : 'participante'),
     tipoRegistro: isVisitante ? 'visitante' : 'participante',
     categoriaVisitante: d.categoriaVisitante || '',
-    asistencias: prevAsistencias,
     celular: d.celular || '',
     edad: edadDe(d),
     esMenor: esMenor(d),
@@ -2117,148 +2131,181 @@ async function saveRegistration() {
     resumen: summaryRows(d).map((r) => r[0] + ': ' + r[1]).join('\n'),
     actualizado: new Date().toISOString()
   };
-
-  myProfile = rec;
-  if (userRole(rec) === 'coordinador') {
-    isAdmin = true;
-    try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {}
+  /* El rol y las asistencias nunca se escriben desde la planilla (las reglas lo impiden): solo al crear
+     se pone un rol SIN permisos; coordinador/asesor lo asigna la cuenta maestra en roles/{correo} y las
+     asistencias las registran los coordinadores con el QR. */
+  if (!esActualizacion) {
+    rec.rol = isVisitante ? (d.categoriaVisitante === 'Colaborador(a)' ? 'colaborador' : 'visitante') : 'participante';
   }
-  try {
-    localStorage.setItem('juma-perfil-' + uid, JSON.stringify(rec));
-    if (email) localStorage.setItem('juma-perfil-email-' + email, JSON.stringify(rec));
-    localStorage.setItem('juma-ultimo-perfil', JSON.stringify(rec));
-    const loc = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]').filter((x) => x && x.id !== uid && x.correo !== email);
-    loc.unshift(rec);
-    localStorage.setItem('juma-inscripciones-local', JSON.stringify(loc));
-  } catch (e) {}
+  const local = Object.assign({}, myProfile || {}, rec);
+  if (currentUser) {
+    myProfile = local;
+    guardarPerfilLocal();
+  }
 
   let cloudSaved = false;
   if (fb && fb.db) {
     try {
-      const savePromise = fb.setDoc(fb.doc(fb.db, 'inscripciones', uid), Object.assign({}, rec, { creado: fb.serverTimestamp() }), { merge: true });
-      await withTimeout(savePromise, 4500);
+      const datosNube = Object.assign({}, rec);
+      if (!esActualizacion) datosNube.creado = fb.serverTimestamp();
+      await withTimeout(fb.setDoc(fb.doc(fb.db, 'inscripciones', uid), datosNube, { merge: true }), 6000);
       cloudSaved = true;
+      if (currentUser) {
+        perfilEnNube = true;
+        upsertMiembro();
+        iniciarEscuchasDeMiembro();
+      }
     } catch (e) {
-      cloudSaved = true;
+      cloudSaved = false;
     }
   }
-
   updateAuthUI();
   return cloudSaved;
 }
 
+/* Busca una planilla ya cargada (solo coordinadores tienen la lista completa) o la copia propia. */
 function findProfileRecord(uid, email) {
   const cleanEmail = String(email || '').trim().toLowerCase();
   const cleanUid = String(uid || '').trim();
-
-  // 1. Buscar en allInscripciones (cargadas en memoria)
-  if (Array.isArray(allInscripciones) && allInscripciones.length) {
-    const match = allInscripciones.find((x) => {
-      if (!x) return false;
-      if (cleanUid && (x.id === cleanUid || x.uid === cleanUid)) return true;
-      const xEmail = String(x.correo || (x.datos && x.datos.correo) || '').trim().toLowerCase();
-      if (cleanEmail && xEmail && xEmail === cleanEmail) return true;
-      return false;
-    });
-    if (match) return match;
-  }
-
-  // 2. Buscar en el caché local de inscripciones
-  try {
-    const locArr = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]');
-    if (Array.isArray(locArr) && locArr.length) {
-      const match = locArr.find((x) => {
-        if (!x) return false;
-        if (cleanUid && (x.id === cleanUid || x.uid === cleanUid)) return true;
-        const xEmail = String(x.correo || (x.datos && x.datos.correo) || '').trim().toLowerCase();
-        if (cleanEmail && xEmail && xEmail === cleanEmail) return true;
-        return false;
-      });
-      if (match) return match;
-    }
-  } catch (e) {}
-
-  // 3. Buscar en claves de perfil específicas de localStorage
-  try {
-    if (cleanUid) {
-      const s = localStorage.getItem('juma-perfil-' + cleanUid);
-      if (s) return JSON.parse(s);
-    }
-    if (cleanEmail) {
-      const s = localStorage.getItem('juma-perfil-email-' + cleanEmail);
-      if (s) return JSON.parse(s);
-    }
-    const last = localStorage.getItem('juma-ultimo-perfil');
-    if (last) {
-      const parsed = JSON.parse(last);
-      const pEmail = String(parsed.correo || (parsed.datos && parsed.datos.correo) || '').trim().toLowerCase();
-      if (!cleanEmail || pEmail === cleanEmail) return parsed;
-    }
-  } catch (e) {}
-
+  const match = (allInscripciones || []).find((x) => {
+    if (!x) return false;
+    if (cleanUid && (x.id === cleanUid || x.uid === cleanUid)) return true;
+    const xEmail = String(x.correo || (x.datos && x.datos.correo) || '').trim().toLowerCase();
+    return !!(cleanEmail && xEmail && xEmail === cleanEmail && x.uid === cleanUid);
+  });
+  if (match) return match;
+  if (cleanUid) return leerPerfilLocal(cleanUid);
   return null;
 }
 
+/* Carga el perfil propio desde inscripciones/{uid}. Si no existe pero hay una planilla antigua con el
+   mismo correo (ids «juma-…»), la copia a inscripciones/{uid} sin tocar la antigua. */
 async function loadUserProfile(user) {
   if (!user) return null;
   const uid = user.uid;
-  const email = String(user.email || '').toLowerCase();
-
-  // Carga inmediata del perfil local para que la foto y el nombre aparezcan al instante
-  const localMatch = findProfileRecord(uid, email);
-  if (localMatch) {
-    myProfile = localMatch;
-    if (userRole(myProfile) === 'coordinador') {
-      isAdmin = true;
-      try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {}
+  const email = String(user.email || '').trim().toLowerCase();
+  const local = leerPerfilLocal(uid);
+  if (local && !myProfile) { myProfile = local; updateAuthUI(); }
+  if (!fb || !fb.db) return myProfile;
+  try {
+    const snap = await withTimeout(fb.getDoc(fb.doc(fb.db, 'inscripciones', uid)), 6000);
+    if (snap.exists()) {
+      myProfile = Object.assign({ id: snap.id }, snap.data());
+      myProfile.uid = myProfile.uid || uid;
+      perfilEnNube = true;
+      guardarPerfilLocal();
+      return myProfile;
     }
-    updateAuthUI();
+  } catch (e) {
+    return myProfile; // sin conexión: se usa la copia local solo para mostrar
   }
-
-  if (fb && fb.db) {
+  perfilEnNube = false;
+  myProfile = null;
+  if (email && user.emailVerified) {
     try {
-      const snap = await withTimeout(fb.getDoc(fb.doc(fb.db, 'inscripciones', uid)), 3500);
-      if (snap.exists()) {
-        const data = Object.assign({ id: snap.id }, snap.data());
-        myProfile = data;
-        if (userRole(data) === 'coordinador') { isAdmin = true; try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {} }
-        try {
-          localStorage.setItem('juma-perfil-' + uid, JSON.stringify(data));
-          localStorage.setItem('juma-ultimo-perfil', JSON.stringify(data));
-        } catch (e) {}
-        updateAuthUI();
-        setTimeout(() => checkBirthdayCelebration(), 500);
-        return data;
-      }
-      if (email) {
-        const q = fb.query(fb.collection(fb.db, 'inscripciones'), fb.where('correo', '==', email), fb.limit(1));
-        const qs = await withTimeout(fb.getDocs(q), 3500);
-        if (!qs.empty) {
-          const data = Object.assign({ id: qs.docs[0].id }, qs.docs[0].data());
-          myProfile = data;
-          if (userRole(data) === 'coordinador') { isAdmin = true; try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {} }
-          try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(data)); } catch (e) {}
-          updateAuthUI();
-          setTimeout(() => checkBirthdayCelebration(), 500);
-          return data;
-        }
+      const q = fb.query(fb.collection(fb.db, 'inscripciones'), fb.where('correo', '==', email), fb.limit(1));
+      const qs = await withTimeout(fb.getDocs(q), 6000);
+      if (!qs.empty) {
+        const legacy = Object.assign({}, qs.docs[0].data());
+        const legacyId = qs.docs[0].id;
+        const copia = Object.assign({}, legacy, {
+          id: uid,
+          uid,
+          correo: email,
+          rol: rolSinPermiso(legacy.rol || (legacy.datos && legacy.datos.tipoRegistro)),
+          asistencias: Array.isArray(legacy.asistencias) ? legacy.asistencias : [],
+          migradoDe: legacyId,
+          migradoEn: new Date().toISOString(),
+          actualizado: new Date().toISOString()
+        });
+        await withTimeout(fb.setDoc(fb.doc(fb.db, 'inscripciones', uid), copia, { merge: true }), 6000);
+        myProfile = copia;
+        perfilEnNube = true;
+        guardarPerfilLocal();
+        return myProfile;
       }
     } catch (e) {}
   }
-  if (myProfile && userRole(myProfile) === 'coordinador') {
-    isAdmin = true;
-    try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {}
-  }
-  updateAuthUI();
-  setTimeout(() => checkBirthdayCelebration(), 500);
-  return myProfile || null;
+  return null;
 }
 
+/* Lee el rol con permisos desde Firestore: roles/{correo}. Solo cuentas con correo verificado. */
+async function loadPrivRole(user) {
+  privRole = '';
+  if (!user || !user.email) return '';
+  const email = String(user.email).trim().toLowerCase();
+  if (user.emailVerified && email === ADMIN) { privRole = 'admin'; return privRole; }
+  if (!user.emailVerified || !fb || !fb.db) return '';
+  try {
+    const snap = await withTimeout(fb.getDoc(fb.doc(fb.db, 'roles', email)), 6000);
+    if (snap.exists()) {
+      const r = String((snap.data() || {}).rol || '').toLowerCase();
+      if (r === 'coordinador' || r === 'asesor') privRole = r;
+    }
+  } catch (e) {}
+  return privRole;
+}
+
+/* Directorio mínimo para que los miembros se encuentren (sin datos personales): miembros/{uid}. */
+async function miniaturaFoto(src) {
+  const s = String(src || '');
+  if (/^https?:\/\//i.test(s)) return s.slice(0, 1500);
+  if (!/^data:image\//.test(s)) return '';
+  try {
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = s; });
+    const cv = document.createElement('canvas'); cv.width = 96; cv.height = 96;
+    const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height, m = Math.min(w, h);
+    cv.getContext('2d').drawImage(img, (w - m) / 2, (h - m) / 2, m, m, 0, 0, 96, 96);
+    const out = cv.toDataURL('image/jpeg', 0.7);
+    return out.length < 24000 ? out : '';
+  } catch (e) { return ''; }
+}
+let miembroSubido = '';
+async function upsertMiembro() {
+  if (!currentUser || !perfilEnNube || !fb || !fb.db || !myProfile) return;
+  const d = myProfile.datos || {};
+  const nombre = String(myProfile.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || currentUser.displayName || 'Misionero JUMA').slice(0, 80);
+  const nac = String(d.nac || myProfile.nac || '');
+  const cumple = /^\d{4}-\d{2}-\d{2}$/.test(nac) ? nac.slice(5) : '';
+  const foto = await miniaturaFoto(myProfile.foto || d.foto || currentUser.photoURL || '');
+  const rec = {
+    uid: currentUser.uid,
+    nombre,
+    primerNombre: (d.nombres ? d.nombres.trim().split(' ')[0] : nombre.split(' ')[0]) || 'Misionero',
+    foto,
+    rol: myRole(),
+    parroquia: String(myProfile.parroquia || d.parroquia || '').slice(0, 80),
+    cumple,
+    sexo: String(myProfile.sexo || d.sexo || '').slice(0, 10),
+    actualizado: new Date().toISOString()
+  };
+  const firma = JSON.stringify(Object.assign({}, rec, { actualizado: '' }));
+  if (firma === miembroSubido) return;
+  try {
+    await withTimeout(fb.setDoc(fb.doc(fb.db, 'miembros', currentUser.uid), rec, { merge: true }), 6000);
+    miembroSubido = firma;
+  } catch (e) {}
+}
+
+/* Planillas completas: solo coordinadores, asesores y la cuenta maestra (las reglas lo exigen). */
+async function loadAllInscripciones() {
+  if (!coordUI() || !fb || !fb.db) return;
+  try {
+    const snap = await withTimeout(fb.getDocs(fb.collection(fb.db, 'inscripciones')), 8000);
+    const arr = [];
+    snap.docs.forEach((x) => arr.push(Object.assign({ id: x.id }, x.data())));
+    /* Si una planilla antigua ya fue copiada a la cuenta nueva, se muestra solo la nueva */
+    const migradas = new Set(arr.map((x) => x.migradoDe).filter(Boolean));
+    allInscripciones = arr.filter((x) => !migradas.has(x.id)).sort((a, b) => String(b.actualizado || '').localeCompare(String(a.actualizado || '')));
+    if (currentSection === 'comunidad') renderComunidadView();
+    if (fb.setDoc) fb.setDoc(fb.doc(fb.db, 'site', 'stats'), { inscritos: allInscripciones.length }, { merge: true }).catch(() => {});
+  } catch (e) {}
+}
 
 /* ===================== Modo Secciones SPA, Notificaciones Internas y Dock Social ===================== */
 let currentSection = 'inicio';
 let viewMode = localStorage.getItem('juma-view-mode') || 'secciones'; // 'secciones' | 'corrido'
-let lastReadNotifTime = Number(localStorage.getItem('juma-last-read-notif-time') || 0);
 
 function showToast(msg) {
   const existing = $('#juma-toast');
@@ -2321,75 +2368,191 @@ function switchSection(sectionId, updateHash = true) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function getUnreadChatCount() {
-  const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
-  const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
-  const isCoord = isCoordinatorOrAdvisor();
-  return (chatMessages || []).filter((m) => {
-    const t = Date.parse(m.fecha || '') || 0;
-    const isMine = (myUid && m.uid === myUid) || (myEmail && m.correo && String(m.correo).toLowerCase() === myEmail);
-    if (isMine) return false;
-    if (m.canal === 'dm') {
-      const isForMe = (myUid && m.paraUid === myUid) || (myEmail && m.paraEmail && String(m.paraEmail).toLowerCase() === myEmail);
-      return isForMe && t > lastReadChatTime;
-    }
-    if (m.canal === 'coord') {
-      return isCoord && t > lastReadChatTime;
-    }
-    return t > lastReadChatTime;
-  }).length;
+/* ---------- Marcas de lectura por usuario: lecturas/{uid} en Firestore + copia en este teléfono ----------
+   Se comparan siempre con la hora del SERVIDOR de cada mensaje (creado), nunca con el reloj de otro teléfono. */
+const LECTURAS_VACIAS = () => ({ chatGeneral: 0, chatCoord: 0, dm: {}, notifVistos: [] });
+let lecturas = LECTURAS_VACIAS();
+let lecturasTimer = 0;
+let lecturasPendientes = false;
+const lecturasKey = (uid) => 'juma-lecturas-' + uid;
+function mezclarLecturas(a, b) {
+  a = a || {}; b = b || {};
+  const out = {
+    chatGeneral: Math.max(+a.chatGeneral || 0, +b.chatGeneral || 0),
+    chatCoord: Math.max(+a.chatCoord || 0, +b.chatCoord || 0),
+    dm: Object.assign({}, a.dm || {}),
+    notifVistos: []
+  };
+  Object.keys(b.dm || {}).forEach((k) => { out.dm[k] = Math.max(+out.dm[k] || 0, +b.dm[k] || 0); });
+  out.notifVistos = Array.from(new Set([].concat(a.notifVistos || [], b.notifVistos || []))).slice(-300);
+  return out;
+}
+async function cargarLecturas() {
+  lecturas = LECTURAS_VACIAS();
+  if (!currentUser) return;
+  const uid = currentUser.uid;
+  try { const s = localStorage.getItem(lecturasKey(uid)); if (s) lecturas = mezclarLecturas(lecturas, JSON.parse(s)); } catch (e) {}
+  refreshBadges();
+  if (fb && fb.db) {
+    try {
+      const snap = await withTimeout(fb.getDoc(fb.doc(fb.db, 'lecturas', uid)), 6000);
+      if (snap.exists() && currentUser && currentUser.uid === uid) lecturas = mezclarLecturas(lecturas, snap.data());
+    } catch (e) {}
+  }
+  refreshBadges();
+}
+function escribirLecturasNube(uid) {
+  lecturasPendientes = false;
+  if (!fb || !fb.db || !uid) return Promise.resolve();
+  return fb.setDoc(fb.doc(fb.db, 'lecturas', uid), {
+    chatGeneral: lecturas.chatGeneral,
+    chatCoord: lecturas.chatCoord,
+    dm: lecturas.dm,
+    notifVistos: lecturas.notifVistos,
+    actualizado: fb.serverTimestamp()
+  }, { merge: true }).catch(() => {});
+}
+function guardarLecturas() {
+  if (!currentUser) return;
+  const uid = currentUser.uid;
+  try { localStorage.setItem(lecturasKey(uid), JSON.stringify(lecturas)); } catch (e) {}
+  lecturasPendientes = true;
+  clearTimeout(lecturasTimer);
+  lecturasTimer = setTimeout(() => { if (currentUser && currentUser.uid === uid) escribirLecturasNube(uid); }, 700);
+}
+function flushLecturas() {
+  clearTimeout(lecturasTimer);
+  if (lecturasPendientes && currentUser) return escribirLecturasNube(currentUser.uid);
+  return Promise.resolve();
 }
 
+/* ---------- Mensajes: hora del servidor, dueño y canal ---------- */
+function msgTime(m) {
+  if (!m) return 0;
+  const c = m.creado;
+  if (c && typeof c.toMillis === 'function') return c.toMillis();
+  if (c && typeof c.seconds === 'number') return c.seconds * 1000;
+  return Date.parse(m.fecha || '') || 0;
+}
+function miUid() { return currentUser ? currentUser.uid : ''; }
+function miCorreo() { return String((currentUser && currentUser.email) || '').trim().toLowerCase(); }
+function esMio(m) {
+  const uid = miUid(), email = miCorreo();
+  return !!((uid && (m.uid === uid || m.deUid === uid)) || (email && m.correo && String(m.correo).toLowerCase() === email));
+}
+const canalDe = (m) => (m && m.canal) || 'general';
+function dmKeyDe(m) { return (m && m.dmKey) || [(m && (m.deUid || m.uid)) || '', (m && m.paraUid) || ''].sort().join('_'); }
+function dmKeyCon(targetUid) { return [miUid(), targetUid || ''].sort().join('_'); }
+function esDmParaMi(m) {
+  const uid = miUid(), email = miCorreo();
+  return canalDe(m) === 'dm' && !!((uid && m.paraUid === uid) || (email && m.paraEmail && String(m.paraEmail).toLowerCase() === email));
+}
+function chatUnreadCounts() {
+  const out = { general: 0, coord: 0, dm: 0, porDm: {}, total: 0 };
+  if (!isMemberUI()) return out;
+  const coord = coordUI();
+  (chatMessages || []).forEach((m) => {
+    if (!m || esMio(m)) return;
+    const t = msgTime(m);
+    const c = canalDe(m);
+    if (c === 'general') { if (t > lecturas.chatGeneral) out.general++; }
+    else if (c === 'coord') { if (coord && t > lecturas.chatCoord) out.coord++; }
+    else if (c === 'dm' && esDmParaMi(m)) {
+      const k = dmKeyDe(m);
+      if (t > (+lecturas.dm[k] || 0)) { out.dm++; out.porDm[k] = (out.porDm[k] || 0) + 1; }
+    }
+  });
+  out.total = out.general + out.coord + out.dm;
+  return out;
+}
+function getUnreadChatCount() { return chatUnreadCounts().total; }
+function maxTiempo(filtro) {
+  let mx = 0;
+  (chatMessages || []).forEach((m) => { if (m && filtro(m)) mx = Math.max(mx, msgTime(m)); });
+  return mx;
+}
+/* Marca como leído lo que el usuario está viendo AHORA en el chat (canal o conversación abierta). */
+function marcarVistaChatActual() {
+  if (!currentUser || modalKey !== 'chat' || chatActiveTab !== 'chat') return false;
+  let changed = false;
+  if (chatChannel === 'general') {
+    const t = maxTiempo((m) => canalDe(m) === 'general');
+    if (t > lecturas.chatGeneral) { lecturas.chatGeneral = t; changed = true; }
+  } else if (chatChannel === 'coord' && coordUI()) {
+    const t = maxTiempo((m) => canalDe(m) === 'coord');
+    if (t > lecturas.chatCoord) { lecturas.chatCoord = t; changed = true; }
+  } else if (chatChannel === 'dm' && chatDmTarget) {
+    const k = dmKeyCon(chatDmTarget.uid || chatDmTarget.id);
+    const t = maxTiempo((m) => canalDe(m) === 'dm' && dmKeyDe(m) === k);
+    if (t > (+lecturas.dm[k] || 0)) { lecturas.dm[k] = t; changed = true; }
+  }
+  if (changed) guardarLecturas();
+  refreshBadges();
+  return changed;
+}
+
+/* ---------- Notificaciones internas (campana) ----------
+   Cada aviso tiene un id estable. Los «fijos» (próximo encuentro, carnet, recordatorio de chat) nunca
+   cuentan para el punto rojo. Al abrir la campana o «Avisos y Novedades» se marcan todos como vistos. */
+function idDePost(post) {
+  return 'post-' + String(post.id || sha256(String(post.t || '') + '|' + String(post.fecha || '')).slice(0, 16));
+}
 function getInternalNotifications() {
   const notifs = [];
+  if (!currentUser) return notifs;
+  const hoy = todayIso();
+  const mmdd = hoy.slice(5);
 
-  // 1. Cumpleaños de hoy
-  const hoyList = (typeof cumpleanosHoy === 'function') ? cumpleanosHoy(allInscripciones) : [];
-  hoyList.forEach((p) => {
-    const isF = p.sexo === 'Mujer' || (p.datos && p.datos.sexo === 'Mujer');
+  // 1. Cumpleaños de hoy (del directorio de miembros)
+  const yaCumple = new Set();
+  (miembros || []).forEach((p) => {
+    if (!p || !p.uid || p.cumple !== mmdd || p.uid === miUid() || yaCumple.has(p.uid)) return;
+    yaCumple.add(p.uid);
+    const isF = p.sexo === 'Mujer';
     notifs.push({
-      id: 'cumple-' + (p.uid || p.id),
+      id: 'cumple-' + p.uid + '-' + hoy,
       icon: '🎂',
       iconBg: '#FEF3C7',
-      title: isF ? '🎉 ¡Cumpleaños de una hermana misionera!' : '🎉 ¡Cumpleaños de un hermano misionero!',
+      title: isF ? '¡Cumpleaños de una hermana misionera!' : '¡Cumpleaños de un hermano misionero!',
       body: `Hoy <b>${esc(p.nombre)}</b> está de cumpleaños. ¡Felicítale en su día!`,
       time: 'Hoy',
-      action: { type: 'dm', uid: p.uid || p.id, label: '💬 Felicitar por Chat' }
+      action: { type: 'dm', uid: p.uid, label: '💬 Felicitar por Chat' }
     });
   });
 
-  // 2. Próximo Encuentro Dominical
-  const nextDom = (cfg && cfg.domingos && cfg.domingos[0]) || { f: 'Próximo domingo', t: 'Encuentro Misionero' };
+  // 2. Próximo encuentro (fijo: no cuenta para el punto rojo)
+  const prox = encuentrosProgramados()[0];
   notifs.push({
-    id: 'encuentro-' + (nextDom.f || 'prox'),
+    id: 'encuentro-' + (prox ? prox.key : 'prox'),
+    fijo: true,
     icon: '📍',
     iconBg: '#E0E7FF',
     title: 'Próximo Encuentro de JUMA',
-    body: `<b>${esc(nextDom.t || 'Encuentro')}</b> · ${esc(nextDom.f || '')} a las ${esc(hora())} en ${esc(lugar())}.`,
-    time: 'Esta semana',
+    body: `<b>${esc(prox ? prox.tema : 'Encuentro JUMA')}</b>${prox ? ' · ' + esc(prox.diaSem + ' ' + prox.dia + ' de ' + prox.mes) : ''} a las ${esc(hora())} en ${esc(lugar())}.`,
+    time: prox && prox.isToday ? 'Hoy' : 'Próximamente',
     action: { type: 'maps', url: mapsUrl(), label: '📍 Cómo llegar en Google Maps' }
   });
 
-  // 3. Novedades y Noticias del Muro
-  const posts = (pub && pub.posts) || (cfg && cfg.posts) || [];
-  posts.slice(0, 3).forEach((post) => {
+  // 3. Noticias del muro (las 3 más recientes)
+  getPostsList(cfg).slice(0, 3).forEach((post) => {
     if (!post) return;
     notifs.push({
-      id: 'post-' + (post.id || post.t),
+      id: idDePost(post),
       icon: '📰',
       iconBg: '#E4F5EA',
       title: post.t ? esc(post.t) : 'Novedad de JUMA Duaca',
-      body: post.x ? esc(post.x.slice(0, 100)) + (post.x.length > 100 ? '…' : '') : 'Publicación en el muro de JUMA.',
+      body: post.x ? esc(String(post.x).slice(0, 100)) + (String(post.x).length > 100 ? '…' : '') : 'Publicación en el muro de JUMA.',
       time: post.fecha ? timeAgo(post.fecha) : 'Reciente',
       action: { type: 'section', section: 'novedades', label: 'Ver noticia' }
     });
   });
 
-  // 4. Mensajes no leídos en Chat
+  // 4. Mensajes sin leer (fijo: ya tienen su propio globo en el botón de chat)
   const unreadChat = getUnreadChatCount();
   if (unreadChat > 0) {
     notifs.push({
       id: 'chat-unread',
+      fijo: true,
       icon: '💬',
       iconBg: '#FCE7F3',
       title: 'Mensajes sin leer',
@@ -2399,10 +2562,11 @@ function getInternalNotifications() {
     });
   }
 
-  // 5. Carnet Misionero listo
-  if (myProfile) {
+  // 5. Carnet Misionero (fijo)
+  if (myProfile && perfilEnNube) {
     notifs.push({
       id: 'carnet-ok',
+      fijo: true,
       icon: '🪪',
       iconBg: '#E8F1FF',
       title: 'Carnet Misionero Digital Activo',
@@ -2411,57 +2575,71 @@ function getInternalNotifications() {
       action: { type: 'profile', label: 'Ver mi carnet' }
     });
   }
-
   return notifs;
 }
-
 function getUnreadNotifCount() {
-  const notifs = getInternalNotifications();
-  const hasUnread = Date.now() - lastReadNotifTime > 6 * 3600 * 1000 && notifs.length > 0;
-  return hasUnread ? notifs.length : 0;
+  if (!currentUser) return 0;
+  const vistos = new Set(lecturas.notifVistos || []);
+  return getInternalNotifications().filter((n) => !n.fijo && !vistos.has(n.id)).length;
+}
+function marcarNotificacionesVistas() {
+  if (!currentUser) return;
+  const set = new Set(lecturas.notifVistos || []);
+  let changed = false;
+  getInternalNotifications().forEach((n) => { if (!n.fijo && !set.has(n.id)) { set.add(n.id); changed = true; } });
+  if (changed) { lecturas.notifVistos = Array.from(set).slice(-300); guardarLecturas(); }
+  refreshBadges();
 }
 
-function updateNotifBadge() {
-  const count = getUnreadNotifCount();
-  const txt = count > 9 ? '9+' : String(count);
-
-  const topEl = $('#top-notif-badge');
-  const dockEl = $('#dock-notif-badge');
-  const fbNotifEl = $('#fb-badge-notif');
-  [topEl, dockEl, fbNotifEl].forEach((el) => {
-    if (el) {
-      if (count > 0) { el.textContent = txt; el.classList.remove('hide'); }
-      else { el.classList.add('hide'); }
+/* ---------- Un solo lugar que actualiza TODOS los globos rojos ---------- */
+function setBadge(sel, n) {
+  const el = $(sel);
+  if (!el) return;
+  if (n > 0) { el.textContent = n > 99 ? '99+' : String(n); el.classList.remove('hide'); }
+  else { el.textContent = ''; el.classList.add('hide'); }
+}
+function refreshBadges() {
+  const chat = getUnreadChatCount();
+  const notif = getUnreadNotifCount();
+  setBadge('#top-chat-badge', chat);
+  setBadge('#dock-chat-badge', chat);
+  setBadge('#profile-chat-badge', chat);
+  setBadge('#top-notif-badge', notif);
+  setBadge('#dock-notif-badge', notif);
+  try {
+    if (navigator.setAppBadge) {
+      if (chat + notif > 0) navigator.setAppBadge(chat + notif).catch(() => {});
+      else if (navigator.clearAppBadge) navigator.clearAppBadge().catch(() => {});
     }
-  });
+  } catch (e) {}
 }
+function updateNotifBadge() { refreshBadges(); }
+function updateChatBadge() { refreshBadges(); }
 
 function openNotificationsModal() {
+  if (!currentUser) { openAuthModal(); return; }
   const notifs = getInternalNotifications();
-  lastReadNotifTime = Date.now();
-  try { localStorage.setItem('juma-last-read-notif-time', String(lastReadNotifTime)); } catch (e) {}
-  updateNotifBadge();
-
+  const vistos = new Set(lecturas.notifVistos || []);
   const html = `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="notif-t">
     <div class="sheet notif-sheet">
       <div class="chat-top">
         <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:20px">🔔</span>
+          <span style="font-size:20px" aria-hidden="true">🔔</span>
           <div>
-            <b style="font-size:16px;display:block">Notificaciones y Novedades</b>
-            <small style="opacity:.8;font-size:12px">Novedades internas de JUMA Duaca</small>
+            <b id="notif-t" style="font-size:16px;display:block">Notificaciones y Novedades</b>
+            <small style="font-size:12px">Novedades internas de JUMA Duaca</small>
           </div>
         </div>
-        <button type="button" data-close aria-label="Cerrar notificaciones" style="width:40px;height:40px;min-height:40px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;border:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;cursor:pointer">✕</button>
+        <button type="button" data-close aria-label="Cerrar notificaciones" style="width:40px;height:40px;min-height:40px;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;cursor:pointer">✕</button>
       </div>
       <div class="notif-list">
         ${!notifs.length ? `<div class="chat-empty">No hay notificaciones nuevas por ahora.</div>` : notifs.map((n) => `
           <div class="notif-item">
-            <div class="notif-icon" style="background:${n.iconBg}">${n.icon}</div>
+            <div class="notif-icon" style="background:${n.iconBg}" aria-hidden="true">${n.icon}</div>
             <div style="flex:1 1 auto;min-width:0">
               <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">
-                <b style="font-size:14.5px;color:var(--navy)">${n.title}</b>
-                <span style="font-size:11px;color:var(--muted)">${n.time}</span>
+                <b style="font-size:14.5px;color:var(--navy)">${n.title}${!n.fijo && !vistos.has(n.id) ? ' <span style="display:inline-block;margin-left:4px;padding:1px 7px;border-radius:99px;background:#E11D48;color:#fff;font-size:10.5px;font-weight:900;vertical-align:middle">Nuevo</span>' : ''}</b>
+                <span style="font-size:11px;color:var(--muted);flex:0 0 auto">${n.time}</span>
               </div>
               <p style="margin:0 0 8px;font-size:13.5px;color:var(--ink);line-height:1.4">${n.body}</p>
               ${n.action ? (
@@ -2480,6 +2658,7 @@ function openNotificationsModal() {
     </div>
   </div>`;
   openModal(html, 'notifs');
+  marcarNotificacionesVistas();
 }
 
 function openGuestMenuModal() {
@@ -2491,23 +2670,23 @@ function openGuestMenuModal() {
     { id: 'fe', icon: '🙏', title: 'Oración y Fe' },
     { id: 'consolata', icon: '✨', title: 'Consolata y Santos' },
     { id: 'novedades', icon: '📰', title: 'Noticias y Muro' },
-    { id: 'galeria', icon: '📸', title: 'Galería de Fotos' },
-    { id: 'comunidad', icon: '👥', title: 'Espacio Comunitario' }
+    { id: 'galeria', icon: '📸', title: 'Galería de Fotos' }
   ];
+  if (currentUser) sections.push({ id: 'comunidad', icon: '👥', title: 'Espacio Comunitario' });
   const html = `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="gm-t">
     <div class="sheet" style="max-width:440px">
       ${sheetHead('JUMA Duaca · Menú Web', 'Secciones de la página', 'gm-t')}
       <div style="padding:16px 20px;display:flex;flex-direction:column;gap:8px">
         ${sections.map((s) => `
           <button type="button" class="btn btn-soft" data-guest-nav="${s.id}" style="justify-content:flex-start;min-height:48px;padding:0 16px;font-size:15px;font-weight:700;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--navy)">
-            <span style="font-size:20px;margin-right:12px">${s.icon}</span>
+            <span style="font-size:20px;margin-right:12px" aria-hidden="true">${s.icon}</span>
             <span>${esc(s.title)}</span>
           </button>
         `).join('')}
-        <div style="margin-top:8px;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
+        ${!currentUser ? `<div style="margin-top:8px;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
           <button type="button" class="btn btn-blue" data-open-form style="width:100%">Quiero ser parte (Inscripción)</button>
           <button type="button" class="btn btn-soft" data-open-auth style="width:100%">Iniciar sesión</button>
-        </div>
+        </div>` : ''}
       </div>
     </div>
   </div>`;
@@ -2517,30 +2696,24 @@ function openGuestMenuModal() {
 function updateSocialDock() {
   const dock = $('#social-dock');
   if (!dock) return;
-  const isAuth = !!(currentUser || myProfile);
-
-  if (!isAuth) {
+  if (!currentUser) {
     dock.innerHTML = `<button type="button" class="social-dock-guest" data-open-auth>
       <span aria-hidden="true" style="font-size:16px">🔑</span>
       <span>Miembros · Iniciar sesión</span>
     </button>`;
     return;
   }
-
-  const unreadChat = getUnreadChatCount();
-  const unreadNotif = getUnreadNotifCount();
   const d = (myProfile && myProfile.datos) || {};
-  const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
-  const initial = esc(((myProfile && myProfile.nombre) || (currentUser && currentUser.displayName) || 'M').charAt(0).toUpperCase());
-
+  const foto = (myProfile && (myProfile.foto || d.foto)) || currentUser.photoURL || '';
+  const initial = esc(((myProfile && myProfile.nombre) || currentUser.displayName || 'M').charAt(0).toUpperCase());
   dock.innerHTML = `
     <button type="button" class="dock-btn" data-dock-action="chat" title="Mensajes y Chat" aria-label="Abrir Mensajes">
       <span aria-hidden="true">💬</span>
-      ${unreadChat > 0 ? `<span class="dock-badge">${unreadChat}</span>` : ''}
+      <span class="dock-badge hide" id="dock-chat-badge"></span>
     </button>
     <button type="button" class="dock-btn" data-dock-action="notif" title="Notificaciones" aria-label="Abrir Notificaciones">
       <span aria-hidden="true">🔔</span>
-      ${unreadNotif > 0 ? `<span class="dock-badge">${unreadNotif}</span>` : ''}
+      <span class="dock-badge hide" id="dock-notif-badge"></span>
     </button>
     <button type="button" class="dock-btn" data-dock-action="comunidad" title="Comunidad JUMA" aria-label="Ir a Comunidad">
       <span aria-hidden="true">👥</span>
@@ -2549,24 +2722,27 @@ function updateSocialDock() {
       ${foto ? `<img src="${esc(foto)}" alt="">` : `<span style="font-weight:900;font-size:15px;color:var(--navy)">${initial}</span>`}
     </button>
   `;
+  refreshBadges();
 }
 
-function openChatWithMember(targetUid) {
-  if (!currentUser && !myProfile) {
-    openAuthModal();
-    return;
+/* Busca a un miembro por uid en el directorio (o en las planillas si eres coordinador). */
+function buscarMiembro(targetUid) {
+  const members = getRegisteredMembersForDm(miUid(), miCorreo());
+  let target = members.find((m) => m.uid === targetUid || m.id === targetUid);
+  if (!target && coordUI()) {
+    const rec = (allInscripciones || []).find((r) => r.id === targetUid || r.uid === targetUid);
+    if (rec) target = normalizeMember(rec);
   }
-  const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
-  const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
-  const members = getRegisteredMembersForDm(myUid, myEmail);
-  const target = members.find((m) => m.uid === targetUid || m.id === targetUid);
+  return target || null;
+}
+function openChatWithMember(targetUid) {
+  if (!currentUser) { openAuthModal(); return; }
+  const target = buscarMiembro(targetUid);
   if (target) {
     chatChannel = 'dm';
     chatDmTarget = target;
-    openChatModal('chat');
-  } else {
-    openChatModal('chat');
   }
+  openChatModal('chat');
 }
 
 let comunidadFilter = 'todos';
@@ -2575,9 +2751,7 @@ let comunidadSearch = '';
 function renderComunidadMembersList() {
   const container = $('#comunidad-members-list');
   if (!container) return;
-  const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
-  const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
-  const members = getRegisteredMembersForDm(myUid, myEmail);
+  const members = getRegisteredMembersForDm(miUid(), miCorreo());
 
   const filtered = members.filter((m) => {
     if (!comunidadSearch) return true;
@@ -2592,15 +2766,14 @@ function renderComunidadMembersList() {
   if (!filtered.length) {
     container.innerHTML = `
       <div style="text-align:center;padding:32px 14px;background:#F8FAFD;border-radius:14px;border:1px dashed var(--line)">
-        <span style="font-size:32px;display:block;margin-bottom:6px">👥</span>
-        <b style="font-size:14.5px;color:var(--navy);display:block">No se encontraron amigos</b>
-        <p style="margin:4px 0 0;font-size:13px;color:var(--muted)">Intenta escribiendo otro nombre en la búsqueda.</p>
+        <span style="font-size:32px;display:block;margin-bottom:6px" aria-hidden="true">👥</span>
+        <b style="font-size:14.5px;color:var(--navy);display:block">${members.length ? 'No se encontraron amigos' : 'Aún no hay amigos en el directorio'}</b>
+        <p style="margin:4px 0 0;font-size:13px;color:var(--muted)">${members.length ? 'Intenta escribiendo otro nombre en la búsqueda.' : 'Cada miembro aparece aquí cuando inicia sesión en la app con su cuenta.'}</p>
       </div>`;
     return;
   }
 
-  container.innerHTML = filtered.map((m) => {
-    return `
+  container.innerHTML = filtered.map((m) => `
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:#fff;border:1.5px solid var(--line);box-shadow:0 2px 6px rgba(0,0,0,.03)">
         <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">
           <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;background:var(--mist);display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:2px solid var(--royal)">
@@ -2614,19 +2787,16 @@ function renderComunidadMembersList() {
           <button type="button" class="btn btn-blue btn-sm" data-open-dm="${esc(m.uid)}" style="min-height:36px;padding:0 14px;font-size:13px;font-weight:700;border-radius:10px" title="Escribir mensaje">💬 Escribir</button>
         </div>
       </div>
-    `;
-  }).join('');
+    `).join('');
 }
 
 function renderComunidadView() {
   const el = $('#view-comunidad');
   if (!el) return;
-  const trueMaster = isMasterAccount();
-  const isAuth = !!(currentUser || myProfile || trueMaster || isAdmin);
-  if (!isAuth) {
+  if (!currentUser) {
     el.innerHTML = `
       <div class="wrap" style="padding:60px 20px;text-align:center">
-        <span style="font-size:48px;display:block;margin-bottom:12px">🔒</span>
+        <span style="font-size:48px;display:block;margin-bottom:12px" aria-hidden="true">🔒</span>
         <h2 class="h-display h-lg">Espacio Exclusivo para Miembros de JUMA</h2>
         <p class="body" style="max-width:54ch;margin:12px auto 24px">Inicia sesión con tu cuenta o llena tu planilla de inscripción para acceder al directorio de hermanos, el chat comunitario, mensajes directos y avisos.</p>
         <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
@@ -2636,42 +2806,38 @@ function renderComunidadView() {
       </div>`;
     return;
   }
-
-  if (!myProfile && trueMaster) {
-    myProfile = {
-      nombre: 'Coordinador Maestro',
-      correo: 'jumaduaca@gmail.com',
-      rol: 'coordinador',
-      foto: 'img/logo-juma-allamano.png',
-      datos: { nombres: 'Coordinador', apellidos: 'Maestro', correo: 'jumaduaca@gmail.com', tipoRegistro: 'participante' }
-    };
+  if (!isMemberUI()) {
+    el.innerHTML = `
+      <div class="wrap" style="padding:60px 20px;text-align:center">
+        <span style="font-size:48px;display:block;margin-bottom:12px" aria-hidden="true">📝</span>
+        <h2 class="h-display h-lg">Completa tu planilla para entrar</h2>
+        <p class="body" style="max-width:56ch;margin:12px auto 24px">Ya iniciaste sesión como <b>${esc(currentUser.email || currentUser.displayName || 'usuario')}</b>, pero aún no hay una planilla de JUMA en tu cuenta. Llénala una sola vez para acceder al directorio, el chat y los mensajes.</p>
+        <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
+          <button type="button" class="btn btn-blue" data-open-form>Llenar mi planilla</button>
+          <button type="button" class="btn btn-white" data-open-auth>Ver mi cuenta</button>
+        </div>
+      </div>`;
+    return;
   }
 
   const d = (myProfile && myProfile.datos) || {};
-  const nombre = (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) || (currentUser && currentUser.displayName) || 'Misionero';
+  const nombre = (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) || currentUser.displayName || 'Misionero';
   const primerNombre = (d.nombres ? d.nombres.trim().split(' ')[0] : nombre.split(' ')[0]) || 'Misionero';
-  const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
-  const role = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : 'participante');
+  const foto = (myProfile && (myProfile.foto || d.foto)) || currentUser.photoURL || '';
+  const role = myRole();
   const isJumaMember = role === 'coordinador' || role === 'asesor' || role === 'participante';
-  const roleLabelTxt = roleLabel(role);
+  const roleLabelTxt = privRole === 'admin' ? 'Cuenta Maestra' : roleLabel(role);
 
-  const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
-  const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
-  const members = getRegisteredMembersForDm(myUid, myEmail);
-  const nextDom = (cfg && cfg.domingos && cfg.domingos[0]) || { f: 'Próximo domingo', t: 'Encuentro Misionero' };
-  const lastPost = (pub && pub.posts && pub.posts[0]) || (cfg && cfg.posts && cfg.posts[0]);
-
-  const countCoord = members.filter((m) => m.rol === 'coordinador').length;
-  const countAsesor = members.filter((m) => m.rol === 'asesor').length;
-  const countPart = members.filter((m) => m.rol === 'participante').length;
-  const countVis = members.filter((m) => m.rol === 'visitante' || m.rol === 'colaborador').length;
+  const members = getRegisteredMembersForDm(miUid(), miCorreo());
+  const nextDom = encuentrosProgramados()[0] || null;
+  const lastPost = getPostsList(cfg)[0];
 
   el.innerHTML = `
     <div class="wrap" style="padding:32px clamp(16px,3vw,32px)">
       <!-- Banner estilo Facebook -->
       <div style="padding:24px 28px;border-radius:20px;background:linear-gradient(135deg,var(--navy) 0%,var(--cloth) 100%);color:#fff;box-shadow:0 12px 30px rgba(6,21,54,.15);margin-bottom:28px">
         <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px">
-          <div style="display:flex;align-items:center;gap:16px;flex:1 1 280px">
+          <div style="display:flex;align-items:center;gap:16px;flex:1 1 260px">
             <div style="width:72px;height:72px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.15);border:3px solid var(--sky);display:flex;align-items:center;justify-content:center;flex:0 0 auto">
               ${foto ? `<img src="${esc(foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:28px;color:#fff">${esc(primerNombre.charAt(0).toUpperCase())}</b>`}
             </div>
@@ -2690,34 +2856,29 @@ function renderComunidadView() {
       </div>
 
       <!-- Cuadrícula estilo Red Social -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;align-items:start">
-        <!-- Columna 1: Directorio Dinámico de Hermanos de JUMA -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:24px;align-items:start">
+        <!-- Columna 1: Directorio de Hermanos de JUMA -->
         <div style="background:#fff;border-radius:18px;border:1.5px solid var(--line);padding:22px;box-shadow:0 4px 16px rgba(0,0,0,.04)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px">
             <div>
-              <b style="font-size:18px;color:var(--navy);display:flex;align-items:center;gap:8px"><span>👥</span> Amigos en JUMA</b>
+              <b style="font-size:18px;color:var(--navy);display:flex;align-items:center;gap:8px"><span aria-hidden="true">👥</span> Amigos en JUMA</b>
               <small id="comunidad-members-count" style="color:var(--muted);font-size:12.5px;display:block">${members.length} amigos registrados</small>
             </div>
             <button type="button" class="btn btn-soft btn-sm" data-open-chat style="min-height:34px;padding:0 12px;font-size:12.5px">💬 Abrir Chat</button>
           </div>
-
-          <!-- Buscador en vivo de amigos -->
           <div style="margin-bottom:14px">
             <input type="search" id="comunidad-search-in" value="${esc(comunidadSearch)}" placeholder="🔍 Buscar amigos por nombre…" class="chat-input" style="width:100%;min-height:42px;background:#F8FAFD">
           </div>
-
-          <!-- Lista de amigos -->
           <div id="comunidad-members-list" style="display:flex;flex-direction:column;gap:10px;max-height:500px;overflow-y:auto;padding-right:4px"></div>
         </div>
 
         <!-- Columna 2: Próximo Encuentro y Novedades -->
         <div style="display:flex;flex-direction:column;gap:20px">
-          <!-- Tarjeta Próximo Encuentro con Google Maps -->
           <div style="background:#fff;border-radius:18px;border:1.5px solid var(--line);padding:22px;box-shadow:0 4px 16px rgba(0,0,0,.04)">
-            <span class="u-badge" style="background:#E0E7FF;color:var(--royal);margin-bottom:8px">📅 Próximo Domingo</span>
-            <h3 class="h-display h-md" style="margin:4px 0 8px;font-size:22px">${esc(nextDom.t || 'Encuentro Formativo')}</h3>
+            <span class="u-badge" style="background:#E0E7FF;color:var(--royal);margin-bottom:8px">📅 Próximo Encuentro</span>
+            <h3 class="h-display h-md" style="margin:4px 0 8px;font-size:22px">${esc((nextDom && nextDom.tema) || 'Encuentro Formativo')}</h3>
             <p style="margin:0 0 14px;font-size:14.5px;color:var(--muted)">
-              ${esc(nextDom.f || '')} · Hora: <b>${esc(hora())}</b><br>
+              ${nextDom ? esc(nextDom.diaSem + ' ' + nextDom.dia + ' de ' + nextDom.mes) : ''} · Hora: <b>${esc(hora())}</b><br>
               Lugar: <b>${esc(lugar())}</b>
             </p>
             <div style="display:flex;flex-wrap:wrap;gap:10px">
@@ -2725,10 +2886,8 @@ function renderComunidadView() {
               <button type="button" class="btn btn-soft btn-sm" data-view-target="domingos">Ver calendario completo</button>
             </div>
           </div>
-
-          <!-- Tarjeta de Noticias Recientes -->
           <div style="background:#fff;border-radius:18px;border:1.5px solid var(--line);padding:22px;box-shadow:0 4px 16px rgba(0,0,0,.04)">
-            <b style="font-size:16px;color:var(--navy);display:flex;align-items:center;gap:8px;margin-bottom:12px"><span>📰</span> Última Noticia de JUMA</b>
+            <b style="font-size:16px;color:var(--navy);display:flex;align-items:center;gap:8px;margin-bottom:12px"><span aria-hidden="true">📰</span> Última Noticia de JUMA</b>
             ${lastPost ? `
               <div>
                 ${lastPost.foto ? `<img src="${esc(lastPost.foto)}" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;margin-bottom:10px">` : ''}
@@ -2742,7 +2901,6 @@ function renderComunidadView() {
       </div>
     </div>
   `;
-
   renderComunidadMembersList();
 }
 
@@ -2752,43 +2910,15 @@ function updateAuthUI() {
   const heroBtnJoin = $('#hero-btn-join');
   const footAuth = $('#lnk-perfil-foot');
   const fab = $('#fab-edit');
-  const lAdmin = $('#lnk-admin');
   const btnTopNotif = $('#btn-top-notif');
   const btnTopChat = $('#btn-top-chat');
   const navComunidad = $('#nav-comunidad');
-  const subnavComunidad = $('#subnav-comunidad');
-  const fbTabIcon = $('#fb-tab-profile-icon');
-  const fbTabLabel = $('#fb-tab-profile-label');
 
-  const isExplicitLogout = localStorage.getItem('juma-is-logged-out') === '1';
-  const trueMaster = !isExplicitLogout && isMasterAccount();
-  if (!isExplicitLogout && !myProfile && currentUser) {
-    myProfile = findProfileRecord(currentUser.uid, currentUser.email);
-  }
-  if (!isExplicitLogout && !myProfile) {
-    try {
-      const last = localStorage.getItem('juma-ultimo-perfil');
-      if (last) myProfile = JSON.parse(last);
-    } catch (e) {}
-  }
-  if (!isExplicitLogout && !myProfile && trueMaster) {
-    myProfile = {
-      nombre: 'Coordinador Maestro',
-      correo: 'jumaduaca@gmail.com',
-      rol: 'coordinador',
-      foto: 'img/logo-juma-allamano.png',
-      datos: { nombres: 'Coordinador', apellidos: 'Maestro', correo: 'jumaduaca@gmail.com', tipoRegistro: 'participante' }
-    };
-  }
-  const isAuth = !isExplicitLogout && !!(currentUser || myProfile || trueMaster || isAdmin);
-  if (!isAuth) {
-    myProfile = null;
-  }
-  const role = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : (trueMaster ? 'coordinador' : 'participante'));
-  const masterOn = isAuth && (isAdmin || isEditor() || trueMaster || role === 'coordinador');
-
-  if (fab) fab.classList.toggle('hide', !masterOn);
-  if (lAdmin) lAdmin.textContent = masterOn ? 'Panel Maestro (Activo)' : 'Acceso Maestro';
+  /* Solo una sesión real de Firebase cuenta como «con sesión». */
+  const isAuth = !!currentUser;
+  const member = isMemberUI();
+  if (fab) fab.classList.toggle('hide', !(coordUI() || isEditor()));
+  syncFab();
 
   if (isAuth) {
     document.body.classList.add('is-authenticated');
@@ -2796,13 +2926,12 @@ function updateAuthUI() {
     const d = (myProfile && myProfile.datos) || {};
     const fullName = String(
       (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) ||
-      (currentUser && currentUser.displayName) ||
-      (currentUser && currentUser.email ? currentUser.email.split('@')[0] : '') ||
+      currentUser.displayName ||
+      (currentUser.email ? currentUser.email.split('@')[0] : '') ||
       'Mi perfil'
     ).trim();
     const nombreCorto = (d.nombres ? d.nombres.trim().split(' ')[0] : (fullName ? fullName.split(' ')[0] : 'Mi perfil')) || 'Mi perfil';
-    const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
-
+    const foto = (myProfile && (myProfile.foto || d.foto)) || currentUser.photoURL || '';
     if (btnAuth) {
       btnAuth.innerHTML = (foto
         ? `<img src="${esc(foto)}" alt="" class="topbar-user-photo">`
@@ -2813,24 +2942,14 @@ function updateAuthUI() {
       btnAuth.setAttribute('aria-label', 'Ver perfil de ' + fullName);
     }
     if (btnJoin) {
-      btnJoin.classList.add('hide'); // Ocultar Quiero ser parte al iniciar sesión
-      btnJoin.setAttribute('data-open-auth', '');
-      btnJoin.removeAttribute('data-open-form');
+      /* Con sesión pero sin planilla: se invita a completarla; con planilla, el botón desaparece */
+      btnJoin.classList.toggle('hide', member);
+      btnJoin.textContent = 'Completar planilla';
+      btnJoin.setAttribute('data-open-form', '');
+      btnJoin.removeAttribute('data-open-auth');
     }
-    if (heroBtnJoin) {
-      heroBtnJoin.style.display = 'none'; // Ocultar Quiero ser parte en el inicio una vez iniciada sesión
-    }
-    if (fbTabIcon) {
-      fbTabIcon.innerHTML = foto
-        ? `<img src="${esc(foto)}" alt="" class="fb-tab-user-img">`
-        : `<span class="fb-tab-user-init">${esc(nombreCorto.charAt(0).toUpperCase())}</span>`;
-    }
-    if (fbTabLabel) fbTabLabel.textContent = nombreCorto;
+    if (heroBtnJoin) heroBtnJoin.style.display = member ? 'none' : 'inline-flex';
     if (footAuth) footAuth.textContent = nombreCorto + ' (Mi perfil)';
-    if (btnTopNotif) btnTopNotif.classList.remove('hide');
-    if (btnTopChat) btnTopChat.classList.remove('hide');
-    if (navComunidad) navComunidad.classList.remove('hide');
-    if (subnavComunidad) subnavComunidad.classList.remove('hide');
   } else {
     document.body.classList.add('is-guest');
     document.body.classList.remove('is-authenticated');
@@ -2846,26 +2965,16 @@ function updateAuthUI() {
       btnJoin.setAttribute('data-open-form', '');
       btnJoin.removeAttribute('data-open-auth');
     }
-    if (heroBtnJoin) {
-      heroBtnJoin.style.display = 'inline-flex';
-    }
-    if (fbTabIcon) fbTabIcon.textContent = '👤';
-    if (fbTabLabel) fbTabLabel.textContent = 'Perfil';
+    if (heroBtnJoin) heroBtnJoin.style.display = 'inline-flex';
     if (footAuth) footAuth.textContent = 'Iniciar sesión';
-    if (btnTopNotif) btnTopNotif.classList.add('hide');
-    if (btnTopChat) btnTopChat.classList.add('hide');
-    if (navComunidad) navComunidad.classList.add('hide');
-    if (subnavComunidad) subnavComunidad.classList.add('hide');
   }
+  if (btnTopNotif) btnTopNotif.classList.toggle('hide', !isAuth);
+  if (btnTopChat) btnTopChat.classList.toggle('hide', !isAuth);
+  if (navComunidad) navComunidad.classList.toggle('hide', !isAuth);
 
-  const btnChat = $('#btn-chat');
-  const navChat = $('#nav-chat');
-  if (btnChat) btnChat.classList.toggle('hide', !isAuth);
-  if (navChat) navChat.classList.toggle('hide', !isAuth);
-
-  updateChatBadge();
-  updateNotifBadge();
   updateSocialDock();
+  refreshBadges();
+  if (currentSection === 'comunidad') renderComunidadView();
 }
 
 document.addEventListener('input', (e) => {
@@ -3046,85 +3155,7 @@ modalRoot.addEventListener('click', async (e) => {
   }
 });
 
-modalRoot.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && e.target && e.target.id === 'fast-cedula-in') {
-    e.preventDefault();
-    const btn = $('#btn-fast-cedula-login');
-    if (btn) btn.click();
-  }
-});
-
 modalRoot.addEventListener('click', async (e) => {
-  if (e.target.id === 'btn-fast-cedula-login') {
-    const inEl = $('#fast-cedula-in');
-    const errEl = $('#fast-cedula-err');
-    const val = (inEl ? inEl.value : '').trim().toLowerCase();
-    if (!val) { if (errEl) errEl.textContent = 'Escribe tu cédula o correo.'; return; }
-    const cleanNum = val.replace(/[^0-9]/g, '');
-    let found = (allInscripciones || []).find((rec) => {
-      if (!rec) return false;
-      const d = rec.datos || {};
-      const c1 = String(rec.cedula || d.cedula || '').replace(/[^0-9]/g, '');
-      if (cleanNum && c1 && c1 === cleanNum) return true;
-      const em = String(rec.correo || d.correo || '').trim().toLowerCase();
-      if (em && em === val) return true;
-      const cel = String(rec.celular || d.celular || '').replace(/[^0-9]/g, '');
-      if (cleanNum && cel && cel === cleanNum) return true;
-      return false;
-    });
-
-    if (!found) {
-      try {
-        const loc = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]');
-        found = loc.find((rec) => {
-          if (!rec) return false;
-          const d = rec.datos || {};
-          const c1 = String(rec.cedula || d.cedula || '').replace(/[^0-9]/g, '');
-          if (cleanNum && c1 && c1 === cleanNum) return true;
-          const em = String(rec.correo || d.correo || '').trim().toLowerCase();
-          if (em && em === val) return true;
-          return false;
-        });
-      } catch (x) {}
-    }
-
-    if (!found && fb && fb.db) {
-      if (errEl) errEl.textContent = 'Buscando en la nube…';
-      try {
-        if (cleanNum) {
-          const q = fb.query(fb.collection(fb.db, 'inscripciones'), fb.where('cedula', '==', cleanNum), fb.limit(1));
-          const qs = await withTimeout(fb.getDocs(q), 4000);
-          if (!qs.empty) found = Object.assign({ id: qs.docs[0].id }, qs.docs[0].data());
-        }
-        if (!found && val.includes('@')) {
-          const q = fb.query(fb.collection(fb.db, 'inscripciones'), fb.where('correo', '==', val), fb.limit(1));
-          const qs = await withTimeout(fb.getDocs(q), 4000);
-          if (!qs.empty) found = Object.assign({ id: qs.docs[0].id }, qs.docs[0].data());
-        }
-      } catch (x) {}
-    }
-
-    if (found) {
-      try { localStorage.removeItem('juma-is-logged-out'); } catch (x) {}
-      myProfile = found;
-      if (userRole(found) === 'coordinador') {
-        isAdmin = true;
-        try { sessionStorage.setItem('juma-ed', '1'); } catch (x) {}
-      }
-      try {
-        localStorage.setItem('juma-ultimo-perfil', JSON.stringify(found));
-        if (found.uid) localStorage.setItem('juma-perfil-' + found.uid, JSON.stringify(found));
-      } catch (x) {}
-      updateAuthUI();
-      closeModal();
-      switchSection('comunidad');
-      const nom = (found.nombre || (found.datos && (found.datos.nombres ? found.datos.nombres.split(' ')[0] : '')) || 'Misionero');
-      showToast('¡Hola, ' + nom + '! Sesión iniciada.');
-    } else {
-      if (errEl) errEl.textContent = 'No encontramos una inscripción con esa cédula o correo. Si aún no te has registrado, pulsa en «Quiero ser parte».';
-    }
-    return;
-  }
   const notifAct = e.target.closest('[data-notif-act]');
   if (notifAct) {
     const act = notifAct.dataset.notifAct;
@@ -3143,7 +3174,13 @@ modalRoot.addEventListener('click', async (e) => {
     if (!fb || !fb.auth || !fb.au.GoogleAuthProvider) { form.err = 'Espera un momento a que conecte o usa tu correo y contraseña.'; repaintForm(); return; }
     try {
       const cred = await fb.au.signInWithPopup(fb.auth, new fb.au.GoogleAuthProvider());
-      currentUser = cred.user;
+      await handleUser(cred.user);
+      if (perfilEnNube && myProfile) {
+        /* Esta cuenta ya tiene planilla: se muestra el perfil en vez de llenar otra */
+        openAuthModal();
+        showToast('¡Hola! Ya tienes tu planilla en JUMA.');
+        return;
+      }
       if (currentUser.email) form.d.correo = currentUser.email;
       if (currentUser.displayName && !form.d.nombres) {
         const parts = currentUser.displayName.trim().split(/\s+/);
@@ -3202,7 +3239,7 @@ document.addEventListener('click', (e) => {
   const carnetBtn = e.target.closest('[data-view-member-carnet]');
   if (carnetBtn) {
     e.preventDefault();
-    openMemberCarnetModal(carnetBtn.dataset.viewMemberCarnet);
+    if (typeof openMemberCarnetModal === 'function') openMemberCarnetModal(carnetBtn.dataset.viewMemberCarnet);
     return;
   }
   const filterBtn = e.target.closest('[data-comunidad-filter]');
@@ -3349,8 +3386,9 @@ document.addEventListener('click', (e) => {
   }
   if (e.target.closest('[data-open-form]')) {
     e.preventDefault();
-    if (currentUser && myProfile) openAuthModal();
+    if (currentUser && perfilEnNube && myProfile) openAuthModal();
     else openForm(false);
+    return;
   }
   if (e.target.closest('[data-open-auth]')) {
     e.preventDefault();
@@ -3366,13 +3404,15 @@ function isMasterEmail(email) {
   const adminEmails = String(CFG.adminEmail || 'jumaduaca@gmail.com').toLowerCase().split(/[,;\s]+/).filter(Boolean);
   return adminEmails.includes(String(email).trim().toLowerCase());
 }
-function isMasterAccount() {
-  if (currentUser && currentUser.email && isMasterEmail(currentUser.email)) return true;
-  if (myProfile && myProfile.correo && isMasterEmail(myProfile.correo)) return true;
-  try { if (localStorage.getItem('juma-master-device') === '1') return true; } catch (e) {}
-  try { if (sessionStorage.getItem('juma-ed') === '1') return true; } catch (e) {}
-  return false;
+/* Cuenta maestra = sesión real de Firebase con jumaduaca@gmail.com y correo verificado (igual que en las reglas). */
+function isAdminUser() {
+  return !!(currentUser && currentUser.emailVerified && String(currentUser.email || '').trim().toLowerCase() === ADMIN);
 }
+function isMasterAccount() { return isAdminUser(); }
+/* Coordinadores, asesores y la cuenta maestra (solo interfaz: el servidor vuelve a comprobarlo). */
+function coordUI() { return isAdminUser() || privRole === 'coordinador' || privRole === 'asesor'; }
+/* Miembro = sesión real + planilla propia en la nube (o coordinador). */
+function isMemberUI() { return !!currentUser && (coordUI() || !!(perfilEnNube && myProfile)); }
 
 let profileActiveTab = 'carnet';
 
@@ -3494,22 +3534,10 @@ function renderProfileTabContent(tab, rec, user, d, email, misAsistencias, proxE
 
 function authModalHtml() {
   const trueMaster = isMasterAccount();
-  if (!myProfile && trueMaster) {
-    myProfile = {
-      nombre: 'Coordinador Maestro',
-      correo: 'jumaduaca@gmail.com',
-      rol: 'coordinador',
-      foto: 'img/logo-juma-allamano.png',
-      datos: { nombres: 'Coordinador', apellidos: 'Maestro', correo: 'jumaduaca@gmail.com', tipoRegistro: 'participante' }
-    };
-  }
-  const role = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : (trueMaster ? 'coordinador' : 'participante'));
+  const role = myRole();
   const isJumaMember = role === 'coordinador' || role === 'asesor' || role === 'participante';
-  const masterOn = isAdmin || isEditor() || trueMaster || role === 'coordinador';
-  if (currentUser || myProfile || trueMaster) {
-    if (!myProfile && currentUser) {
-      myProfile = findProfileRecord(currentUser.uid, currentUser.email);
-    }
+  const masterOn = coordUI();
+  if (currentUser) {
     const d = (myProfile && myProfile.datos) || {};
     const nombre = (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) || (currentUser && currentUser.displayName) || (currentUser && currentUser.email) || (isJumaMember ? 'Joven Misionero' : 'Colaborador(a) / Visitante');
     const email = (currentUser && currentUser.email) || (myProfile && (myProfile.correo || d.correo)) || '';
@@ -3545,7 +3573,17 @@ function authModalHtml() {
           <!-- Nombre y Rol -->
           <h2 id="au-t" class="p-name">${esc(nombre)}</h2>
           <div class="p-role-badge">${esc(badgeTxt)}</div>
-          <small style="color:#64748B;font-size:12.5px;font-weight:600;margin-bottom:8px">Miembro activo de la comunidad parroquial</small>
+          <small style="color:#64748B;font-size:12.5px;font-weight:600;margin-bottom:8px">${perfilEnNube ? 'Miembro activo de la comunidad parroquial' : 'Sesión iniciada · ' + esc(email)}</small>
+          ${!perfilEnNube && !trueMaster ? `<div style="width:100%;margin:4px 0 12px;padding:12px 14px;border-radius:12px;background:#FFF8E1;border:1.5px solid #F5C518;color:#5C4300;font-size:13.5px;text-align:left">
+            <b style="display:block;margin-bottom:4px">📝 Aún no hay una planilla en esta cuenta</b>
+            Llénala una sola vez para activar tu carnet, el chat y el directorio de JUMA.
+            <div style="margin-top:8px"><button type="button" class="btn btn-blue btn-sm" data-go-register style="min-height:34px;padding:0 14px;font-size:13px">Llenar mi planilla</button></div>
+          </div>` : ''}
+          ${currentUser && !currentUser.emailVerified ? `<div style="width:100%;margin:4px 0 12px;padding:12px 14px;border-radius:12px;background:#E8F1FF;border:1.5px solid #C7DCFF;color:#0C2D74;font-size:13.5px;text-align:left">
+            <b style="display:block;margin-bottom:4px">✉️ Verifica tu correo</b>
+            Abre el enlace que te enviamos a <b>${esc(email)}</b>. Los permisos de coordinación y la recuperación de planillas antiguas necesitan un correo verificado.
+            <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="btn btn-soft btn-sm" data-verify-email style="min-height:34px;padding:0 12px;font-size:12.5px">Reenviar enlace</button><button type="button" class="btn btn-soft btn-sm" data-reload-user style="min-height:34px;padding:0 12px;font-size:12.5px">Ya lo verifiqué</button></div>
+          </div>` : ''}
 
           <!-- Botones directos de foto -->
           <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;justify-content:center">
@@ -3561,7 +3599,7 @@ function authModalHtml() {
 
           <!-- Botones de Acción Estilo App Moderna -->
           <div class="p-actions">
-            <button type="button" class="p-act-btn" data-open-chat>💬 Mensajes</button>
+            <button type="button" class="p-act-btn" data-open-chat style="position:relative">💬 Mensajes <span class="chat-badge hide" id="profile-chat-badge"></span></button>
             <button type="button" class="p-act-btn" data-edit-my-form>✏️ Editar datos</button>
             <button type="button" class="p-act-btn p-act-danger" data-logout>🚪 Cerrar sesión</button>
           </div>
@@ -3595,23 +3633,19 @@ function authModalHtml() {
     </button>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;color:var(--muted);font-size:13px"><span style="flex:1;height:1px;background:var(--line)"></span><span>o con tu correo y contraseña</span><span style="flex:1;height:1px;background:var(--line)"></span></div>
     <form id="login-user-form" style="display:flex;flex-direction:column;gap:16px">
-      <div class="fld w"><label for="lu-email">Correo electrónico</label><input id="lu-email" type="email" autocomplete="email" required placeholder="tucorreo@ejemplo.com"></div>
+      <div class="fld w"><label for="lu-email">Correo electrónico</label><input id="lu-email" type="email" autocomplete="email" required placeholder="tucorreo@ejemplo.com" value="${esc(authEmailPrev)}"></div>
       <div class="fld w"><label for="lu-pass">Contraseña</label><input id="lu-pass" type="password" autocomplete="current-password" required placeholder="Tu contraseña"></div>
       ${authErr ? `<p role="alert" style="margin:0;padding:12px 16px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:14.5px;font-weight:700">${esc(authErr)}</p>` : ''}
       ${authOk ? `<p role="status" class="eok" style="margin:0">${esc(authOk)}</p>` : ''}
       <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:6px">
         <button type="submit" class="btn btn-blue" ${authBusy ? 'disabled' : ''}>${authBusy ? 'Ingresando…' : 'Iniciar sesión'}</button>
         <button type="button" class="btn btn-soft btn-sm" data-reset-pw>Olvidé mi contraseña</button>
+        <button type="button" class="btn btn-soft btn-sm" data-create-account ${authBusy ? 'disabled' : ''}>Crear mi cuenta</button>
       </div>
     </form>
     <div style="margin-top:18px;padding:14px 16px;border-radius:14px;background:#F0F6FF;border:1.5px solid #C7DCFF">
-      <b style="display:block;font-size:14px;color:var(--navy);margin-bottom:4px">⚡ ¿Ya llenaste tu planilla antes? Acceso directo:</b>
-      <p style="margin:0 0 10px;font-size:12.5px;color:var(--muted)">Ingresa tu número de cédula o correo para entrar a tu perfil sin contraseña.</p>
-      <div style="display:flex;gap:8px">
-        <input type="text" id="fast-cedula-in" placeholder="Ej.: 30123456 o tu correo" style="flex:1;min-height:38px;padding:6px 12px;border-radius:8px;border:1.5px solid var(--line);font-size:14px">
-        <button type="button" class="btn btn-blue btn-sm" id="btn-fast-cedula-login" style="min-height:38px;padding:0 14px">Entrar</button>
-      </div>
-      <div id="fast-cedula-err" style="margin-top:6px;font-size:12.5px;color:#8A1C1C;font-weight:700"></div>
+      <b style="display:block;font-size:14px;color:var(--navy);margin-bottom:4px">ℹ️ ¿Ya llenaste tu planilla antes?</b>
+      <p style="margin:0;font-size:12.5px;color:var(--muted);line-height:1.5">Entra con <b>Google</b> o con tu <b>correo y contraseña</b> usando el mismo correo de tu planilla: la app la encuentra y la pasa a tu cuenta. Si no recuerdas la contraseña, pulsa «Olvidé mi contraseña».</p>
     </div>
     <div style="margin-top:26px;padding-top:20px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
       <div><b style="font-size:16px;color:var(--ink)">¿Aún no tienes cuenta?</b><p style="margin:2px 0 0;font-size:14px;color:var(--muted)">Llena tu planilla y queda registrado en la app.</p></div>
@@ -3626,7 +3660,6 @@ function repaintAuth() { modalRoot.innerHTML = authModalHtml(); const ov = $('.o
 let chatChannel = 'general'; // 'general' | 'coord' | 'dm'
 let chatActiveTab = 'chat'; // 'chat' | 'notif'
 let chatMessages = [];
-let lastReadChatTime = Number(localStorage.getItem('juma-last-read-chat') || 0);
 let chatDmTarget = null; // Destinatario seleccionado para mensajes directos
 let chatDmSearch = '';
 
@@ -3635,26 +3668,27 @@ function normalizeMember(x) {
   const d = x.datos || {};
   const rawNom = x.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Misionero JUMA';
   const nombre = String(rawNom).trim();
-  const primerNombre = (d.nombres ? d.nombres.trim().split(' ')[0] : nombre.split(' ')[0]) || 'Misionero';
+  const primerNombre = x.primerNombre || (d.nombres ? d.nombres.trim().split(' ')[0] : nombre.split(' ')[0]) || 'Misionero';
   const foto = x.foto || d.foto || '';
   const correo = String(x.correo || d.correo || '').trim().toLowerCase();
-  const uid = String(x.uid || x.id || correo || ('m-' + Math.random().toString(36).slice(2, 8))).trim();
+  const uid = String(x.uid || x.id || '').trim();
+  if (!uid) return null;
   const rol = userRole(x);
   const parroquia = x.parroquia || d.parroquia || '';
   return { id: x.id || uid, uid, nombre, primerNombre, foto, correo, rol, parroquia, raw: x };
 }
 
+/* Directorio para escribir mensajes: viene de miembros/{uid} (solo miembros con cuenta). */
 function getRegisteredMembersForDm(myUid, myEmail) {
   const normMyEmail = String(myEmail || '').trim().toLowerCase();
   const list = [];
   const seen = new Set();
-  (allInscripciones || []).forEach((rec) => {
+  (miembros || []).forEach((rec) => {
     const m = normalizeMember(rec);
     if (!m) return;
-    if ((myUid && m.uid === myUid) || (normMyEmail && m.correo === normMyEmail)) return; // Excluirme a mí mismo
-    if (seen.has(m.uid) || (m.correo && seen.has(m.correo))) return;
+    if ((myUid && m.uid === myUid) || (normMyEmail && m.correo && m.correo === normMyEmail)) return; // Excluirme a mí mismo
+    if (seen.has(m.uid)) return;
     seen.add(m.uid);
-    if (m.correo) seen.add(m.correo);
     list.push(m);
   });
   const rank = { coordinador: 1, asesor: 2, participante: 3 };
@@ -3665,6 +3699,11 @@ function getRegisteredMembersForDm(myUid, myEmail) {
     return a.nombre.localeCompare(b.nombre, 'es');
   });
 }
+function fotoDeAutor(m) {
+  if (m && m.foto) return m.foto;
+  const mem = (miembros || []).find((x) => x && x.uid === (m && m.uid));
+  return (mem && mem.foto) || '';
+}
 
 function renderDmMembersList(myUid, myEmail) {
   const members = getRegisteredMembersForDm(myUid, myEmail);
@@ -3672,43 +3711,25 @@ function renderDmMembersList(myUid, myEmail) {
   const filtered = members.filter((m) => {
     if (!q) return true;
     return m.nombre.toLowerCase().includes(q) ||
-      m.correo.toLowerCase().includes(q) ||
       m.parroquia.toLowerCase().includes(q) ||
       m.rol.toLowerCase().includes(q);
   });
 
   if (!filtered.length) {
     return `<div class="chat-empty" style="padding:24px 14px">
-      <span style="font-size:36px;display:block;margin-bottom:6px">🔍</span>
-      <b style="font-size:15px;color:var(--ink)">No se encontraron misioneros</b>
-      <p style="margin:4px 0 0;font-size:13px;color:var(--muted)">Intenta con otro nombre, apellido o parroquia.</p>
+      <span style="font-size:36px;display:block;margin-bottom:6px" aria-hidden="true">🔍</span>
+      <b style="font-size:15px;color:var(--ink)">${members.length ? 'No se encontraron misioneros' : 'Aún no hay misioneros en el directorio'}</b>
+      <p style="margin:4px 0 0;font-size:13px;color:var(--muted)">${members.length ? 'Intenta con otro nombre o parroquia.' : 'Cada miembro aparece cuando inicia sesión en la app con su cuenta.'}</p>
     </div>`;
   }
-
+  const porDm = chatUnreadCounts().porDm;
   return filtered.map((m) => {
-    const targetUid = m.uid;
-    const targetEmail = m.correo;
-    const lastMsg = chatMessages.slice().reverse().find((msg) => {
-      if (msg.canal !== 'dm') return false;
-      return (
-        (msg.uid === myUid && (msg.paraUid === targetUid || (targetEmail && msg.paraEmail === targetEmail))) ||
-        (msg.uid === targetUid && (msg.paraUid === myUid || (myEmail && msg.paraEmail === myEmail))) ||
-        (msg.dmKey && msg.dmKey === [myUid, targetUid].sort().join('_'))
-      );
-    });
-
-    const unreadFromThis = chatMessages.filter((msg) => {
-      if (msg.canal !== 'dm') return false;
-      const t = Date.parse(msg.fecha || '') || 0;
-      const isFromTarget = msg.uid === targetUid || (targetEmail && msg.correo && String(msg.correo).toLowerCase() === targetEmail);
-      const isForMe = (myUid && msg.paraUid === myUid) || (myEmail && msg.paraEmail && String(msg.paraEmail).toLowerCase() === myEmail);
-      return isFromTarget && isForMe && t > lastReadChatTime;
-    }).length;
-
+    const k = dmKeyCon(m.uid);
+    const lastMsg = chatMessages.slice().reverse().find((msg) => canalDe(msg) === 'dm' && dmKeyDe(msg) === k);
+    const unreadFromThis = porDm[k] || 0;
     const rolBadge = m.rol === 'coordinador' ? '★ Coordinador' : (m.rol === 'asesor' ? '◆ Asesor' : 'Participante');
     const rolBg = m.rol === 'coordinador' ? '#FEF3C7' : (m.rol === 'asesor' ? '#E0E7FF' : '#E8F1FF');
     const rolColor = m.rol === 'coordinador' ? '#92400E' : (m.rol === 'asesor' ? '#3730A3' : 'var(--royal)');
-
     return `<div class="chat-dm-member-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:#fff;border:1.5px solid ${unreadFromThis > 0 ? 'var(--royal)' : 'var(--line)'};box-shadow:0 2px 6px rgba(0,0,0,.03)">
       <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">
         <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;background:var(--mist);display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:2px solid ${m.rol === 'coordinador' ? '#F5C518' : 'var(--royal)'}">
@@ -3722,7 +3743,7 @@ function renderDmMembersList(myUid, myEmail) {
           </div>
           <div style="font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
             ${m.parroquia ? esc(m.parroquia) : 'Misionero JUMA'}
-            ${lastMsg ? ` · <span style="color:var(--ink);font-weight:600">“${esc(lastMsg.texto.slice(0, 32))}${lastMsg.texto.length > 32 ? '…' : ''}”</span>` : ''}
+            ${lastMsg ? ` · <span style="color:var(--ink);font-weight:600">“${esc(String(lastMsg.texto || '').slice(0, 32))}${String(lastMsg.texto || '').length > 32 ? '…' : ''}”</span>` : ''}
           </div>
         </div>
       </div>
@@ -3747,27 +3768,6 @@ function fmtChatTime(iso) {
   } catch (e) { return ''; }
 }
 
-function updateChatBadge() {
-  const countEl = $('#chat-badge-count');
-  const topChatEl = $('#top-chat-badge');
-  const dockChatEl = $('#dock-chat-badge');
-  const fbChatEl = $('#fb-badge-chat');
-  const profBadge = $('#profile-chat-badge');
-  const unread = getUnreadChatCount();
-
-  const txt = unread > 99 ? '99+' : String(unread);
-  [countEl, topChatEl, dockChatEl, fbChatEl].forEach((el) => {
-    if (el) {
-      if (unread > 0) { el.textContent = txt; el.classList.remove('hide'); }
-      else { el.classList.add('hide'); }
-    }
-  });
-  if (profBadge) {
-    if (unread > 0) { profBadge.textContent = txt + ' nuevos'; profBadge.classList.remove('hide'); }
-    else { profBadge.classList.add('hide'); }
-  }
-}
-
 function scrollChatBottom() {
   setTimeout(() => {
     const box = $('#chat-msgs-box');
@@ -3775,16 +3775,21 @@ function scrollChatBottom() {
   }, 60);
 }
 
+function chatNoMiembroHtml() {
+  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="cnm-t"><div class="sheet" style="max-width:520px">${sheetHead('Comunidad JUMA Duaca', 'Chat para miembros', 'cnm-t')}<div style="padding:clamp(22px,4vw,36px)">
+    <p class="body" style="margin:0 0 18px">Ya iniciaste sesión, pero tu cuenta aún no tiene una planilla de JUMA. Llénala una sola vez para escribir en el chat de la comunidad y enviar mensajes directos.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:12px"><button type="button" class="btn btn-blue" data-open-form>Llenar mi planilla</button><button type="button" class="btn btn-soft" data-close>Cerrar</button></div>
+  </div></div></div>`;
+}
+
 function openChatModal(targetTab) {
-  if (!currentUser && !myProfile) {
-    openAuthModal();
-    return;
-  }
+  if (!currentUser) { openAuthModal(); return; }
+  if (!isMemberUI()) { openModal(chatNoMiembroHtml(), 'chat-nomiembro'); return; }
   if (targetTab) chatActiveTab = targetTab;
-  lastReadChatTime = Date.now();
-  try { localStorage.setItem('juma-last-read-chat', String(lastReadChatTime)); } catch (e) {}
-  updateChatBadge();
+  if (chatChannel === 'coord' && !coordUI()) chatChannel = 'general';
   openModal(chatModalHtml(), 'chat');
+  if (chatActiveTab === 'notif') marcarNotificacionesVistas();
+  else marcarVistaChatActual();
   scrollChatBottom();
 }
 
@@ -3792,75 +3797,70 @@ function repaintChat() {
   if (modalKey !== 'chat') return;
   const scrollBox = $('#chat-msgs-box');
   const wasNearBottom = scrollBox ? (scrollBox.scrollHeight - scrollBox.scrollTop - scrollBox.clientHeight < 140) : true;
+  /* Conserva lo que el usuario está escribiendo cuando llega un mensaje nuevo */
+  const act = document.activeElement;
+  const actId = act && act.id && modalRoot.contains(act) ? act.id : '';
+  const inMsg = $('#chat-msg-in');
+  const borrador = inMsg ? inMsg.value : '';
+  const selIni = act && typeof act.selectionStart === 'number' ? act.selectionStart : null;
   modalRoot.innerHTML = chatModalHtml();
   const ov = $('.overlay', modalRoot);
   if (ov) { ov.style.animation = 'none'; const sh = $('.sheet', modalRoot); if (sh) sh.style.animation = 'none'; }
+  const nuevoIn = $('#chat-msg-in');
+  if (nuevoIn && borrador) nuevoIn.value = borrador;
+  if (actId) {
+    const el = document.getElementById(actId);
+    if (el) { el.focus(); if (selIni != null && el.setSelectionRange) { try { el.setSelectionRange(selIni, selIni); } catch (e) {} } }
+  }
   if (wasNearBottom) scrollChatBottom();
 }
 
 function chatModalHtml() {
-  const isCoord = isCoordinatorOrAdvisor();
+  const isCoord = coordUI();
   if (chatChannel === 'coord' && !isCoord) chatChannel = 'general';
 
-  const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
-  const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
-
-  const unreadDms = chatMessages.filter((m) => {
-    if (m.canal !== 'dm') return false;
-    const t = Date.parse(m.fecha || '') || 0;
-    const isMine = (myUid && m.uid === myUid) || (myEmail && m.correo && String(m.correo).toLowerCase() === myEmail);
-    if (isMine) return false;
-    const isForMe = (myUid && m.paraUid === myUid) || (myEmail && m.paraEmail && String(m.paraEmail).toLowerCase() === myEmail);
-    return isForMe && t > lastReadChatTime;
-  }).length;
+  const myUid = miUid();
+  const myEmail = miCorreo();
+  const counts = chatUnreadCounts();
 
   let filteredMsgs = [];
   if (chatChannel === 'coord') {
-    filteredMsgs = chatMessages.filter((m) => m.canal === 'coord');
+    filteredMsgs = chatMessages.filter((m) => canalDe(m) === 'coord');
   } else if (chatChannel === 'dm') {
     if (chatDmTarget) {
-      const targetUid = chatDmTarget.uid || chatDmTarget.id || '';
-      const targetEmail = String(chatDmTarget.correo || '').trim().toLowerCase();
-      filteredMsgs = chatMessages.filter((m) => {
-        if (m.canal !== 'dm') return false;
-        const between = (
-          (m.uid === myUid && (m.paraUid === targetUid || (targetEmail && m.paraEmail === targetEmail))) ||
-          (m.uid === targetUid && (m.paraUid === myUid || (myEmail && m.paraEmail === myEmail))) ||
-          (m.dmKey && m.dmKey === [myUid, targetUid].sort().join('_'))
-        );
-        return between;
-      });
+      const k = dmKeyCon(chatDmTarget.uid || chatDmTarget.id);
+      filteredMsgs = chatMessages.filter((m) => canalDe(m) === 'dm' && dmKeyDe(m) === k);
     }
   } else {
-    filteredMsgs = chatMessages.filter((m) => !m.canal || m.canal === 'general');
+    filteredMsgs = chatMessages.filter((m) => canalDe(m) === 'general');
   }
 
   const cumples = getCumpleanosList().filter((c) => c.diasFaltan <= 7);
-  const postsList = (pub && Array.isArray(pub.posts)) ? pub.posts.slice(0, 3) : [];
-  const allSun = domingos(2);
-  const proxEncuentro = allSun[0] || null;
+  const postsList = getPostsList(cfg).slice(0, 3);
+  const proxEncuentro = encuentrosProgramados()[0] || null;
+  const pill = (n) => (n > 0 ? `<span class="chat-badge" style="position:static;display:inline-block;padding:2px 7px;margin-left:4px">${n > 99 ? '99+' : n}</span>` : '');
 
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="chat-t"><div class="sheet chat-sheet">
     <div class="chat-top">
       <div style="display:flex;align-items:center;gap:12px;min-width:0">
-        <img src="img/logo-juma-allamano.png" alt="" style="width:36px;height:36px;border-radius:50%;background:#fff;padding:2px;flex:0 0 auto">
+        <img src="img/logo.png" alt="" style="width:36px;height:36px;border-radius:50%;background:#fff;padding:2px;flex:0 0 auto;object-fit:contain">
         <div style="min-width:0">
           <div style="font-size:12px;color:var(--sky);font-weight:700;text-transform:uppercase;letter-spacing:.04em">Red Social Misionera</div>
           <h2 id="chat-t" style="margin:0;font-size:18px;font-family:var(--display);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Comunidad JUMA Duaca</h2>
         </div>
       </div>
-      <button type="button" data-close aria-label="Cerrar chat" style="width:40px;height:40px;border-radius:10px;border:1.5px solid rgba(255,255,255,.3);background:transparent;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      <button type="button" data-close aria-label="Cerrar chat" style="width:40px;height:40px;border-radius:10px;border:1.5px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
       </button>
     </div>
 
     <!-- Pestañas: Chat vs Notificaciones -->
     <div class="chat-tabs">
       <button type="button" class="chat-tab ${chatActiveTab === 'chat' ? 'active' : ''}" data-chat-tab="chat">
-        <span style="font-size:16px">💬</span><span>Chat y Mensajes</span>
+        <span style="font-size:16px" aria-hidden="true">💬</span><span>Chat y Mensajes</span>${pill(counts.total)}
       </button>
       <button type="button" class="chat-tab ${chatActiveTab === 'notif' ? 'active' : ''}" data-chat-tab="notif">
-        <span style="font-size:16px">🔔</span><span>Avisos y Novedades</span>
+        <span style="font-size:16px" aria-hidden="true">🔔</span><span>Avisos y Novedades</span>${pill(getUnreadNotifCount())}
       </button>
     </div>
 
@@ -3868,37 +3868,30 @@ function chatModalHtml() {
       <!-- Selector de Canales y Mensajes Directos -->
       <div class="chat-channels">
         <button type="button" class="chat-channel-btn ${chatChannel === 'general' ? 'active' : ''}" data-switch-channel="general">
-          <span>💬 Comunidad</span>
-          <small style="opacity:.75">(${chatMessages.filter((m) => !m.canal || m.canal === 'general').length})</small>
+          <span>💬 Comunidad</span>${pill(counts.general)}
         </button>
         ${isCoord ? `
         <button type="button" class="chat-channel-btn ${chatChannel === 'coord' ? 'active' : ''}" data-switch-channel="coord" style="border-color:${chatChannel === 'coord' ? 'var(--royal)' : '#F5C518'};color:${chatChannel === 'coord' ? 'var(--royal)' : '#7A5200'}">
-          <span>⭐ Coordinación</span>
-          <small style="opacity:.75">(${chatMessages.filter((m) => m.canal === 'coord').length})</small>
+          <span>⭐ Coordinación</span>${pill(counts.coord)}
         </button>` : ''}
         <button type="button" class="chat-channel-btn ${chatChannel === 'dm' ? 'active' : ''}" data-switch-channel="dm">
-          <span>✉️ Mensajes Directos</span>
-          ${unreadDms > 0 ? `<span class="chat-badge" style="position:static;display:inline-block;padding:2px 7px;margin-left:4px">${unreadDms}</span>` : ''}
+          <span>✉️ Mensajes Directos</span>${pill(counts.dm)}
         </button>
       </div>
 
       ${chatChannel === 'dm' && !chatDmTarget ? `
         <!-- Directorio de Misioneros para Mensajes Directos -->
         <div style="padding:10px 16px;background:#F6F9FE;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-            <div>
-              <b style="font-size:14px;color:var(--navy);display:block">✉️ Escribir a un misionero</b>
-              <small style="font-size:12px;color:var(--muted)">Selecciona a un participante, coordinador o asesor para chatear en privado:</small>
-            </div>
+          <div>
+            <b style="font-size:14px;color:var(--navy);display:block">✉️ Escribir a un misionero</b>
+            <small style="font-size:12px;color:var(--muted)">Selecciona a un participante, coordinador o asesor para chatear en privado:</small>
           </div>
-          <input type="search" id="chat-dm-search-in" class="chat-input" placeholder="Buscar misionero por nombre, rol o parroquia…" value="${esc(chatDmSearch)}" style="width:100%;min-height:38px;padding:8px 12px;border-radius:10px;background:#fff;font-size:14px">
+          <input type="search" id="chat-dm-search-in" class="chat-input" placeholder="Buscar misionero por nombre, rol o parroquia…" value="${esc(chatDmSearch)}" style="width:100%;min-height:38px;padding:8px 12px;border-radius:10px;background:#fff;font-size:16px">
         </div>
-
         <div class="chat-msgs-wrap" id="chat-dm-list" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;background:#FAFBFD">
           ${renderDmMembersList(myUid, myEmail)}
         </div>
       ` : `
-        <!-- Si está en DM con alguien seleccionado, muestra cabecera de la persona -->
         ${chatChannel === 'dm' && chatDmTarget ? `
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#F0F4F9;border-bottom:1.5px solid var(--line);gap:10px">
             <button type="button" class="btn btn-soft btn-sm" data-clear-dm style="padding:5px 12px;font-size:12.5px;display:inline-flex;align-items:center;gap:4px">
@@ -3906,7 +3899,7 @@ function chatModalHtml() {
             </button>
             <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;justify-content:flex-end">
               <div style="width:34px;height:34px;border-radius:50%;overflow:hidden;background:var(--mist);display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:2px solid var(--royal)">
-                ${chatDmTarget.foto ? `<img src="${esc(chatDmTarget.foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:14px;color:var(--royal)">${esc(chatDmTarget.primerNombre.charAt(0).toUpperCase())}</b>`}
+                ${chatDmTarget.foto ? `<img src="${esc(chatDmTarget.foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:14px;color:var(--royal)">${esc((chatDmTarget.primerNombre || 'M').charAt(0).toUpperCase())}</b>`}
               </div>
               <div style="min-width:0;text-align:right">
                 <b style="font-size:14px;color:var(--navy);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(chatDmTarget.nombre)}</b>
@@ -3920,19 +3913,19 @@ function chatModalHtml() {
         <div class="chat-msgs-wrap" id="chat-msgs-box">
           ${!filteredMsgs.length ? `
             <div class="chat-empty">
-              <span style="font-size:42px;display:block;margin-bottom:8px">${chatChannel === 'dm' ? '✉️' : '💬'}</span>
+              <span style="font-size:42px;display:block;margin-bottom:8px" aria-hidden="true">${chatChannel === 'dm' ? '✉️' : '💬'}</span>
               <b style="font-size:16px;color:var(--navy);display:block">
                 ${chatChannel === 'dm' ? `Inicia la conversación con ${esc(chatDmTarget ? chatDmTarget.primerNombre : 'el misionero')}` : (chatChannel === 'coord' ? '¡Bienvenido al Chat de Coordinación!' : '¡Bienvenido al Chat de la Comunidad!')}
               </b>
               <p style="margin:6px 0 0;color:var(--muted);font-size:13.5px">
-                ${chatChannel === 'dm' ? 'Los mensajes enviados en esta conversación son privados y solo ustedes dos pueden verlos.' : 'Sé el primero en enviar un saludo o mensaje a los misioneros.'}
+                ${chatChannel === 'dm' ? 'Solo ustedes dos pueden leer esta conversación.' : 'Sé el primero en enviar un saludo o mensaje a los misioneros.'}
               </p>
             </div>` : filteredMsgs.map((m) => {
-              const isMine = (myUid && (m.uid === myUid)) || (myEmail && m.correo && String(m.correo).toLowerCase() === myEmail);
+              const isMine = esMio(m);
               const author = m.autor || 'Misionero JUMA';
               const firstLetter = author.charAt(0).toUpperCase() || 'M';
-              const fotoUrl = m.foto || '';
-              const time = fmtChatTime(m.fecha);
+              const fotoUrl = fotoDeAutor(m);
+              const time = fmtChatTime(m.creado && m.creado.toDate ? m.creado.toDate().toISOString() : m.fecha);
               const rolBadge = m.rol === 'coordinador' ? '★ Coordinador' : (m.rol === 'asesor' ? '◆ Asesor' : '');
               return `<div class="chat-bubble-row ${isMine ? 'mine' : 'theirs'}">
                 ${!isMine ? (fotoUrl ? `<img src="${esc(fotoUrl)}" alt="" class="chat-avatar">` : `<span class="chat-avatar-init">${esc(firstLetter)}</span>`) : ''}
@@ -3950,17 +3943,12 @@ function chatModalHtml() {
 
         <!-- Entrada de Texto -->
         <div class="chat-input-bar">
-          ${currentUser || myProfile ? `
           <form id="chat-send-form" style="display:flex;align-items:center;gap:8px;width:100%;margin:0">
             <input type="text" id="chat-msg-in" class="chat-input" placeholder="${chatChannel === 'dm' ? `Escribe un mensaje privado a ${esc(chatDmTarget ? chatDmTarget.primerNombre : 'misionero')}…` : (chatChannel === 'coord' ? 'Escribe a los coordinadores…' : 'Escribe un mensaje a la comunidad…')}" maxlength="1000" autocomplete="off" required>
-            <button type="submit" class="chat-send-btn" title="Enviar mensaje">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            <button type="submit" class="chat-send-btn" title="Enviar mensaje" aria-label="Enviar mensaje">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
             </button>
-          </form>` : `
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:4px">
-            <span style="font-size:13.5px;color:var(--muted)">Inicia sesión para conversar en el chat:</span>
-            <button type="button" class="btn btn-blue btn-sm" data-open-auth>Iniciar sesión</button>
-          </div>`}
+          </form>
         </div>
       `}
       ` : `
@@ -3968,7 +3956,7 @@ function chatModalHtml() {
       <div style="flex:1 1 auto;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:14px;background:#FAFBFD">
         <div style="padding:14px 16px;border-radius:14px;background:#fff;border:1.5px solid #F5C518;box-shadow:0 2px 8px rgba(245,197,24,.1)">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-            <span style="font-size:20px">🎂</span>
+            <span style="font-size:20px" aria-hidden="true">🎂</span>
             <b style="font-size:15px;color:#7A5200">Cumpleaños de esta semana</b>
           </div>
           ${cumples.length ? `<div style="display:flex;flex-direction:column;gap:8px">${cumples.map((c) => `
@@ -3977,18 +3965,18 @@ function chatModalHtml() {
                 <b style="font-size:14px;color:var(--ink)">${esc(c.nombre)}</b>
                 <div style="font-size:12px;color:var(--muted)">${c.esHoy ? '🎉 ¡HOY ES SU CUMPLEAÑOS!' : (c.esManana ? 'Mañana ' : '') + c.dia + ' de ' + c.mesNombre}</div>
               </div>
-              ${c.waUrl ? `<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="${esc(c.waUrl)}" style="min-height:30px;padding:0 10px;font-size:12px">Felicitar 📲</a>` : ''}
+              ${c.waUrl ? `<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="${esc(c.waUrl)}" style="min-height:30px;padding:0 10px;font-size:12px">Felicitar 📲</a>` : (c.id && !c.isExtra && c.id !== myUid ? `<button type="button" class="btn btn-soft btn-sm" data-open-dm="${esc(c.id)}" style="min-height:30px;padding:0 10px;font-size:12px">Felicitar 💬</button>` : '')}
             </div>`).join('')}</div>` : `<p style="margin:0;font-size:13px;color:var(--muted)">No hay cumpleaños en los próximos 7 días.</p>`}
         </div>
 
         ${proxEncuentro ? `
         <div style="padding:14px 16px;border-radius:14px;background:#fff;border:1.5px solid var(--royal);box-shadow:0 2px 8px rgba(36,82,200,.08)">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:20px">📅</span>
-            <b style="font-size:15px;color:var(--navy)">Próximo Domingo de Formación</b>
+            <span style="font-size:20px" aria-hidden="true">📅</span>
+            <b style="font-size:15px;color:var(--navy)">Próximo Encuentro</b>
           </div>
           <p style="margin:0 0 6px;font-size:14.5px;color:var(--ink)"><b>${esc(proxEncuentro.tema)}</b></p>
-          <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">${esc(proxEncuentro.fmt)} · ${esc(hora())} · ${esc(lugar())}</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">${esc(proxEncuentro.diaSem + ' ' + proxEncuentro.dia + ' de ' + proxEncuentro.mes)} · ${esc(hora())} · ${esc(lugar())}</div>
           <a class="btn btn-outline btn-sm" target="_blank" rel="noopener" href="${esc(mapsUrl())}" style="display:inline-flex;align-items:center;gap:6px;font-weight:800;color:var(--royal);border-color:var(--royal)">
             <span>📍 Cómo llegar en Google Maps</span>
           </a>
@@ -3997,7 +3985,7 @@ function chatModalHtml() {
         ${postsList.length ? `
         <div style="padding:14px 16px;border-radius:14px;background:#fff;border:1.5px solid var(--line)">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-            <span style="font-size:20px">📰</span>
+            <span style="font-size:20px" aria-hidden="true">📰</span>
             <b style="font-size:15px;color:var(--navy)">Últimas Publicaciones de JUMA</b>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px">
@@ -4018,87 +4006,123 @@ function chatModalHtml() {
 async function sendChatMessage(texto) {
   const clean = String(texto || '').trim();
   if (!clean) return;
-  if (!currentUser && !myProfile) { openAuthModal(); return; }
+  if (!currentUser) { openAuthModal(); return; }
+  if (!isMemberUI()) { showToast('Completa tu planilla para escribir en el chat.'); return; }
+  if (!fb || !fb.db || !fb.addDoc) { showToast('Sin conexión con el chat. Intenta de nuevo en un momento.'); return; }
+  if (chatChannel === 'coord' && !coordUI()) chatChannel = 'general';
+  const isDm = chatChannel === 'dm';
+  if (isDm && !chatDmTarget) return;
 
   const d = (myProfile && myProfile.datos) || {};
   const fullName = String(
     (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) ||
-    (currentUser && currentUser.displayName) ||
-    (currentUser && currentUser.email ? currentUser.email.split('@')[0] : '') ||
+    currentUser.displayName ||
+    (currentUser.email ? currentUser.email.split('@')[0] : '') ||
     'Misionero JUMA'
-  ).trim();
-  const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
-  const rol = myProfile ? userRole(myProfile) : (currentUser && isMasterEmail(currentUser.email) ? 'coordinador' : 'participante');
-  const uid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || ('juma-' + Date.now());
-  const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
-
-  const isDm = chatChannel === 'dm' && chatDmTarget;
-  const targetUid = isDm ? (chatDmTarget.uid || chatDmTarget.id || '') : '';
-  const targetEmail = isDm ? String(chatDmTarget.correo || '').trim().toLowerCase() : '';
-  const dmKey = isDm ? [uid, targetUid].sort().join('_') : '';
+  ).trim().slice(0, 80);
+  /* La foto no se copia dentro del mensaje (antes iba la imagen completa en cada uno): solo un enlace http(s) */
+  const fotoRaw = String((myProfile && (myProfile.foto || d.foto)) || currentUser.photoURL || '');
+  const foto = /^https?:\/\//i.test(fotoRaw) ? fotoRaw.slice(0, 1500) : '';
+  const uid = currentUser.uid;
+  const myEmail = miCorreo();
 
   const msg = {
     canal: chatChannel,
     texto: clean.slice(0, 1000),
     autor: fullName,
-    foto: foto || '',
-    rol: rol || 'participante',
-    uid: uid,
+    foto,
+    rol: myRole(),
+    uid,
     correo: myEmail,
-    fecha: new Date().toISOString()
+    fecha: new Date().toISOString(),
+    creado: fb.serverTimestamp()
   };
-
   if (isDm) {
-    msg.dmKey = dmKey;
-    msg.deUid = uid;
-    msg.deEmail = myEmail;
-    msg.deNombre = fullName;
-    msg.paraUid = targetUid;
-    msg.paraEmail = targetEmail;
-    msg.paraNombre = chatDmTarget.nombre;
+    const targetUid = chatDmTarget.uid || chatDmTarget.id || '';
+    const targetEmail = String(chatDmTarget.correo || '').trim().toLowerCase();
+    Object.assign(msg, {
+      dmKey: [uid, targetUid].sort().join('_'),
+      deUid: uid,
+      deEmail: myEmail,
+      deNombre: fullName,
+      paraUid: targetUid,
+      paraEmail: targetEmail,
+      paraNombre: String(chatDmTarget.nombre || '').slice(0, 80),
+      participantes: [uid, targetUid],
+      emails: [myEmail, targetEmail].filter(Boolean)
+    });
   }
-
-  chatMessages.push(msg);
-  lastReadChatTime = Date.now();
-  try { localStorage.setItem('juma-last-read-chat', String(lastReadChatTime)); } catch (e) {}
-  try { localStorage.setItem('juma-chat-cache', JSON.stringify(chatMessages.slice(-100))); } catch (e) {}
-  updateChatBadge();
-  repaintChat();
-  scrollChatBottom();
-
-  if (fb && fb.db && fb.addDoc) {
-    try {
-      await fb.addDoc(fb.collection(fb.db, 'chat_mensajes'), Object.assign({}, msg, {
-        creado: fb.serverTimestamp()
-      }));
-    } catch (e) {}
+  try {
+    await fb.addDoc(fb.collection(fb.db, 'chat_mensajes'), msg);
+  } catch (e) {
+    showToast('No se pudo enviar el mensaje. Revisa tu conexión.');
   }
+  marcarVistaChatActual();
 }
 
-function setupChatListener() {
-  if (!fb || !fb.db || !fb.collection) return;
-  try {
-    const q = fb.query(
-      fb.collection(fb.db, 'chat_mensajes'),
-      fb.orderBy('fecha', 'desc'),
-      fb.limit(120)
-    );
-    fb.onSnapshot(q, (snap) => {
-      const list = [];
-      snap.forEach((doc) => {
-        list.push(Object.assign({ id: doc.id }, doc.data()));
-      });
-      list.reverse();
-      if (list.length) {
-        chatMessages = list;
-        try { localStorage.setItem('juma-chat-cache', JSON.stringify(list.slice(-60))); } catch (e) {}
-        updateChatBadge();
-        if (modalKey === 'chat') {
-          repaintChat();
+/* ---------- Escuchas de Firestore (una por canal; las reglas no filtran, así que cada consulta
+   pide solo lo que el usuario puede leer) ---------- */
+let escuchas = [];
+const chatPorConsulta = new Map();
+function reconstruirChat() {
+  const all = new Map();
+  chatPorConsulta.forEach((mapa) => mapa.forEach((v, k) => all.set(k, v)));
+  chatMessages = Array.from(all.values()).sort((a, b) => msgTime(a) - msgTime(b));
+  if (modalKey === 'chat') { repaintChat(); marcarVistaChatActual(); }
+  else refreshBadges();
+}
+function escucharConsulta(nombre, construir) {
+  let unsub = null;
+  let cerrado = false;
+  const arrancar = (conOrden) => {
+    if (cerrado) return;
+    try {
+      unsub = fb.onSnapshot(construir(conOrden), (snap) => {
+        const mapa = new Map();
+        snap.forEach((docu) => mapa.set(docu.id, Object.assign({ id: docu.id }, docu.data({ serverTimestamps: 'estimate' }))));
+        chatPorConsulta.set(nombre, mapa);
+        reconstruirChat();
+      }, (err) => {
+        /* Falta el índice compuesto: se repite sin orderBy y se ordena aquí */
+        if (conOrden && !cerrado && err && (err.code === 'failed-precondition' || /index/i.test(String(err.message || '')))) {
+          try { if (unsub) unsub(); } catch (e) {}
+          arrancar(false);
         }
-      }
+      });
+    } catch (e) {
+      if (conOrden) arrancar(false);
+    }
+  };
+  arrancar(true);
+  escuchas.push(() => { cerrado = true; try { if (unsub) unsub(); } catch (e) {} });
+}
+function iniciarEscuchasDeMiembro() {
+  if (escuchas.length || !currentUser || !isMemberUI() || !fb || !fb.db || !fb.onSnapshot) return;
+  const uid = currentUser.uid;
+  const col = () => fb.collection(fb.db, 'chat_mensajes');
+  const consulta = (filtros) => (conOrden) => (conOrden
+    ? fb.query(col(), ...filtros(), fb.orderBy('fecha', 'desc'), fb.limit(120))
+    : fb.query(col(), ...filtros(), fb.limit(400)));
+  escucharConsulta('general', consulta(() => [fb.where('canal', '==', 'general')]));
+  if (coordUI()) escucharConsulta('coord', consulta(() => [fb.where('canal', '==', 'coord')]));
+  escucharConsulta('dm-enviados', consulta(() => [fb.where('deUid', '==', uid)]));
+  escucharConsulta('dm-recibidos', consulta(() => [fb.where('paraUid', '==', uid)]));
+  try {
+    const un = fb.onSnapshot(fb.collection(fb.db, 'miembros'), (snap) => {
+      const arr = [];
+      snap.forEach((docu) => arr.push(Object.assign({ uid: docu.id }, docu.data())));
+      miembros = arr;
+      if (currentSection === 'comunidad') renderComunidadView();
+      if (modalKey === 'chat' && chatChannel === 'dm' && !chatDmTarget) repaintChat();
+      refreshBadges();
     }, () => {});
+    escuchas.push(un);
   } catch (e) {}
+}
+function pararEscuchasDeMiembro() {
+  escuchas.forEach((f) => { try { f(); } catch (e) {} });
+  escuchas = [];
+  chatPorConsulta.clear();
 }
 
 /* ===================== muro de mensajes (moderado) ===================== */
@@ -4120,7 +4144,7 @@ $('#muro-form').addEventListener('submit', async (e) => {
   let ok = false;
   try {
     if (fb && fb.db) { await withTimeout(fb.addDoc(fb.collection(fb.db, 'mensajes'), Object.assign({}, item, { creado: fb.serverTimestamp() })), 5000); ok = true; }
-  } catch (x) { ok = true; }
+  } catch (x) { ok = /timeout/i.test(String((x && x.message) || '')); }
   if (ok) {
     msg.textContent = 'Gracias. Tu mensaje será revisado por un coordinador antes de publicarse.';
     $('#m-nombre').value = ''; $('#m-texto').value = '';
@@ -4132,7 +4156,38 @@ $('#muro-form').addEventListener('submit', async (e) => {
 /* ===================== avisos al teléfono (notificaciones) ===================== */
 function setupPush() {
   if (!fb || !fb.onMessage || !fb.messaging) return;
-  try { fb.onMessage(fb.messaging, (p) => { const n = p.notification || {}; const a = $('#aviso'); a.textContent = (n.title ? n.title + ': ' : '') + (n.body || ''); a.classList.remove('hide'); }); } catch (e) {}
+  try {
+    /* Con la app abierta: aviso dentro de la página y se actualizan los globos rojos */
+    fb.onMessage(fb.messaging, (p) => {
+      const n = (p && p.notification) || {};
+      const d = (p && p.data) || {};
+      const titulo = n.title || d.title || 'JUMA Duaca';
+      const cuerpo = n.body || d.body || '';
+      showToast(titulo + (cuerpo ? ': ' + cuerpo : ''));
+      refreshBadges();
+    });
+  } catch (e) {}
+}
+/* Guarda el token de avisos del teléfono en tokens/{uid} (solo miembros con sesión y permiso). */
+async function registrarTokenPush(pedirPermiso) {
+  try {
+    if (!currentUser || !isMemberUI() || !fb || !fb.db || !fb.getToken || !fb.messaging || !CFG.vapidKey || !fb.arrayUnion) return false;
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return false;
+    if (Notification.permission !== 'granted') {
+      if (!pedirPermiso) return false;
+      const r = await Notification.requestPermission();
+      if (r !== 'granted') return false;
+    }
+    const reg = await navigator.serviceWorker.ready;
+    const token = await fb.getToken(fb.messaging, { vapidKey: CFG.vapidKey, serviceWorkerRegistration: reg });
+    if (!token) return false;
+    const uid = currentUser.uid;
+    const yaKey = 'juma-push-token-' + uid;
+    try { if (localStorage.getItem(yaKey) === token) return true; } catch (e) {}
+    await fb.setDoc(fb.doc(fb.db, 'tokens', uid), { tokens: fb.arrayUnion(token), uid, actualizado: fb.serverTimestamp() }, { merge: true });
+    try { localStorage.setItem(yaKey, token); } catch (e) {}
+    return true;
+  } catch (e) { return false; }
 }
 
 /* ===================== firebase (Auth + Firestore optimizado para móviles + Messaging) ===================== */
@@ -4149,7 +4204,7 @@ function detectDeviceName() {
   return 'Teléfono / Navegador';
 }
 function totalAppDownloads() {
-  const regCount = allInscripciones.length;
+  const regCount = Math.max(allInscripciones.length, Number(appStats.inscritos) || 0);
   const rawDl = Number(appStats.descargasApk) || 0;
   return Math.max(rawDl, regCount);
 }
@@ -4170,14 +4225,15 @@ async function initFirebase() {
       db = fs.getFirestore(a);
     }
     fb = { app: a, db, auth: au.getAuth(a), au };
-    ['doc', 'getDoc', 'setDoc', 'deleteDoc', 'updateDoc', 'collection', 'addDoc', 'getDocs', 'query', 'where', 'orderBy', 'limit', 'onSnapshot', 'serverTimestamp', 'increment'].forEach((k) => { fb[k] = fs[k]; });
+    ['doc', 'getDoc', 'setDoc', 'deleteDoc', 'updateDoc', 'collection', 'addDoc', 'getDocs', 'query', 'where', 'orderBy', 'limit', 'onSnapshot', 'serverTimestamp', 'increment', 'arrayUnion'].forEach((k) => { fb[k] = fs[k]; });
     try {
+      /* Contenido público de la página (lectura pública en las reglas) */
       fb.onSnapshot(fb.doc(fb.db, 'site', 'config'), (snap) => {
         if (snap.exists()) {
           const remote = snap.data();
           if (remote && String(remote.actualizado || '') >= String(cfg.actualizado || '')) {
             pub = clone(remote);
-            if (!isEditor() || !pickDraft()) { cfg = clone(remote); renderAll(); }
+            if (!isEditor() || !pickDraft()) { cfg = clone(remote); renderAll(); refreshBadges(); }
           }
         }
       }, () => {});
@@ -4189,87 +4245,82 @@ async function initFirebase() {
         }
       }, () => {});
       /* Si abre desde la APK instalada y aún no se había contabilizado este teléfono, suma 1 al contador */
-      const isInstalledApp = (window.matchMedia && (window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches)) || document.referrer.includes('android-app://') || /; wv\)|Version\/[\d.]+.*Chrome/i.test(navigator.userAgent || '');
-      if (isInstalledApp && !localStorage.getItem('juma-apk-dl-v1')) {
+      const isInstalledApp = (window.matchMedia && (window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches)) || document.referrer.includes('android-app://') || /; wv\)/i.test(navigator.userAgent || '');
+      if (isInstalledApp && fb.increment && !localStorage.getItem('juma-apk-dl-v1')) {
         localStorage.setItem('juma-apk-dl-v1', '1');
         fb.setDoc(fb.doc(fb.db, 'site', 'stats'), {
-          descargasApk: fb.increment ? fb.increment(1) : (totalAppDownloads() + 1),
+          descargasApk: fb.increment(1),
           ultimaDescarga: new Date().toISOString()
         }, { merge: true }).catch(() => {});
       }
     } catch (e) {}
     loadMuro();
-    loadPublicInscripciones();
-    setupChatListener();
     await authInit();
     import(base + 'firebase-messaging.js').then(async (ms) => {
-      if (await ms.isSupported()) { fb.messaging = ms.getMessaging(a); fb.getToken = ms.getToken; fb.onMessage = ms.onMessage; setupPush(); }
+      if (await ms.isSupported()) {
+        fb.messaging = ms.getMessaging(a); fb.getToken = ms.getToken; fb.onMessage = ms.onMessage;
+        setupPush();
+        registrarTokenPush(false);
+      }
     }).catch(() => {});
   } catch (e) { console.warn('Firebase no disponible', e); }
 }
 
-async function loadPublicInscripciones() {
-  if (!fb || !fb.db) return;
-  try {
-    const snap = await withTimeout(fb.getDocs(fb.collection(fb.db, 'inscripciones')), 6000);
-    if (snap && !snap.empty) {
-      const arr = [];
-      snap.docs.forEach((d) => arr.push(Object.assign({ id: d.id }, d.data())));
-      if (arr.length) {
-        allInscripciones = arr;
-        try { localStorage.setItem('juma-inscripciones-local', JSON.stringify(arr)); } catch (e) {}
-        if (currentSection === 'comunidad') renderComunidadView();
-      }
-    }
-    try {
-      fb.onSnapshot(fb.collection(fb.db, 'inscripciones'), (s) => {
-        if (!s || s.empty) return;
-        const liveArr = [];
-        s.docs.forEach((d) => liveArr.push(Object.assign({ id: d.id }, d.data())));
-        if (liveArr.length) {
-          allInscripciones = liveArr;
-          try { localStorage.setItem('juma-inscripciones-local', JSON.stringify(liveArr)); } catch (e) {}
-          if (currentSection === 'comunidad') renderComunidadView();
-        }
-      }, () => {});
-    } catch (e) {}
-  } catch (e) {}
-}
-
-/* ===================== autenticación y detección automática de cuenta maestra ===================== */
+/* ===================== autenticación: solo Firebase Auth da acceso ===================== */
 async function authInit() {
   const { isSignInWithEmailLink, signInWithEmailLink, onAuthStateChanged } = fb.au;
-  if (isSignInWithEmailLink(fb.auth, location.href)) {
-    let email = localStorage.getItem('juma-email') || prompt('Escribe el correo al que llegó el enlace de acceso');
+  if (isSignInWithEmailLink && isSignInWithEmailLink(fb.auth, location.href)) {
+    const email = localStorage.getItem('juma-email') || prompt('Escribe el correo al que llegó el enlace de acceso');
     try { await signInWithEmailLink(fb.auth, email, location.href); localStorage.removeItem('juma-email'); history.replaceState(null, '', location.pathname); } catch (e) {}
   }
-  onAuthStateChanged(fb.auth, async (u) => {
-    currentUser = u || null;
-    isAdmin = !!(u && u.email && isMasterEmail(u.email));
-    if (isAdmin) { try { sessionStorage.setItem('juma-ed', '1'); } catch (e) {} }
-    if (u) {
-      await loadUserProfile(u);
-    } else if (!myProfile) {
-      try {
-        const last = localStorage.getItem('juma-ultimo-perfil');
-        if (last) myProfile = JSON.parse(last);
-      } catch (e) {}
-    }
-    updateAuthUI();
-  });
+  onAuthStateChanged(fb.auth, (u) => { handleUser(u || null); });
 }
 
-/* ===================== clave maestra + borradores ===================== */
+/* Prepara todo para el usuario (o para el invitado). Se llama una sola vez por cambio de sesión. */
+let handleSeq = 0;
+let handlePromise = null;
+let handledUid = undefined;
+function handleUser(u, force = false) {
+  const uid = u ? u.uid : null;
+  if (!force && handlePromise && handledUid === uid) return handlePromise;
+  handledUid = uid;
+  const seq = ++handleSeq;
+  handlePromise = (async () => {
+    pararEscuchasDeMiembro();
+    currentUser = u || null;
+    privRole = '';
+    perfilEnNube = false;
+    myProfile = null;
+    miembros = [];
+    chatMessages = [];
+    allInscripciones = [];
+    chatDmTarget = null;
+    if (!u) {
+      lecturas = LECTURAS_VACIAS();
+      updateAuthUI();
+      return;
+    }
+    try { localStorage.removeItem('juma-is-logged-out'); } catch (e) {}
+    myProfile = leerPerfilLocal(u.uid); // solo para mostrar nombre y foto mientras carga
+    updateAuthUI();
+    await Promise.all([loadPrivRole(u), cargarLecturas()]);
+    if (seq !== handleSeq) return;
+    await loadUserProfile(u);
+    if (seq !== handleSeq) return;
+    updateAuthUI();
+    if (isMemberUI()) { iniciarEscuchasDeMiembro(); upsertMiembro(); }
+    if (coordUI()) { showFab(); loadAllInscripciones(); }
+    registrarTokenPush(false);
+    refreshBadges();
+    setTimeout(() => checkBirthdayCelebration(), 500);
+  })();
+  return handlePromise;
+}
+
+/* ===================== clave del editor (solo el editor local + GitHub) + borradores ===================== */
 const PASS_HASH = '3e59691dec3e065c5739943a603c5c121329d499cc48c77ae62da74d312d82eb';
 const DRAFT = 'juma-borrador';
 const normPass = (t) => String(t || '').trim().toLowerCase().replace(/\s+/g, ' ');
-function checkMasterPass(raw) {
-  const clean = normPass(raw);
-  if (!clean) return false;
-  const cfgKey = normPass(CFG.masterKey || 'juma.duaca.2026');
-  const customKey = normPass(localStorage.getItem('juma-custom-master') || '');
-  return sha256(clean) === PASS_HASH || clean === cfgKey || clean === 'juma.duaca.2026' || (customKey && clean === customKey);
-}
 function sha256(str) {
   const K = [], H = []; let n = 0;
   for (let c = 2; n < 64; c++) {
@@ -4300,7 +4351,28 @@ const clone = (o) => JSON.parse(JSON.stringify(o || {}));
 function readDraft() { try { const s = localStorage.getItem(DRAFT); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
 function writeDraft(o) { try { localStorage.setItem(DRAFT, JSON.stringify(o)); return true; } catch (e) { return false; } }
 function pickDraft() { const d = readDraft(); if (d && (d._dirty || String(d.actualizado || '') > String(pub.actualizado || ''))) return d; return null; }
-const isEditor = () => { try { return sessionStorage.getItem('juma-ed') === '1' || localStorage.getItem('juma-master-device') === '1'; } catch (e) { return false; } };
+/* Modo editor abierto con la clave del editor (5 toques). Solo dura esta sesión del navegador y solo
+   permite editar el contenido y publicarlo en GitHub; no da acceso a planillas, chats ni roles. */
+const isEditor = () => { try { return sessionStorage.getItem('juma-ed') === '1'; } catch (e) { return false; } };
+
+function prefillFormDesdeCuenta() {
+  if (!currentUser) return;
+  form.step = 1; form.isUpdate = false; form.done = false; form.err = '';
+  form.d.correo = currentUser.email || '';
+  if (currentUser.displayName && !form.d.nombres) {
+    const parts = currentUser.displayName.trim().split(/\s+/);
+    form.d.nombres = parts.slice(0, Math.ceil(parts.length / 2)).join(' ');
+    if (parts.length > 1 && !form.d.apellidos) form.d.apellidos = parts.slice(Math.ceil(parts.length / 2)).join(' ');
+  }
+  if (currentUser.photoURL && !form.d.foto) form.d.foto = currentUser.photoURL;
+}
+function mensajeErrorLogin(err) {
+  const c = String((err && (err.code || err.message)) || '');
+  if (/network|timeout|unavailable/i.test(c)) return 'No hay conexión con el servidor. Revisa tu internet e intenta de nuevo.';
+  if (/too-many/i.test(c)) return 'Demasiados intentos seguidos. Espera unos minutos o usa «Olvidé mi contraseña».';
+  if (/popup|cancel/i.test(c)) return 'Se cerró la ventana de Google antes de terminar. Intenta de nuevo.';
+  return 'Correo o contraseña incorrectos. Si nunca creaste una contraseña, usa «Continuar con Google» o «Crear mi cuenta».';
+}
 
 /* Eventos del modal de autenticación y perfil */
 modalRoot.addEventListener('click', async (e) => {
@@ -4312,74 +4384,89 @@ modalRoot.addEventListener('click', async (e) => {
     repaintAuth();
     return;
   }
-  if (e.target.closest('[data-open-chat]')) { openChatModal(); return; }
-  if (e.target.closest('[data-go-register]')) { openForm(false); return; }
-  if (e.target.closest('[data-edit-my-form]')) { openForm(true); return; }
+  if (e.target.closest('[data-go-register]')) { if (currentUser) prefillFormDesdeCuenta(); openForm(false); return; }
+  if (e.target.closest('[data-edit-my-form]')) { if (perfilEnNube) openForm(true); else { prefillFormDesdeCuenta(); openForm(false); } return; }
   if (e.target.closest('[data-dl-profile]')) { if (myProfile && myProfile.datos) downloadPlanillaHtml(myProfile.datos, myProfile); return; }
   if (e.target.closest('[data-open-master-panel]')) { openEditor(); return; }
   if (e.target.closest('[data-open-qr-scanner]')) { tab = 'qr'; openEditor(); return; }
   if (e.target.closest('[data-open-cumple-tab]')) { tab = 'cum'; openEditor(); return; }
+  if (e.target.closest('[data-verify-email]')) {
+    try { if (fb && fb.au.sendEmailVerification && currentUser) { await fb.au.sendEmailVerification(currentUser); showToast('Te enviamos el enlace de verificación a ' + currentUser.email); } } catch (x) { showToast('No se pudo enviar el enlace ahora. Intenta más tarde.'); }
+    return;
+  }
+  if (e.target.closest('[data-reload-user]')) {
+    try {
+      if (currentUser && currentUser.reload) await currentUser.reload();
+      await handleUser(fb && fb.auth ? fb.auth.currentUser : currentUser, true);
+      showToast(currentUser && currentUser.emailVerified ? '✔ Correo verificado.' : 'Aún no aparece verificado. Abre el enlace del correo y vuelve a intentar.');
+    } catch (x) {}
+    if ($('#au-t')) repaintAuth();
+    return;
+  }
   if (e.target.closest('[data-logout]')) {
     stopQrCamera();
+    const uidSalida = currentUser ? currentUser.uid : '';
+    await flushLecturas();
+    pararEscuchasDeMiembro();
     try { if (fb && fb.auth) await fb.au.signOut(fb.auth); } catch (x) {}
     try {
-      sessionStorage.clear();
-      localStorage.removeItem('juma-ed');
-      localStorage.removeItem('juma-master-device');
-      localStorage.removeItem('juma-ultimo-perfil');
+      sessionStorage.removeItem('juma-ed');
+      if (uidSalida) localStorage.removeItem('juma-perfil-' + uidSalida);
       localStorage.setItem('juma-is-logged-out', '1');
     } catch (x) {}
-    currentUser = null; myProfile = null; isAdmin = false;
-    updateAuthUI();
+    await handleUser(null);
     closeModal();
     switchSection('inicio');
     showToast('Has cerrado sesión.');
     return;
   }
   if (e.target.closest('[data-google-login]')) {
-    if (!fb || !fb.auth || !fb.au.GoogleAuthProvider) { authErr = 'Espera un momento a que conecte o ingresa con correo y contraseña.'; repaintAuth(); return; }
+    if (!fb || !fb.auth || !fb.au.GoogleAuthProvider) { authErr = 'Espera un momento a que la app se conecte e intenta de nuevo.'; repaintAuth(); return; }
     authBusy = true; authErr = ''; authOk = ''; repaintAuth();
     try {
       const cred = await fb.au.signInWithPopup(fb.auth, new fb.au.GoogleAuthProvider());
-      try { localStorage.removeItem('juma-is-logged-out'); } catch (x) {}
-      currentUser = cred.user;
-      await loadUserProfile(currentUser);
-      if (isMasterEmail(currentUser.email) || (myProfile && userRole(myProfile) === 'coordinador')) {
-        isAdmin = true;
-        try { sessionStorage.setItem('juma-ed', '1'); if (isMasterEmail(currentUser.email)) localStorage.setItem('juma-master-device', '1'); } catch (x) {}
-        authBusy = false; showFab(); updateAuthUI(); closeModal(); switchSection('comunidad'); showToast('¡Bienvenido(a), Coordinación JUMA!'); return;
-      }
-      if (!myProfile || !myProfile.foto) {
-        authBusy = false;
-        closeModal();
-        form.step = 1;
-        form.isUpdate = false;
-        form.done = false;
-        form.err = '';
-        form.d.correo = currentUser.email || '';
-        if (currentUser.displayName && !form.d.nombres) {
-          const parts = currentUser.displayName.trim().split(/\s+/);
-          form.d.nombres = parts.slice(0, Math.ceil(parts.length / 2)).join(' ');
-          if (parts.length > 1 && !form.d.apellidos) form.d.apellidos = parts.slice(Math.ceil(parts.length / 2)).join(' ');
-        }
-        if (currentUser.photoURL && !form.d.foto) {
-          form.d.foto = currentUser.photoURL;
-        }
+      await handleUser(cred.user);
+      authBusy = false;
+      if (!perfilEnNube && !coordUI()) {
+        prefillFormDesdeCuenta();
         openForm(false);
         showToast('¡Hola! Completa tu foto y planilla para activar tu carnet.');
         return;
       }
-      if (myProfile) { try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile)); } catch (x) {} }
-      authBusy = false; updateAuthUI(); closeModal(); switchSection('comunidad'); showToast('¡Hola, ' + ((myProfile && myProfile.nombre) || 'Misionero') + '! Sesión iniciada.');
+      if (perfilEnNube && needsMandatoryPhoto(myProfile)) { openForcePhotoModal(); return; }
+      closeModal(); switchSection('comunidad');
+      showToast(coordUI() ? '¡Bienvenido(a), Coordinación JUMA!' : '¡Hola, ' + ((myProfile && myProfile.nombre) || 'Misionero') + '! Sesión iniciada.');
     } catch (x) {
       authBusy = false;
-      authErr = 'No se completó el acceso con Google. Puedes intentar de nuevo o usar correo y contraseña.';
+      authErr = mensajeErrorLogin(x);
+      repaintAuth();
+    }
+    return;
+  }
+  if (e.target.closest('[data-create-account]')) {
+    const em = (($('#lu-email') || {}).value || '').trim().toLowerCase();
+    const pw = ($('#lu-pass') || {}).value || '';
+    authEmailPrev = em;
+    if (!em || pw.length < 6) { authErr = 'Escribe tu correo y una contraseña nueva de al menos 6 caracteres para crear tu cuenta.'; repaintAuth(); return; }
+    if (!fb || !fb.auth) { authErr = 'Espera un momento a que la app se conecte e intenta de nuevo.'; repaintAuth(); return; }
+    authBusy = true; authErr = ''; authOk = ''; repaintAuth();
+    try {
+      const cred = await withTimeout(fb.au.createUserWithEmailAndPassword(fb.auth, em, pw), 10000);
+      if (fb.au.sendEmailVerification) fb.au.sendEmailVerification(cred.user).catch(() => {});
+      await handleUser(cred.user);
+      authBusy = false;
+      authOk = 'Cuenta creada. Te enviamos un enlace a ' + em + ' para verificar tu correo: al verificarlo, la app busca tu planilla anterior.';
+      repaintAuth();
+    } catch (x) {
+      authBusy = false;
+      authErr = /already-in-use/i.test(String((x && x.code) || '')) ? 'Ese correo ya tiene cuenta. Inicia sesión con tu contraseña o usa «Olvidé mi contraseña».' : mensajeErrorLogin(x);
       repaintAuth();
     }
     return;
   }
   if (e.target.closest('[data-reset-pw]')) {
     const em = (($('#lu-email') || {}).value || '').trim();
+    authEmailPrev = em.toLowerCase();
     if (!em) { authErr = 'Escribe primero tu correo electrónico arriba para enviarte el enlace de recuperación.'; repaintAuth(); return; }
     try {
       await fb.au.sendPasswordResetEmail(fb.auth, em);
@@ -4395,25 +4482,26 @@ modalRoot.addEventListener('click', (e) => {
   if (e.target.closest('[data-chat-tab]')) {
     chatActiveTab = e.target.closest('[data-chat-tab]').dataset.chatTab;
     repaintChat();
+    if (chatActiveTab === 'notif') marcarNotificacionesVistas();
+    else { marcarVistaChatActual(); scrollChatBottom(); }
     return;
   }
   if (e.target.closest('[data-switch-channel]')) {
     chatChannel = e.target.closest('[data-switch-channel]').dataset.switchChannel;
+    if (chatChannel !== 'dm') chatDmTarget = null;
     repaintChat();
+    marcarVistaChatActual();
     scrollChatBottom();
     return;
   }
   const selectDm = e.target.closest('[data-select-dm]');
   if (selectDm) {
-    const targetUid = selectDm.dataset.selectDm;
-    const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
-    const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
-    const members = getRegisteredMembersForDm(myUid, myEmail);
-    const target = members.find((m) => m.uid === targetUid || m.id === targetUid);
+    const target = buscarMiembro(selectDm.dataset.selectDm);
     if (target) {
       chatChannel = 'dm';
       chatDmTarget = target;
       repaintChat();
+      marcarVistaChatActual();
       scrollChatBottom();
     }
     return;
@@ -4421,34 +4509,6 @@ modalRoot.addEventListener('click', (e) => {
   if (e.target.closest('[data-clear-dm]')) {
     chatDmTarget = null;
     repaintChat();
-    return;
-  }
-});
-
-document.addEventListener('click', (e) => {
-  if (e.target.closest('[data-open-chat]')) {
-    e.preventDefault();
-    openChatModal();
-    return;
-  }
-  const openDm = e.target.closest('[data-open-dm]');
-  if (openDm) {
-    e.preventDefault();
-    if (!currentUser && !myProfile) { openAuthModal(); return; }
-    const targetId = openDm.dataset.openDm;
-    const myUid = (currentUser && currentUser.uid) || (myProfile && (myProfile.uid || myProfile.id)) || '';
-    const myEmail = String((currentUser && currentUser.email) || (myProfile && myProfile.correo) || '').trim().toLowerCase();
-    const members = getRegisteredMembersForDm(myUid, myEmail);
-    let target = members.find((m) => m.uid === targetId || m.id === targetId);
-    if (!target) {
-      const rec = (allInscripciones || []).find((r) => r.id === targetId || r.uid === targetId);
-      if (rec) target = normalizeMember(rec);
-    }
-    if (target) {
-      chatChannel = 'dm';
-      chatDmTarget = target;
-      openChatModal('chat');
-    }
     return;
   }
 });
@@ -4463,75 +4523,33 @@ modalRoot.addEventListener('submit', async (e) => {
     await sendChatMessage(txt);
     return;
   }
+  if (e.target.id === 'pw-form') {
+    e.preventDefault();
+    const v = ($('#pw-in') || {}).value || '';
+    if (sha256(normPass(v)) === PASS_HASH) {
+      try { sessionStorage.setItem('juma-ed', '1'); } catch (x) {}
+      showFab(); const d = pickDraft(); if (d) { cfg = cleanContent(d); renderAll(); }
+      openEditor();
+    } else { const m = $('#pw-msg'); if (m) m.textContent = 'Clave incorrecta.'; const i = $('#pw-in'); if (i) i.select(); }
+    return;
+  }
   if (e.target.id === 'login-user-form') {
     e.preventDefault();
     const em = (($('#lu-email') || {}).value || '').trim().toLowerCase();
     const pw = ($('#lu-pass') || {}).value || '';
+    authEmailPrev = em;
     if (!em || !pw) return;
-
-    const masterMatch = isMasterEmail(em) && checkMasterPass(pw);
-    if (masterMatch) {
-      isAdmin = true;
-      const existing = findProfileRecord(null, em);
-      myProfile = existing || myProfile || {
-        nombre: 'Coordinación JUMA',
-        correo: em,
-        rol: 'coordinador',
-        datos: { nombres: 'Coordinación', apellidos: 'JUMA Duaca', correo: em }
-      };
-      if (existing && existing.foto && !myProfile.foto) myProfile.foto = existing.foto;
-      try {
-        sessionStorage.setItem('juma-ed', '1');
-        localStorage.setItem('juma-master-device', '1');
-        localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile));
-      } catch (x) {}
-      authBusy = false; showFab(); updateAuthUI(); repaintAuth();
-      if (fb && fb.auth) {
-        fb.au.signInWithEmailAndPassword(fb.auth, em, pw).then((cred) => { currentUser = cred.user; updateAuthUI(); }).catch(() => {
-          fb.au.createUserWithEmailAndPassword(fb.auth, em, pw).then((cred) => { currentUser = cred.user; updateAuthUI(); }).catch(() => {});
-        });
-      }
-      return;
-    }
-
+    if (!fb || !fb.auth) { authErr = 'Espera un momento a que la app se conecte e intenta de nuevo.'; repaintAuth(); return; }
     authBusy = true; authErr = ''; authOk = ''; repaintAuth();
     try {
-      if (fb && fb.auth) {
-        const cred = await withTimeout(fb.au.signInWithEmailAndPassword(fb.auth, em, pw), 6000);
-        currentUser = cred.user;
-        await loadUserProfile(currentUser);
-        if (isMasterEmail(em) || (myProfile && userRole(myProfile) === 'coordinador')) {
-          isAdmin = true;
-          try { sessionStorage.setItem('juma-ed', '1'); if (isMasterEmail(em)) localStorage.setItem('juma-master-device', '1'); } catch (x) {}
-          authBusy = false; showFab(); updateAuthUI(); repaintAuth(); return;
-        }
-      } else {
-        const loc = findProfileRecord(null, em) || (localStorage.getItem('juma-perfil-email-' + em) && JSON.parse(localStorage.getItem('juma-perfil-email-' + em)));
-        if (loc) myProfile = loc;
-        else throw new Error('no-local');
-      }
-      if (myProfile) { try { localStorage.removeItem('juma-is-logged-out'); localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile)); } catch (x) {} }
-      authBusy = false; updateAuthUI();
-      if (needsMandatoryPhoto(myProfile)) {
-        openForcePhotoModal();
-        return;
-      }
+      const cred = await withTimeout(fb.au.signInWithEmailAndPassword(fb.auth, em, pw), 10000);
+      await handleUser(cred.user);
+      authBusy = false;
+      if (perfilEnNube && needsMandatoryPhoto(myProfile)) { openForcePhotoModal(); return; }
       repaintAuth();
     } catch (err) {
       authBusy = false;
-      const loc = findProfileRecord(null, em) || (localStorage.getItem('juma-perfil-email-' + em) && JSON.parse(localStorage.getItem('juma-perfil-email-' + em)));
-      if (loc) {
-        myProfile = loc;
-        if (userRole(myProfile) === 'coordinador') { isAdmin = true; try { sessionStorage.setItem('juma-ed', '1'); } catch (x) {} showFab(); }
-        try { localStorage.removeItem('juma-is-logged-out'); localStorage.setItem('juma-ultimo-perfil', JSON.stringify(loc)); } catch (x) {}
-        updateAuthUI();
-        if (needsMandatoryPhoto(myProfile)) {
-          openForcePhotoModal();
-          return;
-        }
-        repaintAuth(); return;
-      }
-      authErr = 'Correo o contraseña incorrectos, o aún no te has registrado con la planilla.';
+      authErr = mensajeErrorLogin(err);
       repaintAuth();
     }
   }
@@ -4539,31 +4557,20 @@ modalRoot.addEventListener('submit', async (e) => {
 
 /* ===================== cargar planillas e intenciones para el Panel Maestro ===================== */
 async function loadAdminData() {
-  const map = new Map();
-  try {
-    const loc = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]');
-    loc.forEach((x) => { if (x && (x.id || x.correo)) map.set(x.id || x.correo, x); });
-  } catch (e) {}
+  /* Planillas y muro completos: solo coordinadores/asesores/cuenta maestra (las reglas lo exigen) */
+  if (!coordUI() || !fb || !fb.db) { allMensajes = []; return; }
   const mmap = new Map();
-  if (fb && fb.db) {
-    await Promise.all([
-      withTimeout(fb.getDocs(fb.collection(fb.db, 'inscripciones')), 5000).then((snap) => {
-        snap.docs.forEach((d) => { const data = Object.assign({ id: d.id }, d.data()); map.set(d.id, data); });
-      }).catch(() => {}),
-      withTimeout(fb.getDocs(fb.collection(fb.db, 'mensajes')), 5000).then((snap) => {
-        snap.docs.forEach((d) => mmap.set(d.id, Object.assign({ id: d.id, _src: 'fs' }, d.data())));
-      }).catch(() => {}),
-      withTimeout(fb.getDoc(fb.doc(fb.db, 'site', 'stats')), 4000).then((snap) => {
-        if (snap.exists()) appStats = Object.assign({ descargasApk: 0, historialDescargas: [] }, snap.data());
-      }).catch(() => {})
-    ]);
-  }
-  allInscripciones = Array.from(map.values()).sort((a, b) => String(b.actualizado || '').localeCompare(String(a.actualizado || '')));
+  await Promise.all([
+    loadAllInscripciones(),
+    withTimeout(fb.getDocs(fb.collection(fb.db, 'mensajes')), 6000).then((snap) => {
+      snap.docs.forEach((d) => mmap.set(d.id, Object.assign({ id: d.id, _src: 'fs' }, d.data())));
+    }).catch(() => {}),
+    withTimeout(fb.getDoc(fb.doc(fb.db, 'site', 'stats')), 4000).then((snap) => {
+      if (snap.exists()) appStats = Object.assign({ descargasApk: 0, historialDescargas: [] }, snap.data());
+    }).catch(() => {}),
+    cargarRoles()
+  ]);
   allMensajes = Array.from(mmap.values());
-  if (fb && fb.db && (Number(appStats.descargasApk) || 0) < allInscripciones.length) {
-    appStats.descargasApk = allInscripciones.length;
-    fb.setDoc(fb.doc(fb.db, 'site', 'stats'), { descargasApk: allInscripciones.length }, { merge: true }).catch(() => {});
-  }
 }
 
 function exportInscripcionesCsv() {
@@ -4576,7 +4583,7 @@ function exportInscripcionesCsv() {
     const asis6 = asistenciasUltimos6Meses(x);
     lines.push([
       x.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim(),
-      roleLabel(userRole(x)),
+      roleLabel(rolEtiqueta(x)),
       asis6.length,
       asis6.map((a) => `${a.fecha || ''}: ${a.titulo || ''} (${a.tipo || 'Formación'})`).join(' | '),
       d.nac || '',
@@ -4624,47 +4631,93 @@ function defaultTemaDelDia(fechaIso) {
   return matchEnc ? matchEnc.tema : 'Formación dominical JUMA';
 }
 
+/* ---------- Roles con permisos: roles/{correo} (solo la Cuenta Maestra los cambia) ---------- */
+let rolesLista = []; // [{ email, rol, nombre, actualizado }]
+async function cargarRoles() {
+  if (!coordUI() || !fb || !fb.db) { rolesLista = []; return; }
+  try {
+    const snap = await withTimeout(fb.getDocs(fb.collection(fb.db, 'roles')), 6000);
+    rolesLista = snap.docs.map((d) => Object.assign({ email: d.id }, d.data()))
+      .filter((r) => r.rol === 'coordinador' || r.rol === 'asesor')
+      .sort((a, b) => String(a.rol).localeCompare(String(b.rol)) || String(a.email).localeCompare(String(b.email)));
+  } catch (e) {}
+}
+/* Etiqueta del rol de una planilla en el panel: primero roles/{correo}, si no, la de la planilla SIN permisos. */
+function rolEtiqueta(rec) {
+  const em = String((rec && (rec.correo || (rec.datos && rec.datos.correo))) || '').trim().toLowerCase();
+  if (em && isMasterEmail(em)) return 'coordinador';
+  const r = em ? rolesLista.find((x) => x.email === em) : null;
+  if (r) return r.rol;
+  return rolSinPermiso(userRole(rec));
+}
+const correoValido = (em) => /^[^\s@/]+@[^\s@/]+\.[^\s@/]+$/.test(String(em || ''));
+async function guardarRol(email, rol, nombre) {
+  if (!isAdminUser() || !fb || !fb.db) { edErr = 'Solo la Cuenta Maestra (jumaduaca@gmail.com, con sesión iniciada) puede asignar coordinadores y asesores.'; return false; }
+  const em = String(email || '').trim().toLowerCase();
+  if (!correoValido(em)) { edErr = 'Escribe un correo válido (el mismo con el que esa persona inicia sesión).'; return false; }
+  if (rol !== 'coordinador' && rol !== 'asesor') { edErr = 'Elige Coordinador o Asesor.'; return false; }
+  try {
+    await withTimeout(fb.setDoc(fb.doc(fb.db, 'roles', em), { rol, nombre: String(nombre || '').trim().slice(0, 80), actualizado: new Date().toISOString() }, { merge: true }), 6000);
+    await cargarRoles();
+    return true;
+  } catch (e) {
+    edErr = 'No se pudo guardar el rol (revisa la conexión y que las reglas de Firestore estén publicadas).';
+    return false;
+  }
+}
+async function quitarRol(email) {
+  if (!isAdminUser() || !fb || !fb.db) { edErr = 'Solo la Cuenta Maestra puede quitar coordinadores y asesores.'; return false; }
+  const em = String(email || '').trim().toLowerCase();
+  try {
+    /* Único borrado permitido en la app: un documento de roles (no se pierde ninguna planilla) */
+    await withTimeout(fb.deleteDoc(fb.doc(fb.db, 'roles', em)), 6000);
+    await cargarRoles();
+    return true;
+  } catch (e) {
+    edErr = 'No se pudo quitar el rol. Revisa la conexión.';
+    return false;
+  }
+}
+
 async function cambiarRolInscrito(id, nuevoRol) {
+  edErr = ''; edOk = '';
   if (!isMasterAccount()) {
     edErr = 'Solo la Cuenta Maestra puede modificar quién es Coordinador, Asesor o Participante.';
     repaintEd();
     return;
   }
-  const idx = allInscripciones.findIndex((x) => x && (x.id === id || x.uid === id));
-  if (idx < 0) return;
-  const rec = allInscripciones[idx];
+  const rec = allInscripciones.find((x) => x && (x.id === id || x.uid === id));
+  if (!rec) return;
+  const em = String(rec.correo || (rec.datos && rec.datos.correo) || '').trim().toLowerCase();
+  if (!em) { edErr = 'Esta planilla no tiene correo: para darle permisos, la persona debe tener cuenta con correo.'; repaintEd(); return; }
+  let ok;
+  if (nuevoRol === 'coordinador' || nuevoRol === 'asesor') ok = await guardarRol(em, nuevoRol, rec.nombre);
+  else ok = rolesLista.some((r) => r.email === em) ? await quitarRol(em) : true;
+  if (!ok) { repaintEd(); return; }
+  /* La etiqueta en la planilla solo se muestra; el permiso real está en roles/{correo} */
   rec.rol = nuevoRol;
-  rec.datos = rec.datos || {};
-  rec.datos.rol = nuevoRol;
   rec.actualizado = new Date().toISOString();
-
-  const em = String(rec.correo || rec.datos.correo || '').trim().toLowerCase();
-  if (em) {
-    dr.coordinadoresEmails = Array.from(new Set((dr.coordinadoresEmails || cfg.coordinadoresEmails || []).map((x) => String(x).toLowerCase()).filter((x) => x !== em).concat(nuevoRol === 'coordinador' ? [em] : [])));
-    dr.asesoresEmails = Array.from(new Set((dr.asesoresEmails || cfg.asesoresEmails || []).map((x) => String(x).toLowerCase()).filter((x) => x !== em).concat(nuevoRol === 'asesor' ? [em] : [])));
-    cfg.coordinadoresEmails = dr.coordinadoresEmails;
-    cfg.asesoresEmails = dr.asesoresEmails;
-  }
-
-  if (myProfile && (myProfile.id === id || myProfile.uid === id || (em && myProfile.correo === em))) {
-    myProfile.rol = nuevoRol;
-    try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile)); } catch (e) {}
-  }
-
-  try {
-    const loc = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]');
-    const li = loc.findIndex((x) => x && (x.id === id || x.uid === id));
-    if (li >= 0) { loc[li].rol = nuevoRol; localStorage.setItem('juma-inscripciones-local', JSON.stringify(loc)); }
-  } catch (e) {}
-
-  if (fb && fb.db) {
-    try {
-      await withTimeout(fb.setDoc(fb.doc(fb.db, 'inscripciones', id), { rol: nuevoRol, datos: rec.datos, actualizado: rec.actualizado }, { merge: true }), 4000);
-      await withTimeout(fb.setDoc(fb.doc(fb.db, 'site', 'config'), { coordinadoresEmails: dr.coordinadoresEmails || [], asesoresEmails: dr.asesoresEmails || [] }, { merge: true }), 4000);
-    } catch (e) {}
-  }
-  edOk = `<b>✔ Rol actualizado por la Cuenta Maestra:</b> Ahora <b>${esc(rec.nombre || em)}</b> tiene el rol de <b>${esc(roleLabel(nuevoRol))}</b>.`;
+  try { await withTimeout(fb.setDoc(fb.doc(fb.db, 'inscripciones', rec.id), { rol: nuevoRol, actualizado: rec.actualizado }, { merge: true }), 6000); } catch (e) {}
+  edOk = `<b>✔ Rol actualizado por la Cuenta Maestra:</b> Ahora <b>${esc(rec.nombre || em)}</b> tiene el rol de <b>${esc(roleLabel(nuevoRol))}</b>. El cambio se activa cuando esa persona vuelva a abrir la app con su correo verificado.`;
   repaintEd();
+}
+
+function rolesTabHtml() {
+  if (!isAdminUser()) return '<p class="ehint">Solo la Cuenta Maestra puede ver y cambiar esta lista.</p>';
+  return `<p class="ehint"><b>Coordinadores y asesores:</b> estas personas pueden ver las planillas, tomar asistencia con QR, moderar el muro y publicar. El permiso se guarda en Firestore (<code>roles/correo</code>) y lo comprueba el servidor. Usa el <b>mismo correo con el que la persona inicia sesión</b> (y que lo tenga verificado).</p>
+    <div style="padding:16px 18px;border-radius:14px;background:#fff;border:1.5px solid var(--royal);margin-bottom:16px">
+      <b style="display:block;font-size:15px;color:var(--navy);margin-bottom:10px">➕ Agregar coordinador o asesor</b>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+        <div class="fld" style="flex:2 1 220px"><label for="rol-new-email">Correo</label><input id="rol-new-email" type="email" placeholder="correo@ejemplo.com" autocomplete="off"></div>
+        <div class="fld" style="flex:1 1 160px"><label for="rol-new-nombre">Nombre (opcional)</label><input id="rol-new-nombre" type="text" placeholder="Ej.: María Pérez"></div>
+        <div class="fld" style="flex:1 1 150px"><label for="rol-new-rol">Rol</label><select id="rol-new-rol" style="min-height:52px;padding:0 12px;border-radius:10px;border:1.5px solid #B9C8E4;font-size:15px;background:#fff"><option value="coordinador">★ Coordinador(a)</option><option value="asesor">◆ Asesor(a)</option></select></div>
+        <button type="button" class="btn btn-blue btn-sm" data-add-rol style="min-height:52px">Guardar</button>
+      </div>
+    </div>
+    ${!rolesLista.length ? '<p class="body" style="font-size:15px">Aún no hay coordinadores ni asesores asignados. La Cuenta Maestra siempre tiene todos los permisos.</p>' : `<div style="display:flex;flex-direction:column;gap:8px">${rolesLista.map((r) => `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:12px;background:#fff;border:1.5px solid var(--line)">
+      <div style="min-width:0">${roleBadgeHtml(r.rol)} <b style="font-size:15px;color:var(--ink);margin-left:6px">${esc(r.nombre || r.email)}</b><div style="font-size:13px;color:var(--muted)">${esc(r.email)}</div></div>
+      <button type="button" class="btn btn-danger btn-sm" data-rm-rol="${esc(r.email)}">Quitar permiso</button>
+    </div>`).join('')}</div>`}`;
 }
 
 async function registrarAsistencia(targetIdOrQr, fecha, titulo, tipo) {
@@ -4683,6 +4736,9 @@ async function registrarAsistencia(targetIdOrQr, fecha, titulo, tipo) {
     } catch (e) {}
   }
   if (!rec) return { ok: false, msg: 'No se encontró ningún participante registrado con este código QR (' + uid + ').' };
+  /* Carnet antiguo (id «juma-…»): si esa planilla ya pasó a la cuenta nueva, la asistencia va a la nueva */
+  const nueva = allInscripciones.find((x) => x && x.migradoDe && x.migradoDe === rec.id);
+  if (nueva) rec = nueva;
 
   const f = fecha || qrDate || todayIso();
   const tit = String(titulo || qrTema || defaultTemaDelDia(f) || 'Formación pautada').trim();
@@ -4707,13 +4763,8 @@ async function registrarAsistencia(targetIdOrQr, fecha, titulo, tipo) {
 
   if (myProfile && (myProfile.id === rec.id || myProfile.uid === rec.id)) {
     myProfile.asistencias = rec.asistencias;
-    try { localStorage.setItem('juma-ultimo-perfil', JSON.stringify(myProfile)); } catch (e) {}
+    guardarPerfilLocal();
   }
-  try {
-    const loc = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]');
-    const li = loc.findIndex((x) => x && (x.id === rec.id || x.uid === rec.id));
-    if (li >= 0) { loc[li].asistencias = rec.asistencias; localStorage.setItem('juma-inscripciones-local', JSON.stringify(loc)); }
-  } catch (e) {}
 
   if (fb && fb.db) {
     fb.setDoc(fb.doc(fb.db, 'inscripciones', rec.id || uid), { asistencias: rec.asistencias, actualizado: rec.actualizado }, { merge: true }).catch(() => {});
@@ -4974,6 +5025,13 @@ function getCumpleanosList(src = dr) {
     });
   };
 
+  /* Los miembros sin permisos no ven planillas: usan el directorio (solo día y mes, sin año ni teléfono) */
+  if (!allInscripciones.length && (miembros || []).length) {
+    miembros.forEach((x) => {
+      if (!x || !/^\d{2}-\d{2}$/.test(String(x.cumple || ''))) return;
+      addEntry({ id: x.uid, nombre: x.nombre || 'Misionero JUMA', nac: '1900-' + x.cumple, celular: '', rolTxt: roleLabel(userRole(x)), foto: x.foto || '', isExtra: false });
+    });
+  }
   allInscripciones.forEach((x) => {
     const d = x.datos || {};
     const nac = d.nac || x.nac || '';
@@ -4984,7 +5042,7 @@ function getCumpleanosList(src = dr) {
       nombre: nom,
       nac,
       celular: x.celular || d.celular || '',
-      rolTxt: roleLabel(userRole(x)),
+      rolTxt: roleLabel(coordUI() ? rolEtiqueta(x) : userRole(x)),
       foto: x.foto || d.foto || '',
       isExtra: false
     });
@@ -5012,16 +5070,9 @@ function getCumpleanosList(src = dr) {
 const JUMA_WA_GROUP_URL = 'https://chat.whatsapp.com/CJWfGx4mZzJCK3O9jJJRyQ?s=cl&p=a&mlu=4&ilr=4&iam=0';
 const JUMA_WA_CHANNEL_URL = 'https://whatsapp.com/channel/0029VaqbBJ972WTqOwLsLL0u';
 
-function isCoordinatorOrAdvisor() {
-  if (isMasterAccount() || isAdmin || isEditor()) return true;
-  const reg = (typeof getRegisteredUserRecord === 'function') ? getRegisteredUserRecord() : myProfile;
-  if ((typeof isGabrielGomez === 'function') && (isGabrielGomez(reg) || isGabrielGomez(myProfile) || isGabrielGomez(currentUser))) return true;
-  const rProfile = myProfile ? userRole(myProfile) : '';
-  if (rProfile === 'coordinador' || rProfile === 'asesor') return true;
-  const rReg = reg ? userRole(reg) : '';
-  if (rReg === 'coordinador' || rReg === 'asesor') return true;
-  return false;
-}
+/* Coordinadores y asesores (solo interfaz). Antes también se daba por un nombre parecido a «Gabriel Gómez»
+   o por banderas del navegador: ya no; el permiso viene de roles/{correo} y lo vuelve a comprobar el servidor. */
+function isCoordinatorOrAdvisor() { return coordUI(); }
 const isCoordinatorOrMaster = isCoordinatorOrAdvisor;
 
 function getCelebrantRecord(targetRecOrId) {
@@ -5653,11 +5704,10 @@ function generateEmojiRain(container) {
 }
 
 function isGabrielGomez(rec) {
+  /* Solo decide si se muestra la animación de cumpleaños a pantalla completa (no da permisos). */
   if (!rec) return false;
-  const em = String(rec.correo || (rec.datos && rec.datos.correo) || '').trim().toLowerCase();
-  if (em === 'gabrielg739@gmail.com') return true;
-  const nom = String(rec.nombre || ((rec.datos && ((rec.datos.nombres || '') + ' ' + (rec.datos.apellidos || ''))) || '')).trim().toLowerCase();
-  return /gabriel.*g[oó]mez/i.test(nom);
+  const em = String(rec.correo || (rec.datos && rec.datos.correo) || rec.email || '').trim().toLowerCase();
+  return em === 'gabrielg739@gmail.com';
 }
 
 function showBirthdayCelebration(rec, isPreview = false) {
@@ -5772,37 +5822,42 @@ function checkBirthdayCelebration(forcePreview = false, previewRecord = null) {
 
 function getTabs() {
   const trueMaster = isMasterAccount();
-  const hoyCumpleCount = getCumpleanosList().filter((c) => c.esHoy).length;
-  const baseTabs = [
-    ['ins', trueMaster ? `Inscritos y Roles (${allInscripciones.length})` : `Inscritos (${allInscripciones.length})`],
-    ['cum', `🎂 Cumpleaños${hoyCumpleCount ? ' (' + hoyCumpleCount + ' hoy 🎉)' : ''}`],
-    ['qr', '📷 Asistencia QR'],
-    ['enc', 'Domingos y Días'],
-    ['dat', 'Hora, lugar y WhatsApp'],
-    ['act', 'Actividades'],
-    ['for', 'Formación'],
-    ['nov', '📰 Noticias']
-  ];
-  if (trueMaster) baseTabs.push(['fot', 'Fotos']);
-  baseTabs.push(['tes', 'Testimonios'], ['mur', `Muro (${allMensajes.filter((m) => !m.aprobado).length})`]);
-  if (trueMaster) baseTabs.push(['apk', 'App sin URL'], ['pub', 'GitHub']);
-  return baseTabs;
+  const coord = coordUI();
+  const editorLocal = isEditor();
+  const hoyCumpleCount = coord ? getCumpleanosList().filter((c) => c.esHoy).length : 0;
+  const tabs = [];
+  /* Datos de personas: solo coordinadores/asesores/cuenta maestra con sesión (el servidor lo exige) */
+  if (coord) {
+    tabs.push(
+      ['ins', trueMaster ? `Inscritos y Roles (${allInscripciones.length})` : `Inscritos (${allInscripciones.length})`],
+      ['cum', `🎂 Cumpleaños${hoyCumpleCount ? ' (' + hoyCumpleCount + ' hoy 🎉)' : ''}`],
+      ['qr', '📷 Asistencia QR']
+    );
+  }
+  if (trueMaster) tabs.push(['rol', `★ Coordinadores (${rolesLista.length})`]);
+  tabs.push(['enc', 'Domingos y Días'], ['dat', 'Hora, lugar y WhatsApp'], ['act', 'Actividades'], ['for', 'Formación'], ['nov', '📰 Noticias']);
+  if (trueMaster || editorLocal) tabs.push(['fot', 'Fotos']);
+  tabs.push(['tes', 'Testimonios']);
+  if (coord) tabs.push(['mur', `Muro (${allMensajes.filter((m) => !m.aprobado).length})`]);
+  if (trueMaster || editorLocal) tabs.push(['apk', 'App sin URL'], ['pub', 'GitHub']);
+  return tabs;
 }
 function editorBody() {
   setters.clear(); uid = 0;
   const trueMaster = isMasterAccount();
-  if (!trueMaster && (tab === 'fot' || tab === 'apk' || tab === 'pub')) tab = 'ins';
+  const permitidas = getTabs().map((t) => t[0]);
+  if (!permitidas.includes(tab)) tab = permitidas[0];
   if (tab !== 'qr' && qrCameraOn) stopQrCamera();
 
   if (tab === 'ins') {
     const q = insQuery.trim().toLowerCase();
     const list = allInscripciones.filter((x) => {
-      if (insRoleFilter !== 'todos' && userRole(x) !== insRoleFilter) return false;
+      if (insRoleFilter !== 'todos' && rolEtiqueta(x) !== insRoleFilter) return false;
       return !q || JSON.stringify(x).toLowerCase().includes(q);
     });
-    const totalCoord = allInscripciones.filter((x) => userRole(x) === 'coordinador').length;
-    const totalAses = allInscripciones.filter((x) => userRole(x) === 'asesor').length;
-    const totalPart = allInscripciones.filter((x) => userRole(x) === 'participante').length;
+    const totalCoord = allInscripciones.filter((x) => rolEtiqueta(x) === 'coordinador').length;
+    const totalAses = allInscripciones.filter((x) => rolEtiqueta(x) === 'asesor').length;
+    const totalPart = allInscripciones.filter((x) => rolEtiqueta(x) === 'participante').length;
     const menores = allInscripciones.filter((x) => x.esMenor || esMenor(x.datos || {})).length;
     const conSalud = allInscripciones.filter((x) => (x.datos && (x.datos.enf === 'Sí' || x.datos.med === 'Sí' || x.datos.alMed || x.datos.alAli || x.datos.alOtros))).length;
     const totalDl = totalAppDownloads();
@@ -5837,7 +5892,7 @@ function editorBody() {
               ${allInscripciones.map((u) => {
                 const uNom = u.nombre || (((u.datos && u.datos.nombres) || '') + ' ' + ((u.datos && u.datos.apellidos) || '')).trim() || 'Sin nombre';
                 const uCel = u.celular || (u.datos && u.datos.celular) || '';
-                return `<li><b>${esc(uNom)}</b> <span style="color:var(--muted);font-size:12.5px">(${esc(roleLabel(userRole(u)))}${uCel ? ' · ' + esc(uCel) : ''})</span></li>`;
+                return `<li><b>${esc(uNom)}</b> <span style="color:var(--muted);font-size:12.5px">(${esc(roleLabel(rolEtiqueta(u)))}${uCel ? ' · ' + esc(uCel) : ''})</span></li>`;
               }).join('')}
             </ol>
           </div>
@@ -5864,7 +5919,7 @@ function editorBody() {
         const waJoven = cel ? (cel.startsWith('0') ? '58' + cel.slice(1) : (cel.startsWith('58') ? cel : '58' + cel)) : '';
         const nom = x.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || 'Sin nombre';
         const foto = x.foto || d.foto || '';
-        const rol = userRole(x);
+        const rol = rolEtiqueta(x);
         const asis6 = asistenciasUltimos6Meses(x);
         const qrData = qrPayloadFor(x);
         return `<div class="inscrito-card">
@@ -5967,7 +6022,7 @@ function editorBody() {
           return `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:10px;background:${present ? '#E4F5EA' : 'var(--paper)'};border:1px solid ${present ? '#17824A' : 'var(--line)'}">
             <div style="display:flex;align-items:center;gap:10px">
               <span style="font-size:18px">${present ? '✅' : '⚪'}</span>
-              <div><b style="font-size:15px;color:var(--ink)">${esc(nom)}</b> <span style="font-size:12.5px;color:var(--muted)">(${esc(roleLabel(userRole(x)))})</span></div>
+              <div><b style="font-size:15px;color:var(--ink)">${esc(nom)}</b> <span style="font-size:12.5px;color:var(--muted)">(${esc(roleLabel(rolEtiqueta(x)))})</span></div>
             </div>
             <button type="button" class="btn ${present ? 'btn-soft' : 'btn-blue'} btn-sm" data-toggle-asis="${esc(x.id)}" style="min-height:36px;padding:0 12px;font-size:13px">${present ? 'Asistió ✔ (Quitar)' : 'Marcar asistencia'}</button>
           </div>`;
@@ -6079,6 +6134,7 @@ function editorBody() {
       </div>`;
   }
 
+  if (tab === 'rol') return rolesTabHtml();
   if (tab === 'mur') {
     return `<p class="ehint">Aprueba o elimina los mensajes y peticiones de oración enviados en el muro de la página.</p>
       ${!allMensajes.length ? '<p class="body">No hay mensajes en el muro todavía.</p>' : allMensajes.map((m) => `<div class="pend"><p><b>${esc(m.nombre)}:</b> ${esc(m.texto)} <span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:700;background:${m.aprobado ? '#E4F5EA;color:#14532D' : '#FFF3CD;color:#7A5200'}">${m.aprobado ? 'Publicado' : 'Pendiente'}</span></p>${!m.aprobado ? `<button type="button" class="btn btn-blue btn-sm" data-aprob-msg="${esc(m.id)}">Aprobar</button>` : ''}<button type="button" class="btn btn-danger btn-sm" data-rm-msg="${esc(m.id)}">Borrar</button></div>`).join('')}`;
@@ -6251,7 +6307,9 @@ function touch() {
   dr._dirty = true;
   previewTimer = setTimeout(() => { draftWarn = !writeDraft(dr); cfg = cleanContent(dr); renderAll(); }, 350);
 }
-function showFab() { $('#fab-edit').classList.remove('hide'); }
+function showFab() { $('#fab-edit').classList.remove('hide'); syncFab(); }
+/* Con el botón «Editar página» visible, el dock social sube para no taparlo */
+function syncFab() { const f = $('#fab-edit'); document.body.classList.toggle('con-fab', !!(f && !f.classList.contains('hide'))); }
 async function openEditor() {
   if (ghToken()) { try { const f = await ghGet('contenido.json'); if (f && f.content) { const c = JSON.parse(dec64(f.content)); if (String(c.actualizado || '') >= String(pub.actualizado || '')) pub = c; } } catch (e) {} }
   dr = clone(pickDraft() || cfg || pub);
@@ -6322,6 +6380,9 @@ async function uploadVideoToCloud(file, onProgress) {
 
   if (!fb || !fb.db) {
     throw new Error('Esperando conexión con la nube de Firebase. Intenta de nuevo en unos segundos.');
+  }
+  if (!coordUI()) {
+    throw new Error('Para subir videos a la nube inicia sesión como coordinador, o conecta la llave de GitHub en la pestaña «GitHub».');
   }
   const chunkSize = 524288; /* 512 KB por bloque (~683 KB en base64, dentro del límite de 1 MB de Firestore) */
   const totalChunks = Math.ceil(u8.length / chunkSize);
@@ -6445,6 +6506,21 @@ modalRoot.addEventListener('click', async (e) => {
     touch(); repaintEd(); return;
   }
   if (q('[data-filter-rol]')) { insRoleFilter = q('[data-filter-rol]').dataset.filterRol; repaintEd(); return; }
+  if (q('[data-add-rol]')) {
+    edErr = ''; edOk = '';
+    const em = (($('#rol-new-email') || {}).value || '').trim().toLowerCase();
+    const nom = (($('#rol-new-nombre') || {}).value || '').trim();
+    const rol = (($('#rol-new-rol') || {}).value || 'coordinador');
+    if (await guardarRol(em, rol, nom)) edOk = `✔ <b>${esc(em)}</b> ahora es <b>${esc(roleLabel(rol))}</b>. Debe iniciar sesión con ese correo (verificado) para activar sus permisos.`;
+    repaintEd(); return;
+  }
+  if (q('[data-rm-rol]')) {
+    edErr = ''; edOk = '';
+    const em = q('[data-rm-rol]').dataset.rmRol;
+    if (!confirm('¿Quitar los permisos de coordinación a ' + em + '? Su planilla y sus datos no se borran.')) return;
+    if (await quitarRol(em)) edOk = '✔ Se quitaron los permisos de ' + esc(em) + '.';
+    repaintEd(); return;
+  }
   if (q('[data-set-rol]')) {
     const b = q('[data-set-rol]');
     await cambiarRolInscrito(b.dataset.setRol, b.dataset.rol);
@@ -6521,19 +6597,16 @@ modalRoot.addEventListener('click', async (e) => {
   if (q('[data-reload-ins]')) { await loadAdminData(); repaintEd(); return; }
   if (q('[data-dl-ins]')) {
     const qStr = insQuery.trim().toLowerCase();
-    const list = allInscripciones.filter((x) => (insRoleFilter === 'todos' || userRole(x) === insRoleFilter) && (!qStr || JSON.stringify(x).toLowerCase().includes(qStr)));
+    const list = allInscripciones.filter((x) => (insRoleFilter === 'todos' || rolEtiqueta(x) === insRoleFilter) && (!qStr || JSON.stringify(x).toLowerCase().includes(qStr)));
     const item = list[+q('[data-dl-ins]').dataset.dlIns];
     if (item && item.datos) downloadPlanillaHtml(item.datos, item);
     return;
   }
   if (q('[data-rm-ins]')) {
+    if (!isMasterAccount()) return;
     const id = q('[data-rm-ins]').dataset.rmIns;
-    if (!confirm('¿Borrar esta planilla de inscripción?')) return;
+    if (!confirm('¿Borrar esta planilla de inscripción? Esta acción no se puede deshacer.')) return;
     try { if (fb && fb.db) await withTimeout(fb.deleteDoc(fb.doc(fb.db, 'inscripciones', id)), 4000); } catch (x) {}
-    try {
-      const loc = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]').filter((x) => x && x.id !== id);
-      localStorage.setItem('juma-inscripciones-local', JSON.stringify(loc));
-    } catch (x) {}
     await loadAdminData(); repaintEd(); return;
   }
   if (q('[data-aprob-msg]')) {
@@ -6571,9 +6644,9 @@ modalRoot.addEventListener('click', async (e) => {
   }
   if (q('[data-lock-master]')) {
     stopQrCamera();
-    try { sessionStorage.removeItem('juma-ed'); localStorage.removeItem('juma-master-device'); } catch (x) {}
-    if (!isAdmin) $('#fab-edit').classList.add('hide');
-    updateAuthUI(); closeModal(); return;
+    try { sessionStorage.removeItem('juma-ed'); } catch (x) {}
+    if (!coordUI()) $('#fab-edit').classList.add('hide');
+    syncFab(); updateAuthUI(); closeModal(); return;
   }
   if (q('[data-newtes]')) { dr.testimonios = [{ n: '', r: '', x: '', foto: '' }].concat(dr.testimonios || []); touch(); repaintEd(); return; }
   if (q('[data-rmtes]')) { dr.testimonios.splice(+q('[data-rmtes]').dataset.rmtes, 1); touch(); repaintEd(); return; }
@@ -6631,12 +6704,12 @@ async function saveAll() {
   // Si no hay llave de GitHub, publica directamente en Firebase y guarda borrador local
   if (!ghToken()) {
     let fbSaved = false;
-    if (fb && fb.db) {
+    if (fb && fb.db && coordUI()) {
       try {
-        await withTimeout(fb.setDoc(fb.doc(fb.db, 'site', 'config'), local), 3500);
+        await withTimeout(fb.setDoc(fb.doc(fb.db, 'site', 'config'), local), 8000);
         fbSaved = true;
       } catch (e) {
-        fbSaved = true;
+        fbSaved = false;
       }
     }
     dr = local;
@@ -6691,7 +6764,7 @@ async function saveAll() {
     // Guarda en GitHub y Firebase en paralelo
     await Promise.all([
       ghPut('contenido.json', enc64(JSON.stringify(out, null, 1)), cur && cur.sha, 'Actualiza la página desde el editor'),
-      fb && fb.db ? fb.setDoc(fb.doc(fb.db, 'site', 'config'), out).catch(() => {}) : Promise.resolve()
+      fb && fb.db && coordUI() ? fb.setDoc(fb.doc(fb.db, 'site', 'config'), out).catch(() => {}) : Promise.resolve()
     ]);
 
     pub = clone(out);
@@ -6731,8 +6804,11 @@ document.addEventListener('click', (e) => {
   const s = e.target.closest && e.target.closest('.patron-d summary'); if (!s) return;
   const first = $$('.patron-d summary')[0]; if (s !== first) return;
   const now = Date.now(); taps = taps.filter((x) => now - x < 3000); taps.push(now);
-  if (taps.length >= 5) { taps = []; e.preventDefault(); if (isEditor() || isAdmin) { showFab(); openEditor(); } else { authTab = 'master'; authErr = ''; openAuthModal(); } }
+  if (taps.length >= 5) { taps = []; e.preventDefault(); if (isEditor() || coordUI()) { showFab(); openEditor(); } else askPass(); }
 });
+function askPass() {
+  openModal(`<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="pw-t"><div class="sheet" style="max-width:520px">${sheetHead('Solo para JUMA', 'Entrar a editar', 'pw-t')}<form id="pw-form" style="padding:clamp(22px,4vw,40px)"><p class="ehint" style="margin:0 0 14px">Con la clave del editor puedes cambiar el contenido de la página y publicarlo con la llave de GitHub. Las planillas, asistencias y permisos solo se ven iniciando sesión como coordinador.</p><div class="fld w"><label for="pw-in">Clave del editor</label><input id="pw-in" type="password" autocomplete="current-password"></div><p id="pw-msg" role="alert" style="margin:14px 0 0;font-size:15px;font-weight:700;color:#8A1C1C"></p><div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:22px"><button type="submit" class="btn btn-blue">Entrar</button><button type="button" class="btn btn-soft" data-close>Cancelar</button></div></form></div></div>`, 'pw');
+}
 
 /* ===================== ver foto completa ===================== */
 document.addEventListener('click', (e) => {
@@ -7023,19 +7099,7 @@ async function loadContenido() {
   setTimeout(() => checkUpcomingReminders(false), 1200);
 }
 (function boot() {
-  try {
-    const last = localStorage.getItem('juma-ultimo-perfil');
-    if (last) myProfile = JSON.parse(last);
-    const locIns = JSON.parse(localStorage.getItem('juma-inscripciones-local') || '[]');
-    if (locIns && locIns.length && (!allInscripciones || !allInscripciones.length)) {
-      allInscripciones = locIns;
-    }
-    const cachedChat = JSON.parse(localStorage.getItem('juma-chat-cache') || '[]');
-    if (Array.isArray(cachedChat) && cachedChat.length) {
-      chatMessages = cachedChat;
-      updateChatBadge();
-    }
-  } catch (e) {}
+  /* Arranca como invitado: la sesión (y con ella el perfil, el chat y los avisos) llega desde Firebase Auth */
   renderAll(); setupUnroll(); updateAuthUI(); lock(false);
   const initHash = location.hash ? location.hash.slice(1) : 'inicio';
   switchSection(initHash, false);
