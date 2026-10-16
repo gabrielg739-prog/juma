@@ -1,0 +1,193 @@
+rules_version = '2';
+
+// Reglas de seguridad de JUMA Duaca (proyecto juma-e4ab8).
+// Publicar en: Consola de Firebase > Firestore Database > Reglas (copiar todo este archivo).
+// Las reglas NO son filtros: cada consulta de la app pide solo lo que el usuario puede leer.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Quién es quién ----------
+    function signedIn() {
+      return request.auth != null;
+    }
+    // Correo de la sesión en minúsculas ('' si la cuenta no tiene correo)
+    function email() {
+      return (signedIn() && ('email' in request.auth.token)) ? request.auth.token.email.lower() : '';
+    }
+    function verified() {
+      return signedIn()
+        && ('email_verified' in request.auth.token)
+        && request.auth.token.email_verified == true;
+    }
+    // Cuenta maestra: jumaduaca@gmail.com con el correo verificado
+    function isAdmin() {
+      return verified() && email() == 'jumaduaca@gmail.com';
+    }
+    function rolePath() {
+      return /databases/$(database)/documents/roles/$(email());
+    }
+    // Rol con permisos, leído SOLO de roles/{correo} (lo escribe únicamente la cuenta maestra)
+    function hasRole(roles) {
+      return verified()
+        && email() != ''
+        && exists(rolePath())
+        && get(rolePath()).data.get('rol', '') in roles;
+    }
+    function isCoord() {
+      return isAdmin() || hasRole(['coordinador', 'asesor']);
+    }
+    // Miembro: coordinador o persona con su planilla en inscripciones/{su uid}
+    function isMember() {
+      return isCoord()
+        || (signedIn() && exists(/databases/$(database)/documents/inscripciones/$(request.auth.uid)));
+    }
+    function nonPriv(r) {
+      return r in ['participante', 'visitante', 'colaborador'];
+    }
+
+    // ---------- Planillas de inscripción (datos personales) ----------
+    match /inscripciones/{id} {
+      // Asistencias al crear: vacías, o copiadas EXACTAMENTE de la planilla antigua con el mismo correo
+      function asistenciasLegitimas() {
+        return request.resource.data.get('asistencias', []).size() == 0
+          || (request.resource.data.get('migradoDe', '') is string
+              && request.resource.data.get('migradoDe', '') != ''
+              && exists(/databases/$(database)/documents/inscripciones/$(request.resource.data.migradoDe))
+              && get(/databases/$(database)/documents/inscripciones/$(request.resource.data.migradoDe)).data.get('correo', '') == email()
+              && get(/databases/$(database)/documents/inscripciones/$(request.resource.data.migradoDe)).data.get('asistencias', []) == request.resource.data.asistencias);
+      }
+
+      allow get: if signedIn() && id == request.auth.uid;
+      allow read: if isCoord();
+      // Recuperar una planilla antigua (id «juma-…») por el correo verificado de la sesión
+      allow read: if verified() && resource.data.correo == email();
+
+      // Planilla propia (id = uid de la sesión), siempre sin permisos
+      allow create: if signedIn()
+        && id == request.auth.uid
+        && nonPriv(request.resource.data.get('rol', 'participante'))
+        && asistenciasLegitimas();
+      // Registro público sin cuenta (como antes): id «juma-…», sin permisos y sin asistencias
+      allow create: if !signedIn()
+        && id.matches('^juma-[0-9a-f]{20}$')
+        && nonPriv(request.resource.data.get('rol', 'participante'))
+        && request.resource.data.get('asistencias', []).size() == 0;
+
+      // El dueño actualiza sus datos pero no su rol ni sus asistencias; coordinadores, todo
+      allow update: if signedIn()
+        && id == request.auth.uid
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['rol', 'asistencias', 'migradoDe']);
+      allow update: if isCoord();
+
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Permisos: coordinadores y asesores ----------
+    match /roles/{correo} {
+      allow read: if isCoord() || (verified() && correo == email());
+      allow create, update: if isAdmin()
+        && correo == correo.lower()
+        && request.resource.data.rol in ['coordinador', 'asesor'];
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Directorio mínimo para miembros (sin datos personales) ----------
+    match /miembros/{uid} {
+      allow read: if isMember();
+      allow create, update: if signedIn()
+        && uid == request.auth.uid
+        && isMember()
+        && request.resource.data.keys().hasOnly(['uid', 'nombre', 'primerNombre', 'foto', 'rol', 'parroquia', 'cumple', 'sexo', 'actualizado'])
+        && request.resource.data.uid == uid
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() <= 80
+        && request.resource.data.get('foto', '') is string
+        && request.resource.data.get('foto', '').size() <= 25000
+        && (nonPriv(request.resource.data.get('rol', 'participante')) || isCoord());
+      allow delete: if isAdmin();
+    }
+
+    // ---------- Chat de la comunidad, coordinación y mensajes directos ----------
+    match /chat_mensajes/{msgId} {
+      allow read: if isMember() && resource.data.canal == 'general';
+      allow read: if isCoord() && resource.data.canal == 'coord';
+      allow read: if signedIn() && resource.data.deUid == request.auth.uid;
+      allow read: if signedIn() && resource.data.paraUid == request.auth.uid;
+
+      allow create: if signedIn()
+        && isMember()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.canal in ['general', 'coord', 'dm']
+        && (request.resource.data.canal != 'coord' || isCoord())
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() > 0
+        && request.resource.data.texto.size() <= 1000
+        && (nonPriv(request.resource.data.get('rol', 'participante')) || isCoord())
+        && request.resource.data.get('foto', '') is string
+        && request.resource.data.get('foto', '').size() <= 2000
+        && request.resource.data.creado == request.time
+        && (request.resource.data.canal != 'dm'
+            || (request.resource.data.deUid == request.auth.uid
+                && request.resource.data.paraUid is string
+                && request.resource.data.paraUid != ''
+                && request.resource.data.paraUid != request.auth.uid
+                && request.resource.data.participantes == [request.auth.uid, request.resource.data.paraUid]));
+
+      // Moderación: coordinadores. El autor puede borrar su propio mensaje.
+      allow update: if isCoord();
+      allow delete: if isCoord() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+
+    // ---------- Marcas de lectura y tokens de avisos: solo el dueño ----------
+    match /lecturas/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+    match /tokens/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // ---------- Contenido público de la página ----------
+    match /site/{docId} {
+      function statsCampos() {
+        return ['descargasApk', 'ultimaDescarga', 'historialDescargas'];
+      }
+      // Cualquiera puede sumar exactamente 1 descarga (y agregar a lo sumo 1 registro al historial)
+      function statsSumaUno() {
+        let d = request.resource.data;
+        let o = resource.data;
+        return d.diff(o).affectedKeys().hasOnly(statsCampos())
+          && d.descargasApk == o.get('descargasApk', 0) + 1
+          && d.get('ultimaDescarga', '') is string
+          && d.get('historialDescargas', []).size() >= o.get('historialDescargas', []).size()
+          && d.get('historialDescargas', []).size() <= o.get('historialDescargas', []).size() + 1;
+      }
+
+      allow read: if docId != 'push_estado' || isCoord();
+      // config, videos de noticias (vid_*) y lo demás: coordinadores (borrar, solo la cuenta maestra)
+      allow create, update: if isCoord() && docId != 'stats' && docId != 'push_estado';
+      allow delete: if isAdmin() && docId != 'stats';
+      // contador de descargas
+      allow create: if docId == 'stats'
+        && (isCoord()
+            || (request.resource.data.keys().hasOnly(statsCampos())
+                && request.resource.data.descargasApk == 1));
+      allow update: if docId == 'stats' && (isCoord() || statsSumaUno());
+    }
+
+    // ---------- Muro de mensajes (moderado) ----------
+    match /mensajes/{id} {
+      allow read: if resource.data.aprobado == true || isCoord();
+      allow create: if request.resource.data.aprobado == false
+        && request.resource.data.keys().hasOnly(['nombre', 'texto', 'aprobado', 'fecha', 'creado'])
+        && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 0
+        && request.resource.data.nombre.size() <= 60
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() > 0
+        && request.resource.data.texto.size() <= 400;
+      allow update, delete: if isCoord();
+    }
+
+    // Todo lo demás (por ejemplo tokens antiguos o site/push_estado) queda cerrado para la app.
+  }
+}

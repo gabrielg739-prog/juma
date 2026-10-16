@@ -1,0 +1,29 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "chat_mensajes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "canal", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "chat_mensajes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "deUid", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "chat_mensajes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "paraUid", "order": "ASCENDING" },
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
