@@ -4926,7 +4926,7 @@ modalRoot.addEventListener('submit', async (e) => {
     const v = ($('#pw-in') || {}).value || '';
     if (sha256(normPass(v)) === PASS_HASH) {
       try { sessionStorage.setItem('juma-ed', '1'); } catch (x) {}
-      showFab(); const d = pickDraft(); if (d) { cfg = cleanContent(d); renderAll(); }
+      showFab(); renderShell(); const d = pickDraft(); if (d) { cfg = cleanContent(d); renderAll(); }
       openEditor();
     } else { const m = $('#pw-msg'); if (m) m.textContent = 'Clave incorrecta.'; const i = $('#pw-in'); if (i) i.select(); }
     return;
