@@ -39,6 +39,8 @@ const P = {
   share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/>',
   megaphone:'<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
   heart:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+  gamepad:'<path d="M6 12h4M8 10v4"/><path d="M15 13h.01M18 11h.01"/><rect width="20" height="12" x="2" y="6" rx="4"/>',
+  library:'<path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/>',
   grid:'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
   check:'<path d="M20 6 9 17l-5-5"/>',
   mail:'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
@@ -2455,6 +2457,38 @@ async function loadPrivRole(user) {
   return privRole;
 }
 
+/* Vigila roles/{correo} en vivo: si la Cuenta Maestra habilita a alguien con la sesión abierta,
+   el rango y el menú de coordinador aparecen al instante (sin cerrar sesión). */
+let rolUnsub = null;
+function vigilarRol(user) {
+  if (rolUnsub) { try { rolUnsub(); } catch (e) {} rolUnsub = null; }
+  if (!user || !user.email || !user.emailVerified || !fb || !fb.db || !fb.onSnapshot) return;
+  const email = String(user.email).trim().toLowerCase();
+  if (email === ADMIN) return;
+  const uidAct = user.uid;
+  try {
+    rolUnsub = fb.onSnapshot(fb.doc(fb.db, 'roles', email), (snap) => {
+      if (!currentUser || currentUser.uid !== uidAct) return;
+      let r = '';
+      if (snap.exists()) {
+        const v = String((snap.data() || {}).rol || '').toLowerCase();
+        if (v === 'coordinador' || v === 'asesor') r = v;
+      }
+      if (!r && privRole && privRole !== 'admin' && !snap.exists()) {
+        /* rol quitado por la Cuenta Maestra: respetar el rol antiguo si lo hay */
+        r = rolAntiguo(email, perfilEnNube ? myProfile : null) || '';
+      }
+      if (r === privRole) return;
+      privRole = r;
+      updateAuthUI();
+      if (isMemberUI()) { iniciarEscuchasDeMiembro(); upsertMiembro(); }
+      if (coordUI()) { showFab(); loadAllInscripciones(); }
+      try { if (document.querySelector('.p-modal')) openAuthModal(); } catch (e) {}
+      try { refreshBadges(); } catch (e) {}
+    }, () => {});
+  } catch (e) {}
+}
+
 async function refrescarListasRoles() {
   try {
     const s = await withTimeout(fb.getDoc(fb.doc(fb.db, 'site', 'config')), 6000);
@@ -2674,7 +2708,7 @@ function elementoDestino(id) {
 }
 function reajustarDestino() {
   const d = destinoPendiente;
-  if (!d || tocoUsuario || Date.now() > d.hasta || currentSection === 'comunidad') return;
+  if (!d || tocoUsuario || Date.now() > d.hasta || VISTAS.includes(currentSection)) return;
   const el = elementoDestino(d.id); if (!el) return;
   const top = el.getBoundingClientRect().top;
   const esperado = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--top-h')) || 64) + 12;
@@ -2690,10 +2724,11 @@ function bajarA(id, smooth) {
   clearTimeout(ajusteScroll);
   ajusteScroll = setTimeout(() => { reajustarDestino(); setTimeout(reajustarDestino, 1200); }, 1000);
 }
+const VISTAS = ['comunidad', 'biblioteca', 'juegos'];
 function mostrarPagina(cual) {
-  const feed = $('#feed'); const com = $('#view-comunidad');
-  if (feed) feed.classList.toggle('hide', cual === 'comunidad');
-  if (com) com.classList.toggle('hide', cual !== 'comunidad');
+  const feed = $('#feed');
+  if (feed) feed.classList.toggle('hide', VISTAS.includes(cual));
+  VISTAS.forEach((v) => { const el = $('#view-' + v); if (el) el.classList.toggle('hide', cual !== v); });
 }
 /* Devuelve el id al que se fue ('comunidad', 'inicio' o el id de la sección / ancla) */
 function irA(destino, opt = {}) {
@@ -2706,12 +2741,14 @@ function irA(destino, opt = {}) {
     try { history.replaceState(null, '', location.pathname + location.search + '#inicio'); } catch (e) {}
     setTimeout(abrirChatPendiente, 0);
   }
-  if (id === 'comunidad') {
-    mostrarPagina('comunidad');
-    currentSection = 'comunidad';
-    renderComunidadView();
+  if (VISTAS.includes(id)) {
+    mostrarPagina(id);
+    currentSection = id;
+    if (id === 'comunidad') renderComunidadView();
+    else if (id === 'biblioteca') renderBibliotecaView();
+    else renderJuegosView();
     if (opt.scroll !== false) window.scrollTo({ top: 0, behavior: 'auto' });
-    marcarNav('comunidad');
+    marcarNav(id);
     return id;
   }
   const feed = $('#feed');
@@ -2760,10 +2797,12 @@ const NAV_CONOCENOS = [
   ['fe', 'Vida de fe', 'book'],
   ['novedades', 'Noticias', 'news'],
   ['galeria', 'Galería', 'image'],
+  ['biblioteca', 'Biblioteca', 'library'],
+  ['juegos', 'Juegos', 'gamepad'],
   ['unete', 'Únete a JUMA', 'userplus']
 ];
 /* Qué entrada del menú se ilumina según la parte de la página que se está viendo */
-const NAV_DE_SECCION = { inicio: 'inicio', quienes: 'quienes', vive: 'vive', domingos: 'domingos', pilares: 'domingos', consolata: 'consolata', mapa: 'consolata', identidad: 'consolata', formacion: 'formacion', fe: 'fe', areas: 'fe', novedades: 'novedades', testimonios: 'novedades', galeria: 'galeria', 'muro-sec': 'galeria', logo: 'unete', unete: 'unete', comunidad: 'comunidad' };
+const NAV_DE_SECCION = { biblioteca: 'biblioteca', juegos: 'juegos', inicio: 'inicio', quienes: 'quienes', vive: 'vive', domingos: 'domingos', pilares: 'domingos', consolata: 'consolata', mapa: 'consolata', identidad: 'consolata', formacion: 'formacion', fe: 'fe', areas: 'fe', novedades: 'novedades', testimonios: 'novedades', galeria: 'galeria', 'muro-sec': 'galeria', logo: 'unete', unete: 'unete', comunidad: 'comunidad' };
 let navActual = 'inicio';
 function seccionDeElemento(id) {
   if (NAV_DE_SECCION[id]) return NAV_DE_SECCION[id];
@@ -2777,7 +2816,7 @@ function marcarNav(id) {
     if (a.dataset.nav === navActual) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
   $$('#tabbar [data-tb]').forEach((t) => {
-    const on = (t.dataset.tb === 'noticias' && navActual === 'novedades') || (t.dataset.tb === 'inicio' && navActual !== 'novedades' && navActual !== 'comunidad');
+    const on = (t.dataset.tb === 'noticias' && navActual === 'novedades') || (t.dataset.tb === 'inicio' && navActual !== 'novedades' && navActual !== 'comunidad' && navActual !== 'biblioteca' && navActual !== 'juegos');
     if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
   });
 }
@@ -3284,6 +3323,75 @@ function renderComunidadMembersList(enfocar) {
   if (enfocar) { const n = container.querySelector(`[data-amigo="${amigosVisibles - 12}"] [data-open-dm]`); if (n) n.focus(); }
 }
 
+/* ===================== Biblioteca (libros 3D, se agregan progresivamente) ===================== */
+const LIBROS = [
+  { id: 'manual-juma', titulo: 'Manual de identidad JUMA', autor: 'Juventud Misionera Allamaniana', desc: 'Quiénes somos, nuestra identidad, estructura y camino de formación. Libro interactivo con índice y buscador.', url: 'biblioteca/manual-juma.html', color: '#0A235C', portada: 'img/logo.png' }
+  /* Para agregar un libro: sube su archivo .html a la carpeta biblioteca/ y añade una línea aquí. */
+];
+function renderBibliotecaView() {
+  const el = $('#view-biblioteca'); if (!el) return;
+  el.innerHTML = `<div class="wrap lib-wrap">
+    <p class="eyebrow">Biblioteca JUMA</p>
+    <h1 class="h-display h-lg">Libros para leer y crecer</h1>
+    <p class="body" style="max-width:56ch;margin:10px 0 28px">Aquí iremos cargando libros poco a poco. Elige uno y pásale las páginas como un libro de verdad.</p>
+    <div class="lib-grid">
+      ${LIBROS.map((b) => `<article class="lib-card">
+        <div class="lib-cover" style="--bk:${b.color}"><img src="${esc(b.portada)}" alt="" width="72" height="72" decoding="async"><b>${esc(b.titulo)}</b></div>
+        <div class="lib-info"><h2>${esc(b.titulo)}</h2><small>${esc(b.autor)}</small><p>${esc(b.desc)}</p>
+        <button type="button" class="btn btn-primary btn-sm" data-leer-libro="${esc(b.id)}">${ic('book')}Leer libro</button></div>
+      </article>`).join('')}
+      <article class="lib-card lib-soon"><div class="lib-cover lib-cover-empty" aria-hidden="true">${ic('library')}</div><div class="lib-info"><h2>Próximamente</h2><p>Nuevos libros se agregarán aquí.</p></div></article>
+    </div></div>`;
+}
+function abrirLibro(id) {
+  const b = LIBROS.find((x) => x.id === id); if (!b) return;
+  if ($('#lib-reader')) return;
+  const r = document.createElement('div');
+  r.id = 'lib-reader';
+  r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', b.titulo);
+  r.innerHTML = `<button type="button" class="lib-close" data-cerrar-libro aria-label="Cerrar libro">${ic('x')}<span>Cerrar</span></button><iframe title="${esc(b.titulo)}" src="${esc(b.url)}" allow="fullscreen"></iframe>`;
+  document.body.appendChild(r);
+  document.documentElement.style.overflow = 'hidden';
+}
+function cerrarLibro() {
+  const r = $('#lib-reader'); if (r) r.remove();
+  document.documentElement.style.overflow = '';
+}
+document.addEventListener('click', (e) => {
+  const l = e.target.closest('[data-leer-libro]'); if (l) { abrirLibro(l.dataset.leerLibro); return; }
+  if (e.target.closest('[data-cerrar-libro]')) cerrarLibro();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#lib-reader')) cerrarLibro(); });
+
+function renderJuegosView() {
+  const el = $('#view-juegos'); if (!el) return;
+  el.innerHTML = `<div class="wrap lib-wrap">
+    <p class="eyebrow">Juegos JUMA</p>
+    <h1 class="h-display h-lg">Juegos para compartir</h1>
+    <p class="body" style="max-width:56ch;margin:10px 0 28px">Estamos preparando juegos para jugar en comunidad. Muy pronto estarán aquí.</p>
+    <div class="lib-grid"><article class="lib-card lib-soon"><div class="lib-cover lib-cover-empty" aria-hidden="true">${ic('gamepad')}</div><div class="lib-info"><h2>En construcción</h2><p>Aquí aparecerán los juegos que vayamos desarrollando.</p></div></article></div></div>`;
+}
+
+/* ===================== Amigos: todos los registrados con nombre y foto ===================== */
+function openFriendsModal() {
+  if (!currentUser) { openAuthModal(); return; }
+  const lista = getRegisteredMembersForDm(miUid(), miCorreo());
+  const fila = (m) => `<button type="button" class="fr-row" data-open-dm="${esc(m.uid)}">${avatarHtml(m.foto, (m.primerNombre || m.nombre).charAt(0).toUpperCase())}<span class="fr-n"><b>${esc(m.nombre)}</b><small>${esc(roleLabel(m.rol))}</small></span></button>`;
+  openModal(`<div class="overlay overlay-sheet" role="dialog" aria-modal="true" aria-labelledby="fr-t">
+    <div class="sheet sheet-auto" style="max-width:460px">
+      <div class="chat-top notif-head"><div><b id="fr-t" style="font-size:19px;display:block">Amigos</b><small style="font-size:12.5px">${lista.length} registrado${lista.length === 1 ? '' : 's'} en JUMA</small></div>
+      <button type="button" class="x-btn" data-close aria-label="Cerrar">${ic('x')}</button></div>
+      <div class="fr-list">${lista.length ? lista.map(fila).join('') : '<p class="body" style="padding:24px;text-align:center">Aún no hay otros registrados.</p>'}</div>
+    </div></div>`, 'friends');
+}
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-open-friends]')) {
+    e.preventDefault();
+    if (modalKey === 'friends') { closeModal(); return; }
+    openFriendsModal();
+  }
+});
+
 function renderComunidadView() {
   const el = $('#view-comunidad');
   if (!el) return;
@@ -3454,6 +3562,7 @@ function updateAuthUI() {
   }
   if (btnTopNotif) btnTopNotif.classList.toggle('hide', !isAuth);
   if (btnTopChat) btnTopChat.classList.toggle('hide', !isAuth);
+  const btnTopFr = $('#btn-top-friends'); if (btnTopFr) btnTopFr.classList.toggle('hide', !isAuth);
 
   renderShell();
   refreshBadges();
@@ -4641,6 +4750,7 @@ function iniciarEscuchasDeMiembro() {
       const arr = [];
       snap.forEach((docu) => arr.push(Object.assign({ uid: docu.id }, docu.data())));
       miembros = arr;
+      if (modalKey === 'friends') openFriendsModal();
       if (currentSection === 'comunidad') renderComunidadView();
       if (modalKey === 'chat' && chatChannel === 'dm' && !chatDmTarget) repaintChat();
       refreshBadges();
@@ -4819,6 +4929,7 @@ function handleUser(u, force = false) {
     pararEscuchasDeMiembro();
     currentUser = u || null;
     privRole = '';
+    if (!u && rolUnsub) { try { rolUnsub(); } catch (e) {} rolUnsub = null; }
     perfilEnNube = false;
     myProfile = null;
     miembros = [];
@@ -4839,6 +4950,7 @@ function handleUser(u, force = false) {
     if (seq !== handleSeq) return;
     if (!privRole) { await cargarRolAntiguo(u); if (seq !== handleSeq) return; }
     updateAuthUI();
+    vigilarRol(u);
     if (isMemberUI()) { iniciarEscuchasDeMiembro(); upsertMiembro(); }
     if (coordUI()) { showFab(); loadAllInscripciones(); }
     registrarTokenPush(false);
@@ -6164,6 +6276,11 @@ async function shareBirthdayFlyer(targetRecOrId, btnEl) {
 /* ===================== Animación, Audio en bucle y Avisos de Cumpleaños ===================== */
 const DEFAULT_CUMPLE_MSG = '🎉🎂 ¡Feliz cumpleaños, {nombre}!\n\nHoy toda nuestra familia misionera de JUMA Duaca se llena de inmensa alegría y da infinitas gracias a Dios por el hermoso regalo de tu vida. Celebramos tu entrega, tu entusiasmo y ese corazón generoso que siempre busca llevar amor y esperanza a los demás.\n\nQue Nuestra Madre, la Virgen Consolata, te cobije siempre bajo su manto maternal de ternura y protección, y que San José Allamano guíe cada uno de tus pasos, derramando sobre ti abundantes bendiciones, salud, fortaleza y santidad.\n\n¡Gracias por ser luz, testimonio vivo de fe y parte tan especial de nuestro caminar! Te enviamos un abrazo fraterno inmenso con todo el amor de tu familia de JUMA Duaca. 💙✨🔥🙏';
 
+(function () {
+  const idle = window.requestIdleCallback || ((f) => setTimeout(f, 2500));
+  idle(() => { try { if (typeof isUserBirthdayToday === 'function') preloadBirthdayAudio(); } catch (e) {} }, { timeout: 6000 });
+})();
+
 function getRegisteredUserRecord() {
   if (myProfile && (myProfile.id || myProfile.uid || myProfile.correo || (myProfile.datos && (myProfile.datos.correo || myProfile.datos.nombres)))) {
     return myProfile;
@@ -6193,62 +6310,82 @@ function isUserBirthdayToday(rec) {
 
 let bdayAudio = null;
 let bdayAudioPlaying = false;
+let bdayCtx = null, bdayBuf = null, bdaySrc = null, bdayLoading = null, bdayWanted = false;
+const BDAY_LOOP_END = 14;
+
+/* Precarga y decodifica el audio una sola vez (en reposo), para que suene al instante y sin trabarse */
+function preloadBirthdayAudio() {
+  if (bdayLoading) return bdayLoading;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return (bdayLoading = Promise.resolve(null));
+  bdayLoading = fetch('audio/cumpleanos.mp3')
+    .then((r) => r.arrayBuffer())
+    .then((ab) => new Promise((res, rej) => {
+      bdayCtx = bdayCtx || new AC();
+      bdayCtx.decodeAudioData(ab, res, rej);
+    }))
+    .then((buf) => { bdayBuf = buf; return buf; })
+    .catch(() => null);
+  return bdayLoading;
+}
 
 function stopBirthdayAudio() {
-  if (bdayAudio) {
-    try {
-      bdayAudio.pause();
-      bdayAudio.currentTime = 0;
-    } catch (e) {}
-  }
+  bdayWanted = false;
+  if (bdaySrc) { try { bdaySrc.stop(); } catch (e) {} bdaySrc = null; }
+  if (bdayAudio) { try { bdayAudio.pause(); bdayAudio.currentTime = 0; } catch (e) {} }
   bdayAudioPlaying = false;
   updateBdayCornetaBtn();
 }
 
+function startBdayBuffer() {
+  if (!bdayBuf || !bdayCtx) return false;
+  if (bdaySrc) { try { bdaySrc.stop(); } catch (e) {} }
+  const src = bdayCtx.createBufferSource();
+  src.buffer = bdayBuf;
+  src.loop = true;
+  src.loopStart = 0;
+  src.loopEnd = Math.min(BDAY_LOOP_END, bdayBuf.duration);
+  src.connect(bdayCtx.destination);
+  src.start(0);
+  bdaySrc = src;
+  return true;
+}
+
 function playBirthdayAudio() {
-  if (!bdayAudio) {
-    bdayAudio = new Audio('audio/cumpleanos.mp3');
-    bdayAudio.loop = true;
-    bdayAudio.addEventListener('timeupdate', () => {
-      /* Bucle estricto hasta el segundo 14 */
-      if (bdayAudio && bdayAudio.currentTime >= 14.0) {
+  bdayWanted = true;
+  const go = () => {
+    if (!bdayWanted) return;
+    const finish = () => {
+      if (!bdayWanted) return;
+      if (startBdayBuffer()) {
+        bdayAudioPlaying = true;
+      } else {
+        /* Respaldo con <audio> si WebAudio no está disponible */
+        if (!bdayAudio) { bdayAudio = new Audio('audio/cumpleanos.mp3'); bdayAudio.loop = true; }
         bdayAudio.currentTime = 0;
+        const p = bdayAudio.play();
+        if (p && p.then) p.then(() => { bdayAudioPlaying = true; updateBdayCornetaBtn(); }).catch(() => { bdayAudioPlaying = false; updateBdayCornetaBtn(); });
+        return;
       }
-    });
-  }
-  bdayAudio.currentTime = 0;
-  const p = bdayAudio.play();
-  if (p && p.then) {
-    p.then(() => {
-      bdayAudioPlaying = true;
       updateBdayCornetaBtn();
-    }).catch(() => {
-      bdayAudioPlaying = false;
-      updateBdayCornetaBtn();
-    });
-  }
+    };
+    if (bdayCtx && bdayCtx.state === 'suspended') {
+      bdayCtx.resume().then(finish).catch(() => {});
+    } else finish();
+  };
+  if (bdayBuf) go(); else preloadBirthdayAudio().then(go);
 }
 
 function toggleBirthdayAudio() {
-  if (!bdayAudio) {
-    playBirthdayAudio();
-    return;
-  }
-  if (bdayAudioPlaying && !bdayAudio.paused) {
-    bdayAudio.pause();
-    bdayAudioPlaying = false;
-  } else {
-    bdayAudio.play().then(() => {
-      bdayAudioPlaying = true;
-    }).catch(() => {});
-  }
+  if (bdayAudioPlaying) stopBirthdayAudio();
+  else playBirthdayAudio();
   updateBdayCornetaBtn();
 }
 
 function updateBdayCornetaBtn() {
   const btn = $('#cumple-snd-toggle');
   if (!btn) return;
-  const isPlaying = bdayAudioPlaying && bdayAudio && !bdayAudio.paused;
+  const isPlaying = !!bdayAudioPlaying;
   btn.setAttribute('aria-pressed', isPlaying ? 'true' : 'false');
   btn.classList.toggle('is-playing', isPlaying);
 }
@@ -6256,7 +6393,8 @@ function updateBdayCornetaBtn() {
 function generateEmojiRain(container) {
   if (!container) return;
   const emojis = ['🎉', '🎂', '🎈', '✨', '🥳', '🎁', '🎊', '💙', '🍰', '🌟', '🧁', '🙌'];
-  const count = 26;
+  const count = 14;
+  const frag = document.createDocumentFragment();
   for (let i = 0; i < count; i++) {
     const el = document.createElement('span');
     el.className = 'falling-emoji';
@@ -6267,10 +6405,11 @@ function generateEmojiRain(container) {
     const size = 26 + (i % 5) * 4.5;
     el.style.left = left.toFixed(1) + '%';
     el.style.fontSize = size.toFixed(0) + 'px';
-    el.style.animationDuration = duration.toFixed(1) + 's, ' + (2.5 + (i % 3) * 0.8).toFixed(1) + 's';
-    el.style.animationDelay = delay.toFixed(2) + 's, ' + delay.toFixed(2) + 's';
-    container.appendChild(el);
+    el.style.animationDuration = duration.toFixed(1) + 's';
+    el.style.animationDelay = delay.toFixed(2) + 's';
+    frag.appendChild(el);
   }
+  container.appendChild(frag);
 }
 
 function isGabrielGomez(rec) {
@@ -6300,13 +6439,7 @@ function showBirthdayCelebration(rec, isPreview = false) {
 
   modal.innerHTML = `
     <div class="cumple-box">
-      <!-- Video de fondo de los jóvenes celebrando (sin audio, en bucle protegido con recorte redondeado) -->
-      <div class="cumple-bg-wrap" style="position:absolute;inset:0;border-radius:29px;overflow:hidden;clip-path:inset(0 round 29px);-webkit-clip-path:inset(0 round 29px);pointer-events:none;z-index:0">
-        <video class="cumple-bg-vid" autoplay muted loop playsinline preload="auto" disablepictureinpicture disableremoteplayback aria-hidden="true" style="width:100%;height:100%;object-fit:cover;border-radius:29px;opacity:0.38;display:block">
-          <source src="video/v-salon.mp4?v=2" type="video/mp4">
-        </video>
-        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,21,54,0.78) 0%,rgba(10,35,92,0.84) 50%,rgba(6,21,54,0.94) 100%)"></div>
-      </div>
+      <div class="cumple-bg-wrap" aria-hidden="true"></div>
 
       <!-- Botón de Corneta para silenciar o activar música (animado al sonar) -->
       <button type="button" class="cumple-snd-btn is-playing" id="cumple-snd-toggle" data-toggle-sound aria-label="Música de cumpleaños" aria-pressed="true" title="Toca para silenciar o activar música">
@@ -6340,10 +6473,12 @@ function showBirthdayCelebration(rec, isPreview = false) {
   `;
 
   document.body.appendChild(modal);
-  generateEmojiRain(modal.querySelector('#cumple-rain'));
-
-  // Reproducir sonido en bucle (cortado a 14s)
-  playBirthdayAudio();
+  /* El modal aparece al instante; lluvia y sonido se arrancan en el siguiente frame */
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (!modal.isConnected) return;
+    generateEmojiRain(modal.querySelector('#cumple-rain'));
+    playBirthdayAudio();
+  }));
 
   // Escucha pasiva para teléfonos si el navegador bloquea autoplay sin gesto previo
   const mobileStart = () => {

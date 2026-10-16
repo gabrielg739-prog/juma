@@ -332,13 +332,14 @@ details[open] > summary .pd-ic::after{transform:translate(-50%,-50%) rotate(0deg
 .progress .ok i{background:var(--c3)}
 
 /* ===== animación y lluvia de emojis de cumpleaños ===== */
-.cumple-overlay{position:fixed;inset:0;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:rgba(6,21,54,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:24px 16px 40px;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:100vh;min-height:100dvh;box-sizing:border-box;animation:fade 280ms cubic-bezier(0.16,1,0.3,1) both}
+.cumple-overlay{position:fixed;inset:0;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:rgba(6,21,54,.97);padding:24px 16px 40px;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:100vh;min-height:100dvh;box-sizing:border-box;animation:fade 280ms cubic-bezier(0.16,1,0.3,1) both}
 .cumple-overlay.is-out{animation:fadeOut 200ms ease both;pointer-events:none}
 .cumple-rain-container{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:20}
-.falling-emoji{position:absolute;top:-60px;user-select:none;pointer-events:none;will-change:transform,top;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.5));animation-name:emojiDrop, emojiWobble;animation-iteration-count:infinite, infinite;animation-timing-function:linear, ease-in-out}
-@keyframes emojiDrop{0%{top:-60px;opacity:0}8%{opacity:1}90%{opacity:1}100%{top:105vh;opacity:0}}
-@keyframes emojiWobble{0%{transform:translateX(0) rotate(0deg)}50%{transform:translateX(35px) rotate(180deg)}100%{transform:translateX(0) rotate(360deg)}}
-.cumple-box{position:relative;z-index:2;width:calc(100% - 24px);max-width:420px;margin:auto 0;background:#061536;border:3px solid #F5C518;border-radius:32px;overflow:hidden;isolation:isolate;transform:translate3d(0,0,0);-webkit-transform:translate3d(0,0,0);-webkit-mask-image:-webkit-radial-gradient(white, black);mask-image:radial-gradient(white, black);clip-path:inset(0 round 32px);-webkit-clip-path:inset(0 round 32px);box-shadow:0 0 0 1px rgba(245,197,24,0.4), 0 24px 70px rgba(0,0,0,0.85), 0 0 45px rgba(245,197,24,0.35);padding:clamp(28px, 6vw, 36px) clamp(18px, 4vw, 24px) 28px;text-align:center;color:#fff;box-sizing:border-box;animation:sheetIn 340ms cubic-bezier(0.16,1,0.3,1) both}
+.falling-emoji{position:absolute;top:0;left:0;user-select:none;pointer-events:none;will-change:transform,opacity;animation-name:emojiDrop;animation-iteration-count:infinite;animation-timing-function:linear;transform:translate3d(0,-70px,0);opacity:0}
+@keyframes emojiDrop{0%{transform:translate3d(0,-70px,0) rotate(0);opacity:0}8%{opacity:1}90%{opacity:1}100%{transform:translate3d(24px,108vh,0) rotate(300deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.falling-emoji{animation-duration:9s!important}}
+.cumple-bg-wrap{position:absolute;inset:0;border-radius:29px;pointer-events:none;z-index:0;background:radial-gradient(circle at 50% 0%,rgba(245,197,24,.18),transparent 55%),linear-gradient(180deg,#0A235C 0%,#061536 100%)}
+.cumple-box{position:relative;z-index:2;width:calc(100% - 24px);max-width:420px;margin:auto 0;background:#061536;border:3px solid #F5C518;border-radius:32px;overflow:hidden;isolation:isolate;transform:translate3d(0,0,0);-webkit-transform:translate3d(0,0,0);box-shadow:0 0 0 1px rgba(245,197,24,0.4), 0 24px 70px rgba(0,0,0,0.85), 0 0 45px rgba(245,197,24,0.35);padding:clamp(28px, 6vw, 36px) clamp(18px, 4vw, 24px) 28px;text-align:center;color:#fff;box-sizing:border-box;animation:sheetIn 340ms cubic-bezier(0.16,1,0.3,1) both}
 .cumple-close-btn{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;background:rgba(6,21,54,0.75);border:2px solid #F5C518;color:#F5C518;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 160ms ease, background-color 160ms ease, color 160ms ease, border-color 160ms ease;z-index:30;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .cumple-close-btn:hover{background:#B71C1C;border-color:#fff;color:#fff;transform:scale(1.08)}
 .cumple-close-btn:active{transform:scale(0.95)}
@@ -1026,6 +1027,26 @@ body{background:var(--paper);overflow-x:clip}
 .nota{background:#fff}
 .u-card{border-radius:var(--r-lg)}
 
+
+/* ---------- biblioteca, juegos y amigos ---------- */
+.lib-wrap{padding:44px 20px 80px;max-width:1040px;margin:0 auto}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:20px}
+.lib-card{display:flex;gap:16px;padding:16px;border-radius:20px;background:#fff;border:1.5px solid var(--line);box-shadow:0 14px 36px -22px rgba(6,21,54,.35)}
+.lib-cover{flex:0 0 96px;height:136px;border-radius:6px 12px 12px 6px;background:linear-gradient(135deg,var(--bk,#0A235C),#061536);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px;text-align:center;box-shadow:inset 6px 0 0 rgba(255,255,255,.14),0 8px 18px -8px rgba(6,21,54,.6)}
+.lib-cover img{width:40px;height:40px;object-fit:contain}.lib-cover b{font-size:10.5px;line-height:1.2;text-transform:uppercase;letter-spacing:.03em}
+.lib-cover-empty{background:var(--mist);color:var(--royal);box-shadow:none}.lib-cover-empty .ic{width:34px;height:34px}
+.lib-info{display:flex;flex-direction:column;gap:6px;min-width:0}.lib-info h2{margin:0;font-size:18px;line-height:1.2}.lib-info small{color:var(--royal);font-weight:700}.lib-info p{margin:0 0 6px;font-size:14px;line-height:1.5;color:var(--ink)}
+.lib-info .btn{align-self:flex-start;margin-top:auto}.lib-soon{opacity:.7;border-style:dashed}
+#lib-reader{position:fixed;inset:0;z-index:100000;background:#0b1220}
+#lib-reader iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.lib-close{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;z-index:2;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:99px;border:1.5px solid rgba(255,255,255,.5);background:rgba(6,21,54,.88);color:#fff;font-weight:800;font-size:13.5px;cursor:pointer}
+.lib-close:active{transform:scale(.96)}
+.fr-list{padding:6px 10px 16px;display:flex;flex-direction:column;max-height:65vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.fr-row{display:flex;align-items:center;gap:12px;padding:9px 10px;border:0;background:none;border-radius:14px;cursor:pointer;text-align:left;font:inherit;color:inherit;transition:background-color 140ms ease}
+.fr-row:active{background:var(--mist)}
+@media (hover:hover) and (pointer:fine){.fr-row:hover{background:var(--mist)}}
+.fr-n{display:flex;flex-direction:column;min-width:0}.fr-n b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fr-n small{color:var(--royal);font-weight:700;font-size:12px}
+
 /* ---------- comunidad ---------- */
 .pagina-comunidad{min-height:calc(100dvh - var(--top-h));background:var(--paper)}
 .com-card{background:#fff;border-radius:var(--r);border:1px solid var(--line);padding:22px;box-shadow:var(--shadow)}
@@ -1201,6 +1222,7 @@ body.is-guest .solo-miembros { display: none !important; }
 <span><b>JUMA Duaca</b><small>Juventud Misionera Allamaniana</small></span>
 </a>
 <div class="topbar-actions">
+<button type="button" class="icon-btn hide" id="btn-top-friends" data-open-friends aria-label="Amigos" title="Amigos"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
 <button type="button" class="icon-btn hide hide-m" id="btn-top-chat" data-open-chat aria-label="Mensajes" title="Mensajes y chat"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span class="dot hide" id="top-chat-badge"></span></button>
 <button type="button" class="icon-btn hide" id="btn-top-notif" data-open-notifs aria-haspopup="dialog" aria-label="Notificaciones" title="Notificaciones"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg><span class="dot hide" id="top-notif-badge"></span></button>
 <button type="button" class="btn btn-ghost btn-sm" id="btn-auth" data-open-auth><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg><span>Entrar</span></button>
@@ -1732,6 +1754,8 @@ body.is-guest .solo-miembros { display: none !important; }
     <p class="body">Cargando tu espacio comunitario…</p>
   </div>
 </div>
+<div class="pagina-comunidad hide" id="view-biblioteca"></div>
+<div class="pagina-comunidad hide" id="view-juegos"></div>
 </main>
 
 
@@ -1755,7 +1779,7 @@ body.is-guest .solo-miembros { display: none !important; }
 <div id="modal-root"></div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=63"></script>
-<script type="module" src="js/fe.js?v=63"></script>
+<script type="module" src="js/app.js?v=64"></script>
+<script type="module" src="js/fe.js?v=64"></script>
 </body>
 </html>
