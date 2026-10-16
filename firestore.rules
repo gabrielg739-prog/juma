@@ -129,18 +129,31 @@ service cloud.firestore {
 
     // ---------- Directorio mínimo para miembros (sin datos personales) ----------
     match /miembros/{uid} {
+      function miembroValido() {
+        return request.resource.data.keys().hasOnly(['uid', 'nombre', 'primerNombre', 'foto', 'rol', 'parroquia', 'cumple', 'sexo', 'actualizado', 'sinCuenta'])
+          && request.resource.data.uid == uid
+          && request.resource.data.nombre is string
+          && request.resource.data.nombre.size() <= 80
+          && request.resource.data.get('foto', '') is string
+          && request.resource.data.get('foto', '').size() <= 25000;
+      }
       allow read: if isMember();
+      // Cada miembro escribe su propia entrada
       allow create, update: if signedIn()
         && uid == request.auth.uid
         && isMember()
-        && request.resource.data.keys().hasOnly(['uid', 'nombre', 'primerNombre', 'foto', 'rol', 'parroquia', 'cumple', 'sexo', 'actualizado'])
-        && request.resource.data.uid == uid
-        && request.resource.data.nombre is string
-        && request.resource.data.nombre.size() <= 80
-        && request.resource.data.get('foto', '') is string
-        && request.resource.data.get('foto', '').size() <= 25000
+        && miembroValido()
         && (nonPriv(request.resource.data.get('rol', 'participante')) || isCoord());
-      allow delete: if isAdmin();
+      // Coordinadores agregan a los inscritos que aún no entraron a la app (sin permisos y sin tocar lo que escribió el dueño)
+      allow create: if isCoord()
+        && uid != request.auth.uid
+        && miembroValido()
+        && nonPriv(request.resource.data.get('rol', 'participante'));
+      allow update: if isCoord()
+        && resource.data.get('sinCuenta', false) == true
+        && miembroValido()
+        && nonPriv(request.resource.data.get('rol', 'participante'));
+      allow delete: if isAdmin() || (isCoord() && resource.data.get('sinCuenta', false) == true);
     }
 
     // ---------- Chat de la comunidad, coordinación y mensajes directos ----------

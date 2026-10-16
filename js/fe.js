@@ -206,18 +206,32 @@ const css = `
 .mp-map .pin.jm .pulse{fill:#F5C518}
 @keyframes mpPulse{from{opacity:.75;transform:scale(1)}to{opacity:0;transform:scale(2.8)}}
 .mp-casa{cursor:pointer;text-decoration:none;outline:none}
-.mp-casa .casa-pulse{fill:#F5C518;transform-box:fill-box;transform-origin:center;animation:mpPulse 2s cubic-bezier(.23,1,.32,1) infinite}
-.mp-casa .casa-bg{fill:#0C2D74;stroke:#F5C518;stroke-width:2.2;transition:transform .18s ease,fill .18s ease}
-.mp-casa.jm .casa-bg{fill:#C8322D;stroke:#F5C518;stroke-width:2.5}
-.mp-casa .casa-ico{fill:#FFFFFF}
-.mp-casa .casa-lbl-bg{fill:rgba(6,21,54,.92);stroke:#8EC9FF;stroke-width:1}
-.mp-casa .casa-lbl{fill:#FFFFFF;font:800 9.5px/1 var(--body); paint-order:stroke;user-select:none}
-.mp-casa:hover .casa-bg,.mp-casa:focus-visible .casa-bg{fill:#2452C8;stroke:#FFFFFF;transform:scale(1.16)}
-.mp-hud{position:absolute;top:14px;left:14px;right:14px;z-index:4;display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none;flex-wrap:wrap}
-.mp-hud-badge{pointer-events:auto;padding:6px 12px;border-radius:999px;background:rgba(6,21,54,.84);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font-size:13px;font-weight:700;border:1px solid rgba(142,201,255,.35);box-shadow:0 6px 18px rgba(0,0,0,.35)}
-.mp-hud-btn{pointer-events:auto;border:1.5px solid #F5C518;border-radius:999px;background:#061536;color:#F5C518;font:800 13px/1 var(--body);padding:8px 14px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4);transition:transform .14s ease,background-color .15s}
-.mp-hud-btn:hover{background:#0C2D74;color:#fff}
-.mp-hud-btn:active{transform:scale(.96)}
+.mp-casa .pin-drop{transform-box:fill-box;transform-origin:50% 100%;animation:mpPinIn .46s cubic-bezier(.23,1,.32,1) both;animation-delay:calc(var(--i,0) * 70ms + 260ms)}
+@keyframes mpPinIn{from{opacity:0;transform:translateY(-10px) scale(.9)}to{opacity:1;transform:none}}
+.mp-casa .pin-halo{fill:#F5C518;transform-box:fill-box;transform-origin:center;animation:mpHalo 2.4s cubic-bezier(.23,1,.32,1) infinite;animation-delay:calc(var(--i,0) * 70ms + 700ms);opacity:0}
+@keyframes mpHalo{from{opacity:.55;transform:scale(.6)}to{opacity:0;transform:scale(2.4)}}
+.mp-casa .pin-shadow{fill:rgba(0,0,0,.35)}
+.mp-casa .pin-body{fill:#F5C518;stroke:#061536;stroke-width:1.1;transition:fill .16s ease}
+.mp-casa.jm .pin-body{fill:#E5483F}
+.mp-casa .pin-eye{fill:#061536}
+.mp-casa.jm .pin-eye{fill:#fff}
+.mp-casa .casa-lbl-bg{fill:rgba(6,21,54,.78);stroke:rgba(142,201,255,.35);stroke-width:.8}
+.mp-casa .casa-lbl{fill:#FFFFFF;font:700 8.6px/1 var(--body);letter-spacing:.01em;user-select:none}
+.mp-casa .pin-lbl{transition:opacity .16s ease}
+.mp-casa.lbl-hover .pin-lbl{opacity:0}
+.mp-casa:hover .pin-body,.mp-casa:focus-visible .pin-body{fill:#FFFFFF}
+.mp-casa:hover .pin-lbl,.mp-casa:focus-visible .pin-lbl{opacity:1}
+.mp-hud{position:absolute;inset:auto 12px 12px 12px;z-index:4;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;pointer-events:none}
+.mp-hud-badge{pointer-events:none;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:rgba(6,21,54,.7);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#EAF2FF;font:700 12px/1.2 var(--body);border:1px solid rgba(142,201,255,.25);opacity:0;transform:translateY(4px);transition:opacity .22s cubic-bezier(.23,1,.32,1),transform .22s cubic-bezier(.23,1,.32,1)}
+.mp-hud-badge.on{opacity:1;transform:none}
+.mp-hud-badge svg{width:13px;height:13px;color:#F5C518;flex:0 0 auto}
+.mp-hud-btn{pointer-events:auto;width:36px;height:36px;display:grid;place-items:center;border:1px solid rgba(142,201,255,.35);border-radius:50%;background:rgba(6,21,54,.78);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;cursor:pointer;padding:0;transition:transform .14s ease,background-color .15s,opacity .2s}
+.mp-hud-btn svg{width:18px;height:18px}
+.mp-hud-btn[hidden]{display:none}
+@media (hover:hover) and (pointer:fine){.mp-hud-btn:hover{background:#2452C8}}
+.mp-hud-btn:active{transform:scale(.94)}
+.mp-pin-ic{display:inline-block;width:1em;height:1em;vertical-align:-.14em}
+@media (prefers-reduced-motion:reduce){.mp-casa .pin-drop{animation:none}.mp-casa .pin-halo{animation:none;opacity:0}.mp-hud-badge{transition:none}}
 .mp-info{background:#fff;color:var(--ink);border-radius:16px;padding:18px}
 .mp-info h3{margin:0;font:800 26px/1 var(--display);text-transform:uppercase;color:var(--cloth)}
 .mp-info p{margin:8px 0 0;font-size:15px;line-height:1.5}
@@ -587,25 +601,40 @@ function mapsUrl(c) {
 }
 
 const WEB = { p: (d) => `Página de la Consolata en ${d.n}`, r: (d) => `Página de la Consolata en ${CONT[d.c][0]}`, g: () => 'Sitio oficial de la Consolata', d: () => 'Página de la diócesis sobre la Consolata', m: () => 'Página de las Misioneras de la Consolata' };
+const PIN_IC_HTML = '<svg class="mp-pin-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
 function paisInfo(k) {
   const d = PAISES[k]; if (!d) return '';
   const quien = d.q === 'mc' ? 'Misioneras de la Consolata' : 'Misioneros de la Consolata';
   const desde = d.y ? `<p class="mp-year"><b>${d.y}</b><span>${d.y === 1901 ? 'fundación del Instituto' : `llegada de ${d.q === 'mc' ? 'las' : 'los'} ${quien}`}</span></p>` : `<p><b>${quien}</b> · año de llegada por confirmar</p>`;
   const casas = CASAS[k] || [];
-  const casasHtml = casas.length ? `<div class="mp-casas-box"><div class="mp-casas-title">🏠 Casas y presencia en ${esc(d.n)} (${casas.length})</div><p style="margin:0 0 6px;font-size:13.5px;color:var(--muted)">Toca el icono de casa en el mapa o en esta lista para abrir su ubicación exacta en Google Maps:</p>${casas.map((c) => `<a class="mp-casa-card" href="${mapsUrl(c)}" target="_blank" rel="noopener"><i>🏠</i><div><b>${esc(c.n)}</b><small>📍 ${esc(c.d)}</small></div><span>Google Maps ↗</span></a>`).join('')}</div>` : '';
-  return `<h3>${esc(d.n)}</h3><p><b>${CONT[d.c][0]}</b>${d.y && d.y !== 1901 ? ` · ${new Date().getFullYear() - d.y} años de presencia` : ''}</p>${desde}${d.q === 'mc' ? '<p>En este país sirven las <b>Misioneras de la Consolata</b>, la rama femenina fundada también por san José Allamano.</p>' : ''}${d.x ? `<p>${esc(d.x)}</p>` : ''}${casasHtml}<p class="mp-links"><a class="fe-tab mp-web" href="${d.w}" target="_blank" rel="noopener">${esc(WEB[d.t](d))} ↗</a><button type="button" class="fe-tab" data-mpreset>🌍 Ver mapa mundial</button></p>`;
+  const casasHtml = casas.length ? `<div class="mp-casas-box"><div class="mp-casas-title">Casas en ${esc(d.n)} (${casas.length})</div><p style="margin:0 0 6px;font-size:13.5px;color:var(--muted)">Toca un pin del mapa o una casa de esta lista para abrirla en Google Maps:</p>${casas.map((c) => `<a class="mp-casa-card" href="${mapsUrl(c)}" target="_blank" rel="noopener"><i>${PIN_IC_HTML}</i><div><b>${esc(c.n)}</b><small>${esc(c.d)}</small></div><span>Google Maps ↗</span></a>`).join('')}</div>` : '';
+  return `<h3>${esc(d.n)}</h3><p><b>${CONT[d.c][0]}</b>${d.y && d.y !== 1901 ? ` · ${new Date().getFullYear() - d.y} años de presencia` : ''}</p>${desde}${d.q === 'mc' ? '<p>En este país sirven las <b>Misioneras de la Consolata</b>, la rama femenina fundada también por san José Allamano.</p>' : ''}${d.x ? `<p>${esc(d.x)}</p>` : ''}${casasHtml}<p class="mp-links"><a class="fe-tab mp-web" href="${d.w}" target="_blank" rel="noopener">${esc(WEB[d.t](d))} ↗</a><button type="button" class="fe-tab" data-mpreset>Ver mapa mundial</button></p>`;
 }
 async function mapa() {
   const box = $('#mapa-app'); if (!box) return;
   const keys = Object.keys(PAISES);
   const totalCasas = Object.values(CASAS).reduce((acc, l) => acc + l.length, 0);
-  box.innerHTML = `<div class="mp-wrap"><div class="mp-map" id="mp-svg" aria-busy="true"></div><div class="mp-info" id="mp-info" aria-live="polite"><h3>Toca un país del menú o del mapa</h3><p>Al seleccionar un país, el mapa hará <b>zoom automático</b> y mostrará los <b>iconos de casa (🏠)</b> en la ubicación exacta de las casas de los Misioneros y Hermanas de la Consolata. Al presionar cualquier casa se abrirá en <b>Google Maps</b>.</p><div class="mp-stats"><div><b>${keys.length}</b><span>países</span></div><div><b>${totalCasas}</b><span>casas registradas</span></div><div><b>1901</b><span>año de fundación</span></div><div><b>898</b><span>misioneros (2024)</span></div></div></div></div><div class="mp-list" id="mp-list"></div><p class="fe-note" style="color:#BFD3F2">Los países con borde punteado tienen presencia de las Misioneras de la Consolata. Toca cualquier país del menú inferior para acercar el mapa y ver sus casas misioneras con enlace directo a Google Maps.</p>`;
-  $('#mp-list').innerHTML = Object.keys(CONT).map((c) => { const ks = keys.filter((k) => PAISES[k].c === c).sort((a, b) => (PAISES[a].y || 9999) - (PAISES[b].y || 9999)); return `<div><b><i style="background:${CONT[c][1]}"></i>${CONT[c][0]} (${ks.length})</b><ul>${ks.map((k) => `<li><button type="button" data-mpk="${k}">${esc(PAISES[k].n)}<span>🏠 ${(CASAS[k] || []).length} · ${PAISES[k].y || '—'}</span></button></li>`).join('')}</ul></div>`; }).join('');
+  box.innerHTML = `<div class="mp-wrap"><div class="mp-map" id="mp-svg" aria-busy="true"></div><div class="mp-info" id="mp-info" aria-live="polite"><h3>Toca un país del menú o del mapa</h3><p>Al seleccionar un país, el mapa hará <b>zoom automático</b> y mostrará un <b>pin de ubicación</b> en cada casa de las casas de los Misioneros y Hermanas de la Consolata. Al tocar un pin se abre en <b>Google Maps</b>.</p><div class="mp-stats"><div><b>${keys.length}</b><span>países</span></div><div><b>${totalCasas}</b><span>casas registradas</span></div><div><b>1901</b><span>año de fundación</span></div><div><b>898</b><span>misioneros (2024)</span></div></div></div></div><div class="mp-list" id="mp-list"></div><p class="fe-note" style="color:#BFD3F2">Los países con borde punteado tienen presencia de las Misioneras de la Consolata. Toca cualquier país del menú inferior para acercar el mapa y ver sus casas misioneras con enlace directo a Google Maps.</p>`;
+  $('#mp-list').innerHTML = Object.keys(CONT).map((c) => { const ks = keys.filter((k) => PAISES[k].c === c).sort((a, b) => (PAISES[a].y || 9999) - (PAISES[b].y || 9999)); return `<div><b><i style="background:${CONT[c][1]}"></i>${CONT[c][0]} (${ks.length})</b><ul>${ks.map((k) => `<li><button type="button" data-mpk="${k}">${esc(PAISES[k].n)}<span>${PIN_IC_HTML} ${(CASAS[k] || []).length} · ${PAISES[k].y || '—'}</span></button></li>`).join('')}</ul></div>`; }).join('');
   let ps = [], svgEl = null, casasLayer = null, hudEl = null, curVb = [0, 0, 960, 470], animId = 0, selK = '';
+  const PIN_IC = '<svg class="mp-pin-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+  const GLOBO_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>';
+  const hud = (txt) => {
+    if (!hudEl) return;
+    hudEl.innerHTML = `<span class="mp-hud-badge">${txt ? PIN_IC + esc(txt) : ''}</span><button type="button" class="mp-hud-btn" data-mpreset aria-label="Ver mapa mundial" title="Ver mapa mundial"${txt ? '' : ' hidden'}>${GLOBO_IC}</button>`;
+    const b = hudEl.querySelector('.mp-hud-badge');
+    if (txt) requestAnimationFrame(() => b.classList.add('on'));
+  };
 
+  /* Escala de los pines: siempre del mismo tamaño en pantalla (≈26 px de alto en el teléfono, 30 px en computadora) */
+  const escalaPin = (vw) => {
+    const ancho = (svgEl && svgEl.getBoundingClientRect().width) || 600;
+    const px = ancho < 520 ? 26 : 30;
+    return Math.max(0.02, Math.min(1.2, (px / 22) * (vw / ancho)));
+  };
   const updateCasasScale = (vw) => {
     if (!casasLayer) return;
-    const s = Math.max(0.055, Math.min(0.85, (vw / 960) * 1.18));
+    const s = escalaPin(vw);
     casasLayer.querySelectorAll('.mp-casa-inner').forEach((g) => {
       g.setAttribute('transform', `scale(${s.toFixed(4)})`);
     });
@@ -638,8 +667,8 @@ async function mapa() {
     }
     const list = CASAS[selK] || [];
     const vw = targetVw || curVb[2] || 60;
-    const s = Math.max(0.055, Math.min(0.85, (vw / 960) * 1.18));
-    const minDist = 26 * s;
+    const s = escalaPin(vw);
+    const minDist = 17 * s;
     const pts = list.map((c) => {
       const [ox, oy] = geoToSvg(c.lat, c.lon);
       return { c, ox, oy, x: ox, y: oy };
@@ -667,12 +696,13 @@ async function mapa() {
     pts.forEach(({ c, ox, oy, x, y }, idx) => {
       const isJm = !!c.jm;
       const lbl = c.l || c.n;
-      const w = Math.max(52, lbl.length * 5.5 + 16);
+      const w = Math.max(40, lbl.length * 4.7 + 14);
+      const muchos = pts.length > 2;
       if (Math.hypot(x - ox, y - oy) > 0.35) {
         items.push(`<line x1="${ox.toFixed(2)}" y1="${oy.toFixed(2)}" x2="${x.toFixed(2)}" y2="${y.toFixed(2)}" stroke="#F5C518" stroke-width="1.4" stroke-dasharray="2 2" vector-effect="non-scaling-stroke" opacity="0.85"/>`);
         items.push(`<circle cx="${ox.toFixed(2)}" cy="${oy.toFixed(2)}" r="${(2.6 * s).toFixed(2)}" fill="#F5C518" stroke="#061536" stroke-width="1" vector-effect="non-scaling-stroke"/>`);
       }
-      items.push(`<a class="mp-casa${isJm ? ' jm' : ''}" href="${mapsUrl(c)}" target="_blank" rel="noopener" data-k="${selK}" data-idx="${idx}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})" aria-label="Abrir en Google Maps: ${esc(c.n)}, ${esc(c.d)}"><title>🏠 ${esc(c.n)} — ${esc(c.d)} (Toca para abrir en Google Maps)</title><g class="mp-casa-inner"><circle class="casa-pulse" r="11"/><circle class="casa-bg" r="10.5"/><path class="casa-ico" d="M0 -6.2 L-6.8 -0.6 H-4.6 V5.2 H-1.4 V1.2 H1.4 V5.2 H4.6 V-0.6 H6.8 Z"/><g transform="translate(0 18.5)"><rect class="casa-lbl-bg" x="${(-w / 2).toFixed(1)}" y="-7.5" width="${w.toFixed(1)}" height="14.5" rx="7.2"/><text class="casa-lbl" text-anchor="middle" y="2.8">${esc(lbl)} ↗</text></g></g></a>`);
+      items.push(`<a class="mp-casa${isJm ? ' jm' : ''}${muchos ? ' lbl-hover' : ''}" href="${mapsUrl(c)}" target="_blank" rel="noopener" data-k="${selK}" data-idx="${idx}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})" style="--i:${idx}" aria-label="Abrir en Google Maps: ${esc(c.n)}, ${esc(c.d)}"><title>${esc(c.n)} — ${esc(c.d)} (Toca para abrir en Google Maps)</title><g class="mp-casa-inner"><ellipse class="pin-halo" cx="0" cy="0" rx="7" ry="2.6"/><g class="pin-drop"><ellipse class="pin-shadow" cx="0" cy="0.4" rx="3.6" ry="1.3"/><path class="pin-body" d="M0 0C-1.6-4.6-8-8.4-8-14.2A8 8 0 0 1 8-14.2C8-8.4 1.6-4.6 0 0Z"/><circle class="pin-eye" cx="0" cy="-14.2" r="3"/><g class="pin-lbl" transform="translate(0 9.5)"><rect class="casa-lbl-bg" x="${(-w / 2).toFixed(1)}" y="-6.5" width="${w.toFixed(1)}" height="12.5" rx="6.2"/><text class="casa-lbl" text-anchor="middle" y="2.6">${esc(lbl)}</text></g></g></g></a>`);
     });
     casasLayer.innerHTML = items.join('');
     updateCasasScale(curVb[2]);
@@ -682,11 +712,11 @@ async function mapa() {
     selK = '';
     ps.forEach((x) => x.classList.remove('sel'));
     document.querySelectorAll('[data-mpk]').forEach((b) => b.setAttribute('aria-pressed', 'false'));
-    if (hudEl) hudEl.innerHTML = `<span class="mp-hud-badge">🌍 Mapa mundial · Selecciona un país para hacer zoom y ver sus casas</span>`;
+    hud('');
     renderCasasSvg(960);
     animateViewBox([0, 0, 960, 470]);
     const keysAll = Object.keys(PAISES);
-    $('#mp-info').innerHTML = `<h3>Toca un país del menú o del mapa</h3><p>Al seleccionar un país, el mapa hará <b>zoom automático</b> y mostrará los <b>iconos de casa (🏠)</b> en la ubicación exacta de las casas de los Misioneros y Hermanas de la Consolata. Al presionar cualquier casa se abrirá en <b>Google Maps</b>.</p><div class="mp-stats"><div><b>${keysAll.length}</b><span>países</span></div><div><b>${totalCasas}</b><span>casas registradas</span></div><div><b>1901</b><span>año de fundación</span></div><div><b>898</b><span>misioneros (2024)</span></div></div>`;
+    $('#mp-info').innerHTML = `<h3>Toca un país del menú o del mapa</h3><p>Al seleccionar un país, el mapa hará <b>zoom automático</b> y mostrará un <b>pin de ubicación</b> en cada casa de las casas de los Misioneros y Hermanas de la Consolata. Al tocar un pin se abre en <b>Google Maps</b>.</p><div class="mp-stats"><div><b>${keysAll.length}</b><span>países</span></div><div><b>${totalCasas}</b><span>casas registradas</span></div><div><b>1901</b><span>año de fundación</span></div><div><b>898</b><span>misioneros (2024)</span></div></div>`;
   };
 
   const sel = (k, scroll) => {
@@ -718,9 +748,7 @@ async function mapa() {
       renderCasasSvg(w);
       animateViewBox([vx, vy, w, h]);
     }
-    if (hudEl) {
-      hudEl.innerHTML = `<span class="mp-hud-badge">🏠 ${esc(d.n)} (${(CASAS[k] || []).length} casas) · Toca una casa para ir a Google Maps</span><button type="button" class="mp-hud-btn" data-mpreset>🌍 Ver mapa mundial</button>`;
-    }
+    { const n = (CASAS[k] || []).length; hud(`${d.n} · ${n} ${n === 1 ? 'casa' : 'casas'}`); }
     if (scroll && svgEl) {
       const r = svgEl.getBoundingClientRect();
       if (r.top < 50 || r.bottom > (window.innerHeight || 800)) {
@@ -733,7 +761,7 @@ async function mapa() {
   try {
     const r = await fetch('img/mapa-consolata.svg?v=2'); const s = await r.text();
     const m = $('#mp-svg');
-    m.innerHTML = `<div class="mp-hud" id="mp-hud"><span class="mp-hud-badge">🌍 Mapa mundial · Selecciona un país para hacer zoom y ver sus casas</span></div>` + s;
+    m.innerHTML = `<div class="mp-hud" id="mp-hud"></div>` + s;
     m.removeAttribute('aria-busy');
     svgEl = m.querySelector('svg');
     hudEl = m.querySelector('#mp-hud');
@@ -743,7 +771,7 @@ async function mapa() {
     casasLayer.setAttribute('id', 'mp-casas-layer');
     svgEl.appendChild(casasLayer);
     ps = Array.from(m.querySelectorAll('.pc'));
-    ps.forEach((p) => { const d = PAISES[p.dataset.k]; if (!d) return; p.setAttribute('tabindex', '0'); p.setAttribute('role', 'button'); p.setAttribute('aria-label', `${d.n}${d.y ? ', desde ' + d.y : ''}`); const t = document.createElementNS('http://www.w3.org/2000/svg', 'title'); t.textContent = `${d.n}${d.y ? ' · desde ' + d.y : ''} (Toca para hacer zoom y ver casas)`; p.appendChild(t); });
+    ps.forEach((p) => { const d = PAISES[p.dataset.k]; if (!d) return; p.setAttribute('tabindex', '0'); p.setAttribute('role', 'button'); p.setAttribute('aria-label', `${d.n}${d.y ? ', desde ' + d.y : ''}`); const t = document.createElementNS('http://www.w3.org/2000/svg', 'title'); t.textContent = `${d.n}${d.y ? ' · desde ' + d.y : ''} (Toca para ver sus casas)`; p.appendChild(t); });
     renderCasasSvg(960);
     m.addEventListener('click', (e) => {
       const casa = e.target.closest('.mp-casa');

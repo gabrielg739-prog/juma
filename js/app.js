@@ -2524,6 +2524,52 @@ async function upsertMiembro() {
 }
 
 /* Planillas completas: solo coordinadores, asesores y la cuenta maestra (las reglas lo exigen). */
+/* Amigos misioneros: los coordinadores agregan al directorio (miembros/{id}) a todos los inscritos,
+   también a los que aún no han entrado a la app. Solo nombre, foto pequeña, rol sin permisos, parroquia,
+   día y mes de cumpleaños y sexo (nunca cédula, teléfono ni dirección). Lo que el dueño escribió no se toca. */
+let planillasCopiadas = new Set();
+let sincronizandoDirectorio = false;
+async function sincronizarDirectorio() {
+  if (sincronizandoDirectorio || !coordUI() || !fb || !fb.db || !fb.getDocs || !currentUser) return;
+  sincronizandoDirectorio = true;
+  try {
+    const snap = await withTimeout(fb.getDocs(fb.collection(fb.db, 'miembros')), 8000);
+    const existentes = new Map();
+    snap.forEach((d) => existentes.set(d.id, d.data() || {}));
+    for (const rec of allInscripciones.slice()) {
+      const id = String((rec && rec.id) || '').trim();
+      if (!id || id.includes('/')) continue;
+      const ya = existentes.get(id);
+      if (ya && !ya.sinCuenta) continue; // ya lo mantiene su dueño (o ya se agregó)
+      const d = rec.datos || {};
+      const nombre = String(rec.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+      if (!nombre) continue;
+      const nac = String(d.nac || rec.nac || '');
+      const doc = {
+        uid: id,
+        nombre,
+        primerNombre: ((d.nombres ? d.nombres.trim().split(' ')[0] : nombre.split(' ')[0]) || 'Misionero').slice(0, 40),
+        foto: await miniaturaFoto(rec.foto || d.foto || ''),
+        rol: rolSinPermiso(userRole(rec)),
+        parroquia: String(rec.parroquia || d.parroquia || '').slice(0, 80),
+        cumple: /^\d{4}-\d{2}-\d{2}$/.test(nac) ? nac.slice(5) : '',
+        sexo: String(rec.sexo || d.sexo || '').slice(0, 10)
+      };
+      const sinCuenta = /^juma-/.test(id);
+      if (sinCuenta) doc.sinCuenta = true;
+      if (ya && ['nombre', 'primerNombre', 'foto', 'rol', 'parroquia', 'cumple', 'sexo'].every((k) => String(ya[k] || '') === String(doc[k] || ''))) continue;
+      doc.actualizado = new Date().toISOString();
+      try { await withTimeout(fb.setDoc(fb.doc(fb.db, 'miembros', id), doc), 6000); } catch (e) {}
+      await new Promise((r) => setTimeout(r, 0)); // deja respirar la pantalla
+    }
+    /* Planillas antiguas que ya pasaron a una cuenta: se quita su entrada repetida «sin cuenta» */
+    for (const id of planillasCopiadas) {
+      const ya = existentes.get(id);
+      if (ya && ya.sinCuenta && fb.deleteDoc) { try { await withTimeout(fb.deleteDoc(fb.doc(fb.db, 'miembros', id)), 6000); } catch (e) {} }
+    }
+  } catch (e) {}
+  sincronizandoDirectorio = false;
+}
 async function loadAllInscripciones() {
   if (!coordUI() || !fb || !fb.db) return;
   try {
@@ -2532,7 +2578,9 @@ async function loadAllInscripciones() {
     snap.docs.forEach((x) => arr.push(Object.assign({ id: x.id }, x.data())));
     /* Si una planilla antigua ya fue copiada a la cuenta nueva, se muestra solo la nueva */
     const migradas = new Set(arr.map((x) => x.migradoDe).filter(Boolean));
+    planillasCopiadas = migradas;
     allInscripciones = arr.filter((x) => !migradas.has(x.id)).sort((a, b) => String(b.actualizado || '').localeCompare(String(a.actualizado || '')));
+    sincronizarDirectorio();
     if (currentSection === 'comunidad') renderComunidadView();
     if (fb.setDoc) fb.setDoc(fb.doc(fb.db, 'site', 'stats'), { inscritos: allInscripciones.length }, { merge: true }).catch(() => {});
   } catch (e) {}
@@ -3210,7 +3258,7 @@ function renderComunidadMembersList(enfocar) {
       <div style="text-align:center;padding:32px 14px;background:var(--paper);border-radius:14px;border:1px dashed var(--line-2)">
         <span class="ico-big" aria-hidden="true">${ic(members.length ? 'search' : 'users')}</span>
         <b style="font-size:15px;color:var(--navy);display:block">${members.length ? 'No se encontraron amigos' : 'Aún no hay amigos en el directorio'}</b>
-        <p style="margin:4px 0 0;font-size:13.5px;color:var(--muted)">${members.length ? 'Intenta escribiendo otro nombre en la búsqueda.' : 'Cada miembro aparece aquí cuando inicia sesión en la app con su cuenta.'}</p>
+        <p style="margin:4px 0 0;font-size:13.5px;color:var(--muted)">${members.length ? 'Intenta escribiendo otro nombre en la búsqueda.' : 'Aquí aparecen todos los inscritos en JUMA Duaca.'}</p>
       </div>`;
     return;
   }
@@ -3229,7 +3277,7 @@ function renderComunidadMembersList(enfocar) {
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex:0 0 auto">
-          <button type="button" class="btn btn-primary btn-sm" data-open-dm="${esc(m.uid)}" style="min-height:40px;padding:0 14px;font-size:13.5px" title="Escribir mensaje">${ic('msg')}Escribir</button>
+          ${m.sinCuenta ? '<span style="font-size:12.5px;color:var(--muted);text-align:right;line-height:1.25" title="Podrás escribirle cuando entre a la app con su correo">Aún no usa<br>la app</span>' : `<button type="button" class="btn btn-primary btn-sm" data-open-dm="${esc(m.uid)}" style="min-height:40px;padding:0 14px;font-size:13.5px" title="Escribir mensaje">${ic('msg')}Escribir</button>`}
         </div>
       </div>
     `).join('') + (quedan > 0 ? `<div class="list-more" style="margin-top:6px"><button type="button" class="btn btn-ghost" data-more-amigos>${ic('down')}Ver más amigos <small style="font-weight:400;color:var(--muted)">(${quedan} más)</small></button></div>` : '');
@@ -4145,7 +4193,7 @@ function normalizeMember(x) {
   if (!uid) return null;
   const rol = userRole(x);
   const parroquia = x.parroquia || d.parroquia || '';
-  return { id: x.id || uid, uid, nombre, primerNombre, foto, correo, rol, parroquia, raw: x };
+  return { id: x.id || uid, uid, nombre, primerNombre, foto, correo, rol, parroquia, sinCuenta: !!x.sinCuenta, raw: x };
 }
 
 /* Directorio para escribir mensajes: viene de miembros/{uid} (solo miembros con cuenta). */
@@ -4153,9 +4201,12 @@ function getRegisteredMembersForDm(myUid, myEmail) {
   const normMyEmail = String(myEmail || '').trim().toLowerCase();
   const list = [];
   const seen = new Set();
+  const clave = (n) => String(n || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const conCuenta = new Set((miembros || []).filter((x) => x && !x.sinCuenta).map((x) => clave(x.nombre)));
   (miembros || []).forEach((rec) => {
     const m = normalizeMember(rec);
     if (!m) return;
+    if (m.sinCuenta && conCuenta.has(clave(m.nombre))) return; // ya está con su cuenta
     if ((myUid && m.uid === myUid) || (normMyEmail && m.correo && m.correo === normMyEmail)) return; // Excluirme a mí mismo
     if (seen.has(m.uid)) return;
     seen.add(m.uid);
@@ -4176,7 +4227,7 @@ function fotoDeAutor(m) {
 }
 
 function renderDmMembersList(myUid, myEmail) {
-  const members = getRegisteredMembersForDm(myUid, myEmail);
+  const members = getRegisteredMembersForDm(myUid, myEmail).filter((m) => !m.sinCuenta);
   const q = String(chatDmSearch || '').trim().toLowerCase();
   const filtered = members.filter((m) => {
     if (!q) return true;
