@@ -9,6 +9,66 @@ const esc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</
 const pad2 = (n) => String(n).padStart(2, '0');
 const reduced = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
 
+/* ---------- iconos vectoriales (los mismos del prototipo v2). Los emojis de contenido se quedan; los de botones y menús son estos. ---------- */
+const P = {
+  home:'<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  calendar:'<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  calcheck:'<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/>',
+  cap:'<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>',
+  book:'<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+  globe:'<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  image:'<rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  news:'<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/>',
+  msg:'<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  bell:'<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
+  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  userplus:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/>',
+  login:'<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+  back:'<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>', down:'<path d="m6 9 6 6 6-6"/>',
+  menu:'<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/>', x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  lock:'<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  cake:'<path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3"/><path d="M12 8v3"/><path d="M17 8v3"/><path d="M7 4h.01"/><path d="M12 4h.01"/><path d="M17 4h.01"/>',
+  pin:'<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  idcard:'<path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/>',
+  send:'<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>',
+  search:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  like:'<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>',
+  comment:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/>',
+  megaphone:'<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
+  heart:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+  grid:'<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  mail:'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  phone:'<rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/>',
+  drop:'<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
+  shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+  star:'<path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/>',
+  sparkles:'<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
+  edit:'<path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/>',
+  church:'<path d="M10 9h4"/><path d="M12 7v5"/><path d="M14 22v-4a2 2 0 0 0-4 0v4"/><path d="M18 22V5.618a1 1 0 0 0-.553-.894l-4.553-2.277a2 2 0 0 0-1.788 0L6.553 4.724A1 1 0 0 0 6 5.618V22"/><path d="m18 7 3.447 1.724a1 1 0 0 1 .553.894V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-10.382a1 1 0 0 1 .553-.894L6 7"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  expand:'<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+  play:'<path d="M6 3v18l15-9z"/>', pause:'<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+  vol:'<path d="M3 9.5v5h4l5 4.5v-14L7 9.5H3z" fill="currentColor"/><path d="M15.5 8.8a4.5 4.5 0 0 1 0 6.4"/><path d="M18.3 6a8.5 8.5 0 0 1 0 12"/>',
+  mute:'<path d="M3 9.5v5h4l5 4.5v-14L7 9.5H3z" fill="currentColor"/><path d="m16 9.5 5 5"/><path d="m21 9.5-5 5"/>'
+};
+/* Iconos extra, del mismo juego de trazos (Lucide), para botones que el prototipo no tenía */
+Object.assign(P, {
+  up:'<path d="m18 15-6-6-6 6"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  settings:'<path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>',
+  info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  qr:'<rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>',
+  file:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  shirt:'<path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/>'
+});
+const ic = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[n] || ''}</svg>`;
+
 let cfg = {};      // contenido publicado (contenido.json) o el borrador del editor
 let pub = {};      // contenido publicado tal como está en GitHub
 let fb = null;      // módulos de firebase
@@ -917,17 +977,33 @@ async function sharePostWhatsApp(idx, btnEl) {
   window.open('https://wa.me/?text=' + encodeURIComponent(waMsg), '_blank', 'noopener');
 }
 
+/* Noticias: se ven 3 y «Cargar más noticias» muestra 3 más (las demás ya están en la página, solo ocultas) */
+let postsVisibles = 3;
+function aplicarPaginaNoticias(enfocar) {
+  const arts = $$('#posts > .post');
+  arts.forEach((a, i) => a.classList.toggle('hide', i >= postsVisibles));
+  let box = $('#posts-more');
+  const posts = $('#posts');
+  if (!box && posts) { box = document.createElement('div'); box.id = 'posts-more'; box.className = 'list-more'; posts.insertAdjacentElement('afterend', box); }
+  if (!box) return;
+  const quedan = arts.length - postsVisibles;
+  box.innerHTML = quedan > 0 ? `<button type="button" class="btn btn-ghost" data-more-posts>${ic('down')}Cargar más noticias <small style="font-weight:400;color:var(--muted)">(${quedan} más)</small></button>` : '';
+  if (enfocar) {
+    const nuevo = arts[postsVisibles - 3];
+    if (nuevo) { const t = nuevo.querySelector('.post-lead'); if (t) { t.setAttribute('tabindex', '-1'); try { t.focus({ preventScroll: true }); } catch (e) {} } nuevo.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' }); }
+  }
+}
 function renderPosts() {
   const list = getPostsList();
   preloadPostMediaFiles(list);
   $('#novedades').classList.toggle('hide', !list.length);
-  $('#nav-nov').classList.toggle('hide', !list.length);
+  const navNov = $('#nav-nov'); if (navNov) navNov.classList.toggle('hide', !list.length);
   $('#posts').innerHTML = list.map((p, idx) => {
     const hasMore = !!String(p.x || '').trim();
     return `<article class="post">
       ${mediaHtml(p, idx)}
       <div class="post-body">
-        ${p.fecha ? `<time>📅 ${esc(fmtF(p.fecha))}</time>` : ''}
+        ${p.fecha ? `<time>${ic('calendar')} ${esc(fmtF(p.fecha))}</time>` : ''}
         <p class="post-lead">${esc(p.t)}</p>
         ${hasMore ? `<div class="post-more-wrap">
           <button type="button" class="post-more-btn" data-toggle-post-more="${idx}" aria-expanded="false">Ver más ▾</button>
@@ -935,12 +1011,13 @@ function renderPosts() {
         </div>` : ''}
         <div class="post-actions">
           <button type="button" class="btn-wa-share" data-share-post="${idx}">
-            <span>📲 Compartir por WhatsApp</span>
+            ${ic('share')}<span>Compartir por WhatsApp</span>
           </button>
         </div>
       </div>
     </article>`;
   }).join('');
+  aplicarPaginaNoticias(false);
   setupPostVideos();
 }
 /* Fotos fijas de la galería: se pueden ocultar o cambiar su pie desde el editor. */
@@ -978,6 +1055,19 @@ function renderGalOrden() {
   const pos = new Map((cfg.orden || []).map((k, i) => [k, i]));
   figs.map((f, i) => ({ f, i, p: pos.has(galKey(f)) ? pos.get(galKey(f)) : 1e6 + i }))
     .sort((a, b) => a.p - b.p).forEach((x) => box.appendChild(x.f));
+  paginarGaleria(false);
+}
+/* Galería: se ven 9 fotos y «Cargar más fotos» muestra 9 más (las ocultas desde el editor no cuentan) */
+let fotosVisibles = 9;
+function paginarGaleria(enfocar) {
+  const box = $('#galeria .gallery'); if (!box) return;
+  const figs = $$('figure.gal', box).filter((f) => f.style.display !== 'none');
+  figs.forEach((f, i) => f.classList.toggle('gal-mas', i >= fotosVisibles));
+  let more = $('#gal-more');
+  if (!more) { more = document.createElement('div'); more.id = 'gal-more'; more.className = 'list-more'; box.insertAdjacentElement('afterend', more); }
+  const quedan = figs.length - fotosVisibles;
+  more.innerHTML = quedan > 0 ? `<button type="button" class="btn btn-ghost" data-more-gal>${ic('image')}Cargar más fotos <small style="font-weight:400;color:var(--muted)">(${quedan} más)</small></button>` : '';
+  if (enfocar) { const f = figs[fotosVisibles - 9]; if (f) f.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'center' }); if (unrollCheck) unrollCheck(); }
 }
 
 /* ===================== desenrollar al entrar en pantalla ===================== */
@@ -987,15 +1077,22 @@ function setupUnroll() {
     if (reduced()) return;
     const els = $$('[data-unroll]');
     root.setAttribute('data-motion', '1');
+    /* Una foto dentro de un bloque todavía escondido (inicio con «Cargar más») tiene medidas en cero: se desenrolla cuando aparece */
+    const visible = (el) => el.getClientRects().length > 0;
     const check = () => {
       const h = window.innerHeight || 800;
-      els.forEach((el) => { if (el.hasAttribute('data-in')) return; const r = el.getBoundingClientRect(); if (r.top < h * 0.92 && r.bottom > 0) el.setAttribute('data-in', '1'); });
+      els.forEach((el) => { if (el.hasAttribute('data-in') || !visible(el)) return; const r = el.getBoundingClientRect(); if (r.top < h * 0.92 && r.bottom > 0) el.setAttribute('data-in', '1'); });
     };
     let tick = 0;
     const on = () => { if (!tick) tick = requestAnimationFrame(() => { tick = 0; check(); }); };
     window.addEventListener('scroll', on, { passive: true, capture: true }); window.addEventListener('resize', on);
+    unrollCheck = on;
     check(); setTimeout(check, 400); setTimeout(check, 1200);
-    setTimeout(() => els.forEach((el) => el.setAttribute('data-in', '1')), 5000);
+    /* Respaldo: si algo visible no llegó a desenrollarse (por ejemplo, sin desplazamiento), se muestra igual */
+    const resp = setInterval(() => {
+      els.forEach((el) => { if (!el.hasAttribute('data-in') && visible(el)) { const r = el.getBoundingClientRect(); if (r.bottom < (window.innerHeight || 800) * 1.5) el.setAttribute('data-in', '1'); } });
+      if (els.every((el) => el.hasAttribute('data-in'))) clearInterval(resp);
+    }, 2500);
   } catch (e) {}
 }
 
@@ -1007,9 +1104,12 @@ function lock(on) {
   document.body.style.overflow = on ? 'hidden' : '';
 }
 let closeTimer = 0;
+let focoAntesModal = null;
 function openModal(html, onKey) {
   /* Si una ventana se estaba cerrando, se cancela ese cierre para no borrar la ventana nueva */
   clearTimeout(closeTimer); closeTimer = 0;
+  /* Al cerrar, el foco vuelve al botón que abrió la primera ventana */
+  if (!modalRoot.firstChild && document.activeElement && !modalRoot.contains(document.activeElement)) focoAntesModal = document.activeElement;
   modalRoot.innerHTML = html; lock(true); modalKey = onKey || null;
   setTimeout(() => { const f = modalRoot.querySelector('input,textarea'); if (f) f.focus(); }, 260);
 }
@@ -1019,7 +1119,11 @@ function closeModal() {
   if (typeof stopQrCamera === 'function') stopQrCamera();
   if (typeof stopSelfieCamera === 'function') stopSelfieCamera();
   const ov = $('.overlay', modalRoot);
-  const done = () => { closeTimer = 0; modalRoot.innerHTML = ''; lock(false); modalKey = null; };
+  const done = () => {
+    closeTimer = 0; modalRoot.innerHTML = ''; lock(false); modalKey = null;
+    const f = focoAntesModal; focoAntesModal = null;
+    if (f && document.contains(f) && f.offsetParent !== null) { try { f.focus({ preventScroll: true }); } catch (e) {} }
+  };
   clearTimeout(closeTimer);
   if (!ov || reduced()) return done();
   ov.classList.add('is-out'); closeTimer = setTimeout(done, 180);
@@ -1031,7 +1135,7 @@ modalRoot.addEventListener('click', (e) => {
 });
 let touchModalStartY = 0;
 modalRoot.addEventListener('touchstart', (e) => {
-  const head = e.target.closest('.sheet-head, .chat-top');
+  const head = e.target.closest('.sheet-head, .chat-top, .notif-head');
   if (head && e.touches && e.touches[0]) {
     touchModalStartY = e.touches[0].clientY;
   } else {
@@ -1047,7 +1151,7 @@ modalRoot.addEventListener('touchend', (e) => {
   }
   touchModalStartY = 0;
 }, { passive: true });
-const closeBtn = '<button type="button" class="btn btn-soft btn-sm" data-close aria-label="Cerrar ventana" style="min-height:42px;min-width:42px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.18);color:#fff;cursor:pointer;flex:0 0 auto">✕</button>';
+const closeBtn = '<button type="button" class="btn btn-soft btn-sm" data-close aria-label="Cerrar ventana" style="min-height:44px;min-width:44px;padding:0;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.14);color:#fff;cursor:pointer;flex:0 0 auto">' + ic('x') + '</button>';
 const sheetHead = (kicker, title, id) => `<div class="sheet-head"><div class="ribbon" aria-hidden="true" style="position:absolute;top:0;left:0;right:0"></div><div style="display:flex;align-items:center;gap:16px"><div style="flex:1 1 auto;min-width:0"><div style="font-size:13px;color:var(--muted-lt)">${esc(kicker)}</div><h2 id="${id}" class="h-display" style="margin-top:4px;font-size:clamp(28px,4vw,38px)">${esc(title)}</h2></div>${closeBtn}</div></div>`;
 const sheetHeadNoClose = (kicker, title, id) => `<div class="sheet-head"><div class="ribbon" aria-hidden="true" style="position:absolute;top:0;left:0;right:0"></div><div style="display:flex;align-items:center;gap:16px"><div style="flex:1 1 auto;min-width:0"><div style="font-size:13px;color:var(--muted-lt)">${esc(kicker)}</div><h2 id="${id}" class="h-display" style="margin-top:4px;font-size:clamp(28px,4vw,38px)">${esc(title)}</h2></div></div></div>`;
 
@@ -1550,7 +1654,7 @@ function carnetInteractiveSectionHtml(rec, contextKey = 'profile') {
 
   return `<div style="padding:18px;margin-bottom:6px;border-radius:18px;background:linear-gradient(180deg,#F2F7FF 0%,#FFFFFF 100%);border:2px solid var(--royal);box-shadow:0 10px 30px rgba(36,82,200,0.08)">
     <div style="margin-bottom:14px;text-align:left">
-      <b style="display:block;font-size:17.5px;color:var(--navy)">🪪 Carnet Misionero Digital JUMA</b>
+      <b style="display:flex;align-items:center;gap:8px;font-size:17.5px;color:var(--navy)">${ic('idcard')}Carnet Misionero Digital JUMA</b>
       <p style="margin:4px 0 0;font-size:13.5px;color:var(--muted)">Tu carnet oficial con código QR y opción de generar el mockup realista en la franela misionera.</p>
     </div>
 
@@ -1561,7 +1665,7 @@ function carnetInteractiveSectionHtml(rec, contextKey = 'profile') {
 
     <div style="display:flex;justify-content:center;margin-bottom:20px">
       <button type="button" class="btn btn-blue btn-sm" data-dl-carnet-png="${esc(uid)}" style="min-height:44px;font-size:14px;font-weight:800;padding:0 24px">
-        📥 Descargar Carnet (PNG HD)
+        ${ic('download')}Descargar Carnet (PNG HD)
       </button>
     </div>
 
@@ -1569,7 +1673,7 @@ function carnetInteractiveSectionHtml(rec, contextKey = 'profile') {
     <div style="padding:18px;border-radius:16px;background:${isMockupReady ? '#FFFFFF' : '#EBF3FF'};border:${isMockupReady ? '2px solid var(--royal)' : '1.5px dashed var(--royal)'};text-align:center">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
         <div>
-          <b style="font-size:15px;color:var(--navy);display:block;text-align:left">👕 Mockup en Franela Oficial JUMA (${esc(g)})</b>
+          <b style="font-size:15px;color:var(--navy);display:flex;align-items:center;gap:6px;text-align:left">${ic('shirt')}Mockup en Franela Oficial JUMA (${esc(g)})</b>
           <span style="font-size:12.5px;color:var(--muted);display:block;text-align:left">${isMockupReady ? '¡Mockup generado con éxito! Revísalo abajo y descárgalo cuando quieras.' : 'Toca «Generar» para ver el diseño en pantalla primero sin tener que descargarlo.'}</span>
         </div>
         <div style="display:flex;gap:6px">
@@ -1580,11 +1684,11 @@ function carnetInteractiveSectionHtml(rec, contextKey = 'profile') {
 
       ${!isMockupReady ? `
         <div style="padding:22px 14px;background:#fff;border-radius:12px;border:1px solid #D2E3FC;margin-bottom:6px">
-          <div style="font-size:42px;margin-bottom:6px">👕🪪</div>
+          <span class="ico-big" aria-hidden="true">${ic('shirt')}</span>
           <b style="font-size:15px;color:var(--navy);display:block">¿Quieres ver cómo queda en la franela oficial?</b>
           <p style="font-size:13.5px;color:var(--muted);margin:4px 0 16px">Al darle a Generar, se muestra primero aquí en pantalla y luego podrás descargarlo.</p>
           <button type="button" class="btn btn-blue" data-action-generate-mockup="${esc(uid)}" style="min-height:46px;font-size:14.5px;font-weight:800;padding:0 26px">
-            ✨ Generar Mockup (${esc(g)})
+            ${ic('sparkles')}Generar Mockup (${esc(g)})
           </button>
         </div>
       ` : `
@@ -1595,7 +1699,7 @@ function carnetInteractiveSectionHtml(rec, contextKey = 'profile') {
         <!-- SOLO ASI LUEGO DE MOSTRARSE APARECE LA OPCION DE DESCARGAR -->
         <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px">
           <button type="button" class="btn btn-blue" data-dl-mockup-png="${esc(uid)}" data-gender="${esc(g)}" style="min-height:46px;font-size:14.5px;font-weight:800;padding:0 26px">
-            📥 Descargar Mockup (${esc(g)}) (PNG HD)
+            ${ic('download')}Descargar Mockup (${esc(g)}) (PNG HD)
           </button>
         </div>
       `}
@@ -1898,6 +2002,85 @@ function qrPayloadFor(rec) {
   const id = (rec && (rec.uid || rec.id)) || (currentUser && currentUser.uid) || ('juma-' + sha256(String((rec && rec.correo) || 'juma')).slice(0, 16));
   return 'JUMA:' + id;
 }
+/* ---------- QR de asistencia a pantalla completa (como en el prototipo v2) ----------
+   El contenido del QR es siempre qrPayloadFor(rec): el mismo que lee el escáner del coordinador. */
+function qrSVG(text) {
+  try {
+    const q = window.qrcode(0, 'M'); q.addData(text); q.make();
+    const n = q.getModuleCount(); let r = '';
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (q.isDark(y, x)) r += `M${x} ${y}h1v1h-1z`;
+    return `<svg viewBox="-2 -2 ${n + 4} ${n + 4}" role="img" aria-label="Código QR de asistencia" shape-rendering="crispEdges"><rect x="-2" y="-2" width="${n + 4}" height="${n + 4}" fill="#fff"/><path d="${r}" fill="#061536"/></svg>`;
+  } catch (e) {
+    return `<img src="${esc(qrImgUrl(text, 300))}" alt="Código QR de asistencia" style="display:block;width:100%;height:100%">`;
+  }
+}
+function qrCardHtml(rec) {
+  const info = getCarnetDisplayData(rec || {});
+  return `<div class="qr-card">
+    <div><b>Tu QR de asistencia</b><p>Tócalo para verlo en grande y que el coordinador lo escanee el domingo.</p></div>
+    <button type="button" class="qr-btn" id="qr-btn" data-qr-open data-qr="${esc(info.qrPayload)}" data-qr-n="${esc(info.fullNom)}" data-qr-s="${esc(info.rolUpper + (info.subTxt ? ' · ' + info.subTxt : ''))}" aria-label="Ver mi código QR en grande">${qrSVG(info.qrPayload)}<span>${ic('expand')}Toca para ampliar</span></button>
+  </div>`;
+}
+let qrWake = null, qrOrigen = null;
+function qrPedirPantallaEncendida() {
+  try { if (navigator.wakeLock && navigator.wakeLock.request) navigator.wakeLock.request('screen').then((w) => { qrWake = w; }).catch(() => {}); } catch (e) {}
+}
+function qrSoltarPantalla() { try { if (qrWake) qrWake.release(); } catch (e) {} qrWake = null; }
+function qrFlip(desde, hasta) {
+  const a = desde.getBoundingClientRect(), b = hasta.getBoundingClientRect();
+  if (!a.width || !b.width) return 'none';
+  return `translate(${a.left + a.width / 2 - (b.left + b.width / 2)}px, ${a.top + a.height / 2 - (b.top + b.height / 2)}px) scale(${a.width / b.width})`;
+}
+function openQR(btn, origen) {
+  if (!btn) return;
+  let ov = $('#qr-full');
+  if (!ov) {
+    ov = document.createElement('section');
+    ov.id = 'qr-full'; ov.className = 'qr-full';
+    ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Código QR de asistencia');
+    ov.addEventListener('click', (e) => { if (e.target.closest('[data-qr-close]')) closeQR(); });
+    document.body.appendChild(ov);
+  }
+  qrOrigen = origen || btn.querySelector('svg, img') || btn;
+  ov.innerHTML = `<button type="button" class="icon-btn x x-btn" data-qr-close aria-label="Cerrar código QR">${ic('x')}</button>
+    <div><div class="qr-big">${qrSVG(btn.dataset.qr || '')}</div>
+    <h2>${esc(btn.dataset.qrN || '')}</h2>
+    <p>${esc(btn.dataset.qrS || '')}</p>
+    <p><b style="color:var(--ink)">Muéstralo al coordinador para marcar tu asistencia.</b></p>
+    <span class="tip">${ic('sun')}Sube el brillo de tu pantalla</span></div>`;
+  ov.classList.add('on');
+  const big = $('.qr-big', ov);
+  if (!reduced() && big && big.animate && qrOrigen) {
+    big.animate([{ transform: qrFlip(qrOrigen, big) }, { transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.23,1,.32,1)' });
+    ov.animate([{ backgroundColor: 'rgba(255,255,255,0)' }, { backgroundColor: '#fff' }], { duration: 260, easing: 'ease-out' });
+  }
+  qrPedirPantallaEncendida();
+  setTimeout(() => { const x = $('[data-qr-close]', ov); if (x) x.focus(); }, 50);
+}
+function closeQR() {
+  const ov = $('#qr-full'); if (!ov || !ov.classList.contains('on')) return;
+  const volver = $('#qr-btn') || (qrOrigen && document.contains(qrOrigen) ? qrOrigen : null);
+  const done = () => { ov.classList.remove('on'); ov.innerHTML = ''; qrSoltarPantalla(); if (volver && volver.focus) { try { volver.focus({ preventScroll: true }); } catch (e) {} } };
+  const big = $('.qr-big', ov); const destino = qrOrigen && document.contains(qrOrigen) ? qrOrigen : null;
+  if (!reduced() && big && destino && big.animate) {
+    const an = big.animate([{ transform: 'none' }, { transform: qrFlip(destino, big) }], { duration: 240, easing: 'cubic-bezier(.4,0,1,1)' });
+    ov.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 240, easing: 'ease-in' });
+    an.onfinish = done;
+  } else done();
+}
+/* Esc cierra primero el QR (sin cerrar el perfil que está debajo) y el foco no se escapa de la pantalla del QR */
+window.addEventListener('keydown', (e) => {
+  const ov = $('#qr-full'); if (!ov || !ov.classList.contains('on')) return;
+  if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); closeQR(); }
+  else if (e.key === 'Tab') { e.preventDefault(); const x = $('[data-qr-close]', ov); if (x) x.focus(); }
+}, true);
+document.addEventListener('visibilitychange', () => { const ov = $('#qr-full'); if (document.visibilityState === 'visible' && ov && ov.classList.contains('on')) qrPedirPantallaEncendida(); });
+modalRoot.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-qr-open]');
+  if (b) { e.preventDefault(); openQR(b); return; }
+  const mini = e.target.closest('.j-carnet-qr');
+  if (mini) { const qb = $('#qr-btn'); if (qb) { e.preventDefault(); openQR(qb, mini); } }
+});
 function qrImgUrl(payload, size = 260) {
   try {
     if (typeof window !== 'undefined' && window.qrcode) {
@@ -2306,19 +2489,25 @@ async function loadAllInscripciones() {
   } catch (e) {}
 }
 
-/* ===================== Modo Secciones SPA, Notificaciones Internas y Dock Social ===================== */
+/* ===================== Navegación v2: inicio con «Cargar más», menú lateral, barra inferior y avisos ===================== */
+/* El inicio es una sola página hecha de bloques (#feed > .blk) que ya están en el HTML: «Cargar más» solo los
+   muestra (quita la clase .blk-oculto), así los videos, animaciones y observadores siguen funcionando igual.
+   Los enlaces #quienes, #domingos, #mapa, #fe, #testimonios… muestran los bloques hasta llegar a ese y bajan hasta él. */
 let currentSection = 'inicio';
-let viewMode = localStorage.getItem('juma-view-mode') || 'secciones'; // 'secciones' | 'corrido'
 
+let toastTimer = 0;
 function showToast(msg) {
   const existing = $('#juma-toast');
   if (existing) existing.remove();
+  clearTimeout(toastTimer);
   const t = document.createElement('div');
   t.id = 'juma-toast';
-  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;background:rgba(6,21,54,.94);color:#fff;padding:12px 22px;border-radius:999px;font-size:14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.3);backdrop-filter:blur(8px);pointer-events:none;animation:fadeInView 200ms ease both;text-align:center;max-width:90vw';
+  t.className = 'toast';
+  t.setAttribute('role', 'status');
+  t.setAttribute('aria-live', 'polite');
   t.textContent = msg;
   document.body.appendChild(t);
-  setTimeout(() => { if (t.parentNode) t.remove(); }, 3200);
+  toastTimer = setTimeout(() => { if (t.parentNode) t.remove(); }, 3200);
 }
 
 function timeAgo(iso) {
@@ -2334,42 +2523,236 @@ function timeAgo(iso) {
   return `Hace ${diffDay} día${diffDay === 1 ? '' : 's'}`;
 }
 
-function switchSection(sectionId, updateHash = true) {
-  if (modalRoot && modalRoot.firstChild && modalKey !== 'force-photo') {
-    closeModal();
-  }
-  const validSections = ['inicio', 'quienes', 'domingos', 'formacion', 'fe', 'consolata', 'novedades', 'galeria', 'comunidad'];
-  if (!validSections.includes(sectionId)) sectionId = 'inicio';
-  currentSection = sectionId;
-
-  document.body.classList.add('modo-secciones');
-  document.body.classList.remove('modo-corrido');
-  document.querySelectorAll('.j-view').forEach((el) => {
-    const isTarget = el.id === 'view-' + sectionId;
-    el.classList.toggle('view-active', isTarget);
-    el.classList.remove('hide');
-  });
-
-  document.querySelectorAll('.navlink').forEach((link) => {
-    const target = link.dataset.viewTarget || (link.getAttribute('href') || '').replace('#', '');
-    link.classList.toggle('active', target === sectionId);
-  });
-
-  document.querySelectorAll('.fb-tab').forEach((tab) => {
-    const isTarget = tab.dataset.fbTab === sectionId;
-    tab.classList.toggle('active', isTarget);
-  });
-
-  if (sectionId === 'comunidad') {
-    renderComunidadView();
-  }
-
-  if (updateHash && location.hash !== '#' + sectionId) {
-    history.pushState(null, '', '#' + sectionId);
-  }
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+/* ---------- bloques del inicio ---------- */
+const bloques = () => $$('#feed > .blk');
+const siguienteOculto = () => bloques().find((b) => b.classList.contains('blk-oculto')) || null;
+let unrollCheck = null; // lo define setupUnroll: vuelve a mirar qué fotos se ven para desenrollarlas
+function despuesDeRevelar() {
+  if (unrollCheck) { unrollCheck(); setTimeout(unrollCheck, 120); }
+  /* Algunas partes (videos, mapa, carrusel) miran el desplazamiento: se les avisa que hay contenido nuevo */
+  try { window.dispatchEvent(new Event('scroll')); window.dispatchEvent(new Event('resize')); } catch (e) {}
 }
+function revelarHasta(blk) {
+  const all = bloques(); const idx = all.indexOf(blk);
+  if (idx < 0) return false;
+  let cambio = false;
+  all.slice(0, idx + 1).forEach((b) => { if (b.classList.contains('blk-oculto')) { b.classList.remove('blk-oculto'); cambio = true; } });
+  if (cambio) despuesDeRevelar();
+  actualizarMas();
+  return cambio;
+}
+function actualizarMas() {
+  const box = $('#feed-more'); if (!box) return;
+  const nx = siguienteOculto();
+  box.innerHTML = nx
+    ? `<button type="button" class="more-btn" data-cargar-mas aria-describedby="feed-more-sig"><span>${ic('down')} Cargar más</span><small id="feed-more-sig">Siguiente página: ${esc(nx.dataset.blkT || '')}</small></button>`
+    : `<div class="more-line">Llegaste al final</div><button type="button" class="more-top" data-view-target="inicio">${ic('up')}Volver al inicio</button>`;
+}
+function cargarMas() {
+  const nx = siguienteOculto(); if (!nx) return;
+  nx.classList.remove('blk-oculto');
+  if (!reduced()) { nx.classList.add('blk-nuevo'); setTimeout(() => nx.classList.remove('blk-nuevo'), 450); }
+  despuesDeRevelar(); actualizarMas();
+  const first = nx.querySelector('section[id]');
+  if (first) {
+    currentSection = first.id;
+    try { history.replaceState(null, '', '#' + first.id); } catch (e) {}
+    marcarNav(first.id);
+  }
+  nx.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
+  /* El foco pasa al título del bloque nuevo, para quien navega con teclado o lector de pantalla */
+  const h = nx.querySelector('h1, h2');
+  if (h) { if (!h.hasAttribute('tabindex')) h.setAttribute('tabindex', '-1'); try { h.focus({ preventScroll: true }); } catch (e) {} }
+}
+
+/* ---------- ir a una parte de la página ---------- */
+let ajusteScroll = 0, tocoUsuario = false;
+['wheel', 'touchstart', 'keydown'].forEach((ev) => window.addEventListener(ev, () => { tocoUsuario = true; }, { passive: true }));
+function bajarA(el, smooth) {
+  if (!el) return;
+  tocoUsuario = false;
+  el.scrollIntoView({ behavior: smooth && !reduced() ? 'smooth' : 'auto', block: 'start' });
+  /* Si una foto de arriba terminó de cargar y empujó el contenido, se corrige una vez */
+  clearTimeout(ajusteScroll);
+  ajusteScroll = setTimeout(() => {
+    if (tocoUsuario || !document.contains(el)) return;
+    const top = el.getBoundingClientRect().top;
+    const esperado = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--top-h')) || 64) + 12;
+    if (Math.abs(top - esperado) > 60) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+  }, 1100);
+}
+function mostrarPagina(cual) {
+  const feed = $('#feed'); const com = $('#view-comunidad');
+  if (feed) feed.classList.toggle('hide', cual === 'comunidad');
+  if (com) com.classList.toggle('hide', cual !== 'comunidad');
+}
+/* Devuelve el id al que se fue ('comunidad', 'inicio' o el id de la sección / ancla) */
+function irA(destino, opt = {}) {
+  let id = String(destino || '').replace(/^#\/?/, '').trim() || 'inicio';
+  if (id === 'main' || id === 'contenido') id = 'inicio';
+  if (id === 'comunidad') {
+    mostrarPagina('comunidad');
+    currentSection = 'comunidad';
+    renderComunidadView();
+    if (opt.scroll !== false) window.scrollTo({ top: 0, behavior: 'auto' });
+    marcarNav('comunidad');
+    return id;
+  }
+  const feed = $('#feed');
+  let el = document.getElementById(id);
+  if (!el || !feed || !feed.contains(el)) { id = 'inicio'; el = document.getElementById('inicio'); }
+  mostrarPagina('inicio');
+  const blk = el.closest('#feed > .blk');
+  if (blk) revelarHasta(blk);
+  currentSection = id;
+  marcarNav(id);
+  if (opt.scroll !== false) {
+    if (id === 'inicio') window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
+    else {
+      /* Una sección escondida (por ejemplo testimonios sin contenido) lleva a su bloque */
+      const destinoVisible = el.offsetParent !== null || getComputedStyle(el).position === 'fixed' ? el : (blk || el);
+      requestAnimationFrame(() => bajarA(destinoVisible, opt.smooth !== false));
+    }
+  }
+  return id;
+}
+function switchSection(sectionId, updateHash = true) {
+  if (modalRoot && modalRoot.firstChild && modalKey !== 'force-photo') closeModal();
+  cerrarMenu(false);
+  const id = irA(sectionId);
+  if (updateHash && location.hash !== '#' + id) {
+    try { history.pushState(null, '', '#' + id); } catch (e) {}
+  }
+}
+/* Para js/fe.js (oraciones y mapa) y cualquier otro módulo de la página */
+window.JUMA_NAV = {
+  revelar(id) { const el = document.getElementById(String(id || '').replace(/^#/, '')); const blk = el && el.closest('#feed > .blk'); if (blk) { mostrarPagina('inicio'); revelarHasta(blk); } return !!el; },
+  ir(id) { switchSection(id); }
+};
+
+/* ---------- menú lateral, barra inferior y hoja de secciones ---------- */
+const NAV_CONOCENOS = [
+  ['inicio', 'Inicio', 'home'],
+  ['quienes', 'Quiénes somos', 'users'],
+  ['vive', 'Así se vive', 'sparkles'],
+  ['domingos', 'Domingos', 'calendar'],
+  ['consolata', 'La Consolata', 'globe'],
+  ['formacion', 'Formación', 'cap'],
+  ['fe', 'Vida de fe', 'book'],
+  ['novedades', 'Noticias', 'news'],
+  ['galeria', 'Galería', 'image'],
+  ['unete', 'Únete a JUMA', 'userplus']
+];
+/* Qué entrada del menú se ilumina según la parte de la página que se está viendo */
+const NAV_DE_SECCION = { inicio: 'inicio', quienes: 'quienes', vive: 'vive', domingos: 'domingos', pilares: 'domingos', consolata: 'consolata', mapa: 'consolata', identidad: 'consolata', formacion: 'formacion', fe: 'fe', areas: 'fe', novedades: 'novedades', testimonios: 'novedades', galeria: 'galeria', 'muro-sec': 'galeria', logo: 'unete', unete: 'unete', comunidad: 'comunidad' };
+let navActual = 'inicio';
+function seccionDeElemento(id) {
+  if (NAV_DE_SECCION[id]) return NAV_DE_SECCION[id];
+  const el = document.getElementById(id);
+  const sec = el && el.closest('#feed section[id]');
+  return sec ? (NAV_DE_SECCION[sec.id] || 'inicio') : 'inicio';
+}
+function marcarNav(id) {
+  navActual = seccionDeElemento(id);
+  $$('[data-nav]').forEach((a) => {
+    if (a.dataset.nav === navActual) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
+  $$('#tabbar [data-tb]').forEach((t) => {
+    const on = (t.dataset.tb === 'noticias' && navActual === 'novedades') || (t.dataset.tb === 'inicio' && navActual !== 'novedades' && navActual !== 'comunidad');
+    if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+  });
+}
+function navItem(k, t, i, extra = '') {
+  return `<a class="nav-it" href="#${k}" data-nav="${k}" data-view-target="${k}"${k === 'novedades' ? ' id="nav-nov"' : ''}${k === 'comunidad' ? ' id="nav-comunidad"' : ''}>${ic(i)}<span>${esc(t)}</span>${extra}</a>`;
+}
+function datosCabecera() {
+  const d = (myProfile && myProfile.datos) || {};
+  const fullName = String(
+    (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) ||
+    (currentUser && currentUser.displayName) ||
+    (currentUser && currentUser.email ? currentUser.email.split('@')[0] : '') ||
+    'Mi perfil'
+  ).trim();
+  const nombreCorto = (d.nombres ? d.nombres.trim().split(' ')[0] : (fullName ? fullName.split(' ')[0] : 'Mi perfil')) || 'Mi perfil';
+  const foto = (myProfile && (myProfile.foto || d.foto)) || (currentUser && currentUser.photoURL) || '';
+  return { fullName, nombreCorto, foto };
+}
+/* Foto redonda con la inicial debajo: si la foto no carga, queda la inicial */
+const avatarHtml = (foto, letra, cls = '') => `<span class="avatar ${cls}"><span aria-hidden="true">${esc(letra)}</span>${foto ? `<img src="${esc(foto)}" alt="" onerror="this.remove()">` : ''}</span>`;
+function renderShell() {
+  const side = $('#sidebar'); const tabs = $('#tabbar');
+  const isAuth = !!currentUser;
+  const coord = coordUI();
+  const editor = typeof isEditor === 'function' && isEditor();
+  const hayNoticias = getPostsList(cfg).length > 0;
+  const conocenos = NAV_CONOCENOS.filter(([k]) => !(isAuth && k === 'novedades'));
+  if (side) {
+    const { fullName, nombreCorto, foto } = datosCabecera();
+    const rolTxt = isAuth ? (privRole === 'admin' ? 'Cuenta maestra' : roleLabel(myRole())) : '';
+    side.innerHTML = `
+      <div class="side-top"><img src="img/logo.png" alt=""><b>JUMA Duaca</b><button type="button" class="icon-btn side-x" data-close-menu aria-label="Cerrar menú">${ic('x')}</button></div>
+      <nav class="nav-group" aria-label="Conócenos"><h2>Conócenos</h2>${conocenos.map(([k, t, i]) => navItem(k, t, i)).join('')}</nav>
+      ${isAuth ? `<nav class="nav-group" aria-label="Comunidad"><h2>Comunidad</h2>
+        ${navItem('novedades', 'Noticias', 'news')}
+        <button type="button" class="nav-it" data-open-chat>${ic('msg')}<span>Mensajes</span><span class="num hide" id="side-chat-badge"></span></button>
+        <button type="button" class="nav-it" data-open-notifs>${ic('bell')}<span>Notificaciones</span><span class="num hide" id="side-notif-badge"></span></button>
+        ${navItem('comunidad', 'Amigos', 'users')}
+        <button type="button" class="nav-it" data-open-encuentros>${ic('calcheck')}<span>Eventos</span></button>
+        <button type="button" class="nav-it" data-open-auth>${ic('user')}<span>Mi perfil</span></button>
+      </nav>` : ''}
+      ${coord || editor ? `<nav class="nav-group" aria-label="Coordinación"><h2>Coordinación</h2>
+        ${coord ? `<button type="button" class="nav-it" data-coord-panel="ins">${ic('users')}<span>Inscritos</span></button>
+        <button type="button" class="nav-it" data-coord-panel="qr">${ic('camera')}<span>Asistencia con QR</span></button>
+        <button type="button" class="nav-it" data-coord-panel="cum">${ic('cake')}<span>Cumpleaños y flyers</span></button>` : ''}
+        <button type="button" class="nav-it" data-coord-panel="">${ic('edit')}<span>Editar la página</span></button>
+      </nav>` : ''}
+      ${isAuth
+        ? `<div class="side-card"><div class="me">${avatarHtml(foto, nombreCorto.charAt(0).toUpperCase())}<div><b>${esc(fullName)}</b><span>${esc(rolTxt)}</span></div></div></div>`
+        : `<div class="side-card"><b>¿Eres de JUMA?</b>Inicia sesión para ver mensajes, amigos, eventos y tu carnet.<button type="button" class="btn btn-primary" data-open-auth>${ic('login')}Iniciar sesión</button></div>`}`;
+    const nn = $('#nav-nov'); if (nn) nn.classList.toggle('hide', !hayNoticias);
+  }
+  if (tabs) {
+    const tb = (k, t, i, extra = '') => { const dest = k === 'noticias' ? 'novedades' : 'inicio'; return `<a class="tb" href="#${dest}" data-tb="${k}" data-view-target="${dest}">${ic(i)}<span>${t}</span>${extra}</a>`; };
+    tabs.innerHTML = isAuth
+      ? tb('inicio', 'Inicio', 'home') +
+        `<button type="button" class="tb" data-open-guest-menu aria-haspopup="dialog">${ic('grid')}<span>Secciones</span></button>` +
+        tb('noticias', 'Noticias', 'news') +
+        `<button type="button" class="tb" data-open-chat aria-label="Mensajes">${ic('msg')}<span>Mensajes</span><span class="dot hide" id="tab-chat-badge"></span></button>` +
+        `<button type="button" class="tb" data-open-auth>${ic('user')}<span>Perfil</span></button>`
+      : tb('inicio', 'Inicio', 'home') +
+        `<button type="button" class="tb" data-open-guest-menu aria-haspopup="dialog">${ic('grid')}<span>Secciones</span></button>` +
+        `<button type="button" class="tb" data-open-form>${ic('userplus')}<span>Únete</span></button>`;
+  }
+  marcarNav(currentSection);
+}
+
+/* Cajón del menú en tableta (y en teléfono si alguien lo abre) */
+let focoAntesMenu = null;
+function abrirMenu() {
+  const side = $('#sidebar'); if (!side) return;
+  focoAntesMenu = document.activeElement;
+  side.classList.add('open'); $('#scrim').classList.add('on');
+  const b = $('#menu-btn'); if (b) b.setAttribute('aria-expanded', 'true');
+  setTimeout(() => { const f = side.querySelector('[aria-current="page"], .nav-it'); if (f) f.focus(); }, 40);
+}
+function cerrarMenu(volverFoco = true) {
+  const side = $('#sidebar'); if (!side || !side.classList.contains('open')) return;
+  side.classList.remove('open'); $('#scrim').classList.remove('on');
+  const b = $('#menu-btn'); if (b) b.setAttribute('aria-expanded', 'false');
+  if (volverFoco && focoAntesMenu && document.contains(focoAntesMenu)) { try { focoAntesMenu.focus(); } catch (e) {} }
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarMenu(); });
+window.addEventListener('resize', () => { if (window.innerWidth >= 1024) cerrarMenu(false); }, { passive: true });
+
+/* Mientras se baja por el inicio, el menú marca la sección que se está viendo */
+(function espiaSecciones() {
+  if (!('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver((es) => {
+    if (currentSection === 'comunidad') return;
+    es.forEach((e) => { if (e.isIntersecting) marcarNav(e.target.id); });
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  $$('#feed section[id]').forEach((s) => io.observe(s));
+})();
 
 /* ---------- Marcas de lectura por usuario: lecturas/{uid} en Firestore + copia en este teléfono ----------
    Se comparan siempre con la hora del SERVIDOR de cada mensaje (creado), nunca con el reloj de otro teléfono. */
@@ -2519,12 +2902,13 @@ function getInternalNotifications() {
     const isF = p.sexo === 'Mujer';
     notifs.push({
       id: 'cumple-' + p.uid + '-' + hoy,
-      icon: '🎂',
+      icon: 'cake',
       iconBg: '#FEF3C7',
+      iconColor: '#92400E',
       title: isF ? '¡Cumpleaños de una hermana misionera!' : '¡Cumpleaños de un hermano misionero!',
       body: `Hoy <b>${esc(p.nombre)}</b> está de cumpleaños. ¡Felicítale en su día!`,
       time: 'Hoy',
-      action: { type: 'dm', uid: p.uid, label: '💬 Felicitar por Chat' }
+      action: { type: 'dm', uid: p.uid, icon: 'msg', label: 'Felicitar por chat' }
     });
   });
 
@@ -2533,12 +2917,13 @@ function getInternalNotifications() {
   notifs.push({
     id: 'encuentro-' + (prox ? prox.key : 'prox'),
     fijo: true,
-    icon: '📍',
+    icon: 'pin',
     iconBg: '#E0E7FF',
+    iconColor: '#2452C8',
     title: 'Próximo Encuentro de JUMA',
     body: `<b>${esc(prox ? prox.tema : 'Encuentro JUMA')}</b>${prox ? ' · ' + esc(prox.diaSem + ' ' + prox.dia + ' de ' + prox.mes) : ''} a las ${esc(hora())} en ${esc(lugar())}.`,
     time: prox && prox.isToday ? 'Hoy' : 'Próximamente',
-    action: { type: 'maps', url: mapsUrl(), label: '📍 Cómo llegar en Google Maps' }
+    action: { type: 'maps', url: mapsUrl(), icon: 'pin', label: 'Cómo llegar en Google Maps' }
   });
 
   // 3. Noticias del muro (las 3 más recientes)
@@ -2546,12 +2931,13 @@ function getInternalNotifications() {
     if (!post) return;
     notifs.push({
       id: idDePost(post),
-      icon: '📰',
+      icon: 'news',
       iconBg: '#E4F5EA',
+      iconColor: '#17824A',
       title: post.t ? esc(post.t) : 'Novedad de JUMA Duaca',
       body: post.x ? esc(String(post.x).slice(0, 100)) + (String(post.x).length > 100 ? '…' : '') : 'Publicación en el muro de JUMA.',
       time: post.fecha ? timeAgo(post.fecha) : 'Reciente',
-      action: { type: 'section', section: 'novedades', label: 'Ver noticia' }
+      action: { type: 'section', section: 'novedades', icon: 'news', label: 'Ver noticia' }
     });
   });
 
@@ -2561,12 +2947,13 @@ function getInternalNotifications() {
     notifs.push({
       id: 'chat-unread',
       fijo: true,
-      icon: '💬',
+      icon: 'msg',
       iconBg: '#FCE7F3',
+      iconColor: '#9D174D',
       title: 'Mensajes sin leer',
       body: `Tienes <b>${unreadChat} mensaje${unreadChat === 1 ? '' : 's'} nuevo${unreadChat === 1 ? '' : 's'}</b> en la app.`,
       time: 'Ahora',
-      action: { type: 'chat', label: 'Abrir Chat' }
+      action: { type: 'chat', icon: 'msg', label: 'Abrir chat' }
     });
   }
 
@@ -2575,12 +2962,13 @@ function getInternalNotifications() {
     notifs.push({
       id: 'carnet-ok',
       fijo: true,
-      icon: '🪪',
+      icon: 'idcard',
       iconBg: '#E8F1FF',
+      iconColor: '#0C2D74',
       title: 'Carnet Misionero Digital Activo',
       body: 'Tu Carnet Misionero oficial con Código QR está disponible para presentar o descargar.',
       time: 'Siempre activo',
-      action: { type: 'profile', label: 'Ver mi carnet' }
+      action: { type: 'profile', icon: 'idcard', label: 'Ver mi carnet' }
     });
   }
   return notifs;
@@ -2603,17 +2991,21 @@ function marcarNotificacionesVistas() {
 function setBadge(sel, n) {
   const el = $(sel);
   if (!el) return;
-  if (n > 0) { el.textContent = n > 99 ? '99+' : String(n); el.classList.remove('hide'); }
+  if (n > 0) {
+    const estaba = el.classList.contains('hide');
+    el.textContent = n > 99 ? '99+' : String(n); el.classList.remove('hide');
+    if (estaba && !reduced()) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+  }
   else { el.textContent = ''; el.classList.add('hide'); }
 }
 function refreshBadges() {
   const chat = getUnreadChatCount();
   const notif = getUnreadNotifCount();
-  setBadge('#top-chat-badge', chat);
-  setBadge('#dock-chat-badge', chat);
-  setBadge('#profile-chat-badge', chat);
-  setBadge('#top-notif-badge', notif);
-  setBadge('#dock-notif-badge', notif);
+  /* Barra superior, menú lateral, barra inferior del teléfono y botón de mensajes del perfil */
+  ['#top-chat-badge', '#side-chat-badge', '#tab-chat-badge', '#profile-chat-badge'].forEach((b) => setBadge(b, chat));
+  ['#top-notif-badge', '#side-notif-badge'].forEach((b) => setBadge(b, notif));
+  const bell = $('#btn-top-notif'); if (bell) bell.setAttribute('aria-label', notif ? `Notificaciones, ${notif} nueva${notif === 1 ? '' : 's'}` : 'Notificaciones');
+  const msg = $('#btn-top-chat'); if (msg) msg.setAttribute('aria-label', chat ? `Mensajes, ${chat} sin leer` : 'Mensajes');
   try {
     if (navigator.setAppBadge) {
       if (chat + notif > 0) navigator.setAppBadge(chat + notif).catch(() => {});
@@ -2628,40 +3020,42 @@ function openNotificationsModal() {
   if (!currentUser) { openAuthModal(); return; }
   const notifs = getInternalNotifications();
   const vistos = new Set(lecturas.notifVistos || []);
-  const html = `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="notif-t">
+  const html = `<div class="overlay overlay-pop" role="dialog" aria-modal="true" aria-labelledby="notif-t">
     <div class="sheet notif-sheet">
-      <div class="chat-top">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:20px" aria-hidden="true">🔔</span>
-          <div>
-            <b id="notif-t" style="font-size:16px;display:block">Notificaciones y Novedades</b>
-            <small style="font-size:12px">Novedades internas de JUMA Duaca</small>
+      <div class="chat-top notif-head">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0">
+          <span class="ico-badge" aria-hidden="true">${ic('bell')}</span>
+          <div style="min-width:0">
+            <b id="notif-t" style="font-size:17px;display:block">Notificaciones</b>
+            <small style="font-size:12.5px">Novedades internas de JUMA Duaca</small>
           </div>
         </div>
-        <button type="button" data-close aria-label="Cerrar notificaciones" style="width:40px;height:40px;min-height:40px;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;cursor:pointer">✕</button>
+        <button type="button" class="x-btn" data-close aria-label="Cerrar notificaciones">${ic('x')}</button>
       </div>
       <div class="notif-list">
-        ${!notifs.length ? `<div class="chat-empty">No hay notificaciones nuevas por ahora.</div>` : notifs.map((n) => `
-          <div class="notif-item">
-            <div class="notif-icon" style="background:${n.iconBg}" aria-hidden="true">${n.icon}</div>
+        ${!notifs.length ? `<div class="chat-empty">No hay notificaciones nuevas por ahora.</div>` : notifs.map((n) => {
+          const nueva = !n.fijo && !vistos.has(n.id);
+          return `
+          <div class="notif-item${nueva ? ' new' : ''}">
+            <div class="notif-icon" style="background:${n.iconBg};color:${n.iconColor || 'var(--royal)'}" aria-hidden="true">${ic(n.icon)}</div>
             <div style="flex:1 1 auto;min-width:0">
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">
-                <b style="font-size:14.5px;color:var(--navy)">${n.title}${!n.fijo && !vistos.has(n.id) ? ' <span style="display:inline-block;margin-left:4px;padding:1px 7px;border-radius:99px;background:#E11D48;color:#fff;font-size:10.5px;font-weight:900;vertical-align:middle">Nuevo</span>' : ''}</b>
-                <span style="font-size:11px;color:var(--muted);flex:0 0 auto">${n.time}</span>
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:2px">
+                <b style="font-size:15px;color:var(--navy)">${n.title}${nueva ? '<span class="notif-new">Nuevo</span>' : ''}</b>
+                <span style="font-size:12px;color:var(--muted);flex:0 0 auto">${n.time}</span>
               </div>
-              <p style="margin:0 0 8px;font-size:13.5px;color:var(--ink);line-height:1.4">${n.body}</p>
+              <p style="margin:0 0 8px;font-size:14px;color:var(--ink);line-height:1.45">${n.body}</p>
               ${n.action ? (
                 n.action.type === 'maps'
-                  ? `<a class="btn btn-soft btn-sm" href="${esc(n.action.url)}" target="_blank" rel="noopener" style="min-height:32px;padding:0 12px;font-size:12.5px;background:#E8F1FF;color:var(--royal);font-weight:700">${n.action.label}</a>`
-                  : `<button type="button" class="btn btn-soft btn-sm" data-notif-act="${esc(n.action.type)}" data-notif-val="${esc(n.action.uid || n.action.section || '')}" style="min-height:32px;padding:0 12px;font-size:12.5px;background:#E8F1FF;color:var(--royal);font-weight:700">${n.action.label}</button>`
+                  ? `<a class="btn btn-soft btn-sm" href="${esc(n.action.url)}" target="_blank" rel="noopener" style="min-height:36px;padding:0 12px;font-size:13px;background:#E8F1FF;color:var(--royal);font-weight:700">${ic(n.action.icon || 'pin')}${n.action.label}</a>`
+                  : `<button type="button" class="btn btn-soft btn-sm" data-notif-act="${esc(n.action.type)}" data-notif-val="${esc(n.action.uid || n.action.section || '')}" style="min-height:36px;padding:0 12px;font-size:13px;background:#E8F1FF;color:var(--royal);font-weight:700">${n.action.icon ? ic(n.action.icon) : ''}${n.action.label}</button>`
               ) : ''}
             </div>
-          </div>
-        `).join('')}
+          </div>`;
+        }).join('')}
       </div>
-      <div style="padding:12px 16px;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:12px;color:var(--muted)">Notificaciones internas de la app</span>
-        <button type="button" class="btn btn-blue btn-sm" data-close style="min-height:38px;padding:0 20px;font-weight:800">Cerrar</button>
+      <div style="padding:10px 16px;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <span style="font-size:12.5px;color:var(--muted)">Notificaciones internas de la app</span>
+        <button type="button" class="btn btn-primary btn-sm" data-close style="min-height:40px;padding:0 18px">Cerrar</button>
       </div>
     </div>
   </div>`;
@@ -2669,68 +3063,36 @@ function openNotificationsModal() {
   marcarNotificacionesVistas();
 }
 
+/* Hoja «Secciones» (barra inferior del teléfono): las mismas entradas del menú lateral */
 function openGuestMenuModal() {
-  const sections = [
-    { id: 'inicio', icon: '🏠', title: 'Inicio' },
-    { id: 'quienes', icon: '📖', title: 'Quiénes somos' },
-    { id: 'domingos', icon: '📅', title: 'Eventos y Domingos' },
-    { id: 'formacion', icon: '🎓', title: 'Formación Allamaniana' },
-    { id: 'fe', icon: '🙏', title: 'Oración y Fe' },
-    { id: 'consolata', icon: '✨', title: 'Consolata y Santos' },
-    { id: 'novedades', icon: '📰', title: 'Noticias y Muro' },
-    { id: 'galeria', icon: '📸', title: 'Galería de Fotos' }
-  ];
-  if (currentUser) sections.push({ id: 'comunidad', icon: '👥', title: 'Espacio Comunitario' });
-  const html = `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="gm-t">
-    <div class="sheet" style="max-width:440px">
-      ${sheetHead('JUMA Duaca · Menú Web', 'Secciones de la página', 'gm-t')}
-      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:8px">
-        ${sections.map((s) => `
-          <button type="button" class="btn btn-soft" data-guest-nav="${s.id}" style="justify-content:flex-start;min-height:48px;padding:0 16px;font-size:15px;font-weight:700;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--navy)">
-            <span style="font-size:20px;margin-right:12px" aria-hidden="true">${s.icon}</span>
-            <span>${esc(s.title)}</span>
-          </button>
-        `).join('')}
-        ${!currentUser ? `<div style="margin-top:8px;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
-          <button type="button" class="btn btn-blue" data-open-form style="width:100%">Quiero ser parte (Inscripción)</button>
-          <button type="button" class="btn btn-soft" data-open-auth style="width:100%">Iniciar sesión</button>
+  const isAuth = !!currentUser;
+  const item = (k, t, i) => `<button type="button" class="nav-it" data-guest-nav="${k}"${seccionDeElemento(currentSection) === k ? ' aria-current="page"' : ''}>${ic(i)}<span>${esc(t)}</span></button>`;
+  const html = `<div class="overlay overlay-sheet" role="dialog" aria-modal="true" aria-labelledby="gm-t">
+    <div class="sheet sheet-auto" style="max-width:440px">
+      <div class="chat-top notif-head">
+        <div><b id="gm-t" style="font-size:19px;display:block">Secciones</b><small style="font-size:12.5px">JUMA Duaca · todo en una página</small></div>
+        <button type="button" class="x-btn" data-close aria-label="Cerrar secciones">${ic('x')}</button>
+      </div>
+      <div style="padding:12px 14px 18px;display:flex;flex-direction:column;gap:4px">
+        ${NAV_CONOCENOS.filter(([k]) => !(isAuth && k === 'novedades')).map(([k, t, i]) => item(k, t, i)).join('')}
+        ${isAuth ? `<div class="nav-group" style="margin-top:10px"><h2>Comunidad</h2>
+          ${item('novedades', 'Noticias', 'news')}
+          ${item('comunidad', 'Amigos', 'users')}
+          <button type="button" class="nav-it" data-open-notifs>${ic('bell')}<span>Notificaciones</span></button>
+          <button type="button" class="nav-it" data-open-encuentros>${ic('calcheck')}<span>Eventos</span></button>
+        </div>` : `<div style="margin-top:10px;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
+          <button type="button" class="btn btn-primary" data-open-form style="width:100%">${ic('userplus')}Quiero ser parte (Inscripción)</button>
+          <button type="button" class="btn btn-ghost" data-open-auth style="width:100%">${ic('login')}Iniciar sesión</button>
+        </div>`}
+        ${coordUI() || isEditor() ? `<div class="nav-group" style="margin-top:10px"><h2>Coordinación</h2>
+          ${coordUI() ? `<button type="button" class="nav-it" data-coord-panel="qr">${ic('camera')}<span>Asistencia con QR</span></button>
+          <button type="button" class="nav-it" data-coord-panel="cum">${ic('cake')}<span>Cumpleaños y flyers</span></button>` : ''}
+          <button type="button" class="nav-it" data-coord-panel="">${ic('edit')}<span>Editar la página</span></button>
         </div>` : ''}
       </div>
     </div>
   </div>`;
   openModal(html, 'guest-menu');
-}
-
-function updateSocialDock() {
-  const dock = $('#social-dock');
-  if (!dock) return;
-  if (!currentUser) {
-    dock.innerHTML = `<button type="button" class="social-dock-guest" data-open-auth>
-      <span aria-hidden="true" style="font-size:16px">🔑</span>
-      <span>Miembros · Iniciar sesión</span>
-    </button>`;
-    return;
-  }
-  const d = (myProfile && myProfile.datos) || {};
-  const foto = (myProfile && (myProfile.foto || d.foto)) || currentUser.photoURL || '';
-  const initial = esc(((myProfile && myProfile.nombre) || currentUser.displayName || 'M').charAt(0).toUpperCase());
-  dock.innerHTML = `
-    <button type="button" class="dock-btn" data-dock-action="chat" title="Mensajes y Chat" aria-label="Abrir Mensajes">
-      <span aria-hidden="true">💬</span>
-      <span class="dock-badge hide" id="dock-chat-badge"></span>
-    </button>
-    <button type="button" class="dock-btn" data-dock-action="notif" title="Notificaciones" aria-label="Abrir Notificaciones">
-      <span aria-hidden="true">🔔</span>
-      <span class="dock-badge hide" id="dock-notif-badge"></span>
-    </button>
-    <button type="button" class="dock-btn" data-dock-action="comunidad" title="Comunidad JUMA" aria-label="Ir a Comunidad">
-      <span aria-hidden="true">👥</span>
-    </button>
-    <button type="button" class="dock-btn dock-btn-user" data-dock-action="profile" title="Mi Carnet y Perfil" aria-label="Mi Perfil">
-      ${foto ? `<img src="${esc(foto)}" alt="">` : `<span style="font-weight:900;font-size:15px;color:var(--navy)">${initial}</span>`}
-    </button>
-  `;
-  refreshBadges();
 }
 
 /* Busca a un miembro por uid en el directorio (o en las planillas si eres coordinador). */
@@ -2756,7 +3118,8 @@ function openChatWithMember(targetUid) {
 let comunidadFilter = 'todos';
 let comunidadSearch = '';
 
-function renderComunidadMembersList() {
+let amigosVisibles = 12;
+function renderComunidadMembersList(enfocar) {
   const container = $('#comunidad-members-list');
   if (!container) return;
   const members = getRegisteredMembersForDm(miUid(), miCorreo());
@@ -2773,16 +3136,19 @@ function renderComunidadMembersList() {
 
   if (!filtered.length) {
     container.innerHTML = `
-      <div style="text-align:center;padding:32px 14px;background:#F8FAFD;border-radius:14px;border:1px dashed var(--line)">
-        <span style="font-size:32px;display:block;margin-bottom:6px" aria-hidden="true">👥</span>
-        <b style="font-size:14.5px;color:var(--navy);display:block">${members.length ? 'No se encontraron amigos' : 'Aún no hay amigos en el directorio'}</b>
-        <p style="margin:4px 0 0;font-size:13px;color:var(--muted)">${members.length ? 'Intenta escribiendo otro nombre en la búsqueda.' : 'Cada miembro aparece aquí cuando inicia sesión en la app con su cuenta.'}</p>
+      <div style="text-align:center;padding:32px 14px;background:var(--paper);border-radius:14px;border:1px dashed var(--line-2)">
+        <span class="ico-big" aria-hidden="true">${ic(members.length ? 'search' : 'users')}</span>
+        <b style="font-size:15px;color:var(--navy);display:block">${members.length ? 'No se encontraron amigos' : 'Aún no hay amigos en el directorio'}</b>
+        <p style="margin:4px 0 0;font-size:13.5px;color:var(--muted)">${members.length ? 'Intenta escribiendo otro nombre en la búsqueda.' : 'Cada miembro aparece aquí cuando inicia sesión en la app con su cuenta.'}</p>
       </div>`;
     return;
   }
 
-  container.innerHTML = filtered.map((m) => `
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:#fff;border:1.5px solid var(--line);box-shadow:0 2px 6px rgba(0,0,0,.03)">
+  /* Se muestran 12 y «Ver más amigos» agrega 12 más */
+  const visibles = filtered.slice(0, amigosVisibles);
+  const quedan = filtered.length - visibles.length;
+  container.innerHTML = visibles.map((m, i) => `
+      <div class="person" data-amigo="${i}">
         <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">
           <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;background:var(--mist);display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:2px solid var(--royal)">
             ${m.foto ? `<img src="${esc(m.foto)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<b style="font-size:17px;color:var(--royal)">${esc(m.primerNombre.charAt(0).toUpperCase())}</b>`}
@@ -2792,10 +3158,11 @@ function renderComunidadMembersList() {
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex:0 0 auto">
-          <button type="button" class="btn btn-blue btn-sm" data-open-dm="${esc(m.uid)}" style="min-height:36px;padding:0 14px;font-size:13px;font-weight:700;border-radius:10px" title="Escribir mensaje">💬 Escribir</button>
+          <button type="button" class="btn btn-primary btn-sm" data-open-dm="${esc(m.uid)}" style="min-height:40px;padding:0 14px;font-size:13.5px" title="Escribir mensaje">${ic('msg')}Escribir</button>
         </div>
       </div>
-    `).join('');
+    `).join('') + (quedan > 0 ? `<div class="list-more" style="margin-top:6px"><button type="button" class="btn btn-ghost" data-more-amigos>${ic('down')}Ver más amigos <small style="font-weight:400;color:var(--muted)">(${quedan} más)</small></button></div>` : '');
+  if (enfocar) { const n = container.querySelector(`[data-amigo="${amigosVisibles - 12}"] [data-open-dm]`); if (n) n.focus(); }
 }
 
 function renderComunidadView() {
@@ -2804,12 +3171,12 @@ function renderComunidadView() {
   if (!currentUser) {
     el.innerHTML = `
       <div class="wrap" style="padding:60px 20px;text-align:center">
-        <span style="font-size:48px;display:block;margin-bottom:12px" aria-hidden="true">🔒</span>
+        <span class="ico-big" aria-hidden="true">${ic('lock')}</span>
         <h2 class="h-display h-lg">Espacio Exclusivo para Miembros de JUMA</h2>
         <p class="body" style="max-width:54ch;margin:12px auto 24px">Inicia sesión con tu cuenta o llena tu planilla de inscripción para acceder al directorio de hermanos, el chat comunitario, mensajes directos y avisos.</p>
         <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
-          <button type="button" class="btn btn-blue" data-open-auth>Iniciar sesión</button>
-          <button type="button" class="btn btn-white" data-open-form>Quiero ser parte</button>
+          <button type="button" class="btn btn-primary" data-open-auth>${ic('login')}Iniciar sesión</button>
+          <button type="button" class="btn btn-ghost" data-open-form>${ic('userplus')}Quiero ser parte</button>
         </div>
       </div>`;
     return;
@@ -2817,12 +3184,12 @@ function renderComunidadView() {
   if (!isMemberUI()) {
     el.innerHTML = `
       <div class="wrap" style="padding:60px 20px;text-align:center">
-        <span style="font-size:48px;display:block;margin-bottom:12px" aria-hidden="true">📝</span>
+        <span class="ico-big" aria-hidden="true">${ic('edit')}</span>
         <h2 class="h-display h-lg">Completa tu planilla para entrar</h2>
         <p class="body" style="max-width:56ch;margin:12px auto 24px">Ya iniciaste sesión como <b>${esc(currentUser.email || currentUser.displayName || 'usuario')}</b>, pero aún no hay una planilla de JUMA en tu cuenta. Llénala una sola vez para acceder al directorio, el chat y los mensajes.</p>
         <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
-          <button type="button" class="btn btn-blue" data-open-form>Llenar mi planilla</button>
-          <button type="button" class="btn btn-white" data-open-auth>Ver mi cuenta</button>
+          <button type="button" class="btn btn-primary" data-open-form>${ic('edit')}Llenar mi planilla</button>
+          <button type="button" class="btn btn-ghost" data-open-auth>${ic('user')}Ver mi cuenta</button>
         </div>
       </div>`;
     return;
@@ -2843,7 +3210,7 @@ function renderComunidadView() {
   el.innerHTML = `
     <div class="wrap" style="padding:32px clamp(16px,3vw,32px)">
       <!-- Banner estilo Facebook -->
-      <div style="padding:24px 28px;border-radius:20px;background:linear-gradient(135deg,var(--navy) 0%,var(--cloth) 100%);color:#fff;box-shadow:0 12px 30px rgba(6,21,54,.15);margin-bottom:28px">
+      <div style="padding:24px 28px;border-radius:var(--r-lg);background:linear-gradient(135deg,var(--cloth) 0%,var(--navy) 100%);color:#fff;box-shadow:var(--shadow-lg);margin-bottom:24px">
         <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px">
           <div style="display:flex;align-items:center;gap:16px;flex:1 1 260px">
             <div style="width:72px;height:72px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.15);border:3px solid var(--sky);display:flex;align-items:center;justify-content:center;flex:0 0 auto">
@@ -2856,9 +3223,9 @@ function renderComunidadView() {
             </div>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:10px">
-            ${isJumaMember ? `<button type="button" class="btn btn-white btn-sm" data-open-auth>🪪 Mi Carnet con QR</button>` : `<button type="button" class="btn btn-white btn-sm" data-open-auth>👤 Mi Perfil</button>`}
-            <button type="button" class="btn btn-blue btn-sm" data-open-chat>💬 Abrir Chat</button>
-            <button type="button" class="btn btn-soft btn-sm" data-open-notifs style="background:rgba(255,255,255,.2);color:#fff">🔔 Notificaciones</button>
+            ${isJumaMember ? `<button type="button" class="btn btn-white btn-sm" data-open-auth>${ic('idcard')}Mi carnet con QR</button>` : `<button type="button" class="btn btn-white btn-sm" data-open-auth>${ic('user')}Mi perfil</button>`}
+            <button type="button" class="btn btn-blue btn-sm" data-open-chat>${ic('msg')}Abrir chat</button>
+            <button type="button" class="btn btn-soft btn-sm" data-open-notifs style="background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.4)">${ic('bell')}Notificaciones</button>
           </div>
         </div>
       </div>
@@ -2866,42 +3233,43 @@ function renderComunidadView() {
       <!-- Cuadrícula estilo Red Social -->
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:24px;align-items:start">
         <!-- Columna 1: Directorio de Hermanos de JUMA -->
-        <div style="background:#fff;border-radius:18px;border:1.5px solid var(--line);padding:22px;box-shadow:0 4px 16px rgba(0,0,0,.04)">
+        <div class="com-card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px">
             <div>
-              <b style="font-size:18px;color:var(--navy);display:flex;align-items:center;gap:8px"><span aria-hidden="true">👥</span> Amigos en JUMA</b>
+              <b class="com-h">${ic('users')} Amigos en JUMA</b>
               <small id="comunidad-members-count" style="color:var(--muted);font-size:12.5px;display:block">${members.length} amigos registrados</small>
             </div>
-            <button type="button" class="btn btn-soft btn-sm" data-open-chat style="min-height:34px;padding:0 12px;font-size:12.5px">💬 Abrir Chat</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-open-chat style="min-height:40px;padding:0 12px;font-size:13.5px">${ic('msg')}Abrir chat</button>
           </div>
           <div style="margin-bottom:14px">
-            <input type="search" id="comunidad-search-in" value="${esc(comunidadSearch)}" placeholder="🔍 Buscar amigos por nombre…" class="chat-input" style="width:100%;min-height:42px;background:#F8FAFD">
+            <label class="sr" for="comunidad-search-in">Buscar amigos por nombre</label>
+            <input type="search" id="comunidad-search-in" value="${esc(comunidadSearch)}" placeholder="Buscar amigos por nombre…" class="chat-input" style="width:100%;min-height:44px;background:var(--paper)">
           </div>
-          <div id="comunidad-members-list" style="display:flex;flex-direction:column;gap:10px;max-height:500px;overflow-y:auto;padding-right:4px"></div>
+          <div id="comunidad-members-list" style="display:flex;flex-direction:column;gap:10px"></div>
         </div>
 
         <!-- Columna 2: Próximo Encuentro y Novedades -->
         <div style="display:flex;flex-direction:column;gap:20px">
-          <div style="background:#fff;border-radius:18px;border:1.5px solid var(--line);padding:22px;box-shadow:0 4px 16px rgba(0,0,0,.04)">
-            <span class="u-badge" style="background:#E0E7FF;color:var(--royal);margin-bottom:8px">📅 Próximo Encuentro</span>
+          <div class="com-card">
+            <span class="u-badge" style="background:#E0E7FF;color:var(--royal);margin-bottom:8px">${ic('calendar')} Próximo encuentro</span>
             <h3 class="h-display h-md" style="margin:4px 0 8px;font-size:22px">${esc((nextDom && nextDom.tema) || 'Encuentro Formativo')}</h3>
             <p style="margin:0 0 14px;font-size:14.5px;color:var(--muted)">
               ${nextDom ? esc(nextDom.diaSem + ' ' + nextDom.dia + ' de ' + nextDom.mes) : ''} · Hora: <b>${esc(hora())}</b><br>
               Lugar: <b>${esc(lugar())}</b>
             </p>
             <div style="display:flex;flex-wrap:wrap;gap:10px">
-              <a class="btn btn-blue btn-sm" href="${esc(mapsUrl())}" target="_blank" rel="noopener">📍 Cómo llegar en Google Maps</a>
-              <button type="button" class="btn btn-soft btn-sm" data-view-target="domingos">Ver calendario completo</button>
+              <a class="btn btn-primary btn-sm" href="${esc(mapsUrl())}" target="_blank" rel="noopener">${ic('pin')}Cómo llegar en Google Maps</a>
+              <button type="button" class="btn btn-ghost btn-sm" data-view-target="domingos">${ic('calendar')}Ver calendario completo</button>
             </div>
           </div>
-          <div style="background:#fff;border-radius:18px;border:1.5px solid var(--line);padding:22px;box-shadow:0 4px 16px rgba(0,0,0,.04)">
-            <b style="font-size:16px;color:var(--navy);display:flex;align-items:center;gap:8px;margin-bottom:12px"><span aria-hidden="true">📰</span> Última Noticia de JUMA</b>
+          <div class="com-card">
+            <b class="com-h" style="font-size:16px;margin-bottom:12px">${ic('news')} Última noticia de JUMA</b>
             ${lastPost ? `
               <div>
                 ${lastPost.foto ? `<img src="${esc(lastPost.foto)}" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;margin-bottom:10px">` : ''}
                 <b style="display:block;font-size:15px;color:var(--ink);margin-bottom:4px">${esc(lastPost.t || 'Novedad')}</b>
                 <p style="margin:0 0 10px;font-size:13.5px;color:var(--muted);line-height:1.4">${esc((lastPost.x || '').slice(0, 120))}${(lastPost.x || '').length > 120 ? '…' : ''}</p>
-                <button type="button" class="btn btn-soft btn-sm" data-view-target="novedades">Ver más noticias</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-view-target="novedades">${ic('news')}Ver más noticias</button>
               </div>
             ` : `<p style="font-size:14px;color:var(--muted);margin:0">No hay noticias publicadas aún.</p>`}
           </div>
@@ -2920,7 +3288,6 @@ function updateAuthUI() {
   const fab = $('#fab-edit');
   const btnTopNotif = $('#btn-top-notif');
   const btnTopChat = $('#btn-top-chat');
-  const navComunidad = $('#nav-comunidad');
 
   /* Solo una sesión real de Firebase cuenta como «con sesión». */
   const isAuth = !!currentUser;
@@ -2931,28 +3298,18 @@ function updateAuthUI() {
   if (isAuth) {
     document.body.classList.add('is-authenticated');
     document.body.classList.remove('is-guest');
-    const d = (myProfile && myProfile.datos) || {};
-    const fullName = String(
-      (myProfile && (myProfile.nombre || (d.nombres ? (d.nombres + ' ' + (d.apellidos || '')).trim() : ''))) ||
-      currentUser.displayName ||
-      (currentUser.email ? currentUser.email.split('@')[0] : '') ||
-      'Mi perfil'
-    ).trim();
-    const nombreCorto = (d.nombres ? d.nombres.trim().split(' ')[0] : (fullName ? fullName.split(' ')[0] : 'Mi perfil')) || 'Mi perfil';
-    const foto = (myProfile && (myProfile.foto || d.foto)) || currentUser.photoURL || '';
+    const { fullName, nombreCorto, foto } = datosCabecera();
     if (btnAuth) {
-      btnAuth.innerHTML = (foto
-        ? `<img src="${esc(foto)}" alt="" class="topbar-user-photo">`
-        : `<span class="topbar-user-initial">${esc(nombreCorto.charAt(0).toUpperCase())}</span>`
-      ) + `<span class="topbar-user-name">${esc(nombreCorto)}</span>`;
-      btnAuth.className = 'btn btn-user-pill';
+      /* En la barra superior queda la foto (o la inicial): lleva al perfil y al carnet */
+      btnAuth.innerHTML = avatarHtml(foto, nombreCorto.charAt(0).toUpperCase()) + `<span class="sr">${esc(nombreCorto)}</span>`;
+      btnAuth.className = 'av-btn';
       btnAuth.setAttribute('title', fullName);
-      btnAuth.setAttribute('aria-label', 'Ver perfil de ' + fullName);
+      btnAuth.setAttribute('aria-label', 'Mi perfil: ' + fullName);
     }
     if (btnJoin) {
       /* Con sesión pero sin planilla: se invita a completarla; con planilla, el botón desaparece */
       btnJoin.classList.toggle('hide', member);
-      btnJoin.textContent = 'Completar planilla';
+      btnJoin.innerHTML = ic('userplus') + '<span>Completar planilla</span>';
       btnJoin.setAttribute('data-open-form', '');
       btnJoin.removeAttribute('data-open-auth');
     }
@@ -2962,14 +3319,14 @@ function updateAuthUI() {
     document.body.classList.add('is-guest');
     document.body.classList.remove('is-authenticated');
     if (btnAuth) {
-      btnAuth.innerHTML = 'Iniciar sesión';
-      btnAuth.className = 'btn btn-outline btn-sm';
+      btnAuth.innerHTML = ic('login') + '<span>Entrar</span>';
+      btnAuth.className = 'btn btn-ghost btn-sm';
       btnAuth.removeAttribute('title');
       btnAuth.setAttribute('aria-label', 'Iniciar sesión');
     }
     if (btnJoin) {
       btnJoin.classList.remove('hide');
-      btnJoin.textContent = 'Quiero ser parte';
+      btnJoin.innerHTML = ic('userplus') + '<span>Quiero ser parte</span>';
       btnJoin.setAttribute('data-open-form', '');
       btnJoin.removeAttribute('data-open-auth');
     }
@@ -2978,9 +3335,8 @@ function updateAuthUI() {
   }
   if (btnTopNotif) btnTopNotif.classList.toggle('hide', !isAuth);
   if (btnTopChat) btnTopChat.classList.toggle('hide', !isAuth);
-  if (navComunidad) navComunidad.classList.toggle('hide', !isAuth);
 
-  updateSocialDock();
+  renderShell();
   refreshBadges();
   if (currentSection === 'comunidad') renderComunidadView();
 }
@@ -2988,6 +3344,7 @@ function updateAuthUI() {
 document.addEventListener('input', (e) => {
   if (e.target.id === 'comunidad-search-in') {
     comunidadSearch = e.target.value.toLowerCase().trim();
+    amigosVisibles = 12;
     renderComunidadMembersList();
     return;
   }
@@ -3164,6 +3521,17 @@ modalRoot.addEventListener('click', async (e) => {
 });
 
 modalRoot.addEventListener('click', async (e) => {
+  if (e.target.closest('[data-chat-older]')) {
+    const box = $('#chat-msgs-box');
+    const antes = box ? box.scrollHeight - box.scrollTop : 0;
+    const k = chatClaveVer();
+    chatVerMas[k] = (chatVerMas[k] || 40) + 40;
+    repaintChat();
+    const nb = $('#chat-msgs-box');
+    if (nb) nb.scrollTop = nb.scrollHeight - antes;
+    const b = $('[data-chat-older]'); if (b) b.focus({ preventScroll: true }); else { const i = $('#chat-msg-in'); if (i) i.focus({ preventScroll: true }); }
+    return;
+  }
   const notifAct = e.target.closest('[data-notif-act]');
   if (notifAct) {
     const act = notifAct.dataset.notifAct;
@@ -3222,28 +3590,42 @@ modalRoot.addEventListener('click', async (e) => {
   if (e.target.closest('[data-dl]')) downloadPlanillaHtml(form.d);
 });
 document.addEventListener('click', (e) => {
-  const fbTab = e.target.closest('[data-fb-tab]');
-  if (fbTab) {
+  /* En la tableta el menú es un cajón: al elegir algo, se cierra */
+  if (e.target.closest('#sidebar .nav-it, #sidebar .btn')) cerrarMenu(false);
+  if (e.target.closest('#menu-btn')) {
     e.preventDefault();
-    switchSection(fbTab.dataset.fbTab);
+    if ($('#sidebar').classList.contains('open')) cerrarMenu(); else abrirMenu();
     return;
   }
-  const fbAct = e.target.closest('[data-fb-action]');
-  if (fbAct) {
+  if (e.target.closest('#scrim, [data-close-menu]')) { e.preventDefault(); cerrarMenu(); return; }
+  if (e.target.closest('[data-skip]')) {
     e.preventDefault();
-    const act = fbAct.dataset.fbAction;
-    if (act === 'chat') {
-      if (modalKey === 'chat') { closeModal(); return; }
-      openChatModal();
-    } else if (act === 'notif') {
-      if (modalKey === 'notifs') { closeModal(); return; }
-      openNotificationsModal();
-    } else if (act === 'profile') {
-      if (modalKey === 'auth') { closeModal(); return; }
-      openAuthModal();
-    }
+    const m = $('#main'); if (m) { try { m.focus({ preventScroll: true }); } catch (x) { m.focus(); } }
     return;
   }
+  if (e.target.closest('[data-cargar-mas]')) { e.preventDefault(); cargarMas(); return; }
+  const coordBtn = e.target.closest('[data-coord-panel]');
+  if (coordBtn) {
+    e.preventDefault();
+    if (modalRoot.firstChild) closeModal();
+    const t = coordBtn.dataset.coordPanel;
+    if (t) tab = t;
+    if (isEditor() || coordUI()) { showFab(); openEditor(); } else askPass();
+    return;
+  }
+  if (e.target.closest('[data-open-encuentros]')) {
+    e.preventDefault();
+    if (!currentUser) { openAuthModal(); return; }
+    profileActiveTab = 'encuentros';
+    openAuthModal();
+    return;
+  }
+  const masNoticias = e.target.closest('[data-more-posts]');
+  if (masNoticias) { e.preventDefault(); postsVisibles += 3; aplicarPaginaNoticias(true); return; }
+  const masFotos = e.target.closest('[data-more-gal]');
+  if (masFotos) { e.preventDefault(); fotosVisibles += 9; paginarGaleria(true); return; }
+  const masAmigos = e.target.closest('[data-more-amigos]');
+  if (masAmigos) { e.preventDefault(); amigosVisibles += 12; renderComunidadMembersList(true); return; }
   const carnetBtn = e.target.closest('[data-view-member-carnet]');
   if (carnetBtn) {
     e.preventDefault();
@@ -3260,21 +3642,6 @@ document.addEventListener('click', (e) => {
       comunidadFilter = targetFilter;
     }
     renderComunidadMembersList();
-    return;
-  }
-  const dockBtn = e.target.closest('[data-dock-action]');
-  if (dockBtn) {
-    const act = dockBtn.dataset.dockAction;
-    if (act === 'chat') openChatModal();
-    else if (act === 'notif') openNotificationsModal();
-    else if (act === 'comunidad') switchSection('comunidad');
-    else if (act === 'profile') openAuthModal();
-    return;
-  }
-  if (e.target.closest('#btn-toggle-view-mode')) {
-    viewMode = viewMode === 'secciones' ? 'corrido' : 'secciones';
-    try { localStorage.setItem('juma-view-mode', viewMode); } catch (x) {}
-    switchSection(currentSection, false);
     return;
   }
   const viewTarget = e.target.closest('[data-view-target]');
@@ -3428,8 +3795,9 @@ function renderProfileTabContent(tab, rec, user, d, email, misAsistencias, proxE
   if (tab === 'carnet' && isParticipant) {
     return `
       <div style="text-align:left;animation:fadeInView .2s ease">
-        <div style="font-size:13px;color:#475569;margin-bottom:12px;background:#F8FAFC;padding:10px 14px;border-radius:12px;border:1.5px solid #E2E8F0">
-          🪪 <b>Tu Carnet Oficial JUMA</b> con QR de asistencia integrado y mockup realista con la franela misionera. Puedes rotarlo o descargarlo en alta definición.
+        ${qrCardHtml(rec || { uid: user && user.uid, correo: email, nombre: rec && rec.nombre, datos: d })}
+        <div style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;color:#475569;margin-bottom:12px;background:#F8FAFC;padding:10px 14px;border-radius:12px;border:1px solid var(--line)">
+          <span style="color:var(--royal);display:inline-flex;margin-top:1px" aria-hidden="true">${ic('idcard')}</span><span><b>Tu Carnet Oficial JUMA</b> con QR de asistencia integrado y mockup realista con la franela misionera. Puedes rotarlo o descargarlo en alta definición.</span>
         </div>
         ${carnetInteractiveSectionHtml(rec || { uid: user && user.uid, correo: email, nombre: rec && rec.nombre, foto: (rec && rec.foto) || (user && user.photoURL), datos: d }, 'profile')}
       </div>
@@ -3441,43 +3809,43 @@ function renderProfileTabContent(tab, rec, user, d, email, misAsistencias, proxE
       <div style="text-align:left;animation:fadeInView .2s ease">
         <div class="p-info-grid">
           <div class="p-info-card">
-            <small>📍 Parroquia / Capilla</small>
+            <small>${ic('church')}Parroquia / Capilla</small>
             <b>${esc(d.parroquia || 'San Juan Bautista de Duaca')}</b>
           </div>
           <div class="p-info-card">
-            <small>🎂 Nacimiento / Edad</small>
+            <small>${ic('cake')}Nacimiento / Edad</small>
             <b>${d.nac ? esc(d.nac.split('-').reverse().join('/')) : 'Registrado'}${edadDe(d) ? ' (' + edadDe(d) + ' años)' : ''}</b>
           </div>
           <div class="p-info-card">
-            <small>📱 Teléfono celular</small>
+            <small>${ic('phone')}Teléfono celular</small>
             <b>${esc(d.celular || 'No registrado')}</b>
           </div>
           <div class="p-info-card">
-            <small>✉️ Correo electrónico</small>
+            <small>${ic('mail')}Correo electrónico</small>
             <b>${esc(email || 'No registrado')}</b>
           </div>
           <div class="p-info-card">
-            <small>🩸 Grupo sanguíneo</small>
+            <small>${ic('drop')}Grupo sanguíneo</small>
             <b>${esc(d.sangre || 'No registrado')}</b>
           </div>
           <div class="p-info-card">
-            <small>📋 Asistencias dominicales</small>
+            <small>${ic('calcheck')}Asistencias dominicales</small>
             <b>${misAsistencias.length} en últimos 6 meses</b>
           </div>
           ${d.direccion ? `
           <div class="p-info-card" style="grid-column:1/-1">
-            <small>🏠 Dirección de habitación</small>
+            <small>${ic('home')}Dirección de habitación</small>
             <b>${esc(d.direccion)}</b>
           </div>` : ''}
           ${d.contacto ? `
           <div class="p-info-card" style="grid-column:1/-1">
-            <small>🆘 Contacto de emergencia</small>
+            <small>${ic('shield')}Contacto de emergencia</small>
             <b>${esc(d.contacto)}</b>
           </div>` : ''}
         </div>
         <div style="margin-top:16px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
-          <button type="button" class="btn btn-soft btn-sm" data-edit-my-form style="font-weight:700">✏️ Editar mis datos</button>
-          <button type="button" class="btn btn-soft btn-sm" data-dl-profile style="font-weight:700">📄 Descargar mi planilla (PDF/HTML)</button>
+          <button type="button" class="btn btn-soft btn-sm" data-edit-my-form style="font-weight:700">${ic('edit')}Editar mis datos</button>
+          <button type="button" class="btn btn-soft btn-sm" data-dl-profile style="font-weight:700">${ic('download')}Descargar mi planilla (PDF/HTML)</button>
         </div>
       </div>
     `;
@@ -3490,11 +3858,11 @@ function renderProfileTabContent(tab, rec, user, d, email, misAsistencias, proxE
           <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px">
             <div>
               <b style="font-size:14px;color:#061536;display:block">Guarda los domingos en tu teléfono</b>
-              <span style="font-size:12px;color:#64748B">${remOn ? '🔔 Recordatorios de avisos activos' : 'Sincroniza con Google Calendar o Apple'}</span>
+              <span style="font-size:12px;color:#64748B">${remOn ? 'Recordatorios de avisos activos' : 'Sincroniza con Google Calendar o Apple'}</span>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:8px">
-              <button type="button" class="btn ${remOn ? 'btn-blue' : 'btn-outline'} btn-sm" data-toggle-rem style="min-height:36px;padding:0 12px;font-size:12.5px">${remOn ? '🔔 Recordatorio activo' : '🔔 Activar recordatorio'}</button>
-              <button type="button" class="btn btn-soft btn-sm" data-dl-ics style="min-height:36px;padding:0 12px;font-size:12.5px">📲 Sincronizar (.ics)</button>
+              <button type="button" class="btn ${remOn ? 'btn-blue' : 'btn-outline'} btn-sm" data-toggle-rem style="min-height:36px;padding:0 12px;font-size:12.5px">${ic('bell')}${remOn ? 'Recordatorio activo' : 'Activar recordatorio'}</button>
+              <button type="button" class="btn btn-soft btn-sm" data-dl-ics style="min-height:36px;padding:0 12px;font-size:12.5px">${ic('calendar')}Sincronizar (.ics)</button>
             </div>
           </div>
         </div>
@@ -3506,7 +3874,7 @@ function renderProfileTabContent(tab, rec, user, d, email, misAsistencias, proxE
                   <b style="font-size:14px;color:#061536">${esc(ev.title)}</b>
                   <span style="display:block;font-size:12px;color:#64748B">${esc(ev.badge)} · ${esc(hora())} · ${esc(lugar())}</span>
                 </div>
-                <a class="btn btn-outline btn-sm" style="padding:6px 12px;font-size:12px;font-weight:700" target="_blank" rel="noopener" href="${esc(googleCalUrl(ev))}">📅 Google Cal</a>
+                <a class="btn btn-outline btn-sm" style="padding:6px 12px;font-size:12px;font-weight:700" target="_blank" rel="noopener" href="${esc(googleCalUrl(ev))}">${ic('calendar')}Google Cal</a>
               </div>
             `).join('')}
           </div>
@@ -3520,7 +3888,7 @@ function renderProfileTabContent(tab, rec, user, d, email, misAsistencias, proxE
       <div style="text-align:left;animation:fadeInView .2s ease">
         <div style="background:#F0F6FF;border:1.5px solid #C7DCFF;border-radius:16px;padding:16px">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-            <span style="font-size:26px">⭐</span>
+            <span class="ico-badge" aria-hidden="true">${ic('star')}</span>
             <div>
               <b style="font-size:15px;color:#061536;display:block">${trueMaster ? 'Panel Maestro de Coordinación' : 'Panel de Coordinación JUMA'}</b>
               <small style="color:#2563EB;font-size:12px;font-weight:700">Herramientas activas de gestión, escaneo y edición</small>
@@ -3528,9 +3896,9 @@ function renderProfileTabContent(tab, rec, user, d, email, misAsistencias, proxE
           </div>
           <p style="margin:0 0 14px;font-size:13px;color:#334155">Accede a las herramientas administrativas del grupo:</p>
           <div style="display:flex;flex-wrap:wrap;gap:8px">
-            <button type="button" class="btn btn-blue btn-sm" data-open-qr-scanner style="font-weight:800;padding:8px 16px">📷 Escanear QR de Asistencia</button>
-            <button type="button" class="btn btn-soft btn-sm" data-open-cumple-tab style="background:#ffffff;border:1.5px solid #C7DCFF;color:#1E40AF;font-weight:800;padding:8px 16px">🎂 Lista de Cumpleaños</button>
-            <button type="button" class="btn btn-outline btn-sm" data-open-master-panel style="font-weight:800;padding:8px 16px">⚙️ Abrir Panel Administrativo</button>
+            <button type="button" class="btn btn-blue btn-sm" data-open-qr-scanner style="font-weight:800;padding:8px 16px">${ic('camera')}Escanear QR de asistencia</button>
+            <button type="button" class="btn btn-soft btn-sm" data-open-cumple-tab style="background:#ffffff;border:1.5px solid #C7DCFF;color:#1E40AF;font-weight:800;padding:8px 16px">${ic('cake')}Lista de cumpleaños</button>
+            <button type="button" class="btn btn-outline btn-sm" data-open-master-panel style="font-weight:800;padding:8px 16px">${ic('settings')}Abrir panel administrativo</button>
           </div>
         </div>
       </div>
@@ -3567,7 +3935,7 @@ function authModalHtml() {
         <div class="p-cover">
           <div class="p-cover-mesh"></div>
           <div class="p-cover-badge">JUMA Duaca · Consolata</div>
-          <button type="button" class="p-close-btn" data-close aria-label="Cerrar perfil" title="Cerrar">✕</button>
+          <button type="button" class="p-close-btn" data-close aria-label="Cerrar perfil" title="Cerrar">${ic('x')}</button>
         </div>
 
         <!-- Cuerpo del perfil moderno -->
@@ -3575,7 +3943,7 @@ function authModalHtml() {
           <!-- Avatar Hero Centrado -->
           <div class="p-avatar-wrap">
             ${foto ? `<img src="${esc(foto)}" alt="Foto de perfil" class="p-avatar-img">` : `<div class="p-avatar-init">${esc(nombre.charAt(0).toUpperCase())}</div>`}
-            <button type="button" data-start-selfie="auth" class="p-avatar-cam-badge" title="Tomar foto con cámara" aria-label="Tomar selfie">📸</button>
+            <button type="button" data-start-selfie="auth" class="p-avatar-cam-badge" title="Tomar foto con cámara" aria-label="Tomar selfie">${ic('camera')}</button>
           </div>
 
           <!-- Nombre y Rol -->
@@ -3583,21 +3951,21 @@ function authModalHtml() {
           <div class="p-role-badge">${esc(badgeTxt)}</div>
           <small style="color:#64748B;font-size:12.5px;font-weight:600;margin-bottom:8px">${perfilEnNube ? 'Miembro activo de la comunidad parroquial' : 'Sesión iniciada · ' + esc(email)}</small>
           ${!perfilEnNube && !trueMaster ? `<div style="width:100%;margin:4px 0 12px;padding:12px 14px;border-radius:12px;background:#FFF8E1;border:1.5px solid #F5C518;color:#5C4300;font-size:13.5px;text-align:left">
-            <b style="display:block;margin-bottom:4px">📝 Aún no hay una planilla en esta cuenta</b>
+            <b style="display:flex;align-items:center;gap:6px;margin-bottom:4px">${ic('edit')}Aún no hay una planilla en esta cuenta</b>
             Llénala una sola vez para activar tu carnet, el chat y el directorio de JUMA.
             <div style="margin-top:8px"><button type="button" class="btn btn-blue btn-sm" data-go-register style="min-height:34px;padding:0 14px;font-size:13px">Llenar mi planilla</button></div>
           </div>` : ''}
           ${currentUser && !currentUser.emailVerified ? `<div style="width:100%;margin:4px 0 12px;padding:12px 14px;border-radius:12px;background:#E8F1FF;border:1.5px solid #C7DCFF;color:#0C2D74;font-size:13.5px;text-align:left">
-            <b style="display:block;margin-bottom:4px">✉️ Verifica tu correo</b>
+            <b style="display:flex;align-items:center;gap:6px;margin-bottom:4px">${ic('mail')}Verifica tu correo</b>
             Abre el enlace que te enviamos a <b>${esc(email)}</b>. Los permisos de coordinación y la recuperación de planillas antiguas necesitan un correo verificado.
             <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="btn btn-soft btn-sm" data-verify-email style="min-height:34px;padding:0 12px;font-size:12.5px">Reenviar enlace</button><button type="button" class="btn btn-soft btn-sm" data-reload-user style="min-height:34px;padding:0 12px;font-size:12.5px">Ya lo verifiqué</button></div>
           </div>` : ''}
 
           <!-- Botones directos de foto -->
           <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;justify-content:center">
-            <button type="button" data-start-selfie="auth" class="btn btn-soft btn-sm" style="min-height:30px;padding:0 12px;font-size:12px;font-weight:700">📸 Tomar selfie</button>
-            <label class="btn btn-soft btn-sm" style="min-height:30px;padding:0 12px;font-size:12px;font-weight:700;cursor:pointer;margin:0">
-              <span>🖼️ Elegir foto</span>
+            <button type="button" data-start-selfie="auth" class="btn btn-soft btn-sm" style="min-height:38px;padding:0 12px;font-size:13px;font-weight:700">${ic('camera')}Tomar selfie</button>
+            <label class="btn btn-soft btn-sm" style="min-height:38px;padding:0 12px;font-size:13px;font-weight:700;cursor:pointer;margin:0">
+              ${ic('image')}<span>Elegir foto</span>
               <input type="file" accept="image/*" id="au-avatar" style="display:none">
             </label>
             <input type="file" accept="image/*" capture="user" id="au-cam-in" style="display:none">
@@ -3607,17 +3975,17 @@ function authModalHtml() {
 
           <!-- Botones de Acción Estilo App Moderna -->
           <div class="p-actions">
-            <button type="button" class="p-act-btn" data-open-chat style="position:relative">💬 Mensajes <span class="chat-badge hide" id="profile-chat-badge"></span></button>
-            <button type="button" class="p-act-btn" data-edit-my-form>✏️ Editar datos</button>
-            <button type="button" class="p-act-btn p-act-danger" data-logout>🚪 Cerrar sesión</button>
+            <button type="button" class="p-act-btn" data-open-chat style="position:relative">${ic('msg')}Mensajes <span class="chat-badge hide" id="profile-chat-badge"></span></button>
+            <button type="button" class="p-act-btn" data-edit-my-form>${ic('edit')}Editar datos</button>
+            <button type="button" class="p-act-btn p-act-danger" data-logout>${ic('logout')}Cerrar sesión</button>
           </div>
 
           <!-- Barra de pestañas segmentadas -->
           <div class="p-tabs" role="tablist">
-            ${isParticipant ? `<button type="button" role="tab" class="p-tab ${activeTab === 'carnet' ? 'active' : ''}" data-profile-tab="carnet">🪪 Mi Carnet</button>` : ''}
-            <button type="button" role="tab" class="p-tab ${activeTab === 'datos' ? 'active' : ''}" data-profile-tab="datos">👤 Mis Datos</button>
-            <button type="button" role="tab" class="p-tab ${activeTab === 'encuentros' ? 'active' : ''}" data-profile-tab="encuentros">📅 Encuentros</button>
-            ${masterOn ? `<button type="button" role="tab" class="p-tab ${activeTab === 'coord' ? 'active' : ''}" data-profile-tab="coord">⭐ Coordinación</button>` : ''}
+            ${isParticipant ? `<button type="button" role="tab" class="p-tab ${activeTab === 'carnet' ? 'active' : ''}" data-profile-tab="carnet" aria-selected="${activeTab === 'carnet'}">${ic('idcard')}Mi carnet</button>` : ''}
+            <button type="button" role="tab" class="p-tab ${activeTab === 'datos' ? 'active' : ''}" data-profile-tab="datos" aria-selected="${activeTab === 'datos'}">${ic('user')}Mis datos</button>
+            <button type="button" role="tab" class="p-tab ${activeTab === 'encuentros' ? 'active' : ''}" data-profile-tab="encuentros" aria-selected="${activeTab === 'encuentros'}">${ic('calendar')}Encuentros</button>
+            ${masterOn ? `<button type="button" role="tab" class="p-tab ${activeTab === 'coord' ? 'active' : ''}" data-profile-tab="coord" aria-selected="${activeTab === 'coord'}">${ic('star')}Coordinación</button>` : ''}
           </div>
 
           <!-- Contenido de la pestaña activa -->
@@ -3627,7 +3995,7 @@ function authModalHtml() {
 
           <!-- Botón inferior para cerrar perfil -->
           <div style="margin-top:20px;padding-top:14px;border-top:1.5px solid #E2E8F0;width:100%;display:flex;justify-content:center">
-            <button type="button" class="btn btn-soft" data-close style="min-height:40px;padding:0 26px;border-radius:99px;font-weight:800;font-size:13.5px">✕ Cerrar perfil</button>
+            <button type="button" class="btn btn-soft" data-close style="min-height:44px;padding:0 26px;border-radius:99px;font-weight:800;font-size:14px">${ic('x')}Cerrar perfil</button>
           </div>
         </div>
       </div>
@@ -3652,7 +4020,7 @@ function authModalHtml() {
       </div>
     </form>
     <div style="margin-top:18px;padding:14px 16px;border-radius:14px;background:#F0F6FF;border:1.5px solid #C7DCFF">
-      <b style="display:block;font-size:14px;color:var(--navy);margin-bottom:4px">ℹ️ ¿Ya llenaste tu planilla antes?</b>
+      <b style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--navy);margin-bottom:4px">${ic('info')}¿Ya llenaste tu planilla antes?</b>
       <p style="margin:0;font-size:12.5px;color:var(--muted);line-height:1.5">Entra con <b>Google</b> o con tu <b>correo y contraseña</b> usando el mismo correo de tu planilla: la app la encuentra y la pasa a tu cuenta. Si no recuerdas la contraseña, pulsa «Olvidé mi contraseña».</p>
     </div>
     <div style="margin-top:26px;padding-top:20px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
@@ -3725,7 +4093,7 @@ function renderDmMembersList(myUid, myEmail) {
 
   if (!filtered.length) {
     return `<div class="chat-empty" style="padding:24px 14px">
-      <span style="font-size:36px;display:block;margin-bottom:6px" aria-hidden="true">🔍</span>
+      <span class="ico-big" aria-hidden="true">${ic('search')}</span>
       <b style="font-size:15px;color:var(--ink)">${members.length ? 'No se encontraron misioneros' : 'Aún no hay misioneros en el directorio'}</b>
       <p style="margin:4px 0 0;font-size:13px;color:var(--muted)">${members.length ? 'Intenta con otro nombre o parroquia.' : 'Cada miembro aparece cuando inicia sesión en la app con su cuenta.'}</p>
     </div>`;
@@ -3755,8 +4123,8 @@ function renderDmMembersList(myUid, myEmail) {
           </div>
         </div>
       </div>
-      <button type="button" class="btn btn-blue btn-sm" data-select-dm="${esc(m.uid)}" style="min-height:36px;padding:0 14px;font-size:13px;flex:0 0 auto">
-        💬 Escribir
+      <button type="button" class="btn btn-blue btn-sm" data-select-dm="${esc(m.uid)}" style="min-height:40px;padding:0 14px;font-size:13.5px;flex:0 0 auto">
+        ${ic('msg')}Escribir
       </button>
     </div>`;
   }).join('');
@@ -3823,6 +4191,8 @@ function repaintChat() {
   if (wasNearBottom) scrollChatBottom();
 }
 
+const chatVerMas = {};
+function chatClaveVer() { return chatChannel === 'dm' ? 'dm:' + (chatDmTarget ? dmKeyCon(chatDmTarget.uid || chatDmTarget.id) : '') : chatChannel; }
 function chatModalHtml() {
   const isCoord = coordUI();
   if (chatChannel === 'coord' && !isCoord) chatChannel = 'general';
@@ -3846,29 +4216,32 @@ function chatModalHtml() {
   const cumples = getCumpleanosList().filter((c) => c.diasFaltan <= 7);
   const postsList = getPostsList(cfg).slice(0, 3);
   const proxEncuentro = encuentrosProgramados()[0] || null;
+  /* Historial: se ven los últimos 40 mensajes; «Cargar mensajes anteriores» agrega 40 más */
+  const claveVer = chatClaveVer();
+  const totalMsgs = filteredMsgs.length;
+  const desde = Math.max(0, totalMsgs - (chatVerMas[claveVer] || 40));
+  filteredMsgs = filteredMsgs.slice(desde);
   const pill = (n) => (n > 0 ? `<span class="chat-badge" style="position:static;display:inline-block;padding:2px 7px;margin-left:4px">${n > 99 ? '99+' : n}</span>` : '');
 
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="chat-t"><div class="sheet chat-sheet">
     <div class="chat-top">
       <div style="display:flex;align-items:center;gap:12px;min-width:0">
-        <img src="img/logo.png" alt="" style="width:36px;height:36px;border-radius:50%;background:#fff;padding:2px;flex:0 0 auto;object-fit:contain">
+        <img src="img/logo.png" alt="" style="width:40px;height:36px;flex:0 0 auto;object-fit:contain">
         <div style="min-width:0">
-          <div style="font-size:12px;color:var(--sky);font-weight:700;text-transform:uppercase;letter-spacing:.04em">Red Social Misionera</div>
-          <h2 id="chat-t" style="margin:0;font-size:18px;font-family:var(--display);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Comunidad JUMA Duaca</h2>
+          <div class="kick" style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">Red social misionera</div>
+          <h2 id="chat-t" style="margin:0;font:800 21px/1.05 var(--display);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Comunidad JUMA Duaca</h2>
         </div>
       </div>
-      <button type="button" data-close aria-label="Cerrar chat" style="width:40px;height:40px;border-radius:10px;border:1.5px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
-      </button>
+      <button type="button" class="x-btn" data-close aria-label="Cerrar chat">${ic('x')}</button>
     </div>
 
     <!-- Pestañas: Chat vs Notificaciones -->
     <div class="chat-tabs">
       <button type="button" class="chat-tab ${chatActiveTab === 'chat' ? 'active' : ''}" data-chat-tab="chat">
-        <span style="font-size:16px" aria-hidden="true">💬</span><span>Chat y Mensajes</span>${pill(counts.total)}
+        ${ic('msg')}<span>Chat y mensajes</span>${pill(counts.total)}
       </button>
       <button type="button" class="chat-tab ${chatActiveTab === 'notif' ? 'active' : ''}" data-chat-tab="notif">
-        <span style="font-size:16px" aria-hidden="true">🔔</span><span>Avisos y Novedades</span>${pill(getUnreadNotifCount())}
+        ${ic('bell')}<span>Avisos y novedades</span>${pill(getUnreadNotifCount())}
       </button>
     </div>
 
@@ -3876,14 +4249,14 @@ function chatModalHtml() {
       <!-- Selector de Canales y Mensajes Directos -->
       <div class="chat-channels">
         <button type="button" class="chat-channel-btn ${chatChannel === 'general' ? 'active' : ''}" data-switch-channel="general">
-          <span>💬 Comunidad</span>${pill(counts.general)}
+          ${ic('users')}<span>Comunidad</span>${pill(counts.general)}
         </button>
         ${isCoord ? `
         <button type="button" class="chat-channel-btn ${chatChannel === 'coord' ? 'active' : ''}" data-switch-channel="coord" style="border-color:${chatChannel === 'coord' ? 'var(--royal)' : '#F5C518'};color:${chatChannel === 'coord' ? 'var(--royal)' : '#7A5200'}">
-          <span>⭐ Coordinación</span>${pill(counts.coord)}
+          ${ic('star')}<span>Coordinación</span>${pill(counts.coord)}
         </button>` : ''}
         <button type="button" class="chat-channel-btn ${chatChannel === 'dm' ? 'active' : ''}" data-switch-channel="dm">
-          <span>✉️ Mensajes Directos</span>${pill(counts.dm)}
+          ${ic('mail')}<span>Mensajes directos</span>${pill(counts.dm)}
         </button>
       </div>
 
@@ -3891,9 +4264,10 @@ function chatModalHtml() {
         <!-- Directorio de Misioneros para Mensajes Directos -->
         <div style="padding:10px 16px;background:#F6F9FE;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
           <div>
-            <b style="font-size:14px;color:var(--navy);display:block">✉️ Escribir a un misionero</b>
+            <b style="font-size:14.5px;color:var(--navy);display:flex;align-items:center;gap:6px">${ic('mail')}Escribir a un misionero</b>
             <small style="font-size:12px;color:var(--muted)">Selecciona a un participante, coordinador o asesor para chatear en privado:</small>
           </div>
+          <label class="sr" for="chat-dm-search-in">Buscar misionero</label>
           <input type="search" id="chat-dm-search-in" class="chat-input" placeholder="Buscar misionero por nombre, rol o parroquia…" value="${esc(chatDmSearch)}" style="width:100%;min-height:38px;padding:8px 12px;border-radius:10px;background:#fff;font-size:16px">
         </div>
         <div class="chat-msgs-wrap" id="chat-dm-list" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;background:#FAFBFD">
@@ -3902,8 +4276,8 @@ function chatModalHtml() {
       ` : `
         ${chatChannel === 'dm' && chatDmTarget ? `
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#F0F4F9;border-bottom:1.5px solid var(--line);gap:10px">
-            <button type="button" class="btn btn-soft btn-sm" data-clear-dm style="padding:5px 12px;font-size:12.5px;display:inline-flex;align-items:center;gap:4px">
-              ← Lista de misioneros
+            <button type="button" class="btn btn-ghost btn-sm" data-clear-dm style="min-height:40px;padding:0 12px;font-size:13px;display:inline-flex;align-items:center;gap:6px">
+              ${ic('back')}<span>Lista de misioneros</span>
             </button>
             <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1;justify-content:flex-end">
               <div style="width:34px;height:34px;border-radius:50%;overflow:hidden;background:var(--mist);display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:2px solid var(--royal)">
@@ -3919,9 +4293,10 @@ function chatModalHtml() {
 
         <!-- Contenedor de Mensajes (Comunidad, Coord o DM activo) -->
         <div class="chat-msgs-wrap" id="chat-msgs-box">
+          ${desde > 0 ? `<button type="button" class="older" data-chat-older>${ic('up')} Cargar mensajes anteriores (${desde})</button>` : ''}
           ${!filteredMsgs.length ? `
             <div class="chat-empty">
-              <span style="font-size:42px;display:block;margin-bottom:8px" aria-hidden="true">${chatChannel === 'dm' ? '✉️' : '💬'}</span>
+              <span class="ico-big" aria-hidden="true">${ic(chatChannel === 'dm' ? 'mail' : 'msg')}</span>
               <b style="font-size:16px;color:var(--navy);display:block">
                 ${chatChannel === 'dm' ? `Inicia la conversación con ${esc(chatDmTarget ? chatDmTarget.primerNombre : 'el misionero')}` : (chatChannel === 'coord' ? '¡Bienvenido al Chat de Coordinación!' : '¡Bienvenido al Chat de la Comunidad!')}
               </b>
@@ -3955,9 +4330,8 @@ function chatModalHtml() {
         <div class="chat-input-bar">
           <form id="chat-send-form" style="display:flex;align-items:center;gap:8px;width:100%;margin:0">
             <input type="text" id="chat-msg-in" class="chat-input" placeholder="${chatChannel === 'dm' ? `Escribe un mensaje privado a ${esc(chatDmTarget ? chatDmTarget.primerNombre : 'misionero')}…` : (chatChannel === 'coord' ? 'Escribe a los coordinadores…' : 'Escribe un mensaje a la comunidad…')}" maxlength="1000" autocomplete="off" required>
-            <button type="submit" class="chat-send-btn" title="Enviar mensaje" aria-label="Enviar mensaje">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-            </button>
+            <label class="sr" for="chat-msg-in">Escribe tu mensaje</label>
+            <button type="submit" class="chat-send-btn" title="Enviar mensaje" aria-label="Enviar mensaje">${ic('send')}</button>
           </form>
         </div>
       `}
@@ -3966,7 +4340,7 @@ function chatModalHtml() {
       <div style="flex:1 1 auto;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:14px;background:#FAFBFD">
         <div style="padding:14px 16px;border-radius:14px;background:#fff;border:1.5px solid #F5C518;box-shadow:0 2px 8px rgba(245,197,24,.1)">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-            <span style="font-size:20px" aria-hidden="true">🎂</span>
+            <span style="color:#92400E;display:inline-flex" aria-hidden="true">${ic('cake')}</span>
             <b style="font-size:15px;color:#7A5200">Cumpleaños de esta semana</b>
           </div>
           ${cumples.length ? `<div style="display:flex;flex-direction:column;gap:8px">${cumples.map((c) => `
@@ -3975,28 +4349,28 @@ function chatModalHtml() {
                 <b style="font-size:14px;color:var(--ink)">${esc(c.nombre)}</b>
                 <div style="font-size:12px;color:var(--muted)">${c.esHoy ? '🎉 ¡HOY ES SU CUMPLEAÑOS!' : (c.esManana ? 'Mañana ' : '') + c.dia + ' de ' + c.mesNombre}</div>
               </div>
-              ${c.waUrl ? `<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="${esc(c.waUrl)}" style="min-height:30px;padding:0 10px;font-size:12px">Felicitar 📲</a>` : (c.id && !c.isExtra && c.id !== myUid ? `<button type="button" class="btn btn-soft btn-sm" data-open-dm="${esc(c.id)}" style="min-height:30px;padding:0 10px;font-size:12px">Felicitar 💬</button>` : '')}
+              ${c.waUrl ? `<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="${esc(c.waUrl)}" style="min-height:34px;padding:0 10px;font-size:12.5px">${ic('share')}Felicitar</a>` : (c.id && !c.isExtra && c.id !== myUid ? `<button type="button" class="btn btn-soft btn-sm" data-open-dm="${esc(c.id)}" style="min-height:34px;padding:0 10px;font-size:12.5px">${ic('msg')}Felicitar</button>` : '')}
             </div>`).join('')}</div>` : `<p style="margin:0;font-size:13px;color:var(--muted)">No hay cumpleaños en los próximos 7 días.</p>`}
         </div>
 
         ${proxEncuentro ? `
         <div style="padding:14px 16px;border-radius:14px;background:#fff;border:1.5px solid var(--royal);box-shadow:0 2px 8px rgba(36,82,200,.08)">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:20px" aria-hidden="true">📅</span>
-            <b style="font-size:15px;color:var(--navy)">Próximo Encuentro</b>
+            <span style="color:var(--royal);display:inline-flex" aria-hidden="true">${ic('calendar')}</span>
+            <b style="font-size:15px;color:var(--navy)">Próximo encuentro</b>
           </div>
           <p style="margin:0 0 6px;font-size:14.5px;color:var(--ink)"><b>${esc(proxEncuentro.tema)}</b></p>
           <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">${esc(proxEncuentro.diaSem + ' ' + proxEncuentro.dia + ' de ' + proxEncuentro.mes)} · ${esc(hora())} · ${esc(lugar())}</div>
           <a class="btn btn-outline btn-sm" target="_blank" rel="noopener" href="${esc(mapsUrl())}" style="display:inline-flex;align-items:center;gap:6px;font-weight:800;color:var(--royal);border-color:var(--royal)">
-            <span>📍 Cómo llegar en Google Maps</span>
+            ${ic('pin')}<span>Cómo llegar en Google Maps</span>
           </a>
         </div>` : ''}
 
         ${postsList.length ? `
         <div style="padding:14px 16px;border-radius:14px;background:#fff;border:1.5px solid var(--line)">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-            <span style="font-size:20px" aria-hidden="true">📰</span>
-            <b style="font-size:15px;color:var(--navy)">Últimas Publicaciones de JUMA</b>
+            <span style="color:var(--royal);display:inline-flex" aria-hidden="true">${ic('news')}</span>
+            <b style="font-size:15px;color:var(--navy)">Últimas publicaciones de JUMA</b>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px">
             ${postsList.map((p) => `
@@ -4005,7 +4379,7 @@ function chatModalHtml() {
                   <b style="display:block;font-size:13.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.t || 'Publicación JUMA')}</b>
                   <span style="font-size:11.5px;color:var(--muted)">${p.fecha ? fmtF(p.fecha) : 'Reciente'}</span>
                 </div>
-                <button type="button" class="btn btn-soft btn-sm" data-close onclick="location.hash='#novedades'" style="min-height:30px;padding:0 10px;font-size:12px;flex:0 0 auto">Ver</button>
+                <button type="button" class="btn btn-soft btn-sm" data-view-target="novedades" style="min-height:36px;padding:0 12px;font-size:12.5px;flex:0 0 auto">Ver</button>
               </div>`).join('')}
           </div>
         </div>` : ''}
@@ -6319,7 +6693,7 @@ function touch() {
   previewTimer = setTimeout(() => { draftWarn = !writeDraft(dr); cfg = cleanContent(dr); renderAll(); }, 350);
 }
 function showFab() { $('#fab-edit').classList.remove('hide'); syncFab(); }
-/* Con el botón «Editar página» visible, el dock social sube para no taparlo */
+/* Marca en <body> si el botón «Editar página» está a la vista (para acomodar lo que flota) */
 function syncFab() { const f = $('#fab-edit'); document.body.classList.toggle('con-fab', !!(f && !f.classList.contains('hide'))); }
 async function openEditor() {
   if (ghToken()) { try { const f = await ghGet('contenido.json'); if (f && f.content) { const c = JSON.parse(dec64(f.content)); if (String(c.actualizado || '') >= String(pub.actualizado || '')) pub = c; } } catch (e) {} }
@@ -6826,7 +7200,7 @@ document.addEventListener('click', (e) => {
   const img = e.target.closest && e.target.closest('.gal img, .tri img'); if (!img || modalRoot.firstChild) return;
   e.preventDefault();
   const src = img.currentSrc || img.src;
-  openModal(`<div class="overlay lightbox" role="dialog" aria-modal="true" aria-label="${esc(img.alt || 'Foto')}" data-close style="display:flex;align-items:center;justify-content:center;padding:58px 14px 14px;cursor:zoom-out"><img src="${esc(src)}" alt="${esc(img.alt || '')}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:10px"><button type="button" data-close style="position:fixed;top:12px;right:12px;min-height:44px;padding:0 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,.5);background:transparent;color:#fff;font-weight:700;font-size:15px">Cerrar ✕</button></div>`);
+  openModal(`<div class="overlay lightbox" role="dialog" aria-modal="true" aria-label="${esc(img.alt || 'Foto')}" data-close style="display:flex;align-items:center;justify-content:center;padding:58px 14px 14px;cursor:zoom-out"><img src="${esc(src)}" alt="${esc(img.alt || '')}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:10px"><button type="button" data-close style="position:fixed;top:12px;right:12px;min-height:44px;padding:0 16px;border-radius:12px;border:1.5px solid rgba(255,255,255,.5);background:rgba(6,21,54,.4);color:#fff;font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:8px">Cerrar ${ic('x')}</button></div>`);
 });
 
 /* ===================== Joriel, el asistente de JUMA ===================== */
@@ -6841,13 +7215,13 @@ document.addEventListener('click', (e) => {
 .jchat-btn:active{transform:scale(.97)}
 .jchat-btn img{width:48px;height:48px;border-radius:50%;display:block;box-shadow:0 0 0 2px #8EC9FF}
 .jchat-btn .dot{position:absolute;left:44px;top:6px;width:12px;height:12px;border-radius:50%;background:#17824A;border:2px solid #fff}
-.jchat{position:fixed;left:16px;bottom:16px;z-index:60;width:min(380px,calc(100vw - 32px));height:min(600px,calc(100dvh - 32px));display:flex;flex-direction:column;background:var(--paper,#F6F9FE);border-radius:20px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(6,21,54,.6);transform-origin:bottom left;animation:jchatIn 220ms cubic-bezier(0.23,1,0.32,1) both}
+.jchat{position:fixed;left:16px;bottom:16px;z-index:70;width:min(380px,calc(100vw - 32px));height:min(600px,calc(100dvh - 32px));display:flex;flex-direction:column;background:var(--paper,#F6F9FE);border-radius:20px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(6,21,54,.6);transform-origin:bottom left;animation:jchatIn 220ms cubic-bezier(0.23,1,0.32,1) both}
 @keyframes jchatIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
 .jchat-head{display:flex;align-items:center;gap:12px;padding:12px 12px 12px 14px;background:var(--navy,#061536);color:#fff}
 .jchat-head img{width:46px;height:46px;border-radius:50%}
 .jchat-head b{display:block;font-size:16px}
 .jchat-head small{display:block;font-size:12.5px;color:#BFD3F2}
-.jchat-x{margin-left:auto;width:44px;height:44px;border-radius:10px;border:1.5px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-size:18px;cursor:pointer}
+.jchat-x{margin-left:auto;width:44px;height:44px;border-radius:10px;border:1.5px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-size:18px;cursor:pointer;display:inline-grid;place-items:center}
 .jchat-log{flex:1 1 auto;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
 .jmsg{display:flex;gap:8px;align-items:flex-end;max-width:92%}
 .jmsg > img{width:30px;height:30px;border-radius:50%;flex:0 0 auto}
@@ -6874,9 +7248,18 @@ document.addEventListener('click', (e) => {
 .jhello-b b{display:block;font-size:16px;padding-right:26px}
 .jhello-b p{margin:6px 0 10px;font-size:14.5px;line-height:1.45}
 .jhello-go{min-height:40px;padding:0 14px;border:0;border-radius:999px;background:var(--royal,#2452C8);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
-.jhello-x{position:absolute;top:6px;right:6px;width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:#5A6B8C;font-size:15px;cursor:pointer}
+.jhello-x{position:absolute;top:6px;right:6px;width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:#5A6B8C;font-size:15px;cursor:pointer;display:inline-grid;place-items:center}
+.jhello-x .ic{width:18px;height:18px}
 @media (prefers-reduced-motion:reduce){.jhello{animation:none}.jchat{animation:none}.jtyping i{animation:none;opacity:.6}}
-@media (max-width:520px){.jchat-btn span.t{display:none}.jchat-btn{padding:6px}}
+/* Diseño v2: en computadora, a la derecha del menú lateral; en el teléfono, encima de la barra inferior y el chat ocupa casi toda la pantalla */
+@media (min-width:1024px){.jchat-btn,.jhello,.jchat{left:calc(var(--side-w,264px) + 16px)}}
+@media (max-width:640px){
+.jchat-btn{bottom:calc(var(--tab-h,64px) + 12px + env(safe-area-inset-bottom));padding:5px;border-radius:50%}
+.jchat-btn span.t{display:none}
+.jhello{bottom:calc(var(--tab-h,64px) + 76px + env(safe-area-inset-bottom))}
+.jchat{left:0;right:0;bottom:0;width:100%;height:calc(100dvh - 40px);border-radius:20px 20px 0 0;transform-origin:bottom center}
+.jchat form{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+}
 `;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
@@ -6968,7 +7351,7 @@ document.addEventListener('click', (e) => {
   function open() {
     if (box) { box.style.display = ''; btn.style.display = 'none'; setTimeout(() => { try { box.querySelector('input').focus({ preventScroll: true }); } catch (e) {} }, 50); return; }
     box = document.createElement('section'); box.className = 'jchat'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Joriel, asistente de JUMA');
-    box.innerHTML = `<div class="jchat-head"><img src="${AV}" alt=""><div><b>Joriel</b><small>Asistente de JUMA · en línea</small></div><button type="button" class="jchat-x" aria-label="Cerrar">✕</button></div><div class="jchat-log" aria-live="polite"></div><div class="jchips">${CHIPS.map((c) => `<button type="button">${esc(c)}</button>`).join('')}</div><form><label for="jchat-in" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Escribe tu pregunta</label><input id="jchat-in" type="text" autocomplete="off" placeholder="Escribe tu pregunta…"><button type="submit">Enviar</button></form>`;
+    box.innerHTML = `<div class="jchat-head"><img src="${AV}" alt=""><div><b>Joriel</b><small>Asistente de JUMA · en línea</small></div><button type="button" class="jchat-x" aria-label="Cerrar">${ic('x')}</button></div><div class="jchat-log" aria-live="polite"></div><div class="jchips">${CHIPS.map((c) => `<button type="button">${esc(c)}</button>`).join('')}</div><form><label for="jchat-in" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Escribe tu pregunta</label><input id="jchat-in" type="text" autocomplete="off" placeholder="Escribe tu pregunta…"><button type="submit">Enviar</button></form>`;
     document.body.appendChild(box); btn.style.display = 'none';
     log = box.querySelector('.jchat-log');
     box.querySelector('.jchat-x').addEventListener('click', close);
@@ -6979,7 +7362,8 @@ document.addEventListener('click', (e) => {
       if (e.target.closest('[data-open-form]')) close();
       const f = e.target.closest('[data-feopen]'); if (f && window.JUMA_FE) { close(); window.JUMA_FE.abrir(f.dataset.feopen); }
       const mk = e.target.closest('[data-mapk]'); if (mk && window.JUMA_FE) { close(); window.JUMA_FE.paisMapa(mk.dataset.mapk); }
-      const g = e.target.closest('[data-goto]'); if (g) { close(); const s = document.querySelector(g.dataset.goto); if (s) s.scrollIntoView({ behavior: 'smooth' }); }
+      /* Los botones de Joriel abren el bloque del inicio que haga falta y bajan hasta la sección */
+      const g = e.target.closest('[data-goto]'); if (g) { close(); switchSection(String(g.dataset.goto || '').replace(/^#/, '')); }
     });
     if (first) {
       first = false;
@@ -7081,11 +7465,16 @@ document.addEventListener('click', (e) => {
     }
 
     hello = document.createElement('div'); hello.className = 'jhello'; hello.setAttribute('role', 'status');
-    hello.innerHTML = `<img src="${FULL}" alt="" class="jhello-img"><div class="jhello-b"><button type="button" class="jhello-x" aria-label="Cerrar saludo">✕</button><b>${bTitle}</b><p>${bText}</p>${bWaHtml}<button type="button" class="jhello-go" style="margin-top:4px">${bBtn}</button></div>`;
+    hello.innerHTML = `<img src="${FULL}" alt="" class="jhello-img"><div class="jhello-b"><button type="button" class="jhello-x" aria-label="Cerrar saludo">${ic('x')}</button><b>${bTitle}</b><p>${bText}</p>${bWaHtml}<button type="button" class="jhello-go" style="margin-top:4px">${bBtn}</button></div>`;
     document.body.appendChild(hello);
     hello.querySelector('.jhello-x').addEventListener('click', hideHello);
     hello.querySelector('.jhello-go').addEventListener('click', () => { hideHello(); open(); });
     hello.querySelector('.jhello-img').addEventListener('click', () => { hideHello(); open(); });
+    /* El saludo se va solo: a los 12 segundos o cuando la persona empieza a desplazarse (pasados 2,5 s) */
+    const t0 = Date.now();
+    const alDesplazar = () => { if (Date.now() - t0 > 2500) { hideHello(); window.removeEventListener('scroll', alDesplazar); } };
+    window.addEventListener('scroll', alDesplazar, { passive: true });
+    setTimeout(() => { hideHello(); window.removeEventListener('scroll', alDesplazar); }, 12000);
   }
   setTimeout(showHello, 1800);
 })();
@@ -7112,6 +7501,8 @@ async function loadContenido() {
 (function boot() {
   /* Arranca como invitado: la sesión (y con ella el perfil, el chat y los avisos) llega desde Firebase Auth */
   renderAll(); setupUnroll(); updateAuthUI(); lock(false);
+  actualizarMas();
+  /* Enlace directo (#domingos, #mapa, #fe, #testimonios, #comunidad…): se abren los bloques hasta esa parte y se baja */
   const initHash = location.hash ? location.hash.slice(1) : 'inicio';
   switchSection(initHash, false);
   window.addEventListener('hashchange', () => {

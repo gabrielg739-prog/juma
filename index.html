@@ -42,7 +42,7 @@ input,textarea,select{font-family:inherit}
 }
 
 /* ===== tokens: tela azul Consolata + cintas de los cinco continentes =====
-   Se definen también en :root para que las ventanas (#modal-root) y el dock (#social-dock),
+   Se definen también en :root para que las ventanas (#modal-root), Joriel y la celebración,
    que viven fuera de .jm, tengan los mismos colores y no quede texto blanco sobre blanco. */
 :root,.jm{
 --navy:#061536;--cloth:#0C2D74;--cloth-2:#103687;--royal:#2452C8;--royal-d:#1B419F;--sky:#8EC9FF;
@@ -55,9 +55,8 @@ input,textarea,select{font-family:inherit}
 caret-color:var(--royal);accent-color:var(--royal);
 }
 .jm,.jm *{box-sizing:border-box}
-#modal-root,#modal-root *,#social-dock,#social-dock *{box-sizing:border-box}
-#modal-root,#social-dock{font-family:var(--body);color:var(--ink)}
-#social-dock:empty{display:none}
+#modal-root,#modal-root *{box-sizing:border-box}
+#modal-root{font-family:var(--body);color:var(--ink)}
 .jm{overflow-x:clip}
 .jm ::selection{background:var(--sky);color:var(--navy)}
 .jm{scrollbar-color:#7F96C2 var(--mist)}
@@ -105,13 +104,6 @@ caret-color:var(--royal);accent-color:var(--royal);
 .brand-logo{flex:0 0 auto;width:70px;height:58px;object-fit:contain;display:block}
 .brand b{display:block;font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:.02em;text-transform:uppercase;line-height:1}
 .brand small{display:block;margin-top:3px;font-size:13px;color:var(--muted)}
-.navlinks{display:flex;align-items:center;gap:4px 26px}
-.navlink{position:relative;padding:12px 2px;font-size:15px;font-weight:700;color:var(--ink);text-decoration:none}
-.navlink:after{content:"";position:absolute;left:2px;right:2px;bottom:6px;height:2px;background:var(--royal);transform:scaleX(0);transform-origin:left;transition:transform 220ms var(--ease-out)}
-.rod-wrap{padding:0 clamp(10px,1.6vw,22px)}
-.topbar .rod{background:linear-gradient(180deg,#2452C8,#0C2D74)}
-.topbar .rod:before,.topbar .rod:after{background:radial-gradient(circle at 35% 35%,#8EC9FF,#0C2D74)}
-.topbar .btn-white{background:var(--royal);color:#fff;box-shadow:none}
 
 /* ===== portada ===== */
 .hero-wrap{position:relative;background:var(--paper);padding:0 clamp(0px,1.8vw,26px)}
@@ -406,10 +398,8 @@ details[open] > summary .pd-ic::after{transform:translate(-50%,-50%) rotate(0deg
 /* ===== interacción (solo con puntero fino) ===== */
 @media (hover:hover) and (pointer:fine){
 .btn-white:hover{background:#E8F1FF}
-.topbar .btn-white:hover{background:var(--royal-d)}
 .btn-blue:hover{background:var(--royal-d)}
 .btn-soft:hover{background:#D9E5F8}
-.navlink:hover:after{transform:scaleX(1)}
 .standard:hover .photo,.gal:hover img{transform:scale(1.04)}
 .dtag:hover{transform:rotate(-2deg)}
 .pennant[aria-pressed="false"]:hover{filter:brightness(1.08)}
@@ -434,7 +424,6 @@ details[open] > summary .pd-ic::after{transform:translate(-50%,-50%) rotate(0deg
 
 /* ===== responsive ===== */
 @media (max-width:980px){
-.navlinks{display:none}
 .posts{grid-template-columns:minmax(0,1fr)}
 .hero-in{grid-template-columns:minmax(0,1fr)}
 .hero-pics{display:none}
@@ -459,11 +448,6 @@ details[open] > summary .pd-ic::after{transform:translate(-50%,-50%) rotate(0deg
 .gallery .gal{margin-bottom:10px}
 }
 @media (max-width:640px){
-.brand-logo{width:56px;height:48px}
-.brand b{font-size:21px}
-.brand small{display:none}
-.topbar-in{padding-top:10px;padding-bottom:10px}
-.topbar .btn-sm{padding:0 14px;font-size:14px}
 .hero{padding:0 0 96px;min-height:0;justify-content:flex-start;--notch:40px}
 .hero .photo{position:relative;inset:auto;height:430px;object-position:50% 82%}
 .hero-veil{display:none}
@@ -486,7 +470,7 @@ details[open] > summary .pd-ic::after{transform:translate(-50%,-50%) rotate(0deg
 html,body{-webkit-tap-highlight-color:transparent}
 @media (display-mode:standalone),(display-mode:fullscreen){
 .topbar{padding-top:env(safe-area-inset-top,0px)}
-.topbar,.btn,.navlink,.pennant,.etab{user-select:none;-webkit-user-select:none}
+.topbar,.btn,.pennant,.etab,.sidebar,.tabbar{user-select:none;-webkit-user-select:none}
 }
 .topbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .btn-outline{background:#fff;color:var(--royal);border:2px solid var(--royal);box-shadow:none}
@@ -514,7 +498,6 @@ html,body{-webkit-tap-highlight-color:transparent}
 .pend p{flex:1 1 280px;margin:0;font-size:15px;line-height:1.5}
 .pushbtn{margin-top:18px}
 @media (max-width:980px){.muro{grid-template-columns:minmax(0,1fr)}}
-@media (max-width:640px){.topbar-actions{gap:6px}.topbar .btn-sm{padding:0 11px;font-size:13.5px;min-height:40px}}
 .j-carnet{position:relative;width:100%;max-width:300px;aspect-ratio:900/1420;margin:0 auto;border-radius:22px;background:linear-gradient(180deg,#FFFFFF 0%,#FFFFFF 38%,#DCEBFF 72%,#89B4F8 100%);box-shadow:0 18px 42px -12px rgba(6,21,54,.38),0 0 0 1.5px rgba(36,82,200,.18);overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;user-select:none;font-family:var(--body)}
 .j-carnet-wm{position:absolute;top:24%;left:50%;transform:translateX(-50%);width:76%;opacity:.075;pointer-events:none;filter:grayscale(20%)}
 .j-carnet-top{position:relative;z-index:2;padding:16px 14px 4px;display:flex;flex-direction:column;align-items:center}
@@ -549,13 +532,6 @@ html,body{-webkit-tap-highlight-color:transparent}
 .profile-acc-arrow{font-size:18px;color:var(--royal);transition:transform 220ms ease;display:inline-block;line-height:1}
 .profile-acc[open] .profile-acc-arrow{transform:rotate(180deg)}
 .profile-acc-content{padding:4px 18px 18px;border-top:1px solid var(--line);animation:fade 180ms ease both}
-/* ===== Estilos del Botón de Perfil (Avatar + Primer Nombre) y Chat/Notificaciones JUMA ===== */
-.btn-user-pill{display:inline-flex;align-items:center;gap:7px;padding:3px 13px 3px 4px;border-radius:999px;background:#fff;color:var(--navy);border:1.5px solid var(--royal);font-weight:800;font-size:13.5px;box-shadow:0 2px 6px rgba(12,45,116,.1);transition:transform .15s ease,box-shadow .15s ease;cursor:pointer}
-.btn-user-pill:hover{transform:translateY(-1px);background:#F3F7FF;box-shadow:0 4px 10px rgba(12,45,116,.16)}
-.topbar-user-photo{width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid var(--royal);display:inline-block;flex:0 0 auto}
-.topbar-user-initial{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--royal),var(--navy));color:#fff;font-size:13px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
-.topbar-user-name{font-weight:800;font-size:13.5px;color:var(--navy);letter-spacing:.01em}
-.chat-badge{position:absolute;top:-4px;right:-5px;background:#E11D48;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:99px;padding:0 4px;text-align:center;border:2px solid #fff;box-shadow:0 2px 5px rgba(225,29,72,.4)}
 
 .chat-sheet{max-width:680px;height:min(88vh,720px);display:flex;flex-direction:column;padding:0;overflow:hidden;border-radius:20px}
 .chat-top{padding:14px 18px;background:linear-gradient(135deg,var(--navy) 0%,var(--cloth) 100%);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;flex:0 0 auto}
@@ -586,82 +562,13 @@ html,body{-webkit-tap-highlight-color:transparent}
 .chat-empty{text-align:center;padding:36px 16px;color:var(--muted);font-size:14px}
 
 
-/* ===== Modo Secciones SPA y Transiciones ===== */
-body.modo-secciones .j-view { display: none; }
-body.modo-secciones .j-view.view-active { display: block; animation: fadeInView 240ms cubic-bezier(.16,1,.3,1) both; }
 @keyframes fadeInView { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-body.modo-corrido .j-view { display: block!important; }
-
-/* Barra de Navegación Única Superior Sticky con soporte táctil */
-.topbar {
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 100 !important;
-  background: rgba(255, 255, 255, 0.98) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  box-shadow: 0 4px 16px rgba(6, 21, 54, 0.07) !important;
-  border-bottom: 1px solid var(--line) !important;
-}
-.navlink.active {
-  color: var(--royal) !important;
-}
-.navlink.active:after {
-  transform: scaleX(1) !important;
-}
-
-@media (max-width: 980px) {
-  .topbar-in {
-    padding: 8px 14px 6px !important;
-    gap: 8px 12px !important;
-  }
-  .brand { min-height: 44px !important; }
-  .navlinks { display: none !important; }
-}
-
-@media (max-width: 640px) {
-  .topbar-actions { gap: 6px !important; }
-  .btn-user-pill { padding: 4px 10px 4px 4px !important; font-size: 13px !important; }
-  .topbar-user-photo, .topbar-user-initial { width: 28px !important; height: 28px !important; }
-  .topbar-user-name { max-width: 95px !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px !important; }
-}
-
-/* Pie de navegación de cada sección */
-.view-foot-nav { max-width: 960px; margin: 32px auto 16px; padding: 18px clamp(16px, 3vw, 24px); border-radius: 16px; background: var(--mist); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-
-/* Barra / Dock Flotante Social estilo Facebook */
-.social-dock { position: fixed; bottom: 22px; right: 22px; z-index: 50; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.95); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding: 6px 10px; border-radius: 999px; box-shadow: 0 10px 30px rgba(6,21,54,.18), 0 0 0 1.5px rgba(36,82,200,.16); animation: slideUpDock 300ms cubic-bezier(.16,1,.3,1) both; }
-@keyframes slideUpDock { from { opacity: 0; transform: translateY(24px) scale(.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.dock-btn { position: relative; width: 44px; height: 44px; border-radius: 50%; border: 0; background: #F0F4FA; color: var(--navy); display: inline-flex; align-items: center; justify-content: center; font-size: 19px; cursor: pointer; transition: transform .15s ease, background .15s ease, box-shadow .15s ease; }
-.dock-btn:hover { transform: scale(1.08); background: var(--royal); color: #fff; }
-.dock-btn:active { transform: scale(.95); }
-.dock-btn-user { padding: 0; overflow: hidden; border: 2px solid var(--royal); background: #fff; }
-.dock-btn-user img { width: 100%; height: 100%; object-fit: cover; }
-.dock-badge { position: absolute; top: -3px; right: -3px; background: #E11D48; color: #fff; font-size: 10px; font-weight: 900; min-width: 18px; height: 18px; line-height: 18px; border-radius: 99px; padding: 0 4px; text-align: center; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(225,29,72,.4); }
-.social-dock-guest { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px; background: linear-gradient(135deg, var(--royal), var(--navy)); color: #fff; font-size: 13.5px; font-weight: 800; border: 0; cursor: pointer; box-shadow: 0 6px 22px rgba(36,82,200,.38); transition: transform .15s, box-shadow .15s; }
-.social-dock-guest:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(36,82,200,.48); }
-body.con-fab .social-dock { bottom: 84px; }
 
 /* Centro de Notificaciones Internas */
 .notif-sheet { max-width: 540px; height: min(85vh, 650px); display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: 20px; }
 .notif-list { flex: 1 1 auto; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: #FAFBFD; }
 .notif-item { display: flex; gap: 12px; padding: 12px 14px; border-radius: 14px; background: #fff; border: 1.5px solid var(--line); transition: border-color .15s, box-shadow .15s; }
 .notif-icon { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 19px; flex: 0 0 auto; }
-
-@media (max-width: 640px) {
-  .topbar-in { padding: 10px 14px 8px; gap: 8px; }
-  .brand-logo { width: 48px; height: 40px; }
-  .brand b { font-size: 18px; }
-  .brand small { font-size: 11px; }
-  .topbar-actions { gap: 6px; }
-  .topbar #btn-join { display: none !important; }
-  .btn-user-pill { padding: 2px 10px 2px 3px; font-size: 12.5px; }
-  .topbar-user-photo, .topbar-user-initial { width: 26px; height: 26px; }
-  .topbar-user-name { max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .social-dock { display: none !important; }
-  .subnav-in { gap: 4px; padding: 6px 10px; }
-  .subnav-btn { padding: 6px 11px; font-size: 12.5px; }
-}
 
 @media (max-width: 768px) {
   .overlay {
@@ -696,84 +603,14 @@ body.con-fab .social-dock { bottom: 84px; }
     -webkit-overflow-scrolling: touch !important;
     overscroll-behavior: contain !important;
   }
-  .fb-tabbar {
-    grid-template-columns: repeat(4, 1fr) !important;
-  }
-  .fb-tab {
-    min-height: 48px !important;
-    padding: 6px 0 4px !important;
-  }
-  .fb-tab-icon {
-    font-size: 21px !important;
-  }
-  .fb-tab-label {
-    font-size: 11px !important;
-    font-weight: 800 !important;
-  }
 }
 
-/* ===== Barra de Navegación estilo Facebook ===== */
-.fb-tabbar {
-  display: flex;
-  align-items: stretch;
-  background: #ffffff;
-  border-top: 1px solid var(--line);
-  box-shadow: 0 3px 12px rgba(6, 21, 54, 0.05);
-  position: relative;
-  width: 100%;
-  max-width: 1320px;
-  margin: 0 auto;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-.fb-tabbar::-webkit-scrollbar { display: none; }
-.fb-tab {
-  flex: 1 1 0;
-  min-width: 48px;
-  min-height: 52px;
-  padding: 6px 2px 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  border: 0;
-  background: transparent;
-  color: #64748B;
-  cursor: pointer;
-  position: relative;
-  transition: all 160ms var(--ease-out);
-  border-bottom: 3px solid transparent;
-  text-decoration: none;
-}
-.fb-tab:hover {
-  background: rgba(36, 82, 200, 0.04);
-  color: var(--navy);
-}
-.fb-tab.active {
-  color: var(--royal);
-  border-bottom-color: var(--royal);
-}
-.fb-tab-icon {
-  font-size: 20px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-.fb-tab-label {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: .01em;
-  white-space: nowrap;
-}
-.fb-badge, .chat-badge {
+/* Globo rojo de los botones de chat (pastillas dentro de las ventanas y del perfil) */
+.chat-badge {
   position: absolute;
   top: -6px;
   right: -8px;
-  background: #EF4444;
+  background: #E11D2E;
   color: #fff;
   font-size: 10px;
   font-weight: 900;
@@ -784,63 +621,6 @@ body.con-fab .social-dock { bottom: 84px; }
   padding: 0 4px;
   text-align: center;
   border: 2px solid #fff;
-  box-shadow: 0 2px 6px rgba(239,68,68,.5);
-}
-.chat-badge:empty, .fb-badge:empty {
-  min-width: 10px;
-  width: 10px;
-  height: 10px;
-  padding: 0;
-  top: -3px;
-  right: -3px;
-}
-.fb-tab-user-img {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1.5px solid var(--royal);
-}
-.fb-tab-user-init {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--royal), var(--navy));
-  color: #fff;
-  font-size: 11px;
-  font-weight: 900;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.atajo-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: #ffffff;
-  border: 1.5px solid var(--line);
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--navy);
-  text-decoration: none;
-  transition: all 160ms var(--ease-out);
-  box-shadow: 0 2px 6px rgba(6, 21, 54, 0.04);
-}
-.atajo-pill:hover {
-  background: var(--royal);
-  color: #ffffff;
-  border-color: var(--royal);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(36, 82, 200, 0.2);
-}
-.atajo-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.8);
 }
 
 /* Modales y Hojas: Fondo blanco sólido y alto contraste permanente */
@@ -1132,97 +912,296 @@ body.con-fab .social-dock { bottom: 84px; }
   word-break: break-word;
 }
 
-/* Barra de navegación estilo Facebook */
-body.is-guest .fb-tabbar { display: none !important; }
-body.is-guest .solo-miembros { display: none !important; }
-body.is-authenticated .fb-tabbar { display: flex !important; }
+/* =====================================================================
+   Diseño v2 (prototipo aprobado): barra superior, menú lateral, barra
+   inferior del teléfono, «Cargar más», ventanas y QR a pantalla completa.
+   Va al final para ganar a las reglas antiguas sin tocar las secciones.
+   ===================================================================== */
+:root,.jm{
+--paper:#F5F8FD;--mist:#E8EEF9;--card:#fff;--line:#D9E2F1;--line-2:#C6D3EA;--soft:#5E7194;--red:#E11D2E;--ok:#17824A;
+--r:16px;--r-lg:22px;
+--shadow:0 1px 2px rgba(6,21,54,.06),0 8px 24px -12px rgba(6,21,54,.22);
+--shadow-lg:0 24px 60px -20px rgba(6,21,54,.45);
+--ease:cubic-bezier(.23,1,.32,1);
+--top-h:64px;--side-w:264px;--tab-h:64px;
+}
+body{background:var(--paper);overflow-x:clip}
+.ic{width:20px;height:20px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{z-index:200}
+.jm :focus-visible,#modal-root :focus-visible{outline:2.5px solid var(--royal);outline-offset:2px}
 
-@media (min-width: 981px) {
-  body.is-guest #btn-top-menu { display: none !important; }
-  body.is-authenticated .fb-tabbar {
-    max-width: 640px;
-    margin: 0 auto;
-    border-radius: 0 0 16px 16px;
-    border-left: 1.5px solid var(--line);
-    border-right: 1.5px solid var(--line);
-    border-bottom: 1.5px solid var(--line);
-  }
+/* ---------- botones ---------- */
+.btn{border-radius:12px}
+.btn .ic{width:18px;height:18px}
+.btn-primary{background:var(--royal);color:#fff;border:1px solid transparent}
+.btn-ghost{background:#fff;border:1px solid var(--line-2);color:var(--ink)}
+@media (hover:hover) and (pointer:fine){.btn-primary:hover{background:var(--royal-d)}.btn-ghost:hover{background:var(--mist)}}
+
+/* ---------- barra superior ---------- */
+.topbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.94);-webkit-backdrop-filter:saturate(1.4) blur(12px);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--line);color:var(--ink)}
+.topbar-in{max-width:none;height:var(--top-h);margin:0;padding:0 20px;display:flex;align-items:center;justify-content:flex-start;gap:12px}
+.brand{gap:10px;min-height:0;min-width:0;flex:0 1 auto}
+.brand>span{min-width:0}
+.brand-logo{width:46px;height:40px}
+.brand b{font-size:22px;color:var(--cloth)}
+.brand small{margin-top:2px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;flex:0 0 auto}
+.topbar-actions .btn{min-height:44px;padding:0 16px;font-size:15px}
+.icon-btn{position:relative;display:inline-grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:12px;background:transparent;color:var(--ink);text-decoration:none;flex:0 0 auto;transition:background-color .15s ease,transform .12s ease}
+.icon-btn.hide{display:none!important}
+.icon-btn:active{transform:scale(.94)}
+@media (hover:hover) and (pointer:fine){.icon-btn:hover{background:var(--mist)}}
+.icon-btn .ic{width:22px;height:22px}
+.menu-btn{display:none}
+.icon-btn>.dot,.tb>.dot,.av-btn>.dot{position:absolute;top:6px;right:6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;box-shadow:0 0 0 2px #fff;pointer-events:none}
+.dot.pop{animation:pop .32s var(--ease)}
+@keyframes pop{from{transform:scale(.4)}to{transform:none}}
+.avatar{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--royal);color:#fff;font-weight:700;font-size:15px;flex:0 0 auto;overflow:hidden}
+.avatar{position:relative}
+.avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:var(--royal)}
+.av-btn{position:relative;display:inline-grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;border:0;border-radius:50%;background:transparent;box-shadow:none}
+.av-btn .avatar{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--line-2)}
+@media (hover:hover) and (pointer:fine){.av-btn:hover .avatar{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--royal)}}
+
+/* ---------- menú lateral ---------- */
+.sidebar{display:none;flex-direction:column;gap:18px;padding:18px 14px 20px;background:#fff;border-right:1px solid var(--line);overflow-y:auto;overscroll-behavior:contain;font-family:var(--body)}
+.nav-group h2{margin:0 10px 8px;font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--soft)}
+.nav-it{position:relative;display:flex;align-items:center;gap:12px;width:100%;min-height:42px;padding:0 12px;border:0;border-radius:12px;background:transparent;color:var(--ink);font-family:inherit;font-weight:700;font-size:15px;line-height:1.2;text-align:left;text-decoration:none;cursor:pointer;transition:background-color .15s ease,color .15s ease}
+.nav-it .ic{color:var(--muted)}
+.nav-it .num{margin-left:auto;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--red);color:#fff;font-size:12px;font-weight:700;line-height:22px;text-align:center}
+.nav-it[aria-current="page"]{background:var(--cloth);color:#fff}
+.nav-it[aria-current="page"] .ic{color:#fff}
+@media (hover:hover) and (pointer:fine){.nav-it:not([aria-current="page"]):hover{background:var(--mist)}}
+.side-card{margin-top:auto;padding:16px;border-radius:var(--r);background:var(--mist);font-size:14px;color:var(--muted)}
+.side-card b{display:block;margin-bottom:4px;color:var(--ink);font-size:15px}
+.side-card .btn{width:100%;margin-top:12px;min-height:44px;font-size:15px}
+.me{display:flex;align-items:center;gap:10px;min-width:0}
+.me>div{min-width:0}
+.me b{margin:0!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me div span{display:block;font-size:13px;color:var(--muted)}
+.side-x{display:none;margin-left:auto}
+.side-top{display:none;align-items:center;gap:10px;padding:0 4px 4px}
+.side-top img{width:40px;height:34px;object-fit:contain}
+.side-top b{font:800 20px/1 var(--display);text-transform:uppercase;color:var(--cloth)}
+.scrim{position:fixed;inset:0;z-index:55;background:rgba(6,21,54,.45);opacity:0;visibility:hidden;transition:opacity .2s ease,visibility .2s}
+.scrim.on{opacity:1;visibility:visible}
+
+/* ---------- barra inferior del teléfono ---------- */
+.tabbar{display:none}
+.tb{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0;border:0;background:transparent;color:var(--muted);font-family:var(--body);font-size:11.5px;font-weight:700;text-decoration:none;cursor:pointer}
+.tb .ic{width:23px;height:23px}
+.tb[aria-current="page"]{color:var(--royal)}
+.tb>.dot{top:6px;right:calc(50% - 22px)}
+
+/* ---------- inicio: bloques que se muestran con «Cargar más» ---------- */
+.main{min-width:0;outline:none}
+.blk-oculto{display:none!important}
+.blk.blk-nuevo{animation:enter .34s var(--ease) both}
+@keyframes enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.feed section[id],.feed .blk,#view-comunidad{scroll-margin-top:calc(var(--top-h) + 12px)}
+.feed [id]{scroll-margin-top:calc(var(--top-h) + 12px)}
+.feed-more{display:grid;justify-items:center;gap:8px;padding:clamp(40px,6vw,64px) 16px clamp(48px,7vw,72px);text-align:center;background:var(--paper)}
+.feed-more:empty{display:none}
+.more-btn{display:inline-flex;flex-direction:column;align-items:center;gap:2px;min-width:min(100%,340px);padding:14px 28px;border:0;border-radius:16px;background:var(--royal);color:#fff;font-family:var(--body);font-weight:700;font-size:16px;line-height:1.3;box-shadow:0 16px 30px -16px rgba(36,82,200,.8);cursor:pointer;transition:transform .12s ease,background-color .15s ease}
+.more-btn small{font-size:13.5px;font-weight:400;color:#DCE6FB}
+.more-btn:active{transform:scale(.97)}
+@media (hover:hover) and (pointer:fine){.more-btn:hover{background:var(--royal-d)}}
+.more-line{display:flex;align-items:center;gap:12px;width:100%;max-width:640px;color:var(--soft);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.more-line::before,.more-line::after{content:"";flex:1;height:1px;background:var(--line-2)}
+.more-top{min-height:44px;padding:0 18px;border:1px solid var(--line-2);border-radius:999px;background:#fff;color:var(--royal);font-family:var(--body);font-weight:700;font-size:14.5px;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.list-more{display:flex;justify-content:center;margin-top:22px}
+.list-more .btn{min-height:46px;border-radius:12px}
+.older{align-self:center;min-height:36px;padding:0 14px;border:1px solid var(--line-2);border-radius:999px;background:#fff;color:var(--royal);font-family:var(--body);font-weight:700;font-size:13.5px;margin-bottom:4px;cursor:pointer}
+.loading{display:inline-flex;gap:6px;padding:16px}
+.loading i{width:8px;height:8px;border-radius:50%;background:var(--royal);animation:ld 1s infinite}
+.loading i:nth-child(2){animation-delay:.15s}.loading i:nth-child(3){animation-delay:.3s}
+@keyframes ld{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
+/* fotos que se desenrollan al aparecer */
+#root[data-motion] [data-unroll="rect"]:not([data-in]){clip-path:inset(0 0 100% 0)}
+#root[data-motion] [data-unroll="tail"]:not([data-in]){clip-path:polygon(0 0,100% 0,100% 0,50% 0,0 0)}
+
+/* ---------- tarjetas con el aspecto del prototipo ---------- */
+.nota,.stat-box,.inscrito-card{border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.nota{background:#fff}
+.u-card{border-radius:var(--r-lg)}
+
+/* ---------- comunidad ---------- */
+.pagina-comunidad{min-height:calc(100dvh - var(--top-h));background:var(--paper)}
+.com-card{background:#fff;border-radius:var(--r);border:1px solid var(--line);padding:22px;box-shadow:var(--shadow)}
+.com-h{display:flex;align-items:center;gap:8px;margin:0;font-size:18px;color:var(--navy)}
+.com-h .ic{color:var(--royal)}
+.person{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:#fff;border:1px solid var(--line);animation:enter .3s var(--ease) both}
+.ico-badge{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:12px;background:var(--mist);color:var(--royal);flex:0 0 auto}
+.ico-badge .ic{width:22px;height:22px}
+.ico-big{display:inline-grid;place-items:center;width:72px;height:72px;margin:0 auto 14px;border-radius:20px;background:var(--mist);color:var(--royal)}
+.ico-big .ic{width:34px;height:34px}
+
+/* ---------- ventanas: notificaciones (ventanita en computadora, hoja en el teléfono) ---------- */
+.notif-head,.chat-top{background:#fff!important;color:var(--ink)!important;border-bottom:1px solid var(--line)}
+.notif-head b,.chat-top b,.chat-top h2,.notif-head h2{color:var(--ink)!important}
+.notif-head small,.chat-top small{color:var(--muted)!important}
+.chat-top .kick{color:var(--royal)!important}
+.x-btn{display:inline-grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;border:1px solid var(--line-2);border-radius:12px;background:#fff;color:var(--ink);cursor:pointer;flex:0 0 auto}
+.x-btn .ic{width:20px;height:20px}
+@media (hover:hover) and (pointer:fine){.x-btn:hover{background:var(--mist)}}
+.notif-list{padding:6px!important;gap:2px!important;background:#fff!important}
+.notif-item{display:flex;gap:12px;align-items:flex-start;padding:12px!important;border:0!important;border-radius:12px;background:transparent!important}
+.notif-item.new{background:#EEF3FD!important}
+.notif-icon{width:40px;height:40px;border-radius:50%}
+.notif-icon .ic{width:20px;height:20px}
+.notif-item .btn{gap:6px}
+.notif-item .btn .ic{width:16px;height:16px}
+.notif-new{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:99px;background:var(--red);color:#fff;font-size:11px;font-weight:700;vertical-align:middle}
+.overlay.overlay-pop{background:rgba(6,21,54,.32)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+@media (min-width:641px){
+.overlay.overlay-pop{padding:0!important;display:block!important;overflow:hidden!important}
+.overlay.overlay-pop>.notif-sheet{position:fixed!important;top:calc(var(--top-h) + 8px)!important;right:16px!important;left:auto!important;bottom:auto!important;width:min(400px,calc(100vw - 32px))!important;max-width:none!important;height:auto!important;max-height:min(72dvh,600px)!important;margin:0!important;border-radius:var(--r)!important;border:1px solid var(--line);box-shadow:var(--shadow-lg)!important;transform-origin:top right;animation:popIn .2s var(--ease) both}
 }
-@media (max-width: 980px) {
-  .navlinks { display: none !important; }
-  body.is-guest #btn-top-menu { display: inline-flex !important; }
-  body.is-authenticated #btn-top-menu { display: none !important; }
+@keyframes popIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+@media (max-width:640px){
+.overlay.overlay-pop>.notif-sheet{height:auto!important;max-height:82dvh!important}
 }
+
+/* ---------- chat ---------- */
+.chat-tabs{background:#fff!important;padding:10px 14px!important;gap:6px}
+.chat-tab{min-height:40px;border:1px solid var(--line-2)!important;border-radius:999px!important;background:#fff!important;color:var(--ink)!important;gap:6px}
+.chat-tab .ic{width:18px;height:18px}
+.chat-tab.active{background:var(--cloth)!important;border-color:var(--cloth)!important;color:#fff!important;box-shadow:none!important}
+.chat-channel-btn{min-height:36px;padding:0 12px}
+.chat-channel-btn .ic{width:16px;height:16px}
+.chat-msgs-wrap{background:var(--paper)!important}
+.chat-bubble{font-size:15px;border-radius:18px}
+.chat-bubble.theirs{border-radius:18px 18px 18px 6px}
+.chat-bubble.mine{border-radius:18px 18px 6px 18px}
+.chat-send-btn{border-radius:12px}
+
+/* ---------- perfil ---------- */
+.p-cover{background:linear-gradient(135deg,var(--cloth),var(--navy))}
+.p-tabs{background:transparent;padding:0;gap:6px;overflow-x:auto;scrollbar-width:none}
+.p-tabs::-webkit-scrollbar{display:none}
+.p-tab{flex:1 0 auto;min-height:44px;padding:0 14px;border:1px solid var(--line-2);border-radius:999px;background:#fff;color:var(--ink);font-size:13.5px}
+.p-tab .ic{width:17px;height:17px}
+.p-tab.active{background:var(--cloth);border-color:var(--cloth);color:#fff;box-shadow:none}
+.p-act-btn .ic,.p-info-card small .ic{width:16px;height:16px}
+.p-info-card small{display:flex!important;align-items:center;gap:6px}
+.p-info-card small .ic{color:var(--royal)}
+.p-avatar-cam-badge .ic{width:17px;height:17px}
+.p-close-btn .ic{width:18px;height:18px}
+.qr-card{display:flex;flex-wrap:wrap;align-items:center;gap:16px;padding:16px;margin-bottom:14px;border-radius:18px;border:1px solid var(--line);background:#fff;box-shadow:var(--shadow);text-align:left}
+.qr-card>div{flex:1 1 180px;min-width:0}
+.qr-card b{display:block;font-size:16px;color:var(--navy)}
+.qr-card p{margin:4px 0 0;font-size:13.5px;color:var(--muted)}
+.qr-btn{position:relative;flex:0 0 auto;margin:0 auto;padding:8px;border:1px solid var(--line);border-radius:14px;background:#fff;cursor:zoom-in;transition:transform .15s ease,box-shadow .2s ease}
+.qr-btn svg{display:block;width:124px;height:124px}
+.qr-btn span{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:6px;font-size:12.5px;font-weight:700;color:var(--royal)}
+.qr-btn span .ic{width:14px;height:14px}
+.qr-btn::after{content:"";position:absolute;inset:-4px;border-radius:18px;border:2px solid var(--royal);opacity:0;animation:qrHint 2.4s ease-in-out 1s 2;pointer-events:none}
+@keyframes qrHint{0%,100%{opacity:0;transform:scale(1)}50%{opacity:.7;transform:scale(1.04)}}
+.qr-btn:active{transform:scale(.97)}
+@media (hover:hover) and (pointer:fine){.qr-btn:hover{box-shadow:0 10px 24px -12px rgba(36,82,200,.6)}}
+.j-carnet-qr{cursor:zoom-in}
+.qr-full{position:fixed;inset:0;z-index:10000001;display:none;place-items:center;padding:24px;background:#fff;color:var(--ink);text-align:center;font-family:var(--body);overflow-y:auto}
+.qr-full.on{display:grid}
+.qr-full .qr-big{width:min(78vw,62dvh,460px);aspect-ratio:1;margin:0 auto;padding:4%;border-radius:20px;background:#fff;box-shadow:0 0 0 1px var(--line),0 30px 60px -30px rgba(6,21,54,.5)}
+.qr-full .qr-big svg{width:100%;height:100%;display:block}
+.qr-full h2{margin:18px 0 2px;font:800 30px/1 var(--display);text-transform:uppercase;color:var(--cloth)}
+.qr-full p{margin:4px 0;color:var(--muted);font-size:16px}
+.qr-full .x{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px}
+.qr-full .tip{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:8px 14px;border-radius:999px;background:var(--mist);color:var(--cloth);font-weight:700;font-size:14px}
+
+/* ---------- listas largas con «Cargar más» ---------- */
+.gallery .gal.gal-mas{display:none!important}
+.sheet.sheet-auto{height:auto!important;max-height:86dvh!important}
+.sheet-auto .nav-it{min-height:46px}
+.post time{display:inline-flex;align-items:center;gap:6px}
+.post time .ic{width:16px;height:16px}
+.btn-wa-share .ic{width:18px;height:18px}
+.link-lt .ic{width:18px;height:18px}
+.p-act-btn,.p-tab{gap:6px}
+.chat-input-bar form{position:relative}
+
+/* ---------- avisos que flotan ---------- */
+#juma-toast.toast{position:fixed;z-index:95;left:50%;top:calc(var(--top-h) + 12px);bottom:auto;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 32px);padding:12px 16px;border-radius:14px;background:var(--navy);color:#fff;font-family:var(--body);font-size:15px;font-weight:700;line-height:1.35;box-shadow:var(--shadow-lg);transform:translateX(-50%);pointer-events:none;text-align:center;animation:toastIn .3s var(--ease) both}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,-14px)}to{opacity:1;transform:translateX(-50%)}}
+#juma-rem-banner{top:calc(var(--top-h) + 12px)!important;right:16px!important;left:auto!important;bottom:auto!important;max-width:min(390px,calc(100vw - 32px))!important}
+
+/* =================== computadora (1024 px o más) =================== */
+@media (min-width:1024px){
+#root{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);grid-template-rows:auto auto 1fr auto;grid-template-areas:"aviso aviso" "top top" "side main" "side foot"}
+#root>.aviso{grid-area:aviso}
+#root>.topbar{grid-area:top}
+#root>.sidebar{grid-area:side;display:flex;position:sticky;top:var(--top-h);align-self:start;height:calc(100dvh - var(--top-h))}
+#root>.main{grid-area:main}
+#root>.foot{grid-area:foot}
+.feed{padding:16px clamp(16px,1.8vw,26px) 0}
+.feed .hero-wrap,.feed .closing-wrap{padding:0}
+.feed .hero{border-radius:var(--r-lg)}
+.feed .sec.cloth,.feed .sec.night,.feed .closing{border-radius:var(--r-lg)}
+.feed .sec{margin-top:16px}
+}
+/* =================== tableta y teléfono: el menú se abre como cajón =================== */
+@media (max-width:1023px){
+.menu-btn{display:inline-grid}
+.sidebar{display:flex;position:fixed;z-index:60;top:0;left:0;bottom:0;height:100dvh;width:min(86vw,300px);padding-top:calc(14px + env(safe-area-inset-top));box-shadow:var(--shadow-lg);transform:translateX(-102%);visibility:hidden;transition:transform .26s var(--ease),visibility .26s}
+.sidebar.open{transform:none;visibility:visible}
+.side-top{display:flex}
+.side-x{display:inline-grid}
+}
+/* =================== teléfono (640 px o menos) =================== */
+@media (max-width:640px){
+:root,.jm{--top-h:58px}
+.topbar-in{padding:0 8px 0 10px;gap:6px}
+.brand-logo{width:40px;height:34px}
+.brand b{font-size:20px}
+.brand small,.topbar-actions .hide-m,.menu-btn{display:none!important}
+.topbar-actions .btn{min-height:42px;padding:0 14px;font-size:14.5px}
+.tabbar{display:flex;position:fixed;z-index:40;left:0;right:0;bottom:0;height:calc(var(--tab-h) + env(safe-area-inset-bottom));padding:0 4px env(safe-area-inset-bottom);background:rgba(255,255,255,.97);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+#root{padding-bottom:calc(var(--tab-h) + env(safe-area-inset-bottom))}
+.editfab{bottom:calc(var(--tab-h) + 12px + env(safe-area-inset-bottom));min-height:48px;padding:0 18px;font-size:15px}
+.more-btn{width:100%}
+}
+@media (max-width:360px){.brand b{font-size:18px}.icon-btn,.av-btn{width:40px;height:40px;min-height:40px}.topbar-actions .btn{padding:0 12px}}
+@media (prefers-reduced-motion:reduce){
+.sidebar,.scrim,.more-btn,.icon-btn,.blk.blk-nuevo,.dot.pop,.qr-btn::after,.loading i,.person,#juma-toast.toast,.overlay.overlay-pop>.notif-sheet{transition:none!important;animation:none!important}
+}
+body.is-guest .solo-miembros { display: none !important; }
 </style>
 </head>
-<body class="modo-secciones is-guest">
+<body class="is-guest">
 <div class="jm" id="root" style="width:100%;font-family:var(--body);background:var(--paper);color:var(--ink)">
-<a class="skip" href="#main">Saltar al contenido</a>
+<a class="skip" href="#main" data-skip>Saltar al contenido</a>
 
 <div class="aviso hide" id="aviso" role="status"></div>
 
 
 <header class="topbar">
 <div class="topbar-in">
+<button type="button" class="icon-btn menu-btn" id="menu-btn" aria-label="Abrir menú" aria-expanded="false" aria-controls="sidebar"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg></button>
 <a class="brand" href="#inicio" data-view-target="inicio" aria-label="JUMA Duaca, ir al inicio">
 <img class="brand-logo" src="img/logo.png" alt="">
 <span><b>JUMA Duaca</b><small>Juventud Misionera Allamaniana</small></span>
 </a>
-<nav class="navlinks" aria-label="Principal">
-<a class="navlink active" href="#inicio" data-view-target="inicio">Inicio</a>
-<a class="navlink" href="#quienes" data-view-target="quienes">Quiénes somos</a>
-<a class="navlink" href="#domingos" data-view-target="domingos">Eventos</a>
-<a class="navlink" href="#formacion" data-view-target="formacion">Formación</a>
-<a class="navlink" href="#fe" data-view-target="fe">Oración</a>
-<a class="navlink" href="#consolata" data-view-target="consolata">Consolata</a>
-<a class="navlink" id="nav-nov" href="#novedades" data-view-target="novedades">Noticias</a>
-<a class="navlink" href="#galeria" data-view-target="galeria">Galería</a>
-<a class="navlink hide solo-miembros" href="#comunidad" data-view-target="comunidad" id="nav-comunidad">👥 Amigos</a>
-</nav>
 <div class="topbar-actions">
-<button type="button" class="btn btn-soft btn-sm hide" id="btn-top-notif" data-open-notifs title="Notificaciones internas de JUMA" style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;min-height:38px;padding:0;border-radius:50%;background:#fff;border:1.5px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.06)">
-  <span aria-hidden="true" style="font-size:16px">🔔</span>
-  <span class="chat-badge hide" id="top-notif-badge"></span>
-</button>
-<button type="button" class="btn btn-soft btn-sm hide" id="btn-top-chat" data-open-chat title="Chat y Mensajes Directos" style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;min-height:38px;padding:0;border-radius:50%;background:#fff;border:1.5px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.06)">
-  <span aria-hidden="true" style="font-size:16px">💬</span>
-  <span class="chat-badge hide" id="top-chat-badge"></span>
-</button>
-<button type="button" class="btn btn-outline btn-sm" id="btn-auth" data-open-auth>Iniciar sesión</button>
-<button type="button" class="btn btn-white btn-sm" id="btn-join" data-open-form>Quiero ser parte</button>
-<button type="button" class="btn btn-soft btn-sm" id="btn-top-menu" data-open-guest-menu title="Menú de navegación" style="display:none;align-items:center;justify-content:center;min-height:38px;padding:0 12px;font-size:13.5px;font-weight:800;border-radius:10px;background:#F0F4FA;color:var(--navy);border:1.5px solid var(--line)">
-  <span style="font-size:16px;margin-right:4px">☰</span><span>Menú</span>
-</button>
+<button type="button" class="icon-btn hide hide-m" id="btn-top-chat" data-open-chat aria-label="Mensajes" title="Mensajes y chat"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span class="dot hide" id="top-chat-badge"></span></button>
+<button type="button" class="icon-btn hide" id="btn-top-notif" data-open-notifs aria-haspopup="dialog" aria-label="Notificaciones" title="Notificaciones"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg><span class="dot hide" id="top-notif-badge"></span></button>
+<button type="button" class="btn btn-ghost btn-sm" id="btn-auth" data-open-auth><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg><span>Entrar</span></button>
+<button type="button" class="btn btn-primary btn-sm hide-m" id="btn-join" data-open-form><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg><span>Quiero ser parte</span></button>
 </div>
 </div>
-<div class="rod-wrap"><div class="rod" aria-hidden="true"></div></div>
-<nav class="fb-tabbar" id="fb-tabbar" aria-label="Navegación principal">
-  <button type="button" class="fb-tab active" data-fb-tab="inicio" title="Inicio">
-    <span class="fb-tab-icon">🏠</span>
-    <span class="fb-tab-label">Inicio</span>
-  </button>
-  <button type="button" class="fb-tab" data-fb-tab="comunidad" title="Amigos y Miembros de JUMA">
-    <span class="fb-tab-icon">👥</span>
-    <span class="fb-tab-label">Amigos</span>
-  </button>
-  <button type="button" class="fb-tab" data-fb-tab="novedades" title="Noticias y Videos de JUMA">
-    <span class="fb-tab-icon">📰</span>
-    <span class="fb-tab-label">Noticias</span>
-  </button>
-  <button type="button" class="fb-tab" data-fb-tab="domingos" title="Eventos y Próximos Encuentros">
-    <span class="fb-tab-icon">📅</span>
-    <span class="fb-tab-label">Eventos</span>
-  </button>
-</nav>
 </header>
 
+<!-- Menú lateral (computadora) / cajón (tableta). Lo arma la app según la sesión. -->
+<aside class="sidebar" id="sidebar" aria-label="Menú"></aside>
+<div class="scrim" id="scrim" aria-hidden="true"></div>
 
 
-<main id="main">
 
-<!-- ============ SECCIÓN: INICIO ============ -->
-<div class="j-view view-active" id="view-inicio">
-  <section id="inicio" class="hero-wrap" aria-label="Portada">
+<main id="main" class="main" tabindex="-1">
+
+<!-- ============ INICIO: portada + bloques que se muestran con «Cargar más» ============ -->
+<div id="feed" class="feed">
+<section id="inicio" class="hero-wrap" aria-label="Portada">
     <div class="hero tail">
       <img fetchpriority="high" class="photo" src="img/hero-2200.jpg" srcset="img/hero-900.jpg 900w, img/hero-2200.jpg 2200w" sizes="100vw" alt="Jóvenes de JUMA Duaca con sus franelas frente al monumento de la Virgen de Coromoto">
       <div class="hero-veil" aria-hidden="true"></div>
@@ -1236,7 +1215,7 @@ body.is-authenticated .fb-tabbar { display: flex !important; }
           <div class="hero-actions rise" style="animation-delay: 640ms">
             <button type="button" class="btn btn-white" data-open-form id="hero-btn-join">Quiero ser parte</button>
             <a class="link-lt" href="#domingos" data-view-target="domingos">Ver los próximos domingos</a>
-            <a class="link-lt" href="#novedades" data-view-target="novedades">📰 Noticias</a>
+            <a class="link-lt" href="#novedades" data-view-target="novedades"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>Noticias</a>
           </div>
           <nav class="hero-links rise" style="animation-delay: 800ms" aria-label="Redes de JUMA">
             <a href="https://www.instagram.com/juma_duaca/" target="_blank" rel="noopener">Instagram</a>
@@ -1247,31 +1226,10 @@ body.is-authenticated .fb-tabbar { display: flex !important; }
       </div>
     </div>
   </section>
-  <div class="view-foot-nav" style="flex-direction: column; align-items: stretch; gap: 16px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px">
-      <span style="font-size:14.5px; font-weight:800; color:var(--navy); display:inline-flex; align-items:center; gap:8px">
-        <span>🧭</span><span>Explora las secciones de JUMA:</span>
-      </span>
-      <button type="button" class="btn btn-blue btn-sm" data-view-target="quienes">
-        Siguiente: Quiénes somos →
-      </button>
-    </div>
-    <div class="atajos-row" style="display:flex; flex-wrap:wrap; gap:8px">
-      <a href="#quienes" data-view-target="quienes" class="atajo-pill"><span class="atajo-dot" style="background:#F59E0B"></span>Quiénes somos</a>
-      <a href="#domingos" data-view-target="domingos" class="atajo-pill"><span class="atajo-dot" style="background:#2452C8"></span>Eventos y Domingos</a>
-      <a href="#formacion" data-view-target="formacion" class="atajo-pill"><span class="atajo-dot" style="background:#EF4444"></span>Formación</a>
-      <a href="#fe" data-view-target="fe" class="atajo-pill"><span class="atajo-dot" style="background:#10B981"></span>Oración y Fe</a>
-      <a href="#consolata" data-view-target="consolata" class="atajo-pill"><span class="atajo-dot" style="background:#8B5CF6"></span>Consolata y Santos</a>
-      <a href="#novedades" data-view-target="novedades" class="atajo-pill"><span class="atajo-dot" style="background:#EC4899"></span>Noticias y Muro</a>
-      <a href="#galeria" data-view-target="galeria" class="atajo-pill"><span class="atajo-dot" style="background:#06B6D4"></span>Galería</a>
-      <a href="#comunidad" data-view-target="comunidad" class="atajo-pill solo-miembros"><span class="atajo-dot" style="background:#3B82F6"></span>👥 Directorio de Amigos</a>
-    </div>
-  </div>
-</div>
 
-<!-- ============ SECCIÓN: QUIÉNES SOMOS ============ -->
-<div class="j-view" id="view-quienes">
-  <section id="quienes" class="sec" style="background: var(--paper)">
+<!-- ============ BLOQUE 1: QUIÉNES SOMOS ============ -->
+<div class="blk" id="blk-quienes" data-blk-t="Quiénes somos" data-blk-ic="users">
+<section id="quienes" class="sec" style="background: var(--paper)">
 <div class="wrap">
 
 <div class="split">
@@ -1320,7 +1278,7 @@ body.is-authenticated .fb-tabbar { display: flex !important; }
 
 </div>
 </section>
-  <section id="vive" class="sec vive" aria-labelledby="vive-t">
+<section id="vive" class="sec vive" aria-labelledby="vive-t">
 <div class="wrap">
 <div class="vive-head">
 <h2 class="h-display h-xl" id="vive-t">Así se vive JUMA</h2>
@@ -1333,7 +1291,45 @@ body.is-authenticated .fb-tabbar { display: flex !important; }
 </div>
 </div>
 </section>
-  <section id="pilares" class="sec" style="background: var(--paper)">
+</div>
+
+<!-- ============ BLOQUE 2: DOMINGOS ============ -->
+<div class="blk blk-oculto" id="blk-domingos" data-blk-t="Domingos" data-blk-ic="calendar">
+<section id="domingos" class="sec cloth">
+<div class="wrap">
+
+<div class="dom-head">
+<h2 class="h-display h-xl">Cada domingo nos encontramos</h2>
+<p class="lead lt" style="margin: 0">Oramos, nos formamos y compartimos. Llega temprano, trae tu alegría y, si quieres, ven con un amigo.</p>
+</div>
+
+<div class="cord-row">
+<div class="rod" aria-hidden="true"></div>
+<ol class="tags" id="tags" aria-label="Próximos domingos" style="list-style: none; margin: 0"></ol>
+</div>
+
+<dl class="facts">
+<div><dt>Día</dt><dd>Todos los domingos</dd></div>
+<div><dt>Hora</dt><dd id="f-hora">Hora por confirmar</dd></div>
+<div>
+  <dt>Lugar</dt>
+  <dd>
+    <div id="f-lugar">Lugar por confirmar, Duaca</div>
+    <a id="lnk-maps-lugar" class="btn-maps-link" target="_blank" rel="noopener" href="https://maps.google.com/?q=Duaca,Lara" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 14px;border-radius:99px;background:#E8F1FF;color:var(--royal);font-size:13px;font-weight:800;text-decoration:none;border:1.5px solid #B9C8E4;box-shadow:0 2px 6px rgba(36,82,200,.08)">
+      <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg><span>Cómo llegar en Google Maps</span>
+    </a>
+  </dd>
+</div>
+</dl>
+
+<div id="acts-wrap" class="hide">
+<h3 class="h-display h-lg" style="margin-top: clamp(64px, 8vw, 96px)">Próximas actividades</h3>
+<ul class="acts" id="acts"></ul>
+</div>
+
+</div>
+</section>
+<section id="pilares" class="sec" style="background: var(--paper)">
 <div class="wrap">
 <div class="split">
 <h2 class="h-display h-xl">Cuatro pilares sostienen cada mes</h2>
@@ -1374,177 +1370,11 @@ body.is-authenticated .fb-tabbar { display: flex !important; }
 </div>
 </div>
 </section>
-  <section id="identidad" class="sec" style="background: var(--mist)">
-<div class="wrap">
-<div class="ident">
-
-<div class="poster">
-<div class="rod" aria-hidden="true"></div>
-<div class="poster-cloth tail" data-unroll="tail">
-<img src="img/poster-virgen.jpg" alt="Ilustración de la Virgen Consolata con el Niño Jesús sobre la silueta del templo, con el nombre Juventud Misionera Allamaniana">
-</div>
 </div>
 
-<div class="ident-txt">
-<h2 class="h-display h-xl">Un misionero de JUMA es…</h2>
-<ol class="idlist">
-<li>Una persona católica que vive los sacramentos.</li>
-<li>Alguien a quien Dios ha llamado a ser misionero en el mundo juvenil. Su corazón arde por la misión: la ama y vive en constante misión.</li>
-<li>Alguien que se reconoce por su profundo amor a María Santísima, bajo la advocación de la Consolata, y a nuestro fundador, San José Allamano.</li>
-</ol>
-</div>
-
-</div>
-<blockquote class="quote quote-wide">
-<p>“Si tu corazón no arde de amor cuando haces misión, no te emocionas, permaneces indiferente, deberías cuestionarte si este carisma es para ti.”</p>
-<footer>San José Allamano</footer>
-</blockquote>
-<div class="patrons-head">
-<h3 class="h-display h-md" style="color: var(--royal)">Nuestra madre, nuestro fundador y nuestros santos</h3>
-<p class="body">Toca cada uno para conocer su historia.</p>
-</div>
-<div class="patrons">
-<details class="patron-d" name="santos"><summary class="patron"><img src="img/consolata.jpg" alt="Ícono de la Virgen Consolata con el Niño Jesús"><div><b>María Consolata</b><span>Nuestra madre y patrona</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/consolata.jpg" alt="Ícono de la Virgen Consolata con el Niño Jesús"><div class="pd-txt"><p><b>Consolata</b> significa «la que consuela». Así llaman en Turín (Italia) a la Virgen María con el Niño que se venera en su santuario. De ella toman su nombre los Misioneros y las Misioneras de la Consolata, y por eso es la madre y patrona de JUMA.</p><p><b>El origen.</b> La devoción nace en la antigua iglesia de San Andrés, en Turín, adonde llegaron monjes benedictinos a comienzos del siglo X. Según la tradición, allí se halló una antigua imagen de la Virgen con el Niño, y un joven ciego que vino a buscarla recobró la vista. Desde entonces la devoción se extendió por toda la ciudad.</p><p><b>El cuadro.</b> La pintura que hoy se venera sobre el altar mayor es una copia de una imagen de la Virgen con el Niño de la iglesia de Santa María del Popolo, en Roma.</p><p><b>Patrona de Turín.</b> En 1706, durante el sitio francés de la ciudad, la gente se refugió en el santuario. Después de la liberación, la ciudad levantó pilares con su imagen y el Senado la confirmó como patrona de Turín. En 1714 se oficializó su fiesta, que se celebra cada <b>20 de junio</b>.</p><p><b>Con Allamano.</b> San José Allamano fue rector del santuario de la Consolata desde 1880. Bajo su mirada fundó en 1901 a los Misioneros y en 1910 a las Misioneras de la Consolata, para llevar el consuelo de María y el Evangelio a los pueblos que aún no lo conocen.</p></div></div></details>
-<details class="patron-d" name="santos"><summary class="patron"><img src="img/allamano.jpg" alt="Ícono de San José Allamano"><div><b>San José Allamano</b><span>Fundador de los Misioneros de la Consolata</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/allamano.jpg" alt="Ícono de San José Allamano"><div class="pd-txt"><p>Nació el <b>21 de enero de 1851</b> en Castelnuovo, en el Piamonte (Italia). Su madre, María Cafasso, era hermana de San José Cafasso. De joven fue alumno de San Juan Bosco.</p><p>Fue ordenado sacerdote el 20 de septiembre de 1873. Desde <b>1880</b> fue rector del santuario de la Consolata, en Turín, donde formó a muchos sacerdotes y renovó el santuario.</p><p>El <b>29 de enero de 1901</b> fundó el Instituto de los Misioneros de la Consolata, y el 29 de enero de 1910, el de las Hermanas Misioneras de la Consolata, para anunciar el Evangelio a los pueblos que aún no lo conocen (la misión <i>ad gentes</i>).</p><p>Murió en Turín el 16 de febrero de 1926. Fue beatificado por San Juan Pablo II el 7 de octubre de 1990 y <b>canonizado por el papa Francisco el 20 de octubre de 2024</b>, por un milagro ocurrido en la Amazonía de Brasil.</p><p>Enseñaba la santidad de la vida diaria: «Sed santos sin ruido» y «No basta hacer el bien, hay que hacerlo bien».</p></div></div></details>
-<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-cafasso.jpg" alt="Pintura de San José Cafasso"><div><b>San José Cafasso</b><span>Tío de Allamano, guía de sacerdotes</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-cafasso.jpg" alt="Pintura de San José Cafasso"><div class="pd-txt"><p>Nació el <b>15 de enero de 1811</b> en Castelnuovo d’Asti, el mismo pueblo de San Juan Bosco y de San José Allamano, en el Piamonte (Italia). Su hermana fue la madre de San José Allamano.</p><p>Fue profesor y luego rector del Convictorio Eclesiástico de Turín, donde formó a muchos sacerdotes. Amaba profundamente la Eucaristía y la confesión.</p><p>Fue capellán de las cárceles de Turín. Acompañó a más de sesenta condenados a muerte hasta el último momento, por eso lo llamaron «el sacerdote de la horca».</p><p>Conoció a Juan Bosco en 1827. Fue su confesor y guía espiritual, lo ayudó en sus estudios y lo apoyó en su obra con los niños pobres y abandonados.</p><p>Murió en Turín el 23 de junio de 1860. Fue <b>canonizado por el papa Pío XII el 22 de junio de 1947</b>.</p></div></div></details>
-<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-leonella.jpg" alt="Pintura de la beata Leonella Sgorbati con un papel que dice Perdono"><div><b>Beata Leonella Sgorbati</b><span>Misionera de la Consolata, mártir del perdón</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-leonella.jpg" alt="Pintura de la beata Leonella Sgorbati con un papel que dice Perdono"><div class="pd-txt"><p>Se llamaba Rosa María Sgorbati. Nació el <b>9 de diciembre de 1940</b> en Gazzola (Piacenza, Italia). En 1963 entró en las Misioneras de la Consolata y tomó el nombre de Leonella. Estudió enfermería en Inglaterra.</p><p>Desde 1972 sirvió en Kenia como enfermera en los hospitales de Nyeri y Kiambu. Desde 1985 dirigió la formación en la escuela de enfermería de Nkubu, y desde 1993 fue superiora de su congregación en Kenia.</p><p>Después fue a Mogadiscio (Somalia), donde abrió en 2002 una escuela de enfermería en el hospital infantil. En 2006 se graduaron las primeras 34 enfermeras.</p><p>El <b>17 de septiembre de 2006</b> le dispararon por la espalda frente al hospital. También murió su guardaespaldas. Antes de morir dijo: <b>«Perdono, perdono, perdono»</b>.</p><p>Fue beatificada el <b>26 de mayo de 2018</b> en Piacenza (Italia).</p></div></div></details>
-<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-irene.jpg" alt="Foto de la beata Irene Stefani con hábito blanco"><div><b>Beata Irene Stefani</b><span>«Nyaatha», madre de la misericordia</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-irene.jpg" alt="Foto de la beata Irene Stefani con hábito blanco"><div class="pd-txt"><p>Se llamaba Aurelia Mercede Stefani. Nació en <b>agosto de 1891</b> en Anfo (Brescia, Italia). En 1911 entró en las Misioneras de la Consolata, fundadas por San José Allamano, y el 29 de enero de 1914 hizo sus votos con el nombre de Irene.</p><p>A fines de 1914 llegó a Kenia. Durante la Primera Guerra Mundial, hasta 1920, cuidó a los heridos y enfermos en hospitales militares de Kenia y Tanzania.</p><p>Desde 1920 vivió en Gikondi (Kenia): enseñaba, visitaba a las familias y cuidaba a los enfermos y a los pobres. La gente la llamó <b>«Nyaatha»</b>, que significa madre de la misericordia.</p><p>Murió el <b>31 de octubre de 1930</b> en Gikondi, contagiada de peste mientras cuidaba a un enfermo.</p><p>Fue beatificada el <b>23 de mayo de 2015</b> en Nyeri (Kenia).</p></div></div></details>
-</div>
-</div>
-</section>
-  <section id="logo" class="sec" style="background: var(--paper)">
-<div class="wrap logo-sec">
-<img class="logo-big" src="img/logo.png" alt="Logo de JUMA Duaca: un globo terráqueo, la J en forma de cruz con tres estrellas, San José Allamano con los brazos abiertos y huellas de colores">
-<div>
-<h2 class="h-display h-xl">Cada detalle de nuestro logo dice algo</h2>
-<ol class="meanings">
-<li><span class="num">1</span>Las letras llevan los colores de la vestimenta de la imagen de la Consolata.</li>
-<li><span class="num">2</span>La J tiene la forma de la cruz del Resucitado, con las tres estrellas y el anillo de la Consolata.</li>
-<li><span class="num">3</span>Al final de la palabra aparece San José Allamano, nuestro maestro de espiritualidad, santidad y misión.</li>
-<li><span class="num">4</span>Las huellas dibujan un camino: la misión, salir y anunciar la gloria de Dios a las naciones.</li>
-<li><span class="num">5</span>Sus colores son los cinco continentes, junto a la silueta del mundo: una mirada universal.</li>
-</ol>
-</div>
-</div>
-</section>
-  <div class="view-foot-nav">
-    <button type="button" class="btn btn-soft btn-sm" data-view-target="inicio">← Inicio</button>
-    <button type="button" class="btn btn-blue btn-sm" data-view-target="domingos">Siguiente: Domingos →</button>
-  </div>
-</div>
-
-<!-- ============ SECCIÓN: DOMINGOS ============ -->
-<div class="j-view" id="view-domingos">
-  <section id="domingos" class="sec cloth">
-<div class="wrap">
-
-<div class="dom-head">
-<h2 class="h-display h-xl">Cada domingo nos encontramos</h2>
-<p class="lead lt" style="margin: 0">Oramos, nos formamos y compartimos. Llega temprano, trae tu alegría y, si quieres, ven con un amigo.</p>
-</div>
-
-<div class="cord-row">
-<div class="rod" aria-hidden="true"></div>
-<ol class="tags" id="tags" aria-label="Próximos domingos" style="list-style: none; margin: 0"></ol>
-</div>
-
-<dl class="facts">
-<div><dt>Día</dt><dd>Todos los domingos</dd></div>
-<div><dt>Hora</dt><dd id="f-hora">Hora por confirmar</dd></div>
-<div>
-  <dt>Lugar</dt>
-  <dd>
-    <div id="f-lugar">Lugar por confirmar, Duaca</div>
-    <a id="lnk-maps-lugar" class="btn-maps-link" target="_blank" rel="noopener" href="https://maps.google.com/?q=Duaca,Lara" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 14px;border-radius:99px;background:#E8F1FF;color:var(--royal);font-size:13px;font-weight:800;text-decoration:none;border:1.5px solid #B9C8E4;box-shadow:0 2px 6px rgba(36,82,200,.08)">
-      <span aria-hidden="true">📍</span><span>Cómo llegar en Google Maps</span>
-    </a>
-  </dd>
-</div>
-</dl>
-
-<div id="acts-wrap" class="hide">
-<h3 class="h-display h-lg" style="margin-top: clamp(64px, 8vw, 96px)">Próximas actividades</h3>
-<ul class="acts" id="acts"></ul>
-</div>
-
-</div>
-</section>
-  <div class="view-foot-nav">
-    <button type="button" class="btn btn-soft btn-sm" data-view-target="quienes">← Quiénes somos</button>
-    <button type="button" class="btn btn-blue btn-sm" data-view-target="formacion">Siguiente: Formación →</button>
-  </div>
-</div>
-
-<!-- ============ SECCIÓN: FORMACIÓN ============ -->
-<div class="j-view" id="view-formacion">
-  <section id="formacion" class="sec night">
-<div class="wrap">
-<div class="split">
-<h2 class="h-display h-xl">Cinco años, cinco continentes</h2>
-<p class="lead lt" style="margin: 0">Cada año de formación tiene un color y una franela que representa un continente. Toca un banderín para ver sus temas.</p>
-</div>
-</div>
-<div style="max-width: 1240px; margin: 0 auto">
-<div class="rod pennants-rod" aria-hidden="true"></div>
-<div class="pennants" id="pennants" role="group" aria-label="Años de formación"></div>
-<div class="fpanel" id="fpanel">
-<div>
-<h3 id="fp-title"></h3>
-<p id="fp-text"></p>
-<ol class="topics" id="fp-topics"></ol>
-</div>
-<div class="fphoto"><img loading="lazy" decoding="async" class="photo" id="fp-img" src="" alt=""></div>
-</div>
-</div>
-</section>
-  <div class="view-foot-nav">
-    <button type="button" class="btn btn-soft btn-sm" data-view-target="domingos">← Domingos</button>
-    <button type="button" class="btn btn-blue btn-sm" data-view-target="fe">Siguiente: Oración →</button>
-  </div>
-</div>
-
-<!-- ============ SECCIÓN: ORACIÓN ============ -->
-<div class="j-view" id="view-fe">
-  <section id="fe" class="sec" style="background: var(--mist)">
-<div class="wrap">
-<div class="split"><h2 class="h-display h-xl">Vida de fe</h2><p class="body">El día litúrgico, las oraciones, el rosario y la misa, para rezar en grupo o en casa.</p></div>
-<div id="fe-app"></div>
-</div>
-</section>
-  <section id="areas" class="sec" style="background: var(--paper)">
-<div class="wrap">
-<div class="split">
-<h2 class="h-display h-xl">Cada joven tiene un lugar donde servir</h2>
-<p class="body">Cada área cuenta con un encargado y un auxiliar, para que el trabajo sea ordenado y siempre tenga continuidad.</p>
-</div>
-<figure class="band areas-pic" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/grupo-iglesia.jpg" alt="Jóvenes de JUMA y misioneros reunidos en grupo dentro de un templo" style="object-position: 50% 35%"><figcaption>Cada área suma: juntos somos el movimiento.</figcaption></figure>
-<ul class="areas">
-<li><h3>Espiritualidad</h3><p>Retiros, oración y meditación, charlas de fe y devoción a los sacramentos, en especial la Eucaristía y la Reconciliación.</p></li>
-<li><h3>Liturgia</h3><p>Prepara la Santa Misa: lecturas, oraciones y ministros, para que cada celebración sea un encuentro con Cristo.</p></li>
-<li><h3>Coro juvenil</h3><p>Anima liturgias, encuentros y eventos especiales con cantos que se vuelven oración.</p></li>
-<li><h3>Recreación</h3><p>Juegos, dinámicas, paseos y deporte que fortalecen la amistad y muestran que la fe también es gozo.</p></li>
-<li><h3>Visita a hogares</h3><p>Visitamos a jóvenes y familias para escuchar y acompañar, y para que el movimiento sea un segundo hogar.</p></li>
-<li><h3>Servicio social</h3><p>Voluntariado y caridad: asilos, hospitales, recolección de alimentos y proyectos comunitarios.</p></li>
-<li><h3>Metodología</h3><p>Diseña el plan de formación de reuniones y talleres, y prepara a los líderes del grupo.</p></li>
-<li><h3>Logística</h3><p>La columna del movimiento: espacios, sonido, alimentos, transporte y materiales.</p></li>
-<li><h3>Ambientación</h3><p>Decora los espacios con telas, luces y símbolos para que todos se sientan bienvenidos.</p></li>
-<li><h3>Redes sociales</h3><p>La voz digital del movimiento: evangelizar con imágenes, videos y textos.</p></li>
-</ul>
-<div class="org">
-<h3 class="h-display h-md">Cómo nos organizamos</h3>
-<p class="body" style="color: var(--ink)">Un asesor general acompaña al movimiento. La coordinación general, la subcoordinación, la secretaría, la tesorería y la animación forman la directiva, que se renueva cada tres años por elección.</p>
-</div>
-</div>
-</section>
-  <div class="view-foot-nav">
-    <button type="button" class="btn btn-soft btn-sm" data-view-target="formacion">← Formación</button>
-    <button type="button" class="btn btn-blue btn-sm" data-view-target="consolata">Siguiente: Consolata →</button>
-  </div>
-</div>
-
-<!-- ============ SECCIÓN: CONSOLATA ============ -->
-<div class="j-view" id="view-consolata">
-  <section id="consolata" class="sec cloth">
+<!-- ============ BLOQUE 3: LA CONSOLATA ============ -->
+<div class="blk blk-oculto" id="blk-consolata" data-blk-t="La Consolata" data-blk-ic="globe">
+<section id="consolata" class="sec cloth">
 <div class="wrap">
 <div class="split">
 <h2 class="h-display h-xl">Los Misioneros de la Consolata</h2>
@@ -1582,21 +1412,114 @@ body.is-authenticated .fb-tabbar { display: flex !important; }
 </div>
 </div>
 </section>
-  <section id="mapa" class="sec night">
+<section id="mapa" class="sec night">
 <div class="wrap">
 <div class="split"><h2 class="h-display h-xl">La Consolata en el mundo</h2><p class="lead lt" style="margin:0">Desde Turín, en 1901, los Misioneros de la Consolata salieron a anunciar el Evangelio. Hoy están en cuatro continentes, y nosotros somos parte de esa familia.</p></div>
 <div id="mapa-app"></div>
 </div>
 </section>
-  <div class="view-foot-nav">
-    <button type="button" class="btn btn-soft btn-sm" data-view-target="fe">← Oración</button>
-    <button type="button" class="btn btn-blue btn-sm" data-view-target="novedades">Siguiente: Noticias →</button>
-  </div>
+<section id="identidad" class="sec" style="background: var(--mist)">
+<div class="wrap">
+<div class="ident">
+
+<div class="poster">
+<div class="rod" aria-hidden="true"></div>
+<div class="poster-cloth tail" data-unroll="tail">
+<img src="img/poster-virgen.jpg" alt="Ilustración de la Virgen Consolata con el Niño Jesús sobre la silueta del templo, con el nombre Juventud Misionera Allamaniana">
+</div>
 </div>
 
-<!-- ============ SECCIÓN: NOTICIAS Y MURO ============ -->
-<div class="j-view" id="view-novedades">
-  <section id="novedades" class="sec" style="background: var(--paper)">
+<div class="ident-txt">
+<h2 class="h-display h-xl">Un misionero de JUMA es…</h2>
+<ol class="idlist">
+<li>Una persona católica que vive los sacramentos.</li>
+<li>Alguien a quien Dios ha llamado a ser misionero en el mundo juvenil. Su corazón arde por la misión: la ama y vive en constante misión.</li>
+<li>Alguien que se reconoce por su profundo amor a María Santísima, bajo la advocación de la Consolata, y a nuestro fundador, San José Allamano.</li>
+</ol>
+</div>
+
+</div>
+<blockquote class="quote quote-wide">
+<p>“Si tu corazón no arde de amor cuando haces misión, no te emocionas, permaneces indiferente, deberías cuestionarte si este carisma es para ti.”</p>
+<footer>San José Allamano</footer>
+</blockquote>
+<div class="patrons-head">
+<h3 class="h-display h-md" style="color: var(--royal)">Nuestra madre, nuestro fundador y nuestros santos</h3>
+<p class="body">Toca cada uno para conocer su historia.</p>
+</div>
+<div class="patrons">
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/consolata.jpg" alt="Ícono de la Virgen Consolata con el Niño Jesús"><div><b>María Consolata</b><span>Nuestra madre y patrona</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/consolata.jpg" alt="Ícono de la Virgen Consolata con el Niño Jesús"><div class="pd-txt"><p><b>Consolata</b> significa «la que consuela». Así llaman en Turín (Italia) a la Virgen María con el Niño que se venera en su santuario. De ella toman su nombre los Misioneros y las Misioneras de la Consolata, y por eso es la madre y patrona de JUMA.</p><p><b>El origen.</b> La devoción nace en la antigua iglesia de San Andrés, en Turín, adonde llegaron monjes benedictinos a comienzos del siglo X. Según la tradición, allí se halló una antigua imagen de la Virgen con el Niño, y un joven ciego que vino a buscarla recobró la vista. Desde entonces la devoción se extendió por toda la ciudad.</p><p><b>El cuadro.</b> La pintura que hoy se venera sobre el altar mayor es una copia de una imagen de la Virgen con el Niño de la iglesia de Santa María del Popolo, en Roma.</p><p><b>Patrona de Turín.</b> En 1706, durante el sitio francés de la ciudad, la gente se refugió en el santuario. Después de la liberación, la ciudad levantó pilares con su imagen y el Senado la confirmó como patrona de Turín. En 1714 se oficializó su fiesta, que se celebra cada <b>20 de junio</b>.</p><p><b>Con Allamano.</b> San José Allamano fue rector del santuario de la Consolata desde 1880. Bajo su mirada fundó en 1901 a los Misioneros y en 1910 a las Misioneras de la Consolata, para llevar el consuelo de María y el Evangelio a los pueblos que aún no lo conocen.</p></div></div></details>
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/allamano.jpg" alt="Ícono de San José Allamano"><div><b>San José Allamano</b><span>Fundador de los Misioneros de la Consolata</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/allamano.jpg" alt="Ícono de San José Allamano"><div class="pd-txt"><p>Nació el <b>21 de enero de 1851</b> en Castelnuovo, en el Piamonte (Italia). Su madre, María Cafasso, era hermana de San José Cafasso. De joven fue alumno de San Juan Bosco.</p><p>Fue ordenado sacerdote el 20 de septiembre de 1873. Desde <b>1880</b> fue rector del santuario de la Consolata, en Turín, donde formó a muchos sacerdotes y renovó el santuario.</p><p>El <b>29 de enero de 1901</b> fundó el Instituto de los Misioneros de la Consolata, y el 29 de enero de 1910, el de las Hermanas Misioneras de la Consolata, para anunciar el Evangelio a los pueblos que aún no lo conocen (la misión <i>ad gentes</i>).</p><p>Murió en Turín el 16 de febrero de 1926. Fue beatificado por San Juan Pablo II el 7 de octubre de 1990 y <b>canonizado por el papa Francisco el 20 de octubre de 2024</b>, por un milagro ocurrido en la Amazonía de Brasil.</p><p>Enseñaba la santidad de la vida diaria: «Sed santos sin ruido» y «No basta hacer el bien, hay que hacerlo bien».</p></div></div></details>
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-cafasso.jpg" alt="Pintura de San José Cafasso"><div><b>San José Cafasso</b><span>Tío de Allamano, guía de sacerdotes</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-cafasso.jpg" alt="Pintura de San José Cafasso"><div class="pd-txt"><p>Nació el <b>15 de enero de 1811</b> en Castelnuovo d’Asti, el mismo pueblo de San Juan Bosco y de San José Allamano, en el Piamonte (Italia). Su hermana fue la madre de San José Allamano.</p><p>Fue profesor y luego rector del Convictorio Eclesiástico de Turín, donde formó a muchos sacerdotes. Amaba profundamente la Eucaristía y la confesión.</p><p>Fue capellán de las cárceles de Turín. Acompañó a más de sesenta condenados a muerte hasta el último momento, por eso lo llamaron «el sacerdote de la horca».</p><p>Conoció a Juan Bosco en 1827. Fue su confesor y guía espiritual, lo ayudó en sus estudios y lo apoyó en su obra con los niños pobres y abandonados.</p><p>Murió en Turín el 23 de junio de 1860. Fue <b>canonizado por el papa Pío XII el 22 de junio de 1947</b>.</p></div></div></details>
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-leonella.jpg" alt="Pintura de la beata Leonella Sgorbati con un papel que dice Perdono"><div><b>Beata Leonella Sgorbati</b><span>Misionera de la Consolata, mártir del perdón</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-leonella.jpg" alt="Pintura de la beata Leonella Sgorbati con un papel que dice Perdono"><div class="pd-txt"><p>Se llamaba Rosa María Sgorbati. Nació el <b>9 de diciembre de 1940</b> en Gazzola (Piacenza, Italia). En 1963 entró en las Misioneras de la Consolata y tomó el nombre de Leonella. Estudió enfermería en Inglaterra.</p><p>Desde 1972 sirvió en Kenia como enfermera en los hospitales de Nyeri y Kiambu. Desde 1985 dirigió la formación en la escuela de enfermería de Nkubu, y desde 1993 fue superiora de su congregación en Kenia.</p><p>Después fue a Mogadiscio (Somalia), donde abrió en 2002 una escuela de enfermería en el hospital infantil. En 2006 se graduaron las primeras 34 enfermeras.</p><p>El <b>17 de septiembre de 2006</b> le dispararon por la espalda frente al hospital. También murió su guardaespaldas. Antes de morir dijo: <b>«Perdono, perdono, perdono»</b>.</p><p>Fue beatificada el <b>26 de mayo de 2018</b> en Piacenza (Italia).</p></div></div></details>
+<details class="patron-d" name="santos"><summary class="patron"><img src="img/new-santo-irene.jpg" alt="Foto de la beata Irene Stefani con hábito blanco"><div><b>Beata Irene Stefani</b><span>«Nyaatha», madre de la misericordia</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="img/new-santo-irene.jpg" alt="Foto de la beata Irene Stefani con hábito blanco"><div class="pd-txt"><p>Se llamaba Aurelia Mercede Stefani. Nació en <b>agosto de 1891</b> en Anfo (Brescia, Italia). En 1911 entró en las Misioneras de la Consolata, fundadas por San José Allamano, y el 29 de enero de 1914 hizo sus votos con el nombre de Irene.</p><p>A fines de 1914 llegó a Kenia. Durante la Primera Guerra Mundial, hasta 1920, cuidó a los heridos y enfermos en hospitales militares de Kenia y Tanzania.</p><p>Desde 1920 vivió en Gikondi (Kenia): enseñaba, visitaba a las familias y cuidaba a los enfermos y a los pobres. La gente la llamó <b>«Nyaatha»</b>, que significa madre de la misericordia.</p><p>Murió el <b>31 de octubre de 1930</b> en Gikondi, contagiada de peste mientras cuidaba a un enfermo.</p><p>Fue beatificada el <b>23 de mayo de 2015</b> en Nyeri (Kenia).</p></div></div></details>
+</div>
+</div>
+</section>
+</div>
+
+<!-- ============ BLOQUE 4: FORMACIÓN ============ -->
+<div class="blk blk-oculto" id="blk-formacion" data-blk-t="Formación" data-blk-ic="cap">
+<section id="formacion" class="sec night">
+<div class="wrap">
+<div class="split">
+<h2 class="h-display h-xl">Cinco años, cinco continentes</h2>
+<p class="lead lt" style="margin: 0">Cada año de formación tiene un color y una franela que representa un continente. Toca un banderín para ver sus temas.</p>
+</div>
+</div>
+<div style="max-width: 1240px; margin: 0 auto">
+<div class="rod pennants-rod" aria-hidden="true"></div>
+<div class="pennants" id="pennants" role="group" aria-label="Años de formación"></div>
+<div class="fpanel" id="fpanel">
+<div>
+<h3 id="fp-title"></h3>
+<p id="fp-text"></p>
+<ol class="topics" id="fp-topics"></ol>
+</div>
+<div class="fphoto"><img loading="lazy" decoding="async" class="photo" id="fp-img" src="" alt=""></div>
+</div>
+</div>
+</section>
+</div>
+
+<!-- ============ BLOQUE 5: VIDA DE FE ============ -->
+<div class="blk blk-oculto" id="blk-fe" data-blk-t="Vida de fe" data-blk-ic="book">
+<section id="fe" class="sec" style="background: var(--mist)">
+<div class="wrap">
+<div class="split"><h2 class="h-display h-xl">Vida de fe</h2><p class="body">El día litúrgico, las oraciones, el rosario y la misa, para rezar en grupo o en casa.</p></div>
+<div id="fe-app"></div>
+</div>
+</section>
+<section id="areas" class="sec" style="background: var(--paper)">
+<div class="wrap">
+<div class="split">
+<h2 class="h-display h-xl">Cada joven tiene un lugar donde servir</h2>
+<p class="body">Cada área cuenta con un encargado y un auxiliar, para que el trabajo sea ordenado y siempre tenga continuidad.</p>
+</div>
+<figure class="band areas-pic" data-unroll="rect"><img loading="lazy" decoding="async" class="photo" src="img/grupo-iglesia.jpg" alt="Jóvenes de JUMA y misioneros reunidos en grupo dentro de un templo" style="object-position: 50% 35%"><figcaption>Cada área suma: juntos somos el movimiento.</figcaption></figure>
+<ul class="areas">
+<li><h3>Espiritualidad</h3><p>Retiros, oración y meditación, charlas de fe y devoción a los sacramentos, en especial la Eucaristía y la Reconciliación.</p></li>
+<li><h3>Liturgia</h3><p>Prepara la Santa Misa: lecturas, oraciones y ministros, para que cada celebración sea un encuentro con Cristo.</p></li>
+<li><h3>Coro juvenil</h3><p>Anima liturgias, encuentros y eventos especiales con cantos que se vuelven oración.</p></li>
+<li><h3>Recreación</h3><p>Juegos, dinámicas, paseos y deporte que fortalecen la amistad y muestran que la fe también es gozo.</p></li>
+<li><h3>Visita a hogares</h3><p>Visitamos a jóvenes y familias para escuchar y acompañar, y para que el movimiento sea un segundo hogar.</p></li>
+<li><h3>Servicio social</h3><p>Voluntariado y caridad: asilos, hospitales, recolección de alimentos y proyectos comunitarios.</p></li>
+<li><h3>Metodología</h3><p>Diseña el plan de formación de reuniones y talleres, y prepara a los líderes del grupo.</p></li>
+<li><h3>Logística</h3><p>La columna del movimiento: espacios, sonido, alimentos, transporte y materiales.</p></li>
+<li><h3>Ambientación</h3><p>Decora los espacios con telas, luces y símbolos para que todos se sientan bienvenidos.</p></li>
+<li><h3>Redes sociales</h3><p>La voz digital del movimiento: evangelizar con imágenes, videos y textos.</p></li>
+</ul>
+<div class="org">
+<h3 class="h-display h-md">Cómo nos organizamos</h3>
+<p class="body" style="color: var(--ink)">Un asesor general acompaña al movimiento. La coordinación general, la subcoordinación, la secretaría, la tesorería y la animación forman la directiva, que se renueva cada tres años por elección.</p>
+</div>
+</div>
+</section>
+</div>
+
+<!-- ============ BLOQUE 6: NOTICIAS ============ -->
+<div class="blk blk-oculto" id="blk-noticias" data-blk-t="Noticias" data-blk-ic="news">
+<section id="novedades" class="sec" style="background: var(--paper)">
 <div class="wrap">
 <div class="split">
 <h2 class="h-display h-xl">Noticias de JUMA</h2>
@@ -1605,36 +1528,17 @@ body.is-authenticated .fb-tabbar { display: flex !important; }
 <div class="posts" id="posts"></div>
 </div>
 </section>
-  <section id="testimonios" class="sec hide" style="background: var(--paper)">
+<section id="testimonios" class="sec hide" style="background: var(--paper)">
 <div class="wrap">
 <div class="split"><h2 class="h-display h-xl">Experiencias que nos marcaron</h2><p class="body">Testimonios de jóvenes, familias y misioneros de JUMA.</p></div>
 <div id="testimonios-list" class="tes-grid"></div>
 </div>
 </section>
-  <section id="muro-sec" class="sec" style="background: var(--mist)">
-<div class="wrap">
-<div class="split">
-<h2 class="h-display h-xl">Escríbenos, comparte una intención</h2>
-<p class="body">Deja un saludo, una petición de oración o un testimonio. Un coordinador lo revisa antes de publicarlo.</p>
-</div>
-<div class="muro" id="muro"></div>
-<form class="muro-form" id="muro-form" autocomplete="off">
-<div class="fld"><label for="m-nombre">Tu nombre</label><input id="m-nombre" maxlength="60" required></div>
-<div class="fld w"><label for="m-texto">Tu mensaje</label><textarea id="m-texto" rows="3" maxlength="400" required></textarea></div>
-<button type="submit" class="btn btn-blue">Enviar mensaje</button>
-<p id="m-msg" class="body" style="flex-basis:100%;font-size:15px"></p>
-</form>
-</div>
-</section>
-  <div class="view-foot-nav">
-    <button type="button" class="btn btn-soft btn-sm" data-view-target="consolata">← Consolata</button>
-    <button type="button" class="btn btn-blue btn-sm" data-view-target="galeria">Siguiente: Galería →</button>
-  </div>
 </div>
 
-<!-- ============ SECCIÓN: GALERÍA ============ -->
-<div class="j-view" id="view-galeria">
-  <section id="galeria" class="sec" style="background: var(--mist)">
+<!-- ============ BLOQUE 7: GALERÍA ============ -->
+<div class="blk blk-oculto" id="blk-galeria" data-blk-t="Galería" data-blk-ic="image">
+<section id="galeria" class="sec" style="background: var(--mist)">
 <div class="wrap">
 <div class="split">
 <h2 class="h-display h-xl">Una Iglesia joven que camina</h2>
@@ -1745,7 +1649,41 @@ body.is-authenticated .fb-tabbar { display: flex !important; }
 </div>
 </div>
 </section>
-  <section id="unete" class="closing-wrap" aria-label="Únete">
+<section id="muro-sec" class="sec" style="background: var(--mist)">
+<div class="wrap">
+<div class="split">
+<h2 class="h-display h-xl">Escríbenos, comparte una intención</h2>
+<p class="body">Deja un saludo, una petición de oración o un testimonio. Un coordinador lo revisa antes de publicarlo.</p>
+</div>
+<div class="muro" id="muro"></div>
+<form class="muro-form" id="muro-form" autocomplete="off">
+<div class="fld"><label for="m-nombre">Tu nombre</label><input id="m-nombre" maxlength="60" required></div>
+<div class="fld w"><label for="m-texto">Tu mensaje</label><textarea id="m-texto" rows="3" maxlength="400" required></textarea></div>
+<button type="submit" class="btn btn-blue">Enviar mensaje</button>
+<p id="m-msg" class="body" style="flex-basis:100%;font-size:15px"></p>
+</form>
+</div>
+</section>
+</div>
+
+<!-- ============ BLOQUE 8: ÚNETE A JUMA ============ -->
+<div class="blk blk-oculto" id="blk-unete" data-blk-t="Únete a JUMA" data-blk-ic="userplus">
+<section id="logo" class="sec" style="background: var(--paper)">
+<div class="wrap logo-sec">
+<img class="logo-big" src="img/logo.png" alt="Logo de JUMA Duaca: un globo terráqueo, la J en forma de cruz con tres estrellas, San José Allamano con los brazos abiertos y huellas de colores">
+<div>
+<h2 class="h-display h-xl">Cada detalle de nuestro logo dice algo</h2>
+<ol class="meanings">
+<li><span class="num">1</span>Las letras llevan los colores de la vestimenta de la imagen de la Consolata.</li>
+<li><span class="num">2</span>La J tiene la forma de la cruz del Resucitado, con las tres estrellas y el anillo de la Consolata.</li>
+<li><span class="num">3</span>Al final de la palabra aparece San José Allamano, nuestro maestro de espiritualidad, santidad y misión.</li>
+<li><span class="num">4</span>Las huellas dibujan un camino: la misión, salir y anunciar la gloria de Dios a las naciones.</li>
+<li><span class="num">5</span>Sus colores son los cinco continentes, junto a la silueta del mundo: una mirada universal.</li>
+</ol>
+</div>
+</div>
+</section>
+<section id="unete" class="closing-wrap" aria-label="Únete">
 <div class="closing tail" data-unroll="tail">
 <img decoding="async" class="photo" src="img/ourem.jpg" alt="Jóvenes de muchos países con sus banderas frente a una iglesia en Portugal">
 <video class="vclip vover vbg" data-src="video/v-salon.mp4?v=2" muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true"></video><button type="button" class="vsnd" aria-label="Activar sonido" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M3 9.5v5h4l5 4.5v-14L7 9.5H3z"/><path class="w" d="M15.5 8.8a4.5 4.5 0 0 1 0 6.4M18.3 6a8.5 8.5 0 0 1 0 12"/><path class="x" d="M16 9.5l5 5M21 9.5l-5 5"/></svg><span>Activar sonido</span></button><button type="button" class="vbtn" aria-label="Pausar video" aria-pressed="false"><span aria-hidden="true"></span></button><div class="closing-veil" aria-hidden="true"></div>
@@ -1765,14 +1703,13 @@ body.is-authenticated .fb-tabbar { display: flex !important; }
 </div>
 </div>
 </section>
-  <div class="view-foot-nav">
-    <button type="button" class="btn btn-soft btn-sm" data-view-target="novedades">← Noticias</button>
-    <button type="button" class="btn btn-blue btn-sm" data-view-target="inicio">Volver al Inicio 🏠</button>
-  </div>
 </div>
 
-<!-- ============ SECCIÓN: COMUNIDAD (MIEMBROS REGISTRADOS) ============ -->
-<div class="j-view" id="view-comunidad">
+<div class="feed-more" id="feed-more" aria-live="polite"></div>
+</div>
+
+<!-- ============ COMUNIDAD (solo miembros con sesión) ============ -->
+<div class="pagina-comunidad hide" id="view-comunidad">
   <div class="wrap" style="padding:40px 20px;text-align:center">
     <p class="body">Cargando tu espacio comunitario…</p>
   </div>
@@ -1794,12 +1731,13 @@ body.is-authenticated .fb-tabbar { display: flex !important; }
 </footer>
 
 <button type="button" class="editfab hide" id="fab-edit">Editar página</button>
+<!-- Barra inferior (teléfono). La arma la app según la sesión. -->
+<nav class="tabbar" id="tabbar" aria-label="Navegación principal"></nav>
 </div>
 <div id="modal-root"></div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
 <script type="module" src="js/app.js?v=60"></script>
 <script type="module" src="js/fe.js?v=60"></script>
-<div class="social-dock" id="social-dock"></div>
 </body>
 </html>

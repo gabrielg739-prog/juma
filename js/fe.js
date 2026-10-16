@@ -866,8 +866,10 @@ function reelsFan() {
   fetch('oraciones.json?t=' + Date.now()).then((r) => r.json()).then((d) => { ORA = { oraciones: d.oraciones || [], catequesis: d.catequesis || [] }; if (tab !== 'hoy') render(); }).catch(() => {});
   window.JUMA_FE = {
     liturgia, misteriosHoy, MISIONERO, CANTOS, MISA, COLORES, PAISES,
-    paisMapa: (k) => { const s = $('#mapa'); if (s) s.scrollIntoView({ behavior: 'smooth' }); setTimeout(() => { const b = document.querySelector(`[data-mpk="${k}"]`); if (b) b.click(); }, 450); },
+    /* En el inicio con «Cargar más», primero se abre el bloque donde está la sección (window.JUMA_NAV lo da app.js) */
+    paisMapa: (k) => { abrirBloque('mapa'); const s = $('#mapa'); if (s) s.scrollIntoView({ behavior: 'smooth' }); setTimeout(() => { const b = document.querySelector(`[data-mpk="${k}"]`); if (b) b.click(); }, 450); },
     oracion: (t) => { const all = ORA.oraciones.concat(ORA.catequesis); return all.find((o) => (o.k || []).some((k) => t.includes(' ' + k + ' ') || t.includes(' ' + k))); },
-    abrir: (k) => { tab = k; render(); const s = $('#fe'); if (s) s.scrollIntoView({ behavior: 'smooth' }); }
+    abrir: (k) => { abrirBloque('fe'); tab = k; render(); const s = $('#fe'); if (s) s.scrollIntoView({ behavior: 'smooth' }); }
   };
+  function abrirBloque(id) { try { if (window.JUMA_NAV) window.JUMA_NAV.revelar(id); if (history.replaceState) history.replaceState(null, '', '#' + id); } catch (e) {} }
 })();
