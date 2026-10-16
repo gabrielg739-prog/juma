@@ -1,11 +1,16 @@
-# Avisos al teléfono por los mensajes nuevos del chat de JUMA Duaca.
+# Avisos al teléfono de JUMA Duaca: agenda (fechas y actividades), noticias, aviso de la página y mensajes del chat.
 # Funciona solo si en GitHub > Settings > Secrets and variables > Actions existe el secreto
 # FIREBASE_SERVICE_ACCOUNT (el JSON de una cuenta de servicio de Firebase). Sin el secreto, no hace nada.
+# Se ejecuta cada 5 minutos (GitHub a veces se retrasa unos minutos más) y, además, enseguida que el editor
+# publica cambios en contenido.json.
 name: Avisos push de JUMA
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '*/5 * * * *'
+  push:
+    branches: [main]
+    paths: [contenido.json]
   workflow_dispatch:
 
 permissions:
@@ -27,14 +32,25 @@ jobs:
         run: echo "Falta el secreto FIREBASE_SERVICE_ACCOUNT; no se envían avisos."
       - uses: actions/checkout@v4
         if: env.TIENE_SECRETO == 'true'
+        with:
+          sparse-checkout: |
+            tools
+            contenido.json
+          sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         if: env.TIENE_SECRETO == 'true'
         with:
           node-version: '20'
+      - name: Recordar firebase-admin entre ejecuciones
+        if: env.TIENE_SECRETO == 'true'
+        uses: actions/cache@v4
+        with:
+          path: tools/node_modules
+          key: avisos-${{ runner.os }}-${{ hashFiles('tools/package.json') }}
       - name: Instalar firebase-admin
         if: env.TIENE_SECRETO == 'true'
         working-directory: tools
-        run: npm install --no-audit --no-fund --omit=dev
+        run: '[ -d node_modules/firebase-admin ] || npm install --no-audit --no-fund --omit=dev'
       - name: Enviar avisos
         if: env.TIENE_SECRETO == 'true'
         working-directory: tools

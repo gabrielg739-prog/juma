@@ -2607,6 +2607,13 @@ function mostrarPagina(cual) {
 function irA(destino, opt = {}) {
   let id = String(destino || '').replace(/^#\/?/, '').trim() || 'inicio';
   if (id === 'main' || id === 'contenido') id = 'inicio';
+  /* Enlace de un aviso del teléfono (#mensajes): abre el chat en cuanto la sesión esté lista */
+  if (id === 'mensajes') {
+    chatPendiente = true;
+    id = 'inicio';
+    try { history.replaceState(null, '', location.pathname + location.search + '#inicio'); } catch (e) {}
+    setTimeout(abrirChatPendiente, 0);
+  }
   if (id === 'comunidad') {
     mostrarPagina('comunidad');
     currentSection = 'comunidad';
@@ -2629,6 +2636,12 @@ function irA(destino, opt = {}) {
     else requestAnimationFrame(() => bajarA(id, opt.smooth !== false));
   }
   return id;
+}
+let chatPendiente = false;
+function abrirChatPendiente() {
+  if (!chatPendiente || !currentUser || !isMemberUI()) return;
+  chatPendiente = false;
+  if (modalKey !== 'chat') openChatModal();
 }
 function switchSection(sectionId, updateHash = true) {
   if (modalRoot && modalRoot.firstChild && modalKey !== 'force-photo') closeModal();
@@ -4710,6 +4723,7 @@ function handleUser(u, force = false) {
     if (coordUI()) { showFab(); loadAllInscripciones(); }
     registrarTokenPush(false);
     refreshBadges();
+    abrirChatPendiente();
     setTimeout(() => checkBirthdayCelebration(), 500);
   })();
   return handlePromise;
