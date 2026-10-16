@@ -2508,7 +2508,12 @@ function getInternalNotifications() {
 
   // 1. Cumpleaños de hoy (del directorio de miembros)
   const yaCumple = new Set();
-  (miembros || []).forEach((p) => {
+  const fuentes = (miembros || []).slice();
+  (allInscripciones || []).forEach((r) => {
+    const nac = String((r && ((r.datos && r.datos.nac) || r.nac)) || '');
+    if (/^\d{4}-\d{2}-\d{2}$/.test(nac)) fuentes.push({ uid: r.uid || r.id, nombre: r.nombre || ((r.datos && ((r.datos.nombres || '') + ' ' + (r.datos.apellidos || '')).trim()) || ''), cumple: nac.slice(5), sexo: r.sexo || (r.datos && r.datos.sexo) || '' });
+  });
+  fuentes.forEach((p) => {
     if (!p || !p.uid || p.cumple !== mmdd || p.uid === miUid() || yaCumple.has(p.uid)) return;
     yaCumple.add(p.uid);
     const isF = p.sexo === 'Mujer';
@@ -5709,10 +5714,11 @@ function generateEmojiRain(container) {
 }
 
 function isGabrielGomez(rec) {
-  /* Solo decide si se muestra la animación de cumpleaños a pantalla completa (no da permisos). */
   if (!rec) return false;
-  const em = String(rec.correo || (rec.datos && rec.datos.correo) || rec.email || '').trim().toLowerCase();
-  return em === 'gabrielg739@gmail.com';
+  const em = String(rec.correo || (rec.datos && rec.datos.correo) || '').trim().toLowerCase();
+  if (em === 'gabrielg739@gmail.com') return true;
+  const nom = String(rec.nombre || ((rec.datos && ((rec.datos.nombres || '') + ' ' + (rec.datos.apellidos || ''))) || '')).trim().toLowerCase();
+  return /gabriel.*g[oó]mez/i.test(nom);
 }
 
 function showBirthdayCelebration(rec, isPreview = false) {
