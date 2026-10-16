@@ -65,6 +65,8 @@ service cloud.firestore {
       // Planilla propia (id = uid de la sesión), siempre sin permisos
       allow create: if signedIn()
         && id == request.auth.uid
+        && request.resource.data.get('uid', id) == id
+        && request.resource.data.get('correo', email()) == email()
         && nonPriv(request.resource.data.get('rol', 'participante'))
         && asistenciasLegitimas();
       // Registro público sin cuenta (como antes): id «juma-…», sin permisos y sin asistencias
@@ -73,10 +75,12 @@ service cloud.firestore {
         && nonPriv(request.resource.data.get('rol', 'participante'))
         && request.resource.data.get('asistencias', []).size() == 0;
 
-      // El dueño actualiza sus datos pero no su rol ni sus asistencias; coordinadores, todo
+      // El dueño actualiza sus datos pero no su rol ni sus asistencias (el correo solo puede pasar a ser el de su cuenta); coordinadores, todo
       allow update: if signedIn()
         && id == request.auth.uid
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['rol', 'asistencias', 'migradoDe']);
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['rol', 'asistencias', 'migradoDe', 'uid', 'id'])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['correo'])
+            || request.resource.data.correo == email());
       allow update: if isCoord();
 
       allow delete: if isAdmin();
@@ -122,6 +126,8 @@ service cloud.firestore {
         && request.resource.data.texto is string
         && request.resource.data.texto.size() > 0
         && request.resource.data.texto.size() <= 1000
+        && request.resource.data.get('autor', '') is string
+        && request.resource.data.get('autor', '').size() <= 80
         && (nonPriv(request.resource.data.get('rol', 'participante')) || isCoord())
         && request.resource.data.get('foto', '') is string
         && request.resource.data.get('foto', '').size() <= 2000
@@ -131,7 +137,9 @@ service cloud.firestore {
                 && request.resource.data.paraUid is string
                 && request.resource.data.paraUid != ''
                 && request.resource.data.paraUid != request.auth.uid
-                && request.resource.data.participantes == [request.auth.uid, request.resource.data.paraUid]));
+                && request.resource.data.participantes == [request.auth.uid, request.resource.data.paraUid]
+                && request.resource.data.dmKey in [request.auth.uid + '_' + request.resource.data.paraUid,
+                                                   request.resource.data.paraUid + '_' + request.auth.uid]));
 
       // Moderación: coordinadores. El autor puede borrar su propio mensaje.
       allow update: if isCoord();

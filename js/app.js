@@ -2106,13 +2106,16 @@ async function saveRegistration() {
   /* Con sesión: la planilla se guarda en inscripciones/{uid} (uid real de Firebase).
      Sin sesión (sin correo/contraseña): se guarda como registro nuevo con id «juma-…», como antes. */
   const uid = currentUser ? currentUser.uid : ('juma-' + sha256(email || ((d.nombres || '') + (d.celular || ''))).slice(0, 20));
+  /* Con sesión, el correo de la planilla es siempre el de la cuenta (las reglas lo exigen) */
+  const correoCuenta = currentUser && currentUser.email ? String(currentUser.email).trim().toLowerCase() : email;
+  d.correo = correoCuenta || d.correo;
   const isVisitante = d.tipoRegistro === 'visitante';
   const esActualizacion = !!(currentUser && perfilEnNube && myProfile && (myProfile.uid === uid || myProfile.id === uid));
 
   const rec = {
     id: uid,
     uid,
-    correo: email,
+    correo: correoCuenta,
     nombre: ((d.nombres || '') + ' ' + (d.apellidos || '')).trim(),
     cedula: d.cedula || '',
     sexo: d.sexo || detectGender({ datos: d }),
@@ -3922,7 +3925,9 @@ function chatModalHtml() {
               </p>
             </div>` : filteredMsgs.map((m) => {
               const isMine = esMio(m);
-              const author = m.autor || 'Misionero JUMA';
+              /* El nombre se toma del directorio (miembros/{uid}) cuando existe; el del mensaje lo escribe quien lo envía */
+              const mem = (miembros || []).find((x) => x && x.uid === m.uid);
+              const author = (mem && mem.nombre) || m.autor || 'Misionero JUMA';
               const firstLetter = author.charAt(0).toUpperCase() || 'M';
               const fotoUrl = fotoDeAutor(m);
               const time = fmtChatTime(m.creado && m.creado.toDate ? m.creado.toDate().toISOString() : m.fecha);
