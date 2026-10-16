@@ -33,8 +33,38 @@ service cloud.firestore {
         && exists(rolePath())
         && get(rolePath()).data.get('rol', '') in roles;
     }
+    function cfgDoc() {
+      return /databases/$(database)/documents/site/config;
+    }
+    function insDoc(id) {
+      return /databases/$(database)/documents/inscripciones/$(id);
+    }
+    function rolPrivilegiado(r) {
+      return r in ['coordinador', 'asesor'];
+    }
+    // Coordinadores y asesores de la versión anterior (los asignó la Cuenta Maestra):
+    // la cuenta de Gabriel Gómez, las listas de site/config, o el rol escrito en su planilla
+    // (o en su planilla antigua «juma-…», si la suya es una copia de ella).
+    // Nadie puede ponerse ese rol a sí mismo: abajo, solo la cuenta maestra cambia «rol» y esas listas.
+    function legacyCoord() {
+      return verified() && email() != '' && (
+        email() == 'gabrielg739@gmail.com'
+        || (exists(cfgDoc())
+            && (email() in get(cfgDoc()).data.get('coordinadoresEmails', [])
+                || email() in get(cfgDoc()).data.get('asesoresEmails', [])))
+        || (exists(insDoc(request.auth.uid))
+            && (rolPrivilegiado(get(insDoc(request.auth.uid)).data.get('rol', ''))
+                || legacyMigrado(get(insDoc(request.auth.uid)).data.get('migradoDe', ''))))
+      );
+    }
+    function legacyMigrado(leg) {
+      return leg is string && leg != ''
+        && exists(insDoc(leg))
+        && get(insDoc(leg)).data.get('correo', '') == email()
+        && rolPrivilegiado(get(insDoc(leg)).data.get('rol', ''));
+    }
     function isCoord() {
-      return isAdmin() || hasRole(['coordinador', 'asesor']);
+      return isAdmin() || hasRole(['coordinador', 'asesor']) || legacyCoord();
     }
     // Miembro: coordinador o persona con su planilla en inscripciones/{su uid}
     function isMember() {
@@ -81,7 +111,9 @@ service cloud.firestore {
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['rol', 'asistencias', 'migradoDe', 'uid', 'id'])
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['correo'])
             || request.resource.data.correo == email());
-      allow update: if isCoord();
+      // Coordinadores: todo menos el rol (el rol solo lo cambia la cuenta maestra)
+      allow update: if isCoord()
+        && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['rol']));
 
       allow delete: if isAdmin();
     }
@@ -170,9 +202,17 @@ service cloud.firestore {
           && d.get('historialDescargas', []).size() <= o.get('historialDescargas', []).size() + 1;
       }
 
+      // Las listas antiguas de coordinadores y asesores en site/config solo las cambia la cuenta maestra
+      function listasIntactas() {
+        return docId != 'config'
+          || (request.resource.data.get('coordinadoresEmails', []) == (resource == null ? [] : resource.data.get('coordinadoresEmails', []))
+              && request.resource.data.get('asesoresEmails', []) == (resource == null ? [] : resource.data.get('asesoresEmails', [])));
+      }
+
       allow read: if docId != 'push_estado' || isCoord();
       // config, videos de noticias (vid_*) y lo demás: coordinadores (borrar, solo la cuenta maestra)
-      allow create, update: if isCoord() && docId != 'stats' && docId != 'push_estado';
+      allow create, update: if isCoord() && docId != 'stats' && docId != 'push_estado'
+        && (isAdmin() || listasIntactas());
       allow delete: if isAdmin() && docId != 'stats';
       // contador de descargas
       allow create: if docId == 'stats'

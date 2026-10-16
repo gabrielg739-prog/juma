@@ -51,9 +51,10 @@ const estado = (await estadoRef.get()).data() || {};
 const nuevoEstado = {};
 
 /* ---------- 1 y 2: agenda, noticias y aviso (del contenido publicado) ---------- */
+let nubeConfig = null;
 async function leerContenido() {
   let nube = null, repo = null;
-  try { const s = await db.doc('site/config').get(); if (s.exists) nube = s.data(); } catch (e) { console.log('No se pudo leer site/config:', e.message); }
+  try { const s = await db.doc('site/config').get(); if (s.exists) nube = nubeConfig = s.data(); } catch (e) { console.log('No se pudo leer site/config:', e.message); }
   try { repo = JSON.parse(await readFile(new URL('../contenido.json', import.meta.url), 'utf8')); } catch (e) {}
   if (nube && repo) return String(repo.actualizado || '') > String(nube.actualizado || '') ? repo : nube;
   return nube || repo;
@@ -211,11 +212,22 @@ for (const a of avisosContenido) await enviar(todos, a);
 
 /* Mensajes: resumen por persona (comunidad, coordinación y privados) */
 if (mensajes.length) {
-  /* Coordinadores y asesores: roles/{correo} + la cuenta maestra */
+  /* Coordinadores y asesores: roles/{correo}, la cuenta maestra y los de la versión anterior
+     (Gabriel Gómez, listas de site/config y el rol escrito en las planillas), igual que las reglas */
   const coordUids = new Set();
-  const correosCoord = [ADMIN];
+  const correosCoord = [ADMIN, 'gabrielg739@gmail.com'];
+  const lista = (l) => (Array.isArray(l) ? l : []).map((x) => String(x || '').trim().toLowerCase()).filter(Boolean);
+  correosCoord.push(...lista(nubeConfig && nubeConfig.coordinadoresEmails), ...lista(nubeConfig && nubeConfig.asesoresEmails));
   (await db.collection('roles').get()).forEach((d) => { const r = (d.data() || {}).rol; if (r === 'coordinador' || r === 'asesor') correosCoord.push(d.id); });
-  for (const correo of correosCoord) {
+  try {
+    (await db.collection('inscripciones').where('rol', 'in', ['coordinador', 'asesor']).get()).forEach((d) => {
+      const x = d.data() || {};
+      if (x.uid === d.id) coordUids.add(d.id);
+      const c = String(x.correo || (x.datos && x.datos.correo) || '').trim().toLowerCase();
+      if (c) correosCoord.push(c);
+    });
+  } catch (e) {}
+  for (const correo of new Set(correosCoord)) {
     try { const u = await admin.auth().getUserByEmail(correo); if (u && u.emailVerified) coordUids.add(u.uid); } catch (e) {}
   }
   const resumen = new Map(); // uid -> { general, coord, dm: Map(nombre -> n) }

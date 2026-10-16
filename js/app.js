@@ -81,6 +81,23 @@ let fb = null;      // módulos de firebase
 let privRole = '';
 const ROLES_SIN_PERMISO = ['participante', 'visitante', 'colaborador'];
 const rolSinPermiso = (r) => (ROLES_SIN_PERMISO.includes(String(r || '').toLowerCase()) ? String(r).toLowerCase() : 'participante');
+/* Coordinadores y asesores que ya existían antes de roles/{correo} (los asignó la Cuenta Maestra en la versión anterior):
+   las listas coordinadoresEmails / asesoresEmails de site/config, el rol guardado en la planilla y la cuenta de Gabriel Gómez.
+   Las reglas de Firestore reconocen exactamente lo mismo. */
+const GABRIEL_CORREO = 'gabrielg739@gmail.com';
+const rolConPermiso = (r) => { const x = String(r || '').trim().toLowerCase(); return x === 'coordinador' || x === 'asesor' ? x : ''; };
+let listasRoles = { coord: [], ases: [], cargadas: false };
+function tomarListasRoles(d) {
+  const lista = (l) => (Array.isArray(l) ? l : []).map((x) => String(x || '').trim().toLowerCase()).filter(Boolean);
+  listasRoles = { coord: lista(d && d.coordinadoresEmails), ases: lista(d && d.asesoresEmails), cargadas: true };
+}
+function rolAntiguo(email, rec) {
+  const em = String(email || '').trim().toLowerCase();
+  if (em && em === GABRIEL_CORREO) return 'coordinador';
+  if (em && listasRoles.coord.includes(em)) return 'coordinador';
+  if (em && listasRoles.ases.includes(em)) return 'asesor';
+  return rolConPermiso(rec && rec.rol);
+}
 
 /* ===================== datos por defecto: años de formación ===================== */
 const T = (arr) => arr.map((t, i) => ({ n: String(i + 1).padStart(2, '0'), t }));
@@ -1335,8 +1352,7 @@ async function captureSelfieFromVideo() {
     forceErr = '';
     repaintForcePhoto();
   } else if (target === 'auth') {
-    await saveNewProfilePhoto(dataUrl);
-    repaintAuth();
+    await cambiarFotoPerfil(() => dataUrl);
   } else {
     form.d.foto = dataUrl;
     form.err = '';
@@ -1360,7 +1376,8 @@ function selfieBoxHtml(target) {
 }
 
 async function saveNewProfilePhoto(url, extraFields = {}) {
-  if (!currentUser) { authErr = 'Inicia sesión para guardar tu foto de perfil.'; openAuthModal(); return; }
+  if (!currentUser) { authErr = 'Inicia sesión para guardar tu foto de perfil.'; openAuthModal(); return 'error'; }
+  let resultado = 'ok';
   const esNuevo = !myProfile || !perfilEnNube;
   if (!myProfile) {
     const email = String(currentUser.email || '').trim().toLowerCase();
@@ -1398,9 +1415,10 @@ async function saveNewProfilePhoto(url, extraFields = {}) {
       perfilEnNube = true;
       upsertMiembro();
       if (esNuevo) iniciarEscuchasDeMiembro();
-    } catch (e) {}
-  }
+    } catch (e) { resultado = e && e.message === 'timeout' ? 'lento' : 'error'; }
+  } else resultado = 'error';
   updateAuthUI();
+  return resultado;
 }
 
 /* Copia del perfil propio en este teléfono (solo para mostrar nombre y foto al instante). */
@@ -2437,6 +2455,32 @@ async function loadPrivRole(user) {
   return privRole;
 }
 
+async function refrescarListasRoles() {
+  try {
+    const s = await withTimeout(fb.getDoc(fb.doc(fb.db, 'site', 'config')), 6000);
+    tomarListasRoles(s.exists() ? s.data() : {});
+  } catch (e) {}
+  return listasRoles.cargadas;
+}
+/* Coordinadores y asesores de antes: siguen siéndolo sin que nadie tenga que volver a asignarlos */
+async function cargarRolAntiguo(user) {
+  if (privRole || !user || !user.email || !user.emailVerified || !fb || !fb.db) return privRole;
+  const email = String(user.email).trim().toLowerCase();
+  if (email !== GABRIEL_CORREO) await refrescarListasRoles();
+  let r = rolAntiguo(email, perfilEnNube ? myProfile : null);
+  if (!r && perfilEnNube && myProfile && myProfile.migradoDe) {
+    try {
+      const s = await withTimeout(fb.getDoc(fb.doc(fb.db, 'inscripciones', String(myProfile.migradoDe))), 6000);
+      if (s.exists()) {
+        const d = s.data() || {};
+        if (String(d.correo || '').trim().toLowerCase() === email) r = rolConPermiso(d.rol);
+      }
+    } catch (e) {}
+  }
+  if (r) privRole = r;
+  return privRole;
+}
+
 /* Directorio mínimo para que los miembros se encuentren (sin datos personales): miembros/{uid}. */
 async function miniaturaFoto(src) {
   const s = String(src || '');
@@ -3420,12 +3464,10 @@ modalRoot.addEventListener('change', async (e) => {
     return;
   }
   if ((e.target.id === 'au-avatar' || e.target.id === 'au-cam-in' || e.target.id === 'au-avatar-sub') && e.target.files && e.target.files[0]) {
-    try {
-      stopSelfieCamera();
-      const url = await shrinkAvatarDataUrl(e.target.files[0]);
-      await saveNewProfilePhoto(url);
-      repaintAuth();
-    } catch (x) {}
+    const archivo = e.target.files[0];
+    try { e.target.value = ''; } catch (x) {}
+    stopSelfieCamera();
+    await cambiarFotoPerfil(() => shrinkAvatarDataUrl(archivo));
     return;
   }
 });
@@ -3988,6 +4030,7 @@ function authModalHtml() {
             <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="btn btn-soft btn-sm" data-verify-email style="min-height:34px;padding:0 12px;font-size:12.5px">Reenviar enlace</button><button type="button" class="btn btn-soft btn-sm" data-reload-user style="min-height:34px;padding:0 12px;font-size:12.5px">Ya lo verifiqué</button></div>
           </div>` : ''}
 
+          ${fotoEstadoHtml()}
           <!-- Botones directos de foto -->
           <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;justify-content:center">
             <button type="button" data-start-selfie="auth" class="btn btn-soft btn-sm" style="min-height:38px;padding:0 12px;font-size:13px;font-weight:700">${ic('camera')}Tomar selfie</button>
@@ -4057,6 +4100,30 @@ function authModalHtml() {
   </div></div></div>`;
 }
 function openAuthModal() { openModal(authModalHtml(), 'auth'); }
+/* Cambio de foto desde «Mi perfil»: se ve al instante y se sube sin dejar la pantalla esperando */
+let fotoEstado = ''; // '' | 'preparando' | 'guardando'
+const repaintAuthSiAbierto = () => { if (modalKey === 'auth') repaintAuth(); };
+async function cambiarFotoPerfil(obtenerFoto) {
+  if (fotoEstado) return;
+  fotoEstado = 'preparando';
+  repaintAuthSiAbierto();
+  let resultado = 'error';
+  try {
+    const url = await obtenerFoto();
+    if (url) {
+      fotoEstado = 'guardando';
+      const guardado = saveNewProfilePhoto(url); // la foto nueva ya queda en el perfil antes de subirla
+      repaintAuthSiAbierto();
+      resultado = await guardado;
+    }
+  } catch (x) {}
+  fotoEstado = '';
+  repaintAuthSiAbierto();
+  if (resultado === 'ok') showToast('Foto guardada');
+  else if (resultado === 'lento') showToast('La conexión está lenta: tu foto se sigue subiendo. No cierres la app por unos segundos.');
+  else showToast('No se pudo guardar la foto. Revisa tu conexión e inténtalo otra vez.');
+}
+const fotoEstadoHtml = () => (fotoEstado ? `<p role="status" style="margin:0 0 12px;text-align:center;font-size:13px;font-weight:700;color:var(--royal)">${fotoEstado === 'preparando' ? 'Preparando tu foto…' : 'Guardando tu foto…'}</p>` : '');
 function repaintAuth() { modalRoot.innerHTML = authModalHtml(); const ov = $('.overlay', modalRoot); if (ov) { ov.style.animation = 'none'; const sh = $('.sheet', modalRoot); if (sh) sh.style.animation = 'none'; } }
 
 /* ===================== Chat Comunitario, Mensajes Directos y Avisos Sociales ===================== */
@@ -4642,6 +4709,7 @@ async function initFirebase() {
       fb.onSnapshot(fb.doc(fb.db, 'site', 'config'), (snap) => {
         if (snap.exists()) {
           const remote = snap.data();
+          tomarListasRoles(remote);
           if (remote && String(remote.actualizado || '') >= String(cfg.actualizado || '')) {
             pub = clone(remote);
             if (!isEditor() || !pickDraft()) { cfg = clone(remote); renderAll(); refreshBadges(); }
@@ -4718,6 +4786,7 @@ function handleUser(u, force = false) {
     if (seq !== handleSeq) return;
     await loadUserProfile(u);
     if (seq !== handleSeq) return;
+    if (!privRole) { await cargarRolAntiguo(u); if (seq !== handleSeq) return; }
     updateAuthUI();
     if (isMemberUI()) { iniciarEscuchasDeMiembro(); upsertMiembro(); }
     if (coordUI()) { showFab(); loadAllInscripciones(); }
@@ -5060,7 +5129,7 @@ function rolEtiqueta(rec) {
   if (em && isMasterEmail(em)) return 'coordinador';
   const r = em ? rolesLista.find((x) => x.email === em) : null;
   if (r) return r.rol;
-  return rolSinPermiso(userRole(rec));
+  return rolAntiguo(em, rec) || rolSinPermiso(userRole(rec));
 }
 const correoValido = (em) => /^[^\s@/]+@[^\s@/]+\.[^\s@/]+$/.test(String(em || ''));
 async function guardarRol(email, rol, nombre) {
@@ -5083,6 +5152,7 @@ async function quitarRol(email) {
   try {
     /* Único borrado permitido en la app: un documento de roles (no se pierde ninguna planilla) */
     await withTimeout(fb.deleteDoc(fb.doc(fb.db, 'roles', em)), 6000);
+    await quitarRolAntiguo(em);
     await cargarRoles();
     return true;
   } catch (e) {
@@ -5091,6 +5161,26 @@ async function quitarRol(email) {
   }
 }
 
+/* Quita también el permiso de la versión anterior: listas de site/config y el rol escrito en sus planillas */
+async function quitarRolAntiguo(em) {
+  if (!isAdminUser() || !fb || !fb.db || !em) return;
+  await refrescarListasRoles();
+  if (listasRoles.coord.includes(em) || listasRoles.ases.includes(em)) {
+    const coord = listasRoles.coord.filter((x) => x !== em), ases = listasRoles.ases.filter((x) => x !== em);
+    try {
+      await withTimeout(fb.setDoc(fb.doc(fb.db, 'site', 'config'), { coordinadoresEmails: coord, asesoresEmails: ases }, { merge: true }), 6000);
+      listasRoles.coord = coord; listasRoles.ases = ases;
+    } catch (e) {}
+  }
+  const conCorreo = (x) => String((x && (x.correo || (x.datos && x.datos.correo))) || '').trim().toLowerCase() === em;
+  for (const rec of allInscripciones.filter((x) => conCorreo(x) && rolConPermiso(x.rol))) {
+    const ids = [rec.id, rec.migradoDe].filter(Boolean);
+    for (const id of ids) {
+      try { await withTimeout(fb.setDoc(fb.doc(fb.db, 'inscripciones', id), { rol: 'participante' }, { merge: true }), 6000); } catch (e) {}
+    }
+    rec.rol = 'participante';
+  }
+}
 async function cambiarRolInscrito(id, nuevoRol) {
   edErr = ''; edOk = '';
   if (!isMasterAccount()) {
@@ -5104,7 +5194,7 @@ async function cambiarRolInscrito(id, nuevoRol) {
   if (!em) { edErr = 'Esta planilla no tiene correo: para darle permisos, la persona debe tener cuenta con correo.'; repaintEd(); return; }
   let ok;
   if (nuevoRol === 'coordinador' || nuevoRol === 'asesor') ok = await guardarRol(em, nuevoRol, rec.nombre);
-  else ok = rolesLista.some((r) => r.email === em) ? await quitarRol(em) : true;
+  else ok = await quitarRol(em);
   if (!ok) { repaintEd(); return; }
   /* La etiqueta en la planilla solo se muestra; el permiso real está en roles/{correo} */
   rec.rol = nuevoRol;
@@ -5126,10 +5216,27 @@ function rolesTabHtml() {
         <button type="button" class="btn btn-blue btn-sm" data-add-rol style="min-height:52px">Guardar</button>
       </div>
     </div>
-    ${!rolesLista.length ? '<p class="body" style="font-size:15px">Aún no hay coordinadores ni asesores asignados. La Cuenta Maestra siempre tiene todos los permisos.</p>' : `<div style="display:flex;flex-direction:column;gap:8px">${rolesLista.map((r) => `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:12px;background:#fff;border:1.5px solid var(--line)">
-      <div style="min-width:0">${roleBadgeHtml(r.rol)} <b style="font-size:15px;color:var(--ink);margin-left:6px">${esc(r.nombre || r.email)}</b><div style="font-size:13px;color:var(--muted)">${esc(r.email)}</div></div>
-      <button type="button" class="btn btn-danger btn-sm" data-rm-rol="${esc(r.email)}">Quitar permiso</button>
+    ${!rolesParaMostrar().length ? '<p class="body" style="font-size:15px">Aún no hay coordinadores ni asesores asignados. La Cuenta Maestra siempre tiene todos los permisos.</p>' : `<div style="display:flex;flex-direction:column;gap:8px">${rolesParaMostrar().map((r) => `<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:12px;background:#fff;border:1.5px solid var(--line)">
+      <div style="min-width:0">${roleBadgeHtml(r.rol) || '<span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:800;background:#E0E7FF;color:#3730A3;border:1px solid #6366F1">◆ Asesor(a)</span>'} <b style="font-size:15px;color:var(--ink);margin-left:6px">${esc(r.nombre || r.email)}</b><div style="font-size:13px;color:var(--muted)">${esc(r.email)}${r.antiguo ? ' · asignado en la versión anterior' : ''}</div></div>
+      ${r.email === GABRIEL_CORREO ? '<span style="font-size:13px;color:var(--muted)">Coordinador fijo</span>' : `<button type="button" class="btn btn-danger btn-sm" data-rm-rol="${esc(r.email)}">Quitar permiso</button>`}
     </div>`).join('')}</div>`}`;
+}
+/* Lista del panel: roles/{correo} + los coordinadores y asesores de la versión anterior */
+function rolesParaMostrar() {
+  const out = rolesLista.map((r) => Object.assign({}, r));
+  const ya = new Set(out.map((r) => r.email));
+  const correoDe = (x) => String((x && (x.correo || (x.datos && x.datos.correo))) || '').trim().toLowerCase();
+  const nombreDe = (em) => { const x = allInscripciones.find((y) => correoDe(y) === em); return x ? String(x.nombre || '') : ''; };
+  const add = (email, rol, nombre) => {
+    if (!email || !rol || ya.has(email) || isMasterEmail(email)) return;
+    ya.add(email);
+    out.push({ email, rol, nombre: nombre || nombreDe(email), antiguo: true });
+  };
+  add(GABRIEL_CORREO, 'coordinador', '');
+  listasRoles.coord.forEach((e) => add(e, 'coordinador', ''));
+  listasRoles.ases.forEach((e) => add(e, 'asesor', ''));
+  allInscripciones.forEach((x) => add(correoDe(x), rolConPermiso(x.rol), x.nombre));
+  return out;
 }
 
 async function registrarAsistencia(targetIdOrQr, fecha, titulo, tipo) {
@@ -7111,6 +7218,9 @@ modalRoot.addEventListener('click', async (e) => {
 
 async function saveAll() {
   const local = cleanContent(dr);
+  delete local.coordinadoresEmails; delete local.asesoresEmails;
+  if (fb && fb.db && coordUI()) await refrescarListasRoles();
+  const conListas = (o) => (listasRoles.cargadas ? Object.assign({}, o, { coordinadoresEmails: listasRoles.coord, asesoresEmails: listasRoles.ases }) : o);
   local.actualizado = new Date(Math.max(Date.now(), (Date.parse(newestSeen) || 0) + 1000)).toISOString();
   edBusy = true; edErr = ''; edOk = ''; repaintEd();
 
@@ -7119,7 +7229,7 @@ async function saveAll() {
     let fbSaved = false;
     if (fb && fb.db && coordUI()) {
       try {
-        await withTimeout(fb.setDoc(fb.doc(fb.db, 'site', 'config'), local), 8000);
+        await withTimeout(fb.setDoc(fb.doc(fb.db, 'site', 'config'), conListas(local)), 8000);
         fbSaved = true;
       } catch (e) {
         fbSaved = false;
@@ -7177,7 +7287,7 @@ async function saveAll() {
     // Guarda en GitHub y Firebase en paralelo
     await Promise.all([
       ghPut('contenido.json', enc64(JSON.stringify(out, null, 1)), cur && cur.sha, 'Actualiza la página desde el editor'),
-      fb && fb.db && coordUI() ? fb.setDoc(fb.doc(fb.db, 'site', 'config'), out).catch(() => {}) : Promise.resolve()
+      fb && fb.db && coordUI() ? fb.setDoc(fb.doc(fb.db, 'site', 'config'), conListas(out)).catch(() => {}) : Promise.resolve()
     ]);
 
     pub = clone(out);
