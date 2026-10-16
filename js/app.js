@@ -68,6 +68,9 @@ Object.assign(P, {
   shirt:'<path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/>'
 });
 const ic = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[n] || ''}</svg>`;
+/* Botón de sonido de los videos de noticias */
+const SND_ON = ic('vol') + '<span>Con sonido</span>';
+const SND_OFF = ic('mute') + '<span>Activar sonido</span>';
 
 let cfg = {};      // contenido publicado (contenido.json) o el borrador del editor
 let pub = {};      // contenido publicado tal como está en GitHub
@@ -114,6 +117,8 @@ let showAllEnc = false;
 let showAllActs = false;
 function renderAll() {
   renderAviso(); renderDomingos(); renderActs(); renderFormacion(); renderPosts(); renderGalExtra(); renderGalFija(); renderGalOrden(); renderTes(); renderComunidadView();
+  /* Si se acaba de abrir un enlace directo (#testimonios…), el contenido nuevo no debe dejarlo fuera de la vista */
+  requestAnimationFrame(reajustarDestino);
 }
 function renderAviso() {
   const el = $('#aviso'); const t = String(cfg.aviso || '').trim();
@@ -604,7 +609,7 @@ function mediaHtml(p, idx) {
     const isCloud = String(p.video).startsWith('juma-vid:');
     const readySrc = isCloud ? (postVideoBlobUrlCache.get(p.video) || '') : p.video;
     return `<div class="post-media is-reel" data-post-media="${idx}" ${isCloud ? `data-cloud-vid="${esc(p.video)}"` : ''}>
-      <button type="button" class="post-sound-btn" data-toggle-post-sound="${idx}">🔊 Con sonido</button>
+      <button type="button" class="post-sound-btn" data-toggle-post-sound="${idx}">${SND_ON}</button>
       <video controls preload="auto" playsinline loop ${readySrc ? `src="${esc(readySrc)}"` : ''} data-post-video="${idx}"></video>
     </div>`;
   }
@@ -622,7 +627,7 @@ function stopAndMuteVideo(box) {
   if (!vid.paused) {
     try { vid.pause(); } catch (e) {}
   }
-  if (sndBtn) sndBtn.textContent = '🔇 Activar sonido';
+  if (sndBtn) sndBtn.innerHTML = SND_OFF;
 }
 
 function playWithSound(box) {
@@ -635,7 +640,7 @@ function playWithSound(box) {
   });
   vid.muted = false;
   vid.volume = 1;
-  if (sndBtn) sndBtn.textContent = '🔊 Con sonido';
+  if (sndBtn) sndBtn.innerHTML = SND_ON;
   vid.play().then(() => {
     if (box.dataset.inView !== '1') {
       stopAndMuteVideo(box);
@@ -643,7 +648,7 @@ function playWithSound(box) {
     }
     vid.muted = false;
     vid.volume = 1;
-    if (sndBtn) sndBtn.textContent = '🔊 Con sonido';
+    if (sndBtn) sndBtn.innerHTML = SND_ON;
   }).catch(() => {
     /* Si el navegador aún no ha recibido el primer toque en la página, inicia el video de inmediato y enciende el audio al primer toque o deslizamiento */
     if (box.dataset.inView !== '1') return;
@@ -664,7 +669,7 @@ function bindGlobalAudioUnlock() {
         if (b.dataset.userMuted !== '1') {
           vid.muted = false;
           vid.volume = 1;
-          if (sndBtn) sndBtn.textContent = '🔊 Con sonido';
+          if (sndBtn) sndBtn.innerHTML = SND_ON;
         }
         if (vid.paused) vid.play().catch(() => {});
       } else if (!vid.dataset.unlocked) {
@@ -852,10 +857,10 @@ function showPostShareModal(p, file, fullText) {
     <div class="sheet" style="max-width:480px;background:#061536;color:#fff;border:2.5px solid #F5C518;border-radius:24px;box-shadow:0 24px 70px rgba(0,0,0,0.85)">
       <div style="padding:16px 20px;border-bottom:1.5px solid rgba(245,197,24,0.3);display:flex;align-items:center;justify-content:space-between">
         <div>
-          <b style="font-size:16px;color:#F5C518;display:block">📰 Compartir Noticia con Foto</b>
+          <b style="font-size:16px;color:#F5C518;display:flex;align-items:center;gap:8px">${ic('news')}Compartir Noticia con Foto</b>
           <span style="font-size:12.5px;color:#DCE7F8">${esc(title.slice(0, 40))}${title.length > 40 ? '…' : ''}</span>
         </div>
-        <button type="button" class="jchat-x" data-close-post-modal aria-label="Cerrar" style="color:#fff;border-color:rgba(255,255,255,0.4)">✕</button>
+        <button type="button" class="jchat-x" data-close-post-modal aria-label="Cerrar" style="color:#fff;border-color:rgba(255,255,255,0.4)">${ic('x')}</button>
       </div>
 
       <div style="padding:20px;text-align:center;overflow-y:auto;max-height:75vh">
@@ -870,14 +875,14 @@ function showPostShareModal(p, file, fullText) {
         <div style="display:flex;flex-direction:column;gap:10px">
           ${file && navigator.canShare && navigator.canShare({ files: [file] }) ? `
           <button type="button" class="btn btn-sm" data-action-share-native-post-img style="min-height:44px;font-size:14px;font-weight:800;background:#25D366;color:#fff;border:0;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 18px rgba(37,211,102,0.4);border-radius:14px;cursor:pointer">
-            📲 Compartir Foto directamente en WhatsApp
+            ${ic('share')}Compartir Foto directamente en WhatsApp
           </button>` : ''}
           <button type="button" class="btn btn-sm" data-action-download-post-img style="min-height:44px;font-size:14px;font-weight:800;background:#F5C518;color:#061536;border:0;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 18px rgba(245,197,24,0.4);border-radius:14px;cursor:pointer">
-            📥 Descargar Foto de la Noticia
+            ${ic('download')}Descargar Foto de la Noticia
           </button>
 
           <a class="btn btn-blue" href="https://wa.me/?text=${encodeURIComponent(fullText)}" target="_blank" rel="noopener" style="min-height:44px;font-size:14px;font-weight:800;background:#17824A;color:#fff;border:0;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 16px rgba(23,130,74,0.4);border-radius:14px;text-decoration:none">
-            💬 Abrir WhatsApp con el Texto
+            ${ic('msg')}Abrir WhatsApp con el Texto
           </a>
         </div>
       </div>
@@ -1347,8 +1352,8 @@ function selfieBoxHtml(target) {
     </div>
     <p style="margin:0 0 10px;font-size:13px;color:#CFE2FF">Ubica tu rostro en el círculo y pulsa «Capturar foto»</p>
     <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px">
-      <button type="button" class="btn btn-white btn-sm" data-capture-selfie style="min-height:38px;padding:0 16px">📸 Capturar foto</button>
-      <button type="button" class="btn btn-sm" data-flip-selfie="${esc(target)}" style="min-height:38px;padding:0 12px;background:rgba(255,255,255,.16);color:#fff;border:1.5px solid rgba(255,255,255,.45)">🔄 Voltear cámara</button>
+      <button type="button" class="btn btn-white btn-sm" data-capture-selfie style="min-height:40px;padding:0 16px">${ic('camera')}Capturar foto</button>
+      <button type="button" class="btn btn-sm" data-flip-selfie="${esc(target)}" style="min-height:38px;padding:0 12px;background:rgba(255,255,255,.16);color:#fff;border:1.5px solid rgba(255,255,255,.45)">${ic('back')}Voltear cámara</button>
       <button type="button" class="btn btn-danger btn-sm" data-cancel-selfie style="min-height:38px;padding:0 12px">Cancelar</button>
     </div>
   </div>`;
@@ -1436,14 +1441,14 @@ function forcePhotoModalHtml() {
     <div style="padding:18px;border-radius:16px;background:#fff;border:1.5px solid var(--royal);margin-bottom:18px">
       <div style="display:flex;flex-wrap:wrap;align-items:center;gap:16px">
         <div style="width:92px;height:92px;border-radius:50%;background:var(--mist);border:3px solid var(--royal);overflow:hidden;display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin:0 auto">
-          ${previewFoto ? `<img src="${esc(previewFoto)}" alt="Vista previa" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-size:36px">📷</span>`}
+          ${previewFoto ? `<img src="${esc(previewFoto)}" alt="Vista previa" style="width:100%;height:100%;object-fit:cover">` : `<span style="color:var(--royal)">${ic('camera', 'ic-xl')}</span>`}
         </div>
         <div style="flex:1 1 220px">
           <b style="display:block;font-size:16px;color:var(--ink)">1. Coloca tu foto de perfil *</b>
           <p style="margin:4px 0 12px;font-size:13.5px;color:var(--muted)">Elige una foto donde se vea bien tu rostro para tu carnet de JUMA.</p>
           <div style="display:flex;flex-wrap:wrap;gap:8px">
-            <button type="button" class="btn btn-blue btn-sm" data-start-selfie="force" style="min-height:40px;padding:0 14px">📸 Tomarme una foto</button>
-            <label class="btn btn-soft btn-sm" style="min-height:40px;padding:0 14px;cursor:pointer;margin:0"><span>🖼️ Elegir de la galería</span><input type="file" accept="image/*" id="fp-gal-in" style="display:none"></label>
+            <button type="button" class="btn btn-blue btn-sm" data-start-selfie="force" style="min-height:40px;padding:0 14px">${ic('camera')}Tomarme una foto</button>
+            <label class="btn btn-soft btn-sm" style="min-height:40px;padding:0 14px;cursor:pointer;margin:0">${ic('image')}<span>Elegir de la galería</span><input type="file" accept="image/*" id="fp-gal-in" style="display:none"></label>
             <input type="file" accept="image/*" capture="user" id="fp-cam-in" style="display:none">
           </div>
         </div>
@@ -1465,14 +1470,14 @@ function forcePhotoModalHtml() {
     </div>
 
     ${previewFoto ? `<div style="margin-bottom:18px;padding:16px;border-radius:16px;background:#F2F7FF;border:1.5px solid #B9C8E4;text-align:center">
-      <b style="display:block;font-size:14.5px;color:var(--navy);margin-bottom:10px">✨ Así quedará tu Carnet Misionero JUMA:</b>
+      <b style="display:flex;align-items:center;gap:6px;font-size:14.5px;color:var(--navy);margin-bottom:10px">${ic('idcard')}Así quedará tu Carnet Misionero JUMA:</b>
       ${carnetCardOnlyHtml(tempRec)}
     </div>` : ''}
 
     ${forceErr ? `<p role="alert" style="margin:0 0 14px;padding:12px 16px;border-radius:10px;background:#FCE8E7;color:#8A1C1C;font-size:14.5px;font-weight:700">${esc(forceErr)}</p>` : ''}
 
     <button type="button" class="btn btn-blue" data-save-force-photo ${!previewFoto || forceSaving ? 'disabled' : ''} style="width:100%;min-height:52px;font-size:16px;opacity:${previewFoto ? '1' : '.55'}">
-      ${forceSaving ? '⏳ Guardando tu foto y generando tu carnet…' : (previewFoto ? '✅ Guardar mi foto y continuar a la App' : '🔒 Coloca tu foto arriba para desbloquear la App')}
+      ${forceSaving ? '⏳ Guardando tu foto y generando tu carnet…' : (previewFoto ? ic('check') + 'Guardar mi foto y continuar a la App' : ic('lock') + 'Coloca tu foto arriba para desbloquear la App')}
     </button>
   </div></div></div>`;
 }
@@ -2126,7 +2131,7 @@ function formHtml() {
             <p class="body" style="margin:0 auto 20px;max-width:54ch">Tu registro como <b>${esc(d.categoriaVisitante || 'Visitante / Colaborador')}</b> ha quedado guardado. Ya puedes interactuar en el chat y estar al tanto de las actividades de JUMA Duaca.</p>
             <div style="display:flex;justify-content:center;gap:12px;margin-top:20px;flex-wrap:wrap">
               <button type="button" class="btn btn-blue" data-go-profile>Ir a mi perfil</button>
-              <button type="button" class="btn btn-soft" data-open-chat>💬 Abrir Chat</button>
+              <button type="button" class="btn btn-soft" data-open-chat>${ic('msg')}Abrir chat</button>
               <button type="button" class="btn btn-soft" data-close>Cerrar</button>
             </div>
           </div>
@@ -2158,7 +2163,7 @@ function formHtml() {
     const accountFields = `<div style="width:100%;padding:16px 18px;margin-bottom:14px;border-radius:14px;background:#fff;border:1.5px solid var(--line)"><div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--royal);margin-bottom:12px">Datos de tu cuenta en la App</div>${googleQuickBtn}<div style="display:flex;flex-wrap:wrap;gap:16px">${inputHtml('correo', 'Correo electrónico *', 'email', 'email', '', 'tucorreo@ejemplo.com')}${!currentUser ? inputHtml('password', 'Contraseña para la app * (mín. 6 caracteres)', 'password', 'new-password', '', 'Mínimo 6 caracteres') : ''}</div></div>`;
     const photoField = `<div style="width:100%;padding:16px 18px;margin-bottom:14px;border-radius:14px;background:${d.foto ? '#F2FAF5' : '#FFFDF5'};border:2px solid ${d.foto ? '#17824A' : '#F5C518'};display:flex;flex-wrap:wrap;align-items:center;gap:16px">
       <div style="width:82px;height:82px;border-radius:50%;background:var(--mist);border:3px solid ${d.foto ? '#17824A' : 'var(--royal)'};display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto">
-        ${d.foto ? `<img src="${esc(d.foto)}" alt="Tu foto de perfil" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-size:32px" aria-hidden="true">📷</span>`}
+        ${d.foto ? `<img src="${esc(d.foto)}" alt="Tu foto de perfil" style="width:100%;height:100%;object-fit:cover">` : `<span style="color:var(--royal)" aria-hidden="true">${ic('camera', 'ic-xl')}</span>`}
       </div>
       <div style="flex:1 1 220px">
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
@@ -2167,8 +2172,8 @@ function formHtml() {
         </div>
         <p style="margin:4px 0 10px;font-size:13.5px;color:var(--muted)">Esta foto identificará tu perfil en la comunidad JUMA. Puedes tomarte una foto en vivo o elegir una de tu galería.</p>
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-          <button type="button" class="btn btn-blue btn-sm" data-start-selfie="form" style="min-height:38px;padding:0 14px">📸 Tomarme una foto</button>
-          <label class="btn btn-soft btn-sm" style="min-height:38px;padding:0 14px;cursor:pointer;margin:0"><span>🖼️ ${d.foto ? 'Cambiar de galería' : 'Usar de la galería'}</span><input type="file" accept="image/*" id="f-avatar" style="display:none"></label>
+          <button type="button" class="btn btn-blue btn-sm" data-start-selfie="form" style="min-height:40px;padding:0 14px">${ic('camera')}Tomarme una foto</button>
+          <label class="btn btn-soft btn-sm" style="min-height:38px;padding:0 14px;cursor:pointer;margin:0">${ic('image')}<span>${d.foto ? 'Cambiar de galería' : 'Usar de la galería'}</span><input type="file" accept="image/*" id="f-avatar" style="display:none"></label>
           <input type="file" accept="image/*" capture="user" id="f-avatar-cam" style="display:none">
           ${d.foto ? `<button type="button" class="btn btn-danger btn-sm" data-rm-avatar style="min-height:38px;padding:0 12px">Quitar</button>` : ''}
         </div>
@@ -2211,7 +2216,7 @@ function formHtml() {
     const previewRec = { datos: d, foto: d.foto, correo: d.correo, nombre: ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() };
     body = `<h3 class="h-display h-md">Revisa tu Carnet y confirma tu registro</h3><p class="body" style="margin:8px 0 18px;font-size:15px">Verifica cómo luce tu Carnet Misionero y que todos tus datos estén bien antes de guardar.</p>
     <div style="margin-bottom:20px;padding:16px;border-radius:16px;background:#F2F7FF;border:1.5px solid #B9C8E4;text-align:center">
-      <b style="display:block;font-size:14.5px;color:var(--navy);margin-bottom:10px">🪪 Vista previa de tu Carnet Misionero:</b>
+      <b style="display:flex;align-items:center;gap:6px;font-size:14.5px;color:var(--navy);margin-bottom:10px">${ic('idcard')}Vista previa de tu Carnet Misionero:</b>
       ${carnetCardOnlyHtml(previewRec, false)}
     </div>
     <dl style="margin:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px 22px">${summaryRows().map((r) => `<div style="display:flex;flex-wrap:wrap;gap:4px 18px;padding:12px 0;border-bottom:1px solid var(--mist)"><dt style="flex:0 0 190px;font-size:14px;font-weight:700;color:var(--royal)">${esc(r[0])}</dt><dd style="margin:0;flex:1 1 200px;min-width:0;font-size:15px;overflow-wrap:anywhere">${esc(r[1])}</dd></div>`).join('')}</dl>
@@ -2221,7 +2226,7 @@ function formHtml() {
   const sendingBanner = form.sending ? `<div role="status" style="margin:18px 0 0;padding:16px 18px;border-radius:12px;background:#E8F1FF;border:1.5px solid var(--royal);color:var(--navy);font-size:15px;font-weight:700;line-height:1.5">⏳ Guardando tu registro en JUMA… Este proceso puede tardar unos momentos, por favor espera y no cierres la planilla.</div>` : '';
   const bottomActionButtons = isVisitante ? `
     <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:30px">
-      <button type="button" class="btn btn-blue" data-submit ${form.sending ? 'disabled' : ''}>${form.sending ? 'Guardando… Por favor espera' : '✅ Guardar mi registro de Visitante / Colaborador'}</button>
+      <button type="button" class="btn btn-blue" data-submit ${form.sending ? 'disabled' : ''}>${form.sending ? 'Guardando… Por favor espera' : ic('check') + 'Guardar mi registro de Visitante / Colaborador'}</button>
     </div>
   ` : `
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-top:30px">
@@ -2567,19 +2572,31 @@ function cargarMas() {
 
 /* ---------- ir a una parte de la página ---------- */
 let ajusteScroll = 0, tocoUsuario = false;
-['wheel', 'touchstart', 'keydown'].forEach((ev) => window.addEventListener(ev, () => { tocoUsuario = true; }, { passive: true }));
-function bajarA(el, smooth) {
+/* A dónde se pidió ir: si después llega contenido (noticias, testimonios, fotos) que empuja la página, se vuelve a ajustar */
+let destinoPendiente = null;
+['wheel', 'touchstart', 'keydown'].forEach((ev) => window.addEventListener(ev, () => { tocoUsuario = true; destinoPendiente = null; }, { passive: true }));
+function elementoDestino(id) {
+  const el = document.getElementById(id); if (!el) return null;
+  if (el.getClientRects().length > 0) return el;
+  const blk = el.closest('#feed > .blk'); return blk && blk.getClientRects().length ? blk : null;
+}
+function reajustarDestino() {
+  const d = destinoPendiente;
+  if (!d || tocoUsuario || Date.now() > d.hasta || currentSection === 'comunidad') return;
+  const el = elementoDestino(d.id); if (!el) return;
+  const top = el.getBoundingClientRect().top;
+  const esperado = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--top-h')) || 64) + 12;
+  if (Math.abs(top - esperado) > 40) el.scrollIntoView({ behavior: 'auto', block: 'start' });
+}
+function bajarA(id, smooth) {
+  const el = elementoDestino(id);
   if (!el) return;
   tocoUsuario = false;
+  destinoPendiente = { id, hasta: Date.now() + 6000 };
   el.scrollIntoView({ behavior: smooth && !reduced() ? 'smooth' : 'auto', block: 'start' });
-  /* Si una foto de arriba terminó de cargar y empujó el contenido, se corrige una vez */
+  /* Si una foto de arriba terminó de cargar y empujó el contenido, se corrige */
   clearTimeout(ajusteScroll);
-  ajusteScroll = setTimeout(() => {
-    if (tocoUsuario || !document.contains(el)) return;
-    const top = el.getBoundingClientRect().top;
-    const esperado = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--top-h')) || 64) + 12;
-    if (Math.abs(top - esperado) > 60) el.scrollIntoView({ behavior: 'auto', block: 'start' });
-  }, 1100);
+  ajusteScroll = setTimeout(() => { reajustarDestino(); setTimeout(reajustarDestino, 1200); }, 1000);
 }
 function mostrarPagina(cual) {
   const feed = $('#feed'); const com = $('#view-comunidad');
@@ -2607,12 +2624,9 @@ function irA(destino, opt = {}) {
   currentSection = id;
   marcarNav(id);
   if (opt.scroll !== false) {
-    if (id === 'inicio') window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
-    else {
-      /* Una sección escondida (por ejemplo testimonios sin contenido) lleva a su bloque */
-      const destinoVisible = el.offsetParent !== null || getComputedStyle(el).position === 'fixed' ? el : (blk || el);
-      requestAnimationFrame(() => bajarA(destinoVisible, opt.smooth !== false));
-    }
+    if (id === 'inicio') { destinoPendiente = null; window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' }); }
+    /* Una sección escondida (por ejemplo testimonios todavía sin contenido) lleva a su bloque, y se ajusta cuando aparezca */
+    else requestAnimationFrame(() => bajarA(id, opt.smooth !== false));
   }
   return id;
 }
@@ -3053,7 +3067,7 @@ function openNotificationsModal() {
           </div>`;
         }).join('')}
       </div>
-      <div style="padding:10px 16px;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div class="notif-foot" style="padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px">
         <span style="font-size:12.5px;color:var(--muted)">Notificaciones internas de la app</span>
         <button type="button" class="btn btn-primary btn-sm" data-close style="min-height:40px;padding:0 18px">Cerrar</button>
       </div>
@@ -3718,7 +3732,7 @@ document.addEventListener('click', (e) => {
       vid.muted = !vid.muted;
       if (box) box.dataset.userMuted = vid.muted ? '1' : '0';
       if (vid.paused) vid.play().catch(() => {});
-      sndBtn.textContent = vid.muted ? '🔇 Activar sonido' : '🔊 Con sonido';
+      sndBtn.innerHTML = vid.muted ? SND_OFF : SND_ON;
     }
     return;
   }
@@ -3733,7 +3747,7 @@ document.addEventListener('click', (e) => {
     if (vid) {
       vid.muted = false;
       vid.play().catch(() => {});
-      if (snd) snd.textContent = '🔊 Con sonido';
+      if (snd) snd.innerHTML = SND_ON;
     }
     return;
   }
@@ -4115,7 +4129,7 @@ function renderDmMembersList(myUid, myEmail) {
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">
             <b style="font-size:15px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.nombre)}</b>
             <span style="font-size:10.5px;padding:1px 7px;border-radius:99px;background:${rolBg};color:${rolColor};font-weight:800">${esc(rolBadge)}</span>
-            ${unreadFromThis > 0 ? `<span class="chat-badge" style="position:static;display:inline-block;padding:2px 7px">${unreadFromThis} nuevo${unreadFromThis === 1 ? '' : 's'}</span>` : ''}
+            ${unreadFromThis > 0 ? `<span class="chat-badge pill">${unreadFromThis} nuevo${unreadFromThis === 1 ? '' : 's'}</span>` : ''}
           </div>
           <div style="font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
             ${m.parroquia ? esc(m.parroquia) : 'Misionero JUMA'}
@@ -4221,7 +4235,7 @@ function chatModalHtml() {
   const totalMsgs = filteredMsgs.length;
   const desde = Math.max(0, totalMsgs - (chatVerMas[claveVer] || 40));
   filteredMsgs = filteredMsgs.slice(desde);
-  const pill = (n) => (n > 0 ? `<span class="chat-badge" style="position:static;display:inline-block;padding:2px 7px;margin-left:4px">${n > 99 ? '99+' : n}</span>` : '');
+  const pill = (n) => (n > 0 ? `<span class="chat-badge pill" style="margin-left:4px">${n > 99 ? '99+' : n}</span>` : '');
 
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="chat-t"><div class="sheet chat-sheet">
     <div class="chat-top">
@@ -5090,7 +5104,7 @@ function rolesTabHtml() {
   if (!isAdminUser()) return '<p class="ehint">Solo la Cuenta Maestra puede ver y cambiar esta lista.</p>';
   return `<p class="ehint"><b>Coordinadores y asesores:</b> estas personas pueden ver las planillas, tomar asistencia con QR, moderar el muro y publicar. El permiso se guarda en Firestore (<code>roles/correo</code>) y lo comprueba el servidor. Usa el <b>mismo correo con el que la persona inicia sesión</b> (y que lo tenga verificado).</p>
     <div style="padding:16px 18px;border-radius:14px;background:#fff;border:1.5px solid var(--royal);margin-bottom:16px">
-      <b style="display:block;font-size:15px;color:var(--navy);margin-bottom:10px">➕ Agregar coordinador o asesor</b>
+      <b style="display:flex;align-items:center;gap:6px;font-size:15px;color:var(--navy);margin-bottom:10px">${ic('userplus')}Agregar coordinador o asesor</b>
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
         <div class="fld" style="flex:2 1 220px"><label for="rol-new-email">Correo</label><input id="rol-new-email" type="email" placeholder="correo@ejemplo.com" autocomplete="off"></div>
         <div class="fld" style="flex:1 1 160px"><label for="rol-new-nombre">Nombre (opcional)</label><input id="rol-new-nombre" type="text" placeholder="Ej.: María Pérez"></div>
@@ -6214,17 +6228,17 @@ function getTabs() {
   /* Datos de personas: solo coordinadores/asesores/cuenta maestra con sesión (el servidor lo exige) */
   if (coord) {
     tabs.push(
-      ['ins', trueMaster ? `Inscritos y Roles (${allInscripciones.length})` : `Inscritos (${allInscripciones.length})`],
-      ['cum', `🎂 Cumpleaños${hoyCumpleCount ? ' (' + hoyCumpleCount + ' hoy 🎉)' : ''}`],
-      ['qr', '📷 Asistencia QR']
+      ['ins', ic('users') + (trueMaster ? `Inscritos y Roles (${allInscripciones.length})` : `Inscritos (${allInscripciones.length})`)],
+      ['cum', ic('cake') + `Cumpleaños${hoyCumpleCount ? ' (' + hoyCumpleCount + ' hoy 🎉)' : ''}`],
+      ['qr', ic('camera') + 'Asistencia QR']
     );
   }
-  if (trueMaster) tabs.push(['rol', `★ Coordinadores (${rolesLista.length})`]);
-  tabs.push(['enc', 'Domingos y Días'], ['dat', 'Hora, lugar y WhatsApp'], ['act', 'Actividades'], ['for', 'Formación'], ['nov', '📰 Noticias']);
-  if (trueMaster || editorLocal) tabs.push(['fot', 'Fotos']);
-  tabs.push(['tes', 'Testimonios']);
-  if (coord) tabs.push(['mur', `Muro (${allMensajes.filter((m) => !m.aprobado).length})`]);
-  if (trueMaster || editorLocal) tabs.push(['apk', 'App sin URL'], ['pub', 'GitHub']);
+  if (trueMaster) tabs.push(['rol', ic('star') + `Coordinadores (${rolesLista.length})`]);
+  tabs.push(['enc', ic('calendar') + 'Domingos y Días'], ['dat', ic('clock') + 'Hora, lugar y WhatsApp'], ['act', ic('calcheck') + 'Actividades'], ['for', ic('cap') + 'Formación'], ['nov', ic('news') + 'Noticias']);
+  if (trueMaster || editorLocal) tabs.push(['fot', ic('image') + 'Fotos']);
+  tabs.push(['tes', ic('comment') + 'Testimonios']);
+  if (coord) tabs.push(['mur', ic('megaphone') + `Muro (${allMensajes.filter((m) => !m.aprobado).length})`]);
+  if (trueMaster || editorLocal) tabs.push(['apk', ic('phone') + 'App sin URL'], ['pub', ic('send') + 'GitHub']);
   return tabs;
 }
 function editorBody() {
@@ -6254,7 +6268,7 @@ function editorBody() {
         <b style="font-size:15px;color:#5C4300">🎂 ${proxCumples.some((c) => c.esHoy) ? '¡Hoy estamos de cumpleaños en JUMA!' : 'Cumpleaños de esta semana en JUMA:'}</b>
         <div style="font-size:13.5px;color:var(--navy);margin-top:3px">${proxCumples.map((c) => `<b>${esc(c.nombre)}</b> (${c.esHoy ? '🎉 ¡HOY!' : (c.esManana ? 'Mañana ' : '') + c.dia + ' de ' + c.mesNombre})`).join(' · ')}</div>
       </div>
-      <button type="button" class="btn btn-blue btn-sm" data-tab="cum">🎂 Abrir Calendario de Cumpleaños</button>
+      <button type="button" class="btn btn-blue btn-sm" data-tab="cum">${ic('cake')}Abrir Calendario de Cumpleaños</button>
     </div>` : '';
     return `<p class="ehint">${trueMaster ? '<b>Cuenta Maestra:</b> Inicialmente todos los registrados entran como <b>Participantes</b>. Únicamente desde esta Cuenta Maestra puedes decidir y modificar quién es <b>Coordinador</b>, <b>Asesor</b> o <b>Participante</b>, además de ver las asistencias de los últimos 6 meses.' : '<b>Vista de Coordinador:</b> Aquí puedes ver el número de participantes, sus planillas, su código QR y las formaciones/actividades a las que asistieron en los últimos 6 meses. <i>(Solo la Cuenta Maestra puede cambiar roles o editar la galería de fotos)</i>.'}</p>
       ${cumpleBanner}
@@ -6293,7 +6307,7 @@ function editorBody() {
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;align-items:center">
         <input type="search" id="ins-search" value="${esc(insQuery)}" placeholder="Buscar por nombre, celular, correo, rol o parroquia…" style="flex:1 1 240px;min-height:46px;padding:0 14px;border-radius:10px;border:1.5px solid #B9C8E4;font-size:15px">
-        <button type="button" class="btn btn-blue btn-sm" data-go-qr-tab>📷 Escanear QR de asistencia</button>
+        <button type="button" class="btn btn-blue btn-sm" data-go-qr-tab>${ic('camera')}Escanear QR de asistencia</button>
         <button type="button" class="btn btn-soft btn-sm" data-export-csv ${!allInscripciones.length ? 'disabled' : ''}>Descargar Excel (CSV)</button>
         <button type="button" class="btn btn-soft btn-sm" data-reload-ins>Actualizar lista</button>
       </div>
@@ -6324,8 +6338,8 @@ function editorBody() {
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:8px">
               ${waJoven.length >= 10 ? `<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="https://wa.me/${waJoven}">WhatsApp</a>` : ''}
-              <button type="button" class="btn btn-soft btn-sm" data-open-dm="${esc(x.id || x.uid)}">💬 Mensaje App</button>
-              <button type="button" class="btn btn-blue btn-sm" data-dl-carnet-png="${esc(x.id || x.uid)}">🪪 Carnet PNG</button>
+              <button type="button" class="btn btn-soft btn-sm" data-open-dm="${esc(x.id || x.uid)}">${ic('msg')}Mensaje App</button>
+              <button type="button" class="btn btn-blue btn-sm" data-dl-carnet-png="${esc(x.id || x.uid)}">${ic('download')}Carnet PNG</button>
               <button type="button" class="btn btn-soft btn-sm" data-dl-ins="${idx}">Planilla + QR</button>
               ${trueMaster ? `<button type="button" class="btn btn-danger btn-sm" data-rm-ins="${esc(x.id)}">Borrar</button>` : ''}
             </div>
@@ -6390,8 +6404,8 @@ function editorBody() {
         </div>
         ${(encOpciones.length || actOpciones.length) ? `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span style="font-size:12.5px;font-weight:700;color:var(--muted)">Elegir rápido de lo programado:</span>${encOpciones.map((e) => `<button type="button" class="chip" data-pick-qr-enc="${esc(e.key)}" data-pick-qr-tema="${esc(e.tema)}" style="min-height:30px;padding:0 10px;font-size:12px">${esc(e.diaSem + ' ' + e.dia + ' ' + e.mes + ': ' + e.tema)}</button>`).join('')}${actOpciones.map((a) => `<button type="button" class="chip" data-pick-qr-act="${esc(a.t)}" style="min-height:30px;padding:0 10px;font-size:12px">★ ${esc(a.t)}</button>`).join('')}</div>` : ''}
         <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-top:6px">
-          ${!qrCameraOn ? `<button type="button" class="btn btn-blue" data-start-qr-cam>📷 Abrir cámara para escanear QR</button>` : `<button type="button" class="btn btn-danger" data-stop-qr-cam>⏹ Detener cámara</button>`}
-          <label class="btn btn-soft" style="cursor:pointer;margin:0"><span>📸 Escanear tomando foto del QR</span><input type="file" accept="image/*" capture="environment" id="qr-file-in" style="display:none"></label>
+          ${!qrCameraOn ? `<button type="button" class="btn btn-blue" data-start-qr-cam>${ic('camera')}Abrir cámara para escanear QR</button>` : `<button type="button" class="btn btn-danger" data-stop-qr-cam>⏹ Detener cámara</button>`}
+          <label class="btn btn-soft" style="cursor:pointer;margin:0">${ic('qr')}<span>Escanear tomando foto del QR</span><input type="file" accept="image/*" capture="environment" id="qr-file-in" style="display:none"></label>
         </div>
         ${qrCameraOn ? `<div style="position:relative;max-width:420px;margin:8px auto 0;border-radius:16px;overflow:hidden;border:3px solid var(--royal);background:#000"><video id="qr-video" playsinline muted style="width:100%;display:block;max-height:360px;object-fit:cover"></video><div style="position:absolute;inset:18%;border:2.5px dashed rgba(142,201,255,.9);border-radius:14px;pointer-events:none"></div></div>` : ''}
         ${qrStatusMsg ? `<div id="qr-status-box" role="status" style="padding:14px 16px;border-radius:12px;font-size:15px;font-weight:700;background:${qrStatusKind === 'ok' ? '#E4F5EA' : '#FCE8E7'};color:${qrStatusKind === 'ok' ? '#14532D' : '#8A1C1C'};border:1.5px solid ${qrStatusKind === 'ok' ? '#17824A' : '#C8322D'}">${esc(qrStatusMsg)}</div>` : ''}
@@ -6606,17 +6620,17 @@ function editorBody() {
           ${fld('Texto completo al tocar «Ver más ▾» (estilo TikTok)', p.x || '', (v) => { dr.posts[i].x = v; }, { w: 1, area: 1, rows: 5, ph: 'Escribe aquí la información completa, ruta, fecha, hora…' })}
           <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--paper);border:1px solid var(--line)">
             <label class="btn btn-blue btn-sm" style="cursor:pointer;position:relative">
-              <span>🎥 ${hasVid ? 'Cambiar video del teléfono' : 'Subir video del teléfono'}</span>
+              ${ic('play')}<span>${hasVid ? 'Cambiar video del teléfono' : 'Subir video del teléfono'}</span>
               <input type="file" accept="video/*" data-up="video" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0">
             </label>
             ${hasVid ? `<span style="font-size:13.5px;font-weight:800;color:#14532D;background:#E4F5EA;padding:5px 12px;border-radius:99px">✔ Video cargado ${isCloudVid ? '(Nube JUMA)' : ''}</span><button type="button" class="btn btn-soft btn-sm" data-rmvid="${i}">Quitar video</button>` : '<span style="font-size:13.5px;color:var(--muted)">Sin video</span>'}
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto">
               <label class="btn btn-soft btn-sm" style="cursor:pointer;position:relative" title="Tomar foto con la cámara">
-                <span>📷 Tomar foto</span>
+                ${ic('camera')}<span>Tomar foto</span>
                 <input type="file" accept="image/*" capture="environment" data-up="foto" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0">
               </label>
               <label class="btn btn-soft btn-sm" style="cursor:pointer;position:relative" title="Elegir foto de la galería">
-                <span>🖼️ ${p.foto ? 'Cambiar foto' : 'Elegir de galería'}</span>
+                ${ic('image')}<span>${p.foto ? 'Cambiar foto' : 'Elegir de galería'}</span>
                 <input type="file" accept="image/*" data-up="foto" data-i="${i}" style="position:absolute;width:1px;height:1px;opacity:0">
               </label>
               ${p.foto ? `<div style="display:flex;align-items:center;gap:6px"><img class="ethumb" src="${esc(p.foto)}" alt="" style="width:44px;height:44px;border-radius:8px;object-fit:cover;border:1.5px solid var(--royal)"><span style="font-size:12.5px;font-weight:800;color:#14532D">✔ Foto lista</span><button type="button" class="btn btn-soft btn-sm" data-rmfoto="${i}">Quitar</button></div>` : ''}
@@ -7490,7 +7504,8 @@ async function loadContenido() {
   }));
   let best = got[0] || null;
   got.forEach((c) => { if (c && String(c.actualizado || '') > String((best && best.actualizado) || '')) best = c; });
-  if (best) pub = best;
+  /* Si Firebase ya trajo una versión publicada más nueva (site/config), el archivo viejo no la pisa */
+  if (best && String(best.actualizado || '') >= String((pub && pub.actualizado) || '')) pub = best;
   newestSeen = String((best && best.actualizado) || '');
   oldFiles = names.slice(1).filter((n, i) => got[i + 1]).map((n) => decodeURIComponent(n));
   cfg = clone(pub);
