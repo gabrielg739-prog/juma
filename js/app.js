@@ -2489,6 +2489,45 @@ function vigilarRol(user) {
   } catch (e) {}
 }
 
+/* ===================== presencia: punto verde cuando la app está abierta ===================== */
+let presenciaMap = new Map(); // uid -> ms del último latido con la app abierta
+let presenciaTimer = 0, presenciaUnsub = null;
+const PRESENCIA_MAX_MS = 4 * 60 * 1000;
+function estaEnLinea(uid) { const t = presenciaMap.get(uid); return !!t && Date.now() - t < PRESENCIA_MAX_MS; }
+/* Pinta el punto verde en los elementos con data-pres, sin volver a dibujar la lista */
+function repintarEnLinea() {
+  document.querySelectorAll('[data-pres]').forEach((el) => el.classList.toggle('en-linea', estaEnLinea(el.dataset.pres)));
+}
+async function latidoPresencia(activo) {
+  if (!currentUser || !fb || !fb.db || !isMemberUI()) return;
+  try { await withTimeout(fb.setDoc(fb.doc(fb.db, 'presencia', currentUser.uid), { uid: currentUser.uid, activo: !!activo, visto: fb.serverTimestamp() }, { merge: true }), 5000); } catch (e) {}
+}
+function iniciarPresencia() {
+  if (presenciaTimer || !currentUser || !isMemberUI() || !fb || !fb.onSnapshot || !fb.db) return;
+  if (!presenciaUnsub) {
+    try {
+      presenciaUnsub = fb.onSnapshot(fb.collection(fb.db, 'presencia'), (snap) => {
+        const m = new Map();
+        snap.forEach((d) => { const x = d.data() || {}; if (x.activo && x.visto && x.visto.toMillis) m.set(d.id, x.visto.toMillis()); });
+        presenciaMap = m;
+        repintarEnLinea();
+      }, () => {});
+    } catch (e) {}
+  }
+  latidoPresencia(document.visibilityState === 'visible');
+  presenciaTimer = setInterval(() => { if (document.visibilityState === 'visible') latidoPresencia(true); }, 2 * 60 * 1000);
+}
+function pararPresencia() {
+  if (presenciaTimer) { clearInterval(presenciaTimer); presenciaTimer = 0; }
+  if (presenciaUnsub) { try { presenciaUnsub(); } catch (e) {} presenciaUnsub = null; }
+  presenciaMap = new Map();
+}
+/* Con la app en segundo plano o minimizada, el punto se apaga al instante */
+document.addEventListener('visibilitychange', () => {
+  if (!currentUser || !presenciaTimer) return;
+  latidoPresencia(document.visibilityState === 'visible');
+});
+
 async function refrescarListasRoles() {
   try {
     const s = await withTimeout(fb.getDoc(fb.doc(fb.db, 'site', 'config')), 6000);
@@ -2532,21 +2571,24 @@ async function miniaturaFoto(src) {
 }
 let miembroSubido = '';
 async function upsertMiembro() {
-  if (!currentUser || !perfilEnNube || !fb || !fb.db || !myProfile) return;
-  const d = myProfile.datos || {};
-  const nombre = String(myProfile.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || currentUser.displayName || 'Misionero JUMA').slice(0, 80);
-  const nac = String(d.nac || myProfile.nac || '');
+  if (!currentUser || !fb || !fb.db) return;
+  const soyMaestra = isAdminUser();
+  if (!soyMaestra && (!perfilEnNube || !myProfile)) return;
+  const mp = myProfile || {};
+  const d = mp.datos || {};
+  const nombre = String(mp.nombre || ((d.nombres || '') + ' ' + (d.apellidos || '')).trim() || currentUser.displayName || (soyMaestra ? 'Cuenta Maestra JUMA' : 'Misionero JUMA')).slice(0, 80);
+  const nac = String(d.nac || mp.nac || '');
   const cumple = /^\d{4}-\d{2}-\d{2}$/.test(nac) ? nac.slice(5) : '';
-  const foto = await miniaturaFoto(myProfile.foto || d.foto || currentUser.photoURL || '');
+  const foto = await miniaturaFoto(mp.foto || d.foto || currentUser.photoURL || '');
   const rec = {
     uid: currentUser.uid,
     nombre,
     primerNombre: (d.nombres ? d.nombres.trim().split(' ')[0] : nombre.split(' ')[0]) || 'Misionero',
     foto,
     rol: myRole(),
-    parroquia: String(myProfile.parroquia || d.parroquia || '').slice(0, 80),
+    parroquia: String(mp.parroquia || d.parroquia || '').slice(0, 80),
     cumple,
-    sexo: String(myProfile.sexo || d.sexo || '').slice(0, 10),
+    sexo: String(mp.sexo || d.sexo || '').slice(0, 10),
     actualizado: new Date().toISOString()
   };
   const firma = JSON.stringify(Object.assign({}, rec, { actualizado: '' }));
@@ -3376,14 +3418,67 @@ function renderJuegosView() {
 function openFriendsModal() {
   if (!currentUser) { openAuthModal(); return; }
   const lista = getRegisteredMembersForDm(miUid(), miCorreo());
-  const fila = (m) => `<button type="button" class="fr-row" data-open-dm="${esc(m.uid)}">${avatarHtml(m.foto, (m.primerNombre || m.nombre).charAt(0).toUpperCase())}<span class="fr-n"><b>${esc(m.nombre)}</b><small>${esc(roleLabel(m.rol))}</small></span></button>`;
+  const fila = (m) => `<button type="button" class="fr-row" data-open-dm="${esc(m.uid)}"><span class="av-wrap" data-pres="${esc(m.uid)}">${avatarHtml(m.foto, (m.primerNombre || m.nombre).charAt(0).toUpperCase())}</span><span class="fr-n"><b>${esc(m.nombre)}</b><small>${esc(roleLabel(m.rol))}</small></span></button>`;
   openModal(`<div class="overlay overlay-sheet" role="dialog" aria-modal="true" aria-labelledby="fr-t">
     <div class="sheet sheet-auto" style="max-width:460px">
       <div class="chat-top notif-head"><div><b id="fr-t" style="font-size:19px;display:block">Amigos</b><small style="font-size:12.5px">${lista.length} registrado${lista.length === 1 ? '' : 's'} en JUMA</small></div>
       <button type="button" class="x-btn" data-close aria-label="Cerrar">${ic('x')}</button></div>
       <div class="fr-list">${lista.length ? lista.map(fila).join('') : '<p class="body" style="padding:24px;text-align:center">Aún no hay otros registrados.</p>'}</div>
     </div></div>`, 'friends');
+  repintarEnLinea();
 }
+/* Cambiar la clave de la app (puede ser distinta a la del correo). Pide la actual antes de cambiarla. */
+function abrirCambiarClave() {
+  if (!currentUser) { openAuthModal(); return; }
+  const tieneClave = (currentUser.providerData || []).some((p) => p && p.providerId === 'password');
+  const campo = (id, txt, ac) => `<label style="display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:700;color:var(--ink);text-align:left">${txt}<input id="${id}" type="password" autocomplete="${ac}" style="min-height:44px;border:1.5px solid var(--line-2);border-radius:12px;padding:0 12px;font:inherit;font-weight:500"></label>`;
+  openModal(`<div class="overlay overlay-sheet" role="dialog" aria-modal="true" aria-labelledby="cc-t">
+    <div class="sheet sheet-auto" style="max-width:420px">
+      <div class="chat-top notif-head"><div><b id="cc-t" style="font-size:19px;display:block">Cambiar contraseña</b><small style="font-size:12.5px">Es la clave para entrar a la app, puede ser distinta a la de tu correo</small></div>
+      <button type="button" class="x-btn" data-close aria-label="Cerrar">${ic('x')}</button></div>
+      <div style="padding:16px 18px 20px;display:flex;flex-direction:column;gap:12px">
+        ${tieneClave ? campo('cc-old', 'Contraseña actual', 'current-password') : '<p class="body" style="margin:0">Tu cuenta entra con Google. Crea aquí una clave propia para entrar también con tu correo.</p>'}
+        ${campo('cc-new', 'Contraseña nueva (mínimo 6 caracteres)', 'new-password')}
+        ${campo('cc-new2', 'Repite la contraseña nueva', 'new-password')}
+        <p id="cc-msg" role="status" style="margin:0;font-size:13.5px;color:#B91C1C;min-height:18px"></p>
+        <button type="button" class="btn btn-primary" id="cc-go" style="min-height:46px">Guardar contraseña</button>
+      </div></div></div>`, 'cambiar-clave');
+}
+function errorClave(x) {
+  const c = String((x && x.code) || '');
+  if (/wrong-password|invalid-credential/.test(c)) return 'La contraseña actual no es correcta.';
+  if (/weak-password/.test(c)) return 'La contraseña es muy débil: usa al menos 6 caracteres.';
+  if (/requires-recent-login/.test(c)) return 'Por seguridad, cierra sesión, vuelve a entrar y prueba de nuevo.';
+  if (/credential-already-in-use|email-already-in-use/.test(c)) return 'Esa cuenta ya tiene clave. Usa «Cambiar contraseña» con la actual.';
+  return 'No se pudo cambiar la contraseña. Revisa tu conexión e intenta de nuevo.';
+}
+async function guardarClaveNueva() {
+  const set = (t) => { const m = $('#cc-msg'); if (m) m.textContent = t; };
+  const vieja = ($('#cc-old') || {}).value || '';
+  const nueva = ($('#cc-new') || {}).value || '';
+  const repite = ($('#cc-new2') || {}).value || '';
+  const tieneClave = !!$('#cc-old');
+  if (nueva.length < 6) return set('La contraseña nueva debe tener al menos 6 caracteres.');
+  if (nueva !== repite) return set('Las dos contraseñas no coinciden.');
+  if (tieneClave && !vieja) return set('Escribe tu contraseña actual.');
+  if (!currentUser || !fb || !fb.au) return set('Espera a que la app se conecte e intenta de nuevo.');
+  set('Guardando…');
+  try {
+    if (tieneClave) {
+      await fb.au.reauthenticateWithCredential(currentUser, fb.au.EmailAuthProvider.credential(currentUser.email, vieja));
+      await fb.au.updatePassword(currentUser, nueva);
+    } else {
+      await fb.au.linkWithCredential(currentUser, fb.au.EmailAuthProvider.credential(currentUser.email, nueva));
+    }
+    closeModal();
+    showToast('Contraseña cambiada. Úsala la próxima vez que entres.');
+  } catch (x) { set(errorClave(x)); }
+}
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-cambiar-clave]')) { e.preventDefault(); abrirCambiarClave(); return; }
+  if (e.target.closest('#cc-go')) { e.preventDefault(); guardarClaveNueva(); }
+});
+
 document.addEventListener('click', (e) => {
   if (e.target.closest('[data-open-friends]')) {
     e.preventDefault();
@@ -4204,6 +4299,7 @@ function authModalHtml() {
           <div class="p-actions">
             <button type="button" class="p-act-btn" data-open-chat style="position:relative">${ic('msg')}Mensajes <span class="chat-badge hide" id="profile-chat-badge"></span></button>
             <button type="button" class="p-act-btn" data-edit-my-form>${ic('edit')}Editar datos</button>
+            <button type="button" class="p-act-btn" data-cambiar-clave>${ic('lock')}Cambiar contraseña</button>
             <button type="button" class="p-act-btn p-act-danger" data-logout>${ic('logout')}Cerrar sesión</button>
           </div>
 
@@ -4937,6 +5033,7 @@ function handleUser(u, force = false) {
     allInscripciones = [];
     chatDmTarget = null;
     if (!u) {
+      pararPresencia();
       lecturas = LECTURAS_VACIAS();
       updateAuthUI();
       return;
@@ -4951,6 +5048,7 @@ function handleUser(u, force = false) {
     if (!privRole) { await cargarRolAntiguo(u); if (seq !== handleSeq) return; }
     updateAuthUI();
     vigilarRol(u);
+    iniciarPresencia();
     if (isMemberUI()) { iniciarEscuchasDeMiembro(); upsertMiembro(); }
     if (coordUI()) { showFab(); loadAllInscripciones(); }
     registrarTokenPush(false);
@@ -5052,6 +5150,7 @@ modalRoot.addEventListener('click', async (e) => {
     const uidSalida = currentUser ? currentUser.uid : '';
     await flushLecturas();
     pararEscuchasDeMiembro();
+    pararPresencia();
     try { if (fb && fb.auth) await fb.au.signOut(fb.auth); } catch (x) {}
     try {
       sessionStorage.removeItem('juma-ed');

@@ -657,13 +657,16 @@ html,body{-webkit-tap-highlight-color:transparent}
   background: #ffffff !important;
   color: #0A1B3F !important;
   border-radius: 28px !important;
-  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
   box-shadow: 0 25px 80px rgba(6, 21, 54, 0.45) !important;
   width: 100% !important;
   max-width: 660px !important;
   display: flex !important;
   flex-direction: column !important;
 }
+.p-modal > * { flex-shrink: 0; }
 .p-cover {
   position: relative;
   height: 140px;
@@ -1047,6 +1050,9 @@ body{background:var(--paper);overflow-x:clip}
 @media (hover:hover) and (pointer:fine){.fr-row:hover{background:var(--mist)}}
 .fr-n{display:flex;flex-direction:column;min-width:0}.fr-n b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fr-n small{color:var(--royal);font-weight:700;font-size:12px}
 
+/* punto verde de «conectado» (app abierta) */
+.av-wrap{position:relative;display:inline-flex;flex:0 0 auto;border-radius:50%}
+.av-wrap.en-linea::after{content:'';position:absolute;right:1px;bottom:1px;width:13px;height:13px;border-radius:50%;background:#22C55E;border:2.5px solid #fff;box-shadow:0 0 0 1px rgba(34,197,94,.35)}
 /* ---------- comunidad ---------- */
 .pagina-comunidad{min-height:calc(100dvh - var(--top-h));background:var(--paper)}
 .com-card{background:#fff;border-radius:var(--r);border:1px solid var(--line);padding:22px;box-shadow:var(--shadow)}
@@ -1779,7 +1785,7 @@ body.is-guest .solo-miembros { display: none !important; }
 <div id="modal-root"></div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=64"></script>
-<script type="module" src="js/fe.js?v=64"></script>
+<script type="module" src="js/app.js?v=65"></script>
+<script type="module" src="js/fe.js?v=65"></script>
 </body>
 </html>

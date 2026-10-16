@@ -156,6 +156,14 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isCoord() && resource.data.get('sinCuenta', false) == true);
     }
 
+    // ---------- Presencia: punto verde (cada miembro escribe solo su propio latido) ----------
+    match /presencia/{uid} {
+      allow read: if isMember();
+      allow create, update: if signedIn() && uid == request.auth.uid && isMember()
+        && request.resource.data.keys().hasOnly(['uid', 'activo', 'visto'])
+        && request.resource.data.uid == uid;
+    }
+
     // ---------- Chat de la comunidad, coordinación y mensajes directos ----------
     match /chat_mensajes/{msgId} {
       allow read: if isMember() && resource.data.canal == 'general';
