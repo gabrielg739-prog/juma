@@ -1,0 +1,44 @@
+# Avisos al teléfono por los mensajes nuevos del chat de JUMA Duaca.
+# Funciona solo si en GitHub > Settings > Secrets and variables > Actions existe el secreto
+# FIREBASE_SERVICE_ACCOUNT (el JSON de una cuenta de servicio de Firebase). Sin el secreto, no hace nada.
+name: Avisos push de JUMA
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: avisos-push
+  cancel-in-progress: false
+
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TIENE_SECRETO: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+    steps:
+      - name: Sin secreto, no hay nada que hacer
+        if: env.TIENE_SECRETO != 'true'
+        run: echo "Falta el secreto FIREBASE_SERVICE_ACCOUNT; no se envían avisos."
+      - uses: actions/checkout@v4
+        if: env.TIENE_SECRETO == 'true'
+      - uses: actions/setup-node@v4
+        if: env.TIENE_SECRETO == 'true'
+        with:
+          node-version: '20'
+      - name: Instalar firebase-admin
+        if: env.TIENE_SECRETO == 'true'
+        working-directory: tools
+        run: npm install --no-audit --no-fund --omit=dev
+      - name: Enviar avisos
+        if: env.TIENE_SECRETO == 'true'
+        working-directory: tools
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SITE_URL: https://gabrielg739-prog.github.io/juma/
+        run: node enviar-avisos.mjs

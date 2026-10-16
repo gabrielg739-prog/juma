@@ -1,0 +1,9 @@
+{
+  "name": "juma-avisos",
+  "private": true,
+  "type": "module",
+  "description": "Envía avisos (FCM) de los mensajes nuevos del chat de JUMA Duaca. Lo usa .github/workflows/avisos-push.yml.",
+  "dependencies": {
+    "firebase-admin": "12.7.0"
+  }
+}
