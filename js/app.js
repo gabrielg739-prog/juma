@@ -3460,7 +3460,7 @@ function renderJuegosView() {
       </article>
       <article class="lib-card">
         <div class="lib-cover" style="--bk:#B5462E" role="img" aria-label="Portada de Carrera de la fe"><b>Carrera de la fe</b></div>
-        <div class="lib-info"><h2>Carrera de la fe</h2><small>Carreras de karts · 4 pistas · ¡Nuevo!</small><p>Corre junto a Lucía, Pedro, Miguel, Ana y el Padre Tomás por caminos de la fe. Recoge cajas de gracia y usa la vela, el rosario, el incienso, la campanilla o la paloma para llegar primero.</p>
+        <div class="lib-info"><h2>Carrera de la fe</h2><small>Carreras de karts en 3D · 4 pistas · ¡Nuevo!</small><p>Corre junto a Lucía, Pedro, Miguel, Ana y el Padre Tomás por caminos de la fe. Recoge cajas de gracia y usa la vela, el rosario, el incienso, la campanilla o la paloma para llegar primero.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/carrera-de-la-fe.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card lib-soon"><div class="lib-cover lib-cover-empty" aria-hidden="true">${ic('gamepad')}</div><div class="lib-info"><h2>Próximamente</h2><p>Aquí aparecerán nuevos juegos.</p></div></article>
@@ -3473,7 +3473,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=103" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=104" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }
