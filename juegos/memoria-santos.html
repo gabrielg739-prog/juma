@@ -158,7 +158,7 @@
     <p class="sub">Encuentra las parejas: cada santo con su nombre y cada signo de la fe con su significado.</p>
     <div class="como">
       <p>• Voltea dos cartas. Si forman pareja quedan <b>encendidas</b> y aprendes algo nuevo.</p>
-      <p>• <b>10 niveles</b> con más cartas cada vez. Las <b>cartas doradas</b> valen el doble.</p>
+      <p>• <b>15 niveles</b> con más cartas cada vez; en los últimos, las cartas se mueven y corre el reloj. Las <b>cartas doradas</b> valen el doble.</p>
       <p>• Encadena aciertos para sumar <b>racha</b>. Menos movimientos, más estrellas.</p>
     </div>
     <div class="dific" id="dific"></div>
@@ -196,7 +196,8 @@ const $ = (id) => document.getElementById(id);
 const CLAVE = 'juma-memoria-v2';
 const NIVELES = [
   { pares: 3, cols: 3 }, { pares: 4, cols: 4 }, { pares: 5, cols: 5 }, { pares: 6, cols: 4 }, { pares: 6, cols: 4, dorada: true },
-  { pares: 8, cols: 4, dorada: true }, { pares: 8, cols: 4, dorada: true }, { pares: 9, cols: 6, dorada: true }, { pares: 10, cols: 5, dorada: true }, { pares: 10, cols: 5, dorada: true }
+  { pares: 8, cols: 4, dorada: true }, { pares: 8, cols: 4, dorada: true }, { pares: 9, cols: 6, dorada: true }, { pares: 10, cols: 5, dorada: true }, { pares: 10, cols: 5, dorada: true, mezcla: true },
+  { pares: 11, cols: 6, dorada: true, mezcla: true }, { pares: 11, cols: 6, dorada: true, reloj: true }, { pares: 12, cols: 6, dorada: true, mezcla: true }, { pares: 12, cols: 6, dorada: true, reloj: true, mezcla: true }, { pares: 12, cols: 6, dorada: true, reloj: true, mezcla: true }
 ];
 const DIFS = {
   facil: { n: 'Fácil', d: 'Cartas iguales y vistazo inicial', vistazo: 2600, iguales: true, tiempo: 0, mezcla: false },
@@ -310,7 +311,7 @@ function iniciarNivel(n) {
   });
   cartas = barajar(mazo);
   abiertas = []; encontrados = 0; movimientos = 0; racha = 0; fallosSeguidos = 0; pistas = 2; ganadosNivel = 0;
-  limiteT = DIF.tiempo ? (cfg.pares * 9 + 15) * 1000 : 0;
+  limiteT = DIF.tiempo || cfg.reloj ? (cfg.pares * (DIF.tiempo ? 9 : 10) + 15) * 1000 : 0;
   $('g-nivel').textContent = 'Nivel ' + n;
   $('g-racha').textContent = 'Racha 0';
   $('t-pistas').textContent = pistas; $('btn-pista').disabled = false;
@@ -418,7 +419,7 @@ function fallo(a, b) {
   setTimeout(() => {
     [a, b].forEach((i) => { cartas[i].volteada = false; const el = elCarta(i); el.classList.remove('volteada', 'error'); el.setAttribute('aria-label', 'Carta boca abajo'); });
     abiertas = [];
-    if (DIF.mezcla && fallosSeguidos >= 2) { fallosSeguidos = 0; mezclarDos(); } else bloqueado = false;
+    if ((DIF.mezcla || cfgN().mezcla) && fallosSeguidos >= 2) { fallosSeguidos = 0; mezclarDos(); } else bloqueado = false;
   }, 420);
 }
 /* En difícil, tras dos fallos seguidos dos cartas ocultas cambian de lugar */
