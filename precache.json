@@ -1,7 +1,7 @@
 {
- "version": "e80cbb06e65a",
+ "version": "f4ff52690c33",
  "recursos": "juma-recursos-v1",
- "tamano": 51971541,
+ "tamano": 52013327,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -741,12 +741,12 @@
   {
    "ruta": "index.html",
    "tamano": 147037,
-   "hash": "39d99f001799"
+   "hash": "9ae3e270aa4c"
   },
   {
    "ruta": "js/app.js",
-   "tamano": 488114,
-   "hash": "96e91372cdbd"
+   "tamano": 488753,
+   "hash": "19eb0360c76d"
   },
   {
    "ruta": "js/fe.js",
@@ -777,6 +777,11 @@
    "ruta": "juegos/camino-del-misionero.html",
    "tamano": 146213,
    "hash": "025d6e4a100b"
+  },
+  {
+   "ruta": "juegos/carrera-de-la-fe.html",
+   "tamano": 41147,
+   "hash": "053a38982178"
   },
   {
    "ruta": "juegos/cuadros/cap1-consolata.jpg",

@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f0f33">
+<title>Carrera de la fe · JUMA</title>
+<style>
+  :root {
+    --crema: #fff3d6; --tinta: #2b1a3f; --muted: #7a6a8c; --plum: #3a1f5a; --plum-2: #1f0f33;
+    --oro: #ffd25a; --oro-2: #c98f12; --linea: #e4cf98; --cielo: #9fd8ff;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: "Trebuchet MS", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--tinta); background: var(--plum-2); overflow: hidden; user-select: none; -webkit-user-select: none;
+    touch-action: none;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
+  button:focus-visible { outline: 3px solid var(--oro); outline-offset: 2px; }
+
+  .app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+  .menu { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 20px; text-align: center; color: #fff;
+    background: radial-gradient(ellipse at 50% 20%, #5a3a8e 0%, #2a1650 55%, #1f0f33 100%); }
+  .menu h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: clamp(30px, 7vw, 46px); color: var(--oro); line-height: 1.05; text-shadow: 0 3px 0 #6a3e0a; }
+  .menu p { margin: 0; max-width: 40ch; font-size: 15px; line-height: 1.45; color: #efe6ff; }
+  .menu .sub { font-size: 13px; color: #c9b8e6; }
+  .elige { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 520px; }
+  .pista-btn { width: 150px; padding: 12px 10px; border-radius: 18px; background: #fff; color: var(--plum); border: 2px solid var(--oro-2); box-shadow: 0 5px 0 var(--oro-2); font-weight: 900; font-size: 15px; transition: transform .12s var(--ease), box-shadow .12s var(--ease); }
+  .pista-btn small { display: block; margin-top: 4px; font-weight: 700; font-size: 12px; color: var(--muted); }
+  .pista-btn.on { background: #fff8d8; }
+  .pista-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--oro-2); }
+  .gran { min-height: 56px; padding: 0 28px; border-radius: 999px; background: var(--oro); color: #3a2400; font-weight: 900; font-size: 20px; box-shadow: 0 6px 0 var(--oro-2); transition: transform .12s var(--ease), box-shadow .12s var(--ease); }
+  .gran:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--oro-2); }
+  .modos { display: flex; gap: 8px; }
+  .modo { height: 40px; padding: 0 16px; border-radius: 999px; background: rgba(255,255,255,.12); color: #fff; font-weight: 800; border: 2px solid rgba(255,255,255,.3); }
+  .modo.on { background: var(--oro); color: #3a2400; border-color: var(--oro-2); }
+  .mejor { font-size: 13px; color: #d9c9f2; min-height: 18px; }
+
+  .hud { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 8px); left: 8px; right: 8px; z-index: 3; display: flex; gap: 6px; align-items: flex-start; justify-content: space-between; pointer-events: none; }
+  .chip { padding: 6px 12px; border-radius: 999px; background: rgba(31,15,51,.78); color: #fff; font-weight: 800; font-size: 14px; border: 2px solid rgba(255,210,90,.6); white-space: nowrap; }
+  .chip b { color: var(--oro); font-weight: 900; }
+  .caja-item { width: 56px; height: 56px; border-radius: 16px; background: rgba(31,15,51,.78); border: 2px solid var(--oro); display: grid; place-items: center; font-size: 30px; line-height: 1; }
+  .pausa-btn { pointer-events: auto; width: 44px; height: 44px; border-radius: 50%; background: rgba(31,15,51,.78); color: #fff; border: 2px solid rgba(255,255,255,.4); font-size: 18px; font-weight: 900; display: grid; place-items: center; }
+  .vuelta-txt { position: absolute; top: 46%; left: 50%; transform: translate(-50%, -50%); z-index: 4; pointer-events: none; font-family: Georgia, "Times New Roman", serif; font-size: clamp(54px, 13vw, 96px); color: #fff; text-shadow: 0 5px 0 #6a3e0a, 0 0 22px rgba(255,210,90,.7); font-weight: 400; white-space: nowrap; }
+  .vuelta-txt.anim { animation: pop .9s var(--ease) both; }
+  @keyframes pop { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.85); } 20% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
+
+  .pista { position: relative; flex: 1; min-height: 0; }
+  .pista canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .controles { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; justify-content: space-between; align-items: flex-end; padding: 10px 12px calc(env(safe-area-inset-bottom, 0px) + 12px); pointer-events: none; }
+  .grupo { display: flex; gap: 10px; align-items: flex-end; }
+  .btn-t { pointer-events: auto; width: 74px; height: 74px; border-radius: 50%; background: rgba(255,255,255,.92); color: var(--plum); border: 3px solid var(--oro-2); box-shadow: 0 5px 0 var(--oro-2), 0 8px 14px rgba(0,0,0,.25); font-weight: 900; font-size: 15px; display: grid; place-items: center; touch-action: none; }
+  .btn-t:active, .btn-t.on { transform: translateY(3px); box-shadow: 0 2px 0 var(--oro-2), 0 4px 8px rgba(0,0,0,.25); background: #fff8d8; }
+  .btn-t.grande { width: 84px; height: 84px; font-size: 16px; }
+  .btn-t.mini { width: 62px; height: 62px; font-size: 13px; }
+  .btn-t.item { background: #fff; }
+  .btn-t.item.lleno { background: var(--oro); }
+
+  .velo { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 20px; text-align: center; background: rgba(20,8,36,.86); color: #fff; }
+  .velo h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: clamp(30px, 6vw, 40px); color: var(--oro); }
+  .tabla { width: min(92vw, 360px); border-collapse: collapse; background: #fff; color: var(--tinta); border-radius: 16px; overflow: hidden; }
+  .tabla td { padding: 8px 12px; font-weight: 700; font-size: 15px; border-bottom: 1px solid #efe2c0; }
+  .tabla tr.yo td { background: #fff3c4; font-weight: 900; }
+  .tabla td:last-child { text-align: right; }
+  .puntos-txt { font-size: 17px; font-weight: 800; color: #fff; }
+  .puntos-txt b { color: var(--oro); }
+  .fila-btn { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .sec { height: 48px; padding: 0 20px; border-radius: 999px; background: #fff; color: var(--plum); font-weight: 900; font-size: 16px; box-shadow: 0 4px 0 #b9a6d6; }
+  .sec:active { transform: translateY(2px); box-shadow: 0 2px 0 #b9a6d6; }
+  .ayuda { font-size: 12px; color: #c9b8e6; max-width: 46ch; line-height: 1.4; }
+
+  /* Pantallas pequeñas: botones un poco más chicos */
+  @media (max-width: 430px) {
+    .controles { padding-left: 8px; padding-right: 8px; }
+    .grupo { gap: 8px; }
+    .btn-t.grande { width: 70px; height: 70px; font-size: 14px; }
+    .btn-t.mini { width: 56px; height: 56px; font-size: 12px; }
+    .btn-t.item { width: 64px; height: 64px; }
+  }
+  @media (max-height: 520px) { .btn-t { width: 60px; height: 60px; font-size: 13px; } .btn-t.grande { width: 68px; height: 68px; } }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <section class="menu" id="menu">
+    <h1>Carrera de la fe</h1>
+    <p>Corre con tus amigos por caminos de la fe. Recoge las cajas de gracia y usa tus armas espirituales para llegar primero.</p>
+    <div class="modos" role="group" aria-label="Modo de juego">
+      <button type="button" class="modo on" data-modo="copa">Copa de 4 pistas</button>
+      <button type="button" class="modo" data-modo="suelta">Una pista</button>
+    </div>
+    <div class="elige" id="elige"></div>
+    <div class="mejor" id="mejor"></div>
+    <button type="button" class="gran" id="arrancar">¡A correr!</button>
+    <p class="ayuda">Con el teclado: flechas o A y D para girar, Espacio para usar el objeto, Shift para derrapar y ↓ para frenar.</p>
+  </section>
+
+  <div class="hud" id="hud" hidden>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <span class="chip">Vuelta <b id="vuelta">1</b>/3</span>
+      <span class="chip">Puesto <b id="puesto">6</b>/6</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-start">
+      <div class="caja-item" id="cajaItem" aria-label="Objeto guardado">·</div>
+      <button type="button" class="pausa-btn" id="pausa" aria-label="Pausa">II</button>
+    </div>
+  </div>
+
+  <div class="pista" id="pista">
+    <canvas id="lienzo"></canvas>
+    <div class="vuelta-txt" id="avisoTxt" hidden></div>
+    <div class="controles" id="controles" hidden>
+      <div class="grupo">
+        <button type="button" class="btn-t grande" data-tecla="izq" aria-label="Girar a la izquierda">◀</button>
+        <button type="button" class="btn-t grande" data-tecla="der" aria-label="Girar a la derecha">▶</button>
+      </div>
+      <div class="grupo">
+        <button type="button" class="btn-t mini" data-tecla="freno" aria-label="Frenar">Frenar</button>
+        <button type="button" class="btn-t mini" data-tecla="deriva" aria-label="Derrapar">Derrapar</button>
+        <button type="button" class="btn-t item" data-tecla="objeto" id="btnObjeto" aria-label="Usar objeto">Usar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="velo" id="velo" hidden>
+    <h2 id="veloTitulo">Pausa</h2>
+    <div id="veloCuerpo"></div>
+  </div>
+
+</div>
+<script>
+/* ---------- Datos de las pistas, personajes y reglas ---------- */
+const CLAVE = 'juma-kart-v1';
+const PUNTOS_POS = [30, 24, 20, 16, 12, 8];
+const N_KARTS = 6;
+const VUELTAS = 3;
+const K_PTS = 16;      /* puntos de control de cada pista */
+const M_SEG = 60;      /* muestras por tramo de la curva */
+const ANCHO = 150;     /* ancho de la pista en unidades del mundo */
+const TIEMPO_SEG = 1 / 60;
+
+const PISTAS = [
+  { id: 'emaus', nombre: 'Camino a Emaús', desc: 'Campos suaves y curvas amables', hierba: '#7fc46b', arena: '#e2c48c',
+    r: [820, 760, 880, 700, 860, 780, 900, 740, 850, 800, 700, 860, 760, 890, 720, 840] },
+  { id: 'desierto', nombre: 'Sendero del desierto', desc: 'Dunas y curvas cerradas', hierba: '#e7c57e', arena: '#f3dca8',
+    r: [700, 880, 720, 860, 700, 900, 730, 840, 710, 880, 700, 860, 720, 900, 700, 820] },
+  { id: 'mision', nombre: 'Ruta de la misión', desc: 'Pueblos y puentes', hierba: '#8fcf7a', arena: '#d9ba8c',
+    r: [760, 840, 700, 880, 740, 800, 820, 900, 700, 780, 860, 720, 800, 740, 880, 760] },
+  { id: 'santiago', nombre: 'Camino de Santiago', desc: 'La subida más larga', hierba: '#6fb36a', arena: '#cfb088',
+    r: [900, 780, 840, 720, 800, 900, 740, 860, 760, 700, 820, 900, 780, 710, 860, 740] },
+];
+
+/* Personajes: el jugador y cinco rivales */
+const PERSONAJES = [
+  { nombre: 'Tú', color: '#ffffff', borde: '#2b1a3f', humano: true },
+  { nombre: 'Lucía', color: '#3a8fe0', borde: '#123a6e' },
+  { nombre: 'Pedro', color: '#3fb860', borde: '#14502a' },
+  { nombre: 'Miguel', color: '#e04a4a', borde: '#6e1a1a' },
+  { nombre: 'Ana', color: '#a86ae0', borde: '#44205e' },
+  { nombre: 'Padre Tomás', color: '#ffb838', borde: '#6a4206' },
+];
+
+/* Objetos: las armas espirituales */
+const OBJETOS = {
+  vela:       { icono: '🕯️', nombre: 'Vela', texto: 'Turbo de la fe' },
+  rosario:    { icono: '📿', nombre: 'Rosario', texto: 'Escudo de oración' },
+  incienso:   { icono: '🌫️', nombre: 'Incienso', texto: 'Nube que frena' },
+  campanilla: { icono: '🔔', nombre: 'Campanilla', texto: 'Aturde a los de cerca' },
+  paloma:     { icono: '🕊️', nombre: 'Paloma', texto: 'Persigue al de adelante' },
+};
+
+/* ---------- Geometría de la pista (curva suave cerrada) ---------- */
+function catmull(p0, p1, p2, p3, t) {
+  const t2 = t * t, t3 = t2 * t;
+  return 0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
+}
+function construirPista(def) {
+  const pts = [];
+  for (let i = 0; i < K_PTS; i++) {
+    const a = (Math.PI * 2 * i) / K_PTS;
+    pts.push([def.r[i] * Math.cos(a), def.r[i] * Math.sin(a)]);
+  }
+  const xs = [], ys = [];
+  for (let i = 0; i < K_PTS; i++) {
+    const p0 = pts[(i - 1 + K_PTS) % K_PTS], p1 = pts[i], p2 = pts[(i + 1) % K_PTS], p3 = pts[(i + 2) % K_PTS];
+    for (let m = 0; m < M_SEG; m++) {
+      const t = m / M_SEG;
+      xs.push(catmull(p0[0], p1[0], p2[0], p3[0], t));
+      ys.push(catmull(p0[1], p1[1], p2[1], p3[1], t));
+    }
+  }
+  const N = xs.length;
+  const S = new Float64Array(N + 1);
+  for (let i = 0; i < N; i++) {
+    const j = (i + 1) % N;
+    S[i + 1] = S[i] + Math.hypot(xs[j] - xs[i], ys[j] - ys[i]);
+  }
+  const L = S[N];
+  const tx = new Float64Array(N), ty = new Float64Array(N);
+  for (let i = 0; i < N; i++) {
+    const a = (i - 1 + N) % N, b = (i + 1) % N;
+    const dx = xs[b] - xs[a], dy = ys[b] - ys[a], d = Math.hypot(dx, dy) || 1;
+    tx[i] = dx / d; ty[i] = dy / d;
+  }
+  return { def, N, xs, ys, S, L, tx, ty, mitad: ANCHO / 2 };
+}
+/* Punto de la pista en una distancia (en unidades) desde la línea de salida */
+function enDistancia(P, d) {
+  let a = ((d % P.L) + P.L) % P.L;
+  let lo = 0, hi = P.N - 1;
+  while (lo < hi) { const m = (lo + hi + 1) >> 1; if (P.S[m] <= a) lo = m; else hi = m - 1; }
+  return lo;
+}
+/* Índice más cercano a un punto, buscando solo cerca del índice anterior */
+function indiceCercano(P, x, y, idx) {
+  let mejor = idx, md = Infinity;
+  for (let k = -40; k <= 40; k++) {
+    const i = (idx + k + P.N) % P.N;
+    const d = (P.xs[i] - x) ** 2 + (P.ys[i] - y) ** 2;
+    if (d < md) { md = d; mejor = i; }
+  }
+  return mejor;
+}
+/* Distancia con signo al centro de la pista (+ = a la izquierda de la marcha) */
+function lateral(P, i, x, y) {
+  return -(x - P.xs[i]) * P.ty[i] + (y - P.ys[i]) * P.tx[i];
+}
+
+/* ---------- Estado guardado ---------- */
+function leerGuardado() {
+  try {
+    const d = JSON.parse(localStorage.getItem(CLAVE) || 'null');
+    if (d && typeof d === 'object' && d.mejores && typeof d.mejores === 'object') return d;
+  } catch (e) { /* sin datos */ }
+  return { mejores: {} };
+}
+function guardarDatos(d) { try { localStorage.setItem(CLAVE, JSON.stringify(d)); } catch (e) { /* sin almacenamiento */ } }
+function puntosTotales(d) { return Object.values(d.mejores).reduce((s, v) => s + (Number(v) || 0), 0); }
+function avisarPuntos(total) {
+  try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', juego: 'kart', total }, location.origin); } catch (e) { /* nada */ }
+}
+</script>
+<script>
+/* ---------- Física, rivales y objetos ---------- */
+const VMAX = 330, ACEL = 300, FRENO = 520, FRICC = 220, GIRO = 2.6, AGARRE = 6.0, AGARRE_DERIVA = 2.0;
+const TOPE_ATRAS = -120;
+
+let P = null;               /* pista en juego */
+let karts = [];
+let cosas = [];             /* proyectiles, nubes y ondas */
+let cajas = [];             /* cajas de gracia */
+let jugador = null;
+
+function crearPista(def) {
+  P = construirPista(def);
+  cajas = [];
+  for (let f = 0; f < 4; f++) {
+    for (const lado of [-0.45, 0.45]) {
+      cajas.push({ d: (P.L * (f + 0.25)) / 4, lado, vivo: true, espera: 0 });
+    }
+  }
+  cosas = [];
+}
+function posCaja(c) {
+  const i = enDistancia(P, c.d);
+  return { x: P.xs[i] - P.ty[i] * c.lado * P.mitad, y: P.ys[i] + P.tx[i] * c.lado * P.mitad };
+}
+
+function crearCarrera(sel) {
+  karts = PERSONAJES.map((p, i) => {
+    const d0 = -(70 + Math.floor(i / 2) * 80);
+    const lado = (i % 2 === 0 ? -1 : 1) * P.mitad * 0.42;
+    const idx = enDistancia(P, d0);
+    const x = P.xs[idx] - P.ty[idx] * lado, y = P.ys[idx] + P.tx[idx] * lado;
+    return {
+      i, nombre: p.nombre, color: p.color, borde: p.borde, humano: !!p.humano,
+      x, y, h: Math.atan2(P.ty[idx], P.tx[idx]), vx: 0, vy: 0,
+      idx, dist: d0, fin: null, listo: false,
+      item: null, escudo: 0, aturd: 0, lento: 0, turbo: 0, deriva: 0, tiempoItem: 0, retardo: 1 + Math.random() * 2,
+      carril: p.humano ? 0 : (Math.random() - 0.5) * 0.7, giroVis: 0
+    };
+  });
+  jugador = karts[0];
+  cosas = [];
+  for (const c of cajas) { c.vivo = true; c.espera = 0; }
+}
+
+/* Lo que pide cada kart en este instante: { acel, freno, giro (-1 izq, +1 der), deriva } */
+function controlIA(k) {
+  const L = P.L;
+  const la = 120 + Math.hypot(k.vx, k.vy) * 0.4;
+  const j = enDistancia(P, P.S[k.idx] + la);
+  const tx = P.xs[j] - P.ty[j] * k.carril * P.mitad * 0.6;
+  const ty = P.ys[j] + P.tx[j] * k.carril * P.mitad * 0.6;
+  let ang = Math.atan2(ty - k.y, tx - k.x) - k.h;
+  while (ang > Math.PI) ang -= Math.PI * 2;
+  while (ang < -Math.PI) ang += Math.PI * 2;
+  const velo = Math.hypot(k.vx, k.vy);
+  const curva = Math.abs(ang) > 0.9 && velo > 220;
+  return { acel: !curva, freno: curva, giro: Math.max(-1, Math.min(1, ang * 2.4)), deriva: false, L };
+}
+
+function avanzar(k, dt, ctl) {
+  if (k.aturd > 0) { k.aturd -= dt; ctl = { acel: false, freno: false, giro: 0, deriva: false }; }
+  if (k.lento > 0) k.lento -= dt;
+  if (k.turbo > 0) k.turbo -= dt;
+  if (k.escudo > 0) k.escudo -= dt;
+
+  const fx = Math.cos(k.h), fy = Math.sin(k.h);
+  let vf = k.vx * fx + k.vy * fy;
+  let vl = -k.vx * fy + k.vy * fx;
+  const enPista = Math.abs(lateral(P, k.idx, k.x, k.y)) <= P.mitad + 6;
+  let vmax = VMAX * (enPista ? 1 : 0.55);
+  if (k.turbo > 0) vmax += 120;
+  if (k.lento > 0) vmax *= 0.45;
+  if (k.ritmo) vmax *= k.ritmo;
+  const acel = k.turbo > 0 ? ACEL * 1.4 : ACEL;
+
+  if (ctl.acel && vf < vmax) vf = Math.min(vmax, vf + acel * dt);
+  else if (vf > vmax) vf = Math.max(vmax, vf - FRICC * dt);
+  if (ctl.freno) vf = Math.max(TOPE_ATRAS, vf - FRENO * dt);
+  if (!ctl.acel && !ctl.freno) vf -= Math.sign(vf) * Math.min(Math.abs(vf), FRICC * dt * 0.5);
+
+  /* Giro: depende de la velocidad. Derrapar deja la parte de atrás resbalar */
+  /* Incluso casi parado se puede girar, así nadie queda atascado en el borde */
+  const mult = Math.max(0.35, Math.min(1, Math.abs(vf) / 120));
+  let grip = AGARRE;
+  if (ctl.deriva && Math.abs(vf) > 150 && ctl.giro !== 0) {
+    k.deriva += dt; grip = AGARRE_DERIVA; k.giroVis = ctl.giro;
+    k.h += ctl.giro * GIRO * 1.35 * mult * dt;
+  } else {
+    if (!ctl.deriva && k.deriva > 0.7) k.turbo = Math.max(k.turbo, 0.9);
+    if (!ctl.deriva) k.deriva = 0;
+    k.h += ctl.giro * GIRO * mult * dt * (vf < 0 ? -1 : 1);
+    k.giroVis = ctl.giro;
+  }
+  const nfx = Math.cos(k.h), nfy = Math.sin(k.h);
+  vl *= Math.max(0, 1 - grip * dt);
+  k.vx = vf * nfx - vl * nfy;
+  k.vy = vf * nfy + vl * nfx;
+  k.x += k.vx * dt;
+  k.y += k.vy * dt;
+  if (k.aturd > 0) { k.vx = 0; k.vy = 0; }
+
+  /* Fuera de la pista se va más lento (el campo frena), pero se puede volver. Solo hay un tope lejano
+     para que nadie se pierda del todo. */
+  const i = indiceCercano(P, k.x, k.y, k.idx);
+  const lat = lateral(P, i, k.x, k.y);
+  const tope = P.mitad + 220;
+  if (Math.abs(lat) > tope) {
+    const lado = Math.sign(lat) * (Math.abs(lat) - tope);
+    k.x -= -P.ty[i] * lado; k.y -= P.tx[i] * lado;
+    /* Quita solo la parte que empuja hacia afuera: la velocidad a lo largo del borde se mantiene */
+    const nx = -P.ty[i], ny = P.tx[i], vn = k.vx * nx + k.vy * ny;
+    if (vn * lat > 0) { k.vx -= nx * vn; k.vy -= ny * vn; }
+  }
+  /* Si pasa mucho rato lejos de la pista, lo devuelve al camino mirando hacia adelante */
+  if (Math.abs(lat) > P.mitad + 60) {
+    k.fuera = (k.fuera || 0) + dt;
+    if (k.fuera > 1.2) {
+      k.x = P.xs[i]; k.y = P.ys[i];
+      k.h = Math.atan2(P.ty[i], P.tx[i]);
+      k.vx = P.tx[i] * 120; k.vy = P.ty[i] * 120;
+      k.fuera = 0;
+      if (k.humano && typeof aviso === 'function') aviso('¡Vuelve a la pista!', 1400);
+    }
+  } else k.fuera = 0;
+  /* Avance por la pista y vueltas */
+  const j = indiceCercano(P, k.x, k.y, i);
+  let delta = P.S[j] - P.S[k.idx];
+  if (delta > P.L / 2) delta -= P.L; else if (delta < -P.L / 2) delta += P.L;
+  k.dist += delta;
+  k.idx = j;
+  if (!k.listo && k.dist >= P.L * VUELTAS) { k.listo = true; k.fin = raceT; }
+}
+
+/* Orden actual: primero los que llegaron (por tiempo), luego por distancia recorrida */
+function clasificacion() {
+  return karts.slice().sort((a, b) => {
+    if (a.listo && b.listo) return a.fin - b.fin;
+    if (a.listo) return -1;
+    if (b.listo) return 1;
+    return b.dist - a.dist;
+  });
+}
+
+/* Cajas de gracia: al tocarlas dan un objeto según el puesto */
+const TABLA_OBJETOS = {
+  1: ['campanilla', 'incienso', 'vela'],
+  2: ['campanilla', 'incienso', 'vela', 'rosario'],
+  3: ['vela', 'rosario', 'paloma'],
+  4: ['vela', 'rosario', 'paloma', 'incienso'],
+  5: ['paloma', 'paloma', 'vela', 'campanilla'],
+  6: ['paloma', 'campanilla', 'rosario', 'vela'],
+};
+function revisarCajas(dt) {
+  const orden = clasificacion();
+  for (const c of cajas) {
+    if (!c.vivo) { c.espera -= dt; if (c.espera <= 0) c.vivo = true; continue; }
+    const p = posCaja(c);
+    for (const k of karts) {
+      if (k.item || k.listo) continue;
+      if (Math.hypot(k.x - p.x, k.y - p.y) < 34) {
+        const puesto = orden.indexOf(k) + 1;
+        const lista = TABLA_OBJETOS[puesto] || TABLA_OBJETOS[6];
+        k.item = lista[Math.floor(Math.random() * lista.length)];
+        k.tiempoItem = 0;
+        c.vivo = false; c.espera = 4;
+        if (k.humano) avisarObjetoCambio();
+        break;
+      }
+    }
+  }
+}
+</script>
+<script>
+/* ---------- Objetos en juego, choques y paso del tiempo ---------- */
+let raceT = 0;
+
+function aturdir(r, segundos) {
+  if (r.escudo > 0) { r.escudo = 0; return false; }   /* el rosario bloquea el golpe */
+  r.aturd = Math.max(r.aturd, segundos);
+  return true;
+}
+
+function usarObjeto(k) {
+  if (!k.item) return;
+  const it = k.item;
+  k.item = null;
+  if (it === 'vela') {
+    k.turbo = 1.8;
+  } else if (it === 'rosario') {
+    k.escudo = 4;
+  } else if (it === 'incienso') {
+    cosas.push({ tipo: 'nube', x: k.x - Math.cos(k.h) * 60, y: k.y - Math.sin(k.h) * 60, r: 55, t: 6, dueno: k.i });
+  } else if (it === 'campanilla') {
+    let golpes = 0;
+    for (const r of karts) {
+      if (r === k || Math.hypot(r.x - k.x, r.y - k.y) > 260) continue;
+      if (aturdir(r, 1.0)) golpes++;
+    }
+    cosas.push({ tipo: 'onda', x: k.x, y: k.y, r: 0, t: 0.6 });
+  } else if (it === 'paloma') {
+    let obj = null;
+    for (const r of karts) {
+      if (r === k || r.dist <= k.dist) continue;
+      if (!obj || r.dist < obj.dist) obj = r;
+    }
+    cosas.push({ tipo: 'paloma', x: k.x, y: k.y, h: k.h, obj, vida: 6, dueno: k.i });
+  }
+  if (k.humano && typeof actualizarCajaItem === 'function') actualizarCajaItem();
+}
+
+/* Los rivales usan su objeto cuando tiene sentido */
+function usarIA(k, dt) {
+  if (!k.item) return;
+  k.tiempoItem += dt;
+  if (k.tiempoItem < k.retardo) return;
+  const cerca = (cond) => karts.some((r) => r !== k && cond(r, Math.hypot(r.x - k.x, r.y - k.y)));
+  const detrasCerca = cerca((r) => r.dist < k.dist && k.dist - r.dist < 220);
+  const delanteCerca = cerca((r) => r.dist > k.dist && r.dist - k.dist < 300);
+  const cercaTodos = cerca((r, d) => d < 240);
+  let usa = false;
+  if (k.item === 'vela') usa = true;
+  else if (k.item === 'rosario') usa = detrasCerca || k.tiempoItem > 4;
+  else if (k.item === 'incienso') usa = detrasCerca || k.tiempoItem > 6;
+  else if (k.item === 'campanilla') usa = cercaTodos;
+  else if (k.item === 'paloma') usa = delanteCerca || k.tiempoItem > 5;
+  if (k.tiempoItem > 8) usa = true;
+  if (usa) usarObjeto(k);
+}
+
+function actualizarCosas(dt) {
+  for (const c of cosas) {
+    if (c.tipo === 'nube') {
+      c.t -= dt;
+      for (const r of karts) {
+        if (r.escudo > 0 || r.lento > 0) continue;
+        if (Math.hypot(r.x - c.x, r.y - c.y) < c.r) r.lento = 1.2;
+      }
+    } else if (c.tipo === 'onda') {
+      c.t -= dt; c.r += 520 * dt;
+    } else if (c.tipo === 'paloma') {
+      c.vida -= dt;
+      let tx, ty;
+      if (c.obj) { tx = c.obj.x; ty = c.obj.y; }
+      else { tx = c.x + Math.cos(c.h) * 100; ty = c.y + Math.sin(c.h) * 100; }
+      const ang = Math.atan2(ty - c.y, tx - c.x);
+      let dif = ang - c.h;
+      while (dif > Math.PI) dif -= Math.PI * 2;
+      while (dif < -Math.PI) dif += Math.PI * 2;
+      c.h += Math.max(-4 * dt, Math.min(4 * dt, dif));
+      c.x += Math.cos(c.h) * 480 * dt;
+      c.y += Math.sin(c.h) * 480 * dt;
+      if (c.obj && Math.hypot(c.obj.x - c.x, c.obj.y - c.y) < 34) {
+        aturdir(c.obj, 1.3);
+        c.vida = 0;
+        if (c.obj.humano && typeof aviso === 'function') aviso('¡La paloma te alcanzó!');
+      }
+    }
+  }
+  cosas = cosas.filter((c) => (c.tipo === 'nube' ? c.t > 0 : c.tipo === 'onda' ? c.t > 0 : c.vida > 0));
+}
+
+/* Los karts no se atraviesan: si se tocan, se separan */
+function chocarKarts() {
+  for (let a = 0; a < karts.length; a++) {
+    for (let b = a + 1; b < karts.length; b++) {
+      const A = karts[a], B = karts[b];
+      const dx = B.x - A.x, dy = B.y - A.y;
+      const d = Math.hypot(dx, dy);
+      const min = 30;
+      if (d >= min || d < 0.01) continue;
+      const nx = dx / d, ny = dy / d, empuje = (min - d) / 2;
+      A.x -= nx * empuje; A.y -= ny * empuje;
+      B.x += nx * empuje; B.y += ny * empuje;
+      A.vx *= 0.9; A.vy *= 0.9; B.vx *= 0.9; B.vy *= 0.9;
+    }
+  }
+}
+
+/* Paso del tiempo: mueve a todos, aplica objetos y choques */
+function actualizarMundo(dt, ctlJugador) {
+  raceT += dt;
+  for (const k of karts) {
+    if (!k.humano) {
+      /* Un poco de ayuda a los que van atrás, un poco de freno a los que van delante */
+      k.ritmo = 1 + 0.05 * Math.max(-1, Math.min(1, (jugador.dist - k.dist) / 700));
+      usarIA(k, dt);
+    }
+    const ctl = (k.humano && !k.listo) ? ctlJugador : controlIA(k);
+    avanzar(k, dt, ctl);
+  }
+  chocarKarts();
+  actualizarCosas(dt);
+  revisarCajas(dt);
+  /* Las cajas de gracia se reponen solas */
+}
+</script>
+<script>
+/* ---------- Dibujo (vista desde arriba que sigue al jugador) ---------- */
+const cv = document.getElementById('lienzo');
+const ctx = cv.getContext('2d');
+let W = 1, H = 1, DPR = 1, decor = [];
+
+function ajustarLienzo() {
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  const r = cv.getBoundingClientRect();
+  W = Math.max(1, r.width); H = Math.max(1, r.height);
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+}
+window.addEventListener('resize', ajustarLienzo);
+
+/* Adornos alrededor de la pista: siempre los mismos para cada pista (semilla fija) */
+function generaRuido(semilla) {
+  let s = semilla >>> 0;
+  return () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+function crearDecor(P) {
+  const ruido = generaRuido(P.def.id.length * 977 + P.def.r[3] * 13);
+  const lista = [];
+  for (let n = 0; n < 150; n++) {
+    const i = Math.floor(ruido() * P.N);
+    const lado = ruido() < 0.5 ? -1 : 1;
+    const off = P.mitad + 34 + ruido() * 220;
+    const tipo = ruido();
+    lista.push({ x: P.xs[i] - P.ty[i] * lado * off, y: P.ys[i] + P.tx[i] * lado * off,
+      tipo: tipo < 0.42 ? 'arbol' : tipo < 0.7 ? 'piedra' : tipo < 0.9 ? 'cruz' : 'capilla', k: ruido() });
+  }
+  return lista;
+}
+function dibujarDecor(d) {
+  if (d.tipo === 'arbol') {
+    ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.arc(d.x + 5, d.y + 6, 26, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#2f7a3c'; ctx.beginPath(); ctx.arc(d.x, d.y, 26, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#4fa35a'; ctx.beginPath(); ctx.arc(d.x - 7, d.y - 8, 12, 0, Math.PI * 2); ctx.fill();
+  } else if (d.tipo === 'piedra') {
+    ctx.fillStyle = '#9a8d7e'; ctx.beginPath(); ctx.ellipse(d.x, d.y, 16, 11, d.k * 3, 0, Math.PI * 2); ctx.fill();
+  } else if (d.tipo === 'cruz') {
+    ctx.fillStyle = '#7a4a1e'; ctx.fillRect(d.x - 3, d.y - 22, 6, 40); ctx.fillRect(d.x - 14, d.y - 10, 28, 6);
+    ctx.fillStyle = '#f3e6c8'; ctx.fillRect(d.x - 1, d.y - 22, 2, 36);
+  } else {
+    ctx.fillStyle = '#f3e6c8'; ctx.fillRect(d.x - 24, d.y - 16, 48, 34);
+    ctx.fillStyle = '#8a2c2c'; ctx.beginPath(); ctx.moveTo(d.x - 30, d.y - 16); ctx.lineTo(d.x, d.y - 40); ctx.lineTo(d.x + 30, d.y - 16); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#ffd25a'; ctx.fillRect(d.x - 2, d.y - 52, 4, 14); ctx.fillRect(d.x - 6, d.y - 47, 12, 4);
+  }
+}
+
+function trazarPista(anchoLinea, color, discont) {
+  const xs = P.xs, ys = P.ys, N = P.N;
+  ctx.beginPath();
+  ctx.moveTo(xs[0], ys[0]);
+  for (let i = 2; i < N; i += 2) ctx.lineTo(xs[i], ys[i]);
+  ctx.closePath();
+  ctx.lineWidth = anchoLinea; ctx.strokeStyle = color;
+  if (discont) ctx.setLineDash(discont); else ctx.setLineDash([]);
+  ctx.stroke();
+}
+
+function dibujarKart(k) {
+  ctx.save();
+  ctx.translate(k.x, k.y);
+  if (k.lento > 0) { ctx.fillStyle = 'rgba(120,200,90,.45)'; ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(3, 5, 15, 22, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.rotate(k.h);
+  if (k.turbo > 0) { ctx.fillStyle = 'rgba(255,190,80,.85)'; ctx.beginPath(); ctx.arc(-19, 0, 5 + Math.random() * 3, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = '#1d1420';
+  ctx.fillRect(-16, -16, 6, 10); ctx.fillRect(10, -16, 6, 10); ctx.fillRect(-16, 6, 6, 10); ctx.fillRect(10, 6, 6, 10);
+  ctx.fillStyle = k.color; ctx.strokeStyle = k.borde; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.roundRect(-13, -18, 26, 36, 9); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#bfe6ff'; ctx.beginPath(); ctx.roundRect(-8, -9, 16, 10, 4); ctx.fill();
+  ctx.fillStyle = '#ffe0bd'; ctx.strokeStyle = k.borde; ctx.beginPath(); ctx.arc(1, 9, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  if (k.escudo > 0) { ctx.strokeStyle = 'rgba(255,230,140,.95)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(k.x, k.y, 30, 0, Math.PI * 2); ctx.stroke(); }
+  if (k.aturd > 0) {
+    ctx.fillStyle = '#ffd25a';
+    for (let j = 0; j < 3; j++) { const a = raceT * 8 + j * 2.1; ctx.beginPath(); ctx.arc(k.x + Math.cos(a) * 22, k.y + Math.sin(a) * 22 - 6, 3.5, 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.font = '800 13px "Trebuchet MS", Arial, sans-serif'; ctx.textAlign = 'center';
+  ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(20,8,36,.8)'; ctx.strokeText(k.nombre, k.x, k.y - 34);
+  ctx.fillStyle = '#fff'; ctx.fillText(k.nombre, k.x, k.y - 34);
+}
+
+function dibujar() {
+  if (!P || !jugador) return;
+  const s = Math.min(W, H * 1.15) / 620;
+  const v = Math.hypot(jugador.vx, jugador.vy) * 0.12;
+  const cx = jugador.x + Math.cos(jugador.h) * v, cy = jugador.y + Math.sin(jugador.h) * v;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = P.def.hierba; ctx.fillRect(0, 0, W, H);
+  ctx.setTransform(DPR * s, 0, 0, DPR * s, DPR * (W / 2 - cx * s), DPR * (H / 2 - cy * s));
+  for (const d of decor) { if (Math.abs(d.x - cx) < W / s / 2 + 60 && Math.abs(d.y - cy) < H / s / 2 + 60) dibujarDecor(d); }
+  trazarPista(P.mitad * 2 + 18, '#fff7e6', null);
+  trazarPista(P.mitad * 2, P.def.arena, null);
+  trazarPista(4, 'rgba(255,255,255,.75)', [18, 22]);
+  /* Línea de salida y meta */
+  const x0 = P.xs[0], y0 = P.ys[0], nx = -P.ty[0], ny = P.tx[0];
+  ctx.strokeStyle = '#2b1a3f'; ctx.lineWidth = 12; ctx.setLineDash([8, 8]);
+  ctx.beginPath(); ctx.moveTo(x0 + nx * P.mitad, y0 + ny * P.mitad); ctx.lineTo(x0 - nx * P.mitad, y0 - ny * P.mitad); ctx.stroke();
+  ctx.setLineDash([]);
+  /* Cajas de gracia */
+  for (const c of cajas) {
+    if (!c.vivo) continue;
+    const p = posCaja(c);
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(raceT * 1.5);
+    ctx.fillStyle = '#ffd25a'; ctx.strokeStyle = '#a86a00'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.roundRect(-14, -14, 28, 28, 8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.fillRect(-2.5, -8, 5, 16); ctx.fillRect(-8, -2.5, 16, 5);
+    ctx.restore();
+  }
+  /* Objetos en el camino */
+  for (const c of cosas) {
+    if (c.tipo === 'nube') {
+      ctx.fillStyle = 'rgba(120,110,120,.45)';
+      ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2); ctx.fill();
+    } else if (c.tipo === 'onda') {
+      ctx.strokeStyle = `rgba(255,230,140,${Math.max(0, c.t / 0.6)})`; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2); ctx.stroke();
+    } else if (c.tipo === 'paloma') {
+      ctx.font = '34px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('🕊️', c.x, c.y);
+      ctx.textBaseline = 'alphabetic';
+    }
+  }
+  /* Karts: primero los de atrás para que el jugador quede encima */
+  for (const k of karts.slice().sort((a, b) => a.dist - b.dist)) dibujarKart(k);
+  ctx.setLineDash([]);
+}
+</script>
+<script>
+/* ---------- Pantallas, controles y flujo de la carrera ---------- */
+const $ = (s) => document.querySelector(s);
+const ui = { menu: $('#menu'), hud: $('#hud'), controles: $('#controles'), velo: $('#velo'), veloT: $('#veloTitulo'), veloC: $('#veloCuerpo'), aviso: $('#avisoTxt'), elige: $('#elige'), mejor: $('#mejor') };
+let modo = 'copa', pistaSel = 0, fase = 'menu', faseAntes = 'menu', cuentaT = 0, finT = 0, last = 0, avisoT = 0;
+let copa = { idx: 0, total: [0, 0, 0, 0, 0, 0] };
+const input = { izq: false, der: false, freno: false, deriva: false };
+
+function tiempo(s) { const m = Math.floor(s / 60), r = s - m * 60; return `${m}:${r.toFixed(2).padStart(5, '0')}`; }
+
+function aviso(txt, ms = 1600, grande = false) {
+  const el = ui.aviso;
+  el.textContent = txt;
+  el.style.fontSize = grande ? '' : 'clamp(20px, 4.4vw, 30px)';
+  el.classList.remove('anim'); void el.offsetWidth; el.classList.add('anim');
+  el.hidden = false;
+  clearTimeout(avisoT);
+  avisoT = setTimeout(() => { el.hidden = true; }, ms);
+}
+function actualizarCajaItem() {
+  const caja = $('#cajaItem'), btn = $('#btnObjeto');
+  caja.textContent = jugador && jugador.item ? OBJETOS[jugador.item].icono : '·';
+  btn.classList.toggle('lleno', !!(jugador && jugador.item));
+}
+function avisarObjetoCambio() {
+  actualizarCajaItem();
+  const o = OBJETOS[jugador.item];
+  aviso(`${o.icono} ${o.nombre}: ${o.texto}`, 1800);
+}
+
+function pintarMenu() {
+  const d = leerGuardado();
+  ui.elige.innerHTML = PISTAS.map((p, i) => `<button type="button" class="pista-btn${i === pistaSel ? ' on' : ''}" data-pista="${i}">${p.nombre}<small>${p.desc}</small></button>`).join('');
+  ui.elige.hidden = modo === 'copa';
+  document.querySelectorAll('[data-modo]').forEach((b) => b.classList.toggle('on', b.dataset.modo === modo));
+  ui.mejor.textContent = modo === 'copa'
+    ? `Puntos misioneros guardados: ${puntosTotales(d)}`
+    : `Tu mejor en esta pista: ${d.mejores[PISTAS[pistaSel].id] ?? '—'} de ${PUNTOS_POS[0]}`;
+}
+
+function mostrarHUD(ver) {
+  ui.menu.hidden = ver; ui.hud.hidden = !ver; ui.controles.hidden = !ver;
+}
+function iniciarPista(i) {
+  crearPista(PISTAS[i]);
+  decor = crearDecor(P);
+  crearCarrera();
+  ajustarLienzo();
+  actualizarCajaItem();
+  mostrarHUD(true);
+  ui.velo.hidden = true;
+  fase = 'cuenta'; cuentaT = 0; finT = 0;
+  raceT = 0;
+}
+function arrancarMenu() {
+  if (modo === 'copa') { copa = { idx: 0, total: [0, 0, 0, 0, 0, 0] }; iniciarPista(0); }
+  else iniciarPista(pistaSel);
+}
+
+/* Cuenta atrás 3, 2, 1, ¡VAMOS! */
+function revisarCuenta(dt) {
+  cuentaT += dt;
+  const txt = cuentaT < 0.8 ? '3' : cuentaT < 1.6 ? '2' : cuentaT < 2.4 ? '1' : cuentaT < 3.2 ? '¡VAMOS!' : null;
+  if (txt === null) { fase = 'corre'; ui.aviso.hidden = true; return; }
+  if (ui.aviso.textContent !== txt) aviso(txt, 900, true);
+}
+
+function ctlJugador() {
+  return { acel: !input.freno, freno: input.freno, giro: (input.der ? 1 : 0) - (input.izq ? 1 : 0), deriva: input.deriva };
+}
+
+/* Fin de la pista: se guardan los puntos y se muestran los resultados */
+function terminarPista() {
+  const orden = clasificacion();
+  const pos = orden.indexOf(jugador) + 1;
+  const pts = PUNTOS_POS[pos - 1] || 0;
+  const id = PISTAS[modo === 'copa' ? copa.idx : pistaSel].id;
+  const d = leerGuardado();
+  const previo = d.mejores[id] || 0;
+  if (pts > previo) d.mejores[id] = pts;
+  guardarDatos(d);
+  avisarPuntos(puntosTotales(d));
+  if (modo === 'copa') orden.forEach((k, r) => { copa.total[k.i] += PUNTOS_POS[r] || 0; });
+  const filas = orden.map((k, r) => `<tr class="${k.humano ? 'yo' : ''}"><td>${r + 1}º</td><td>${k.nombre}</td><td>${k.listo ? tiempo(k.fin) : '—'}</td></tr>`).join('');
+  let botones;
+  if (modo === 'copa' && copa.idx < PISTAS.length - 1) botones = `<button type="button" class="sec" data-accion="siguiente">Siguiente pista</button>`;
+  else if (modo === 'copa') botones = `<button type="button" class="sec" data-accion="copa">Ver la copa</button>`;
+  else botones = `<button type="button" class="sec" data-accion="repetir">Otra vez</button>`;
+  fase = 'fin';
+  mostrarVelo(pos === 1 ? '¡Primer lugar!' : `Llegaste en ${pos}º lugar`,
+    `<p class="puntos-txt">Ganas <b>${pts}</b> puntos misioneros en esta pista.</p>
+     <table class="tabla">${filas}</table>
+     <div class="fila-btn" style="margin-top:14px">${botones}<button type="button" class="sec" data-accion="menu">Menú</button></div>`);
+}
+function mostrarCopa() {
+  const orden = karts.map((k) => ({ k, t: copa.total[k.i] })).sort((a, b) => b.t - a.t);
+  const filas = orden.map((o, r) => `<tr class="${o.k.humano ? 'yo' : ''}"><td>${r + 1}º</td><td>${o.k.nombre}</td><td>${o.t}</td></tr>`).join('');
+  mostrarVelo('Resultado de la copa', `<table class="tabla">${filas}</table>
+    <div class="fila-btn" style="margin-top:14px"><button type="button" class="sec" data-accion="menu">Volver al menú</button></div>`);
+}
+function mostrarVelo(titulo, html) {
+  ui.veloT.textContent = titulo; ui.veloC.innerHTML = html; ui.velo.hidden = false;
+}
+
+function pausar() {
+  if (fase === 'pausa') { fase = faseAntes; ui.velo.hidden = true; return; }
+  if (fase !== 'cuenta' && fase !== 'corre') return;
+  faseAntes = fase; fase = 'pausa';
+  mostrarVelo('Pausa', `<div class="fila-btn"><button type="button" class="sec" data-accion="seguir">Seguir</button><button type="button" class="sec" data-accion="menu">Menú</button></div>`);
+}
+function volverMenu() {
+  fase = 'menu'; ui.velo.hidden = true; mostrarHUD(false); pintarMenu();
+}
+
+/* ---------- Eventos ---------- */
+ui.menu.addEventListener('click', (e) => {
+  const p = e.target.closest('[data-pista]'); if (p) { pistaSel = Number(p.dataset.pista); pintarMenu(); return; }
+  const m = e.target.closest('[data-modo]'); if (m) { modo = m.dataset.modo; pintarMenu(); return; }
+  if (e.target.closest('#arrancar')) arrancarMenu();
+});
+ui.velo.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-accion]'); if (!b) return;
+  const a = b.dataset.accion;
+  if (a === 'seguir') pausar();
+  else if (a === 'menu') volverMenu();
+  else if (a === 'repetir') arrancarMenu();
+  else if (a === 'siguiente') { copa.idx++; iniciarPista(copa.idx); }
+  else if (a === 'copa') mostrarCopa();
+});
+$('#pausa').addEventListener('click', pausar);
+
+const TECLAS = { ArrowLeft: 'izq', KeyA: 'izq', ArrowRight: 'der', KeyD: 'der', ArrowDown: 'freno', KeyS: 'freno', ShiftLeft: 'deriva', ShiftRight: 'deriva', KeyX: 'deriva' };
+const TECLAS_OBJETO = ['Space', 'KeyZ', 'KeyE', 'Enter'];
+window.addEventListener('keydown', (e) => {
+  if (ui.menu.hidden === false && e.code !== 'Enter') return;
+  if (TECLAS[e.code]) { input[TECLAS[e.code]] = true; e.preventDefault(); }
+  if (TECLAS_OBJETO.includes(e.code)) { e.preventDefault(); if (!e.repeat && fase === 'corre') usarObjeto(jugador); }
+  if ((e.code === 'KeyP' || e.code === 'Escape') && !e.repeat) pausar();
+});
+window.addEventListener('keyup', (e) => { if (TECLAS[e.code]) input[TECLAS[e.code]] = false; });
+window.addEventListener('blur', () => { for (const k in input) input[k] = false; });
+
+document.querySelectorAll('[data-tecla]').forEach((b) => {
+  const nombre = b.dataset.tecla;
+  b.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); b.setPointerCapture?.(e.pointerId);
+    if (nombre === 'objeto') { if (fase === 'corre') usarObjeto(jugador); return; }
+    input[nombre] = true; b.classList.add('on');
+  });
+  const soltar = () => { if (nombre !== 'objeto') input[nombre] = false; b.classList.remove('on'); };
+  b.addEventListener('pointerup', soltar);
+  b.addEventListener('pointercancel', soltar);
+  b.addEventListener('pointerleave', soltar);
+});
+
+/* ---------- Bucle principal ---------- */
+function puesto() { return clasificacion().indexOf(jugador) + 1; }
+function actualizarHUD() {
+  if (!jugador) return;
+  const vuelta = Math.min(VUELTAS, Math.max(1, Math.floor(Math.max(0, jugador.dist) / P.L) + 1));
+  $('#vuelta').textContent = vuelta;
+  $('#puesto').textContent = puesto();
+}
+function frame(ts) {
+  const dt = Math.min(1 / 30, (ts - last) / 1000 || 1 / 60);
+  last = ts;
+  if (fase === 'cuenta') revisarCuenta(dt);
+  else if (fase === 'corre') {
+    actualizarMundo(dt, ctlJugador());
+    if (jugador.listo) { finT += dt; if (finT > 1.4) terminarPista(); }
+    else if (karts.every((k) => k.listo)) terminarPista();
+  }
+  if (fase === 'cuenta' || fase === 'corre' || fase === 'pausa' || fase === 'fin') { dibujar(); actualizarHUD(); }
+  requestAnimationFrame(frame);
+}
+ajustarLienzo();
+pintarMenu();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
