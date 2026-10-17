@@ -97,6 +97,23 @@
   .stats b { color: var(--oro); float: right; }
   @media (max-width: 420px) { .celda { min-width: 58px; padding: 3px 5px; } .celda b { font-size: 19px; } .cara { width: 46px; height: 46px; } }
   @media (prefers-reduced-motion: reduce) { .aviso, .tarjeta { animation: none; } }
+  /* Cinemática: franjas de cine, títulos y botón para saltar */
+  .cine { position: fixed; inset: 0; z-index: 18; pointer-events: none; display: none; }
+  .cine.on { display: block; }
+  .cine > i { position: absolute; left: 0; right: 0; height: 12vh; background: #000; animation: franja .6s cubic-bezier(.23,1,.32,1) both; }
+  .cine > i:first-child { top: 0; } .cine > i:nth-child(2) { bottom: 0; }
+  @keyframes franja { from { transform: scaleY(0); } }
+  .cine-txt { position: absolute; left: 0; right: 0; bottom: calc(12vh + 18px); text-align: center; font-family: Georgia, serif; font-size: 30px; color: #fff3c4; text-shadow: 0 2px 12px rgba(0,0,0,.9), 0 0 24px rgba(255,200,90,.5); opacity: 0; transform: translateY(12px); transition: opacity .6s, transform .6s cubic-bezier(.23,1,.32,1); }
+  .cine-txt.on { opacity: 1; transform: none; }
+  .cine-txt small { display: block; font-size: 13px; letter-spacing: .3em; text-transform: uppercase; color: #ffd25a; font-family: inherit; margin-bottom: 4px; }
+  .cine-txt span { display: block; font-size: 15px; font-style: italic; margin-top: 6px; color: #fff; }
+  #b-saltar-cine { position: absolute; right: 14px; top: calc(12vh + 12px); pointer-events: auto; background: rgba(0,0,0,.55); color: #fff; border: 1px solid rgba(255,255,255,.4); border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 14px; }
+  .dones-lista { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+  .dones-lista span { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 6px 8px; font-size: 13px; font-weight: 700; opacity: .6; text-align: left; }
+  .dones-lista span.ya { opacity: 1; border-color: #ffd25a; background: rgba(255,210,90,.14); color: #fff3c4; }
+  .dones-lista small { display: block; font-weight: 400; font-size: 11px; opacity: .85; }
+  .barra-don { height: 8px; border-radius: 4px; background: rgba(0,0,0,.4); overflow: hidden; margin-top: 8px; }
+  .barra-don i { display: block; height: 100%; background: linear-gradient(90deg,#ffd25a,#fff3b0); }
 </style>
 </head>
 <body>
@@ -140,6 +157,8 @@
     <div class="titulo-sec">Nivel</div>
     <div class="niveles" id="m-niveles"></div>
     <button class="boton" id="b-jugar" type="button">COMENZAR</button>
+    <div class="titulo-sec">Dones del Espíritu</div>
+    <div class="dones" id="m-dones"></div>
     <div class="titulo-sec">Los pecados</div>
     <div class="bestiario" id="m-bestiario"></div>
     <div class="lista">
@@ -154,6 +173,7 @@
   </div>
 </div>
 
+<div class="cine" id="cine"><i></i><i></i><div class="cine-txt" id="cine-txt"></div><button type="button" id="b-saltar-cine">Saltar ›</button></div>
 <div class="pantalla" id="intro" hidden><div class="tarjeta" id="intro-tarjeta"></div></div>
 <div class="pantalla" id="pausa" hidden>
   <div class="tarjeta">
@@ -784,6 +804,7 @@ ajustar();
 let estado = 'menu';
 let nivel = 0, cfgNivel = NIVELES[0], TEMA = TEMAS.capilla, DIF = DIFICULTADES[S.dificultad];
 let T = 0, mapa = null, suelos = null, techos = null, visto = null, puertas = new Map(), flujo = null, flujoT = 0;
+let ruta = null;
 let J = null, enemigos = [], proyectiles = [], pickups = [], decor = [], particulas = [], salas = [];
 let salida = null, llave = false, jefe = null, sinPecados = 0, totalPecados = 0;
 let tiempoJuego = 0, hurtT = 0, curaT = 0, avisoCerradaT = 0, poder = 0;
@@ -798,6 +819,39 @@ let fuego = false, mouseDown = false;
    Generación de niveles: salas, pasillos, puertas, luces
    ===================================================================== */
 const enMapa = (x, y) => x >= 0 && y >= 0 && x < T && y < T;
+function cercaDeRuta(x, y, r) { for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) { const X = x + i, Y = y + j; if (X >= 0 && Y >= 0 && X < T && Y < T && ruta[Y * T + X]) return true; } return false; }
+/* Que nada estorbe el camino: quita adornos de los pasillos, puertas y objetos, y comprueba que todo se pueda alcanzar */
+function despejarCamino(inicio) {
+  decor = decor.filter((d) => {
+    const cx = d.x | 0, cy = d.y | 0;
+    if (cercaDeRuta(cx, cy, 1)) return false;
+    for (const p of puertas.values()) if (Math.hypot(p.x + 0.5 - d.x, p.y + 0.5 - d.y) < 2.2) return false;
+    for (const k of pickups) if (Math.hypot(k.x - d.x, k.y - d.y) < 1.1) return false;
+    // Nada pegado a una abertura de la sala
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = cx + dx * 2, ny = cy + dy * 2; if (enMapa(nx, ny) && mapa[ny * T + nx] === 0 && enSala(nx, ny) < 0 && enSala(cx, cy) >= 0) return false; }
+    return true;
+  });
+  for (let vuelta = 0; vuelta < 12; vuelta++) {
+    const bloqueada = new Uint8Array(T * T);
+    for (const d of decor) if (d.solido) for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) { const X = (d.x | 0) + i, Y = (d.y | 0) + j; if (enMapa(X, Y) && Math.hypot(X + 0.5 - d.x, Y + 0.5 - d.y) < d.solido + 0.3) bloqueada[Y * T + X] = 1; }
+    const alcanza = (bloq) => {
+      const v = new Uint8Array(T * T), cola = [inicio.cy * T + inicio.cx]; v[cola[0]] = 1;
+      while (cola.length) { const i = cola.pop(); for (const j of [i + 1, i - 1, i + T, i - T]) { if (j < 0 || j >= T * T || v[j] || (bloq && bloq[j])) continue; const c = mapa[j]; if (c !== 0 && c !== M.PUERTA && c !== M.PUERTA_ORO) continue; v[j] = 1; cola.push(j); } }
+      return v;
+    };
+    const sin = alcanza(null), con = alcanza(bloqueada);
+    let perdida = -1;
+    for (let i = 0; i < T * T; i++) if (sin[i] && !con[i] && !bloqueada[i]) { perdida = i; break; }
+    if (perdida < 0) return;
+    // Quita el adorno más cercano a la zona que quedó encerrada
+    const px = perdida % T + 0.5, py = ((perdida / T) | 0) + 0.5;
+    let mejor = -1, md = 1e9;
+    decor.forEach((d, k) => { const dd = Math.hypot(d.x - px, d.y - py); if (d.solido && dd < md) { md = dd; mejor = k; } });
+    if (mejor < 0) return;
+    decor.splice(mejor, 1);
+  }
+  decor = decor.filter((d) => !d.solido);
+}
 function carvar(x, y, piso) { if (x <= 0 || y <= 0 || x >= T - 1 || y >= T - 1) return; const i = y * T + x; if (mapa[i] !== 0) { mapa[i] = 0; suelos[i] = piso; } }
 function enSala(x, y) { for (let k = 0; k < salas.length; k++) { const s = salas[k]; if (x >= s.x && y >= s.y && x < s.x + s.w && y < s.y + s.h) return k; } return -1; }
 function pasillo(ax, ay, bx, by, prohibida) {
@@ -811,7 +865,7 @@ function pasillo(ax, ay, bx, by, prohibida) {
       else { while (y !== by) { y += Math.sign(by - y); if (dentro(x, y)) { ok = false; break; } celdas.push([x, y]); } }
       if (!ok) break;
     }
-    if (ok) { const ancho = rnd() < 0.18; for (const [cx, cy] of celdas) { carvar(cx, cy, piso); if (ancho) carvar(cx + 1, cy, piso); } return true; }
+    if (ok) { const ancho = rnd() < 0.18; for (const [cx, cy] of celdas) { carvar(cx, cy, piso); ruta[cy * T + cx] = 1; if (ancho) carvar(cx + 1, cy, piso); } return true; }
   }
   // Ruta alternativa por búsqueda en anchura
   const prev = new Int32Array(T * T).fill(-1), cola = [ay * T + ax]; prev[ay * T + ax] = ay * T + ax;
@@ -825,7 +879,7 @@ function pasillo(ax, ay, bx, by, prohibida) {
     }
   }
   let k = by * T + bx; if (prev[k] < 0) return false;
-  while (k !== ay * T + ax) { carvar(k % T, (k - (k % T)) / T, piso); k = prev[k]; }
+  while (k !== ay * T + ax) { carvar(k % T, (k - (k % T)) / T, piso); ruta[k] = 1; k = prev[k]; }
   return true;
 }
 function generarNivel(n) {
@@ -834,7 +888,7 @@ function generarNivel(n) {
   mapa = new Uint8Array(T * T).fill(TEMA.muro);
   suelos = new Uint8Array(T * T); techos = new Uint8Array(T * T).fill(TEMA.techo); visto = new Uint8Array(T * T);
   for (let i = 0; i < mapa.length; i++) if (rnd() < 0.18) mapa[i] = TEMA.muro2;
-  puertas = new Map(); salas = []; decor = [];
+  puertas = new Map(); salas = []; decor = []; ruta = new Uint8Array(T * T);
   let intentos = 0;
   while (salas.length < cfgNivel.salas && intentos++ < 600) {
     const grande = cfgNivel.jefe && salas.length === cfgNivel.salas - 1;
@@ -899,7 +953,7 @@ function generarNivel(n) {
   }
   // Columnas en salas grandes y decoración de muros
   for (const s of salas) {
-    if (s.w >= 7 && s.h >= 7 && s !== altar) for (const [px, py] of [[s.x + 2, s.y + 2], [s.x + s.w - 3, s.y + 2], [s.x + 2, s.y + s.h - 3], [s.x + s.w - 3, s.y + s.h - 3]]) mapa[py * T + px] = M.columna;
+    if (s.w >= 7 && s.h >= 7 && s !== altar) for (const [px, py] of [[s.x + 2, s.y + 2], [s.x + s.w - 3, s.y + 2], [s.x + 2, s.y + s.h - 3], [s.x + s.w - 3, s.y + s.h - 3]]) if (!cercaDeRuta(px, py, 1)) mapa[py * T + px] = M.columna;
   }
   const luces = [];
   for (let y = 1; y < T - 1; y++) for (let x = 1; x < T - 1; x++) {
@@ -946,12 +1000,13 @@ function generarNivel(n) {
       for (const [x, y] of barajar(esquinas).slice(0, 2)) { if (mapa[(y | 0) * T + (x | 0)] !== 0) continue; decor.push({ tipo: 'candelabro', x, y, solido: 0.22 }); luces.push({ x, y, r: 1.0, g: 0.75, b: 0.4, rad: 5.5, int: 1.0 }); }
     }
     if ((cfgNivel.tema === 'capilla' || cfgNivel.tema === 'monasterio') && s.w >= 5 && s.h >= 6 && s !== altar && rnd() < 0.6) {
-      for (let y = s.y + 2; y < s.y + s.h - 1; y += 2) for (const x of [s.x + 1.5, s.x + s.w - 1.5]) if (mapa[(y | 0) * T + (x | 0)] === 0) decor.push({ tipo: 'banco', x, y: y + 0.5, solido: 0.34 });
+      for (let y = s.y + 2; y < s.y + s.h - 1; y += 2) for (const x of [s.x + 1.5, s.x + s.w - 1.5]) if (mapa[(y | 0) * T + (x | 0)] === 0) decor.push({ tipo: 'banco', x, y: y + 0.5, solido: 0.3 });
     }
     if (rnd() < 0.35) { const c = libresSala(s)[0]; if (c) decor.push({ tipo: 'vasija', x: c[0], y: c[1], solido: 0.2 }); }
   }
   salida = { x: altar.cx + 0.5, y: altar.cy + 0.5 };
   decor = decor.filter((d) => Math.hypot(d.x - salida.x, d.y - salida.y) > 1.6 && Math.hypot(d.x - inicio.cx - 0.5, d.y - inicio.cy - 0.5) > 1.2);
+  despejarCamino(inicio);
   luces.push({ x: salida.x, y: salida.y, r: 1.0, g: 0.85, b: 0.5, rad: 4, int: 0.6 });
   // Enemigos
   enemigos = [];
@@ -1151,7 +1206,7 @@ function superPoder() {
     herir(e, e.tipo === 'tentador' ? 15 : 8, true);
     if (!e.muerto) { e.estado = 'dolor'; e.t = 1.2; }
   }
-  J.vida = Math.min(100, J.vida + 10);
+  J.vida = Math.min(DON.vida, J.vida + 10);
   const fl = $('destello'); fl.classList.add('on'); setTimeout(() => fl.classList.remove('on'), 90);
   JS.coro([880, 1174.66, 1568], 1.2, 0.12, { at: 0.08 }); JS.E.magia(0.7);
   aviso('¡Bendición mayor!');
@@ -1170,8 +1225,20 @@ function danoJugador(d, ox, oy) {
   actualizarHud();
 }
 function despertar(e) { if (e.estado === 'dormido') { e.estado = 'caza'; SND.gruñido(e.x, e.y, e.tipo); } }
+/* Dones del Espíritu: con más puntos misioneros, el misionero se vuelve más fuerte */
+const DONES = [
+  { p: 250, n: 'Fortaleza I', d: '+10% de poder en las armas' }, { p: 700, n: 'Fe I', d: '+20 de salud máxima' },
+  { p: 1400, n: 'Celo I', d: '+8% de velocidad' }, { p: 2400, n: 'Fortaleza II', d: '+10% de poder' },
+  { p: 3800, n: 'Providencia', d: '+25% de munición al recoger' }, { p: 5500, n: 'Fe II', d: '+20 de salud máxima' },
+  { p: 8000, n: 'Fortaleza III', d: '+15% de poder' }, { p: 11000, n: 'Celo II', d: '+8% de velocidad' }
+];
+function donesDe(pts) { const t = DONES.filter((d) => pts >= d.p); const has = (n) => t.some((d) => d.n === n); return {
+  n: t.length, poder: 1 + (has('Fortaleza I') ? 0.1 : 0) + (has('Fortaleza II') ? 0.1 : 0) + (has('Fortaleza III') ? 0.15 : 0),
+  vida: 100 + (has('Fe I') ? 20 : 0) + (has('Fe II') ? 20 : 0), vel: 1 + (has('Celo I') ? 0.08 : 0) + (has('Celo II') ? 0.08 : 0), mun: has('Providencia') ? 1.25 : 1 }; }
+let DON = donesDe(0);
 function herir(e, d, sinPuntos) {
   if (e.muerto) return;
+  d *= DON.poder;
   e.vida -= d; e.flash = 0.12;
   stats.aciertos++;
   marcarAcierto();
@@ -1365,7 +1432,7 @@ function actualizar(dt) {
   if (joy.activo) { avance += -joy.dy; lado += joy.dx; }
   const m = Math.hypot(avance, lado); if (m > 1) { avance /= m; lado /= m; }
   J.a += giro * 2.6 * dt;
-  const velMax = 3.4 * (J.lento > 0 ? 0.55 : 1) * (teclas.ShiftLeft ? 1.3 : 1);
+  const velMax = 3.4 * DON.vel * (J.lento > 0 ? 0.55 : 1) * (teclas.ShiftLeft ? 1.3 : 1);
   J.lento = Math.max(0, J.lento - dt);
   const ca = Math.cos(J.a), sa = Math.sin(J.a);
   const tvx = (ca * avance - sa * lado) * velMax, tvy = (sa * avance + ca * lado) * velMax;
@@ -1447,13 +1514,13 @@ let destellos = [];
 function recoger(tipo) {
   const lim = (k, n) => { if (J.mun[k] >= MUN_MAX[k]) return false; J.mun[k] = Math.min(MUN_MAX[k], J.mun[k] + n); return true; };
   switch (tipo) {
-    case 'hostia': if (J.vida >= 100) return false; J.vida = Math.min(100, J.vida + 15); curaT = 0.4; aviso('+15 salud · Hostia'); return true;
-    case 'caliz': if (J.vida >= 100) return false; J.vida = Math.min(100, J.vida + 40); curaT = 0.6; aviso('+40 salud · Cáliz'); return true;
+    case 'hostia': if (J.vida >= DON.vida) return false; J.vida = Math.min(DON.vida, J.vida + 15); curaT = 0.4; aviso('+15 salud · Hostia'); return true;
+    case 'caliz': if (J.vida >= DON.vida) return false; J.vida = Math.min(DON.vida, J.vida + 40); curaT = 0.6; aviso('+40 salud · Cáliz'); return true;
     case 'escapulario': if (J.escudo >= 100) return false; J.escudo = Math.min(100, J.escudo + 50); aviso('+50 escapulario'); return true;
-    case 'agua': if (!lim('agua', 15)) return false; aviso('+15 agua bendita'); return true;
-    case 'cuentas': if (!lim('cuentas', 40)) return false; aviso('+40 cuentas del rosario'); return true;
-    case 'vela': if (!lim('luz', 6)) return false; aviso('+6 velas · luz'); return true;
-    case 'incienso': if (!lim('incienso', 4)) return false; aviso('+4 incienso'); return true;
+    case 'agua': if (!lim('agua', Math.round(15 * DON.mun))) return false; aviso('+15 agua bendita'); return true;
+    case 'cuentas': if (!lim('cuentas', Math.round(40 * DON.mun))) return false; aviso('+40 cuentas del rosario'); return true;
+    case 'vela': if (!lim('luz', Math.round(6 * DON.mun))) return false; aviso('+6 velas · luz'); return true;
+    case 'incienso': if (!lim('incienso', Math.round(4 * DON.mun))) return false; aviso('+4 incienso'); return true;
     case 'llave': llave = true; aviso('¡Llave dorada! Abre la puerta del Sagrario'); return true;
     case 'rosario': case 'cruz': case 'incensario': {
       const mun = { rosario: ['cuentas', 80], cruz: ['luz', 12], incensario: ['incienso', 8] }[tipo];
@@ -1676,13 +1743,38 @@ function frameEnemigo(e) {
   return S0.paso[Math.floor(e.fase * 2.2) % 4];
 }
 function mirarCamara(m) { m.rotation.y = Math.atan2(camara.position.x - m.position.x, camara.position.z - m.position.z); }
+/* Polvo que flota en el aire y brilla con la luz de las velas */
+const POLVO = (() => {
+  const n = 320, pos = new Float32Array(n * 3), vel = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { pos[i * 3] = (rnd() - 0.5) * 9; pos[i * 3 + 1] = rnd() * ALTO; pos[i * 3 + 2] = (rnd() - 0.5) * 9; vel[i * 3] = (rnd() - 0.5) * 0.05; vel[i * 3 + 1] = (rnd() - 0.5) * 0.03; vel[i * 3 + 2] = (rnd() - 0.5) * 0.05; }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d'); const gr = g.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 32, 32);
+  const mat = new THREE.PointsMaterial({ size: 0.03, map: new THREE.CanvasTexture(c), color: 0xffe0a8, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending });
+  const p = new THREE.Points(geo, mat); p.frustumCulled = false; escena3.add(p);
+  return { p, pos, vel, n, geo };
+})();
+function moverPolvo(dt) {
+  const { pos, vel, n } = POLVO, cx = camara.position.x, cz = camara.position.z;
+  for (let i = 0; i < n; i++) {
+    const k = i * 3;
+    vel[k] += Math.sin(tiempoJuego * 0.7 + i) * 0.002 * dt;
+    pos[k] += vel[k] * dt; pos[k + 1] += vel[k + 1] * dt; pos[k + 2] += vel[k + 2] * dt;
+    if (pos[k] - cx > 4.5) pos[k] -= 9; else if (pos[k] - cx < -4.5) pos[k] += 9;
+    if (pos[k + 2] - cz > 4.5) pos[k + 2] -= 9; else if (pos[k + 2] - cz < -4.5) pos[k + 2] += 9;
+    if (pos[k + 1] < 0.02) pos[k + 1] = ALTO - 0.05; else if (pos[k + 1] > ALTO - 0.02) pos[k + 1] = 0.05;
+  }
+  POLVO.geo.attributes.position.needsUpdate = true;
+  POLVO.p.material.opacity = 0.45 + Math.sin(tiempoJuego * 0.9) * 0.1;
+}
 function actualizar3D(dt) {
+  moverPolvo(dt);
   // Cámara: inercia, balanceo al caminar, retroceso del arma y sacudidas
   const rapidez = Math.min(1, Math.hypot(J.vx || 0, J.vy || 0) / 3.4);
   const bob = estado === 'jugando' ? Math.sin(J.paso * 2) * 0.022 * rapidez : 0;
   const sac = J.sacudida || 0;
   camara.position.set(J.x + (rnd() - 0.5) * sac * 0.08, OJO + bob + (rnd() - 0.5) * sac * 0.06, J.y + (rnd() - 0.5) * sac * 0.08);
   camara.rotation.set((J.pitch || 0) + (J.kick || 0), Math.atan2(-Math.cos(J.a), -Math.sin(J.a)), (J.roll || 0) + Math.sin(J.paso) * 0.008 * rapidez);
+  if (estado === 'cine') camaraCine(dt);
   linterna.position.copy(camara.position);
   linterna.intensity = 2.4 + Math.sin(tiempoJuego * 13) * 0.08;
   // Luces cercanas (antorchas, candelabros, vitrales) con parpadeo
@@ -1999,7 +2091,9 @@ function prepararNivel(n, conservar) {
   nivel = n;
   const inicio = generarNivel(n);
   const viejo = conservar && J ? J : null;
+  DON = donesDe(S.puntos);
   J = nuevoJugador(inicio.cx + 0.5, inicio.cy + 0.5, n);
+  J.vida = DON.vida;
   if (viejo) { J.armas = Array.from(new Set(viejo.armas.concat(J.armas))); J.mun = viejo.mun; J.vida = Math.max(viejo.vida, 60); J.escudo = viejo.escudo; J.arma = viejo.arma; }
   let mejor = 0, md = -1;
   for (let k = 0; k < 16; k++) { const a = (k / 16) * Math.PI * 2; const h = rayo(J.x, J.y, Math.cos(a), Math.sin(a), false); if (h.dist > md) { md = h.dist; mejor = a; } }
@@ -2018,9 +2112,51 @@ function mostrarIntro(n) {
     `<button class="boton" type="button" id="b-entrar">ENTRAR</button>`;
   $('intro').hidden = false;
   $('b-entrar').onclick = () => { $('intro').hidden = true; jugar(); };
+  $('b-saltar-cine').onclick = terminarCine;
+}
+/* Cinemática 3D al empezar cada nivel: la cámara recorre el Sagrario (la meta) y baja hasta los ojos del misionero */
+let cine = null;
+const _v = new THREE.Vector3();
+function camaraCine(dt) {
+  cine.t += dt;
+  const t = cine.t, altar = salas[salas.length - 1];
+  const r = clamp(Math.min(altar.w, altar.h) / 2 - 0.7, 0.8, 2.4);
+  const caja = $('cine-txt');
+  if (t < 3) {
+    // Toma 1: vuelta lenta alrededor del Sagrario
+    const k = t / 3, a = cine.a0 + k * 1.6;
+    camara.position.set(salida.x + Math.cos(a) * r, 0.35 + k * 0.55, salida.y + Math.sin(a) * r);
+    camara.lookAt(salida.x, 0.42, salida.y);
+    if (!cine.t1) { cine.t1 = true; caja.innerHTML = '<small>Tu meta</small>El Sagrario' + (cfgNivel.jefe ? '<span>Vence al Tentador</span>' : '<span>Encuentra la llave dorada y vence a los pecados</span>'); caja.className = 'cine-txt on'; }
+  } else {
+    // Toma 2: desde lo alto de la sala de inicio hasta los ojos del misionero
+    const k = suaveC(Math.min(1, (t - 3) / 2.4));
+    const atras = 2.2 * (1 - k);
+    _v.set(J.x - Math.cos(J.a) * atras, OJO + (ALTO - 0.12 - OJO) * (1 - k), J.y - Math.sin(J.a) * atras);
+    camara.position.copy(_v);
+    camara.rotation.set(-0.55 * (1 - k), Math.atan2(-Math.cos(J.a), -Math.sin(J.a)), 0);
+    if (!cine.t2) { cine.t2 = true; caja.innerHTML = '<small>Nivel ' + (nivel + 1) + '</small>' + cfgNivel.nombre + '<span>«La luz brilla en las tinieblas» · Juan 1, 5</span>'; caja.className = 'cine-txt on'; }
+  }
+  if (t >= 5.4) terminarCine();
+}
+const suaveC = (k) => k * k * (3 - 2 * k);
+function terminarCine() {
+  if (!cine) return;
+  cine = null; $('cine').classList.remove('on'); $('cine-txt').className = 'cine-txt';
+  $('hud').classList.add('on');
+  $('botones').classList.toggle('on', esTactil());
+  estado = 'jugando';
+  aviso(cfgNivel.nombre);
 }
 function jugar() {
   $('menu').hidden = true; $('fin').hidden = true; $('pausa').hidden = true; $('intro').hidden = true;
+  ac();
+  for (const k in hudCache) delete hudCache[k];
+  actualizarHud();
+  cine = { t: 0, a0: rnd() * 6.28 }; estado = 'cine';
+  $('cine').classList.add('on');
+  SND.arma();
+  return;
   $('hud').classList.add('on');
   $('botones').classList.toggle('on', esTactil());
   estado = 'jugando';
@@ -2101,6 +2237,8 @@ function pintarMenu() {
   $('m-dific').innerHTML = Object.entries(DIFICULTADES).map(([k, d]) => `<button type="button" data-dif="${k}" aria-pressed="${k === S.dificultad}">${d.nombre}<small>${d.desc}</small></button>`).join('');
   $('m-niveles').innerHTML = NIVELES.map((c, i) => `<button type="button" data-niv="${i}" title="${c.nombre}" aria-pressed="${i === nivelElegido}"${i > S.mejorNivel ? ' disabled' : ''}>${i + 1}</button>`).join('');
   $('m-mejor').textContent = (S.mejorNivel ? `Niveles superados: ${S.mejorNivel} de ${NIVELES.length} · ` : '') + `★ ${S.puntos} puntos misioneros`;
+  const don = donesDe(S.puntos), sig = DONES[don.n];
+  $('m-dones').innerHTML = `<p class="pequeno">Con tus puntos misioneros recibes dones que te hacen más fuerte.</p><div class="dones-lista">${DONES.map((d) => `<span class="${S.puntos >= d.p ? 'ya' : ''}" title="${d.d}">${S.puntos >= d.p ? '✦' : '○'} ${d.n}<small>${S.puntos >= d.p ? d.d : '★ ' + d.p}</small></span>`).join('')}</div>` + (sig ? `<div class="barra-don"><i style="width:${Math.min(100, S.puntos / sig.p * 100).toFixed(1)}%"></i></div><p class="pequeno">Faltan ${sig.p - S.puntos} ★ para ${sig.n}</p>` : '<p class="pequeno">¡Tienes todos los dones!</p>');
   $('b-jugar').textContent = nivelElegido === 0 ? 'COMENZAR' : `COMENZAR EN EL NIVEL ${nivelElegido + 1}`;
 }
 function pintarBestiario() {
@@ -2197,7 +2335,7 @@ estado = 'menu';
 pintarMenu();
 pintarBestiario();
 requestAnimationFrame(bucle);
-window.__luz = { get J() { return J; }, get enemigos() { return enemigos; }, cambiarArma, disparar, empezar, jugar, get estado() { return estado; } };
+window.__luz = { prueba(n) { const ini = generarNivel(n); const v = new Uint8Array(T * T), cola = [ini.cy * T + ini.cx]; v[cola[0]] = 1; const bloq = (i) => { const x = i % T + 0.5, y = ((i / T) | 0) + 0.5; return decor.some((d) => d.solido && Math.hypot(d.x - x, d.y - y) < d.solido + 0.25); }; while (cola.length) { const i = cola.pop(); for (const j of [i + 1, i - 1, i + T, i - T]) { if (v[j]) continue; const c = mapa[j]; if (c !== 0 && c !== M.PUERTA && c !== M.PUERTA_ORO) continue; if (bloq(j)) continue; v[j] = 1; cola.push(j); } } const ok = (x, y) => v[(y | 0) * T + (x | 0)]; return { salida: !!ok(salida.x, salida.y), objetos: pickups.every((p) => ok(p.x, p.y)), decor: decor.length }; }, get J() { return J; }, get enemigos() { return enemigos; }, cambiarArma, disparar, empezar, jugar, get estado() { return estado; } };
 </script>
 </body>
 </html>

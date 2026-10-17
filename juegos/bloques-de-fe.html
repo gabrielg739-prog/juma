@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#1a0f2e">
+<title>Bloques de fe · JUMA</title>
+<style>
+  :root { --gold: #ffd25a; --gold-2: #c98f12; --glass: rgba(22, 12, 40, .72); --borde: rgba(255, 255, 255, .2); --ease: cubic-bezier(.23, 1, .32, 1); --resorte: cubic-bezier(.34, 1.56, .64, 1); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #140a24; color: #fff; font-family: "Trebuchet MS", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
+  button { font: inherit; color: inherit; border: 0; cursor: pointer; }
+  button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .bg { position: fixed; inset: -20px; background: #140a24 center / cover no-repeat url(fondos/f3.jpg); filter: blur(6px) saturate(1.1); }
+  .bg::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, rgba(60, 24, 90, .45), rgba(14, 6, 26, .9) 75%); }
+  .motas { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+  .motas i { position: absolute; bottom: -20px; width: var(--t); height: var(--t); border-radius: 50%; background: radial-gradient(circle, rgba(255, 236, 170, .95), rgba(255, 210, 90, .3) 45%, rgba(255, 210, 90, 0) 70%); animation: sube var(--d) linear var(--r) infinite; opacity: 0; }
+  @keyframes sube { 0% { transform: translate(0, 0); opacity: 0; } 12% { opacity: .8; } 85% { opacity: .5; } 100% { transform: translate(var(--x), -105vh); opacity: 0; } }
+  canvas#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* Barra superior */
+  .top { position: fixed; left: 0; right: 0; top: 0; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 0; display: flex; align-items: center; gap: 8px; z-index: 5; pointer-events: none; }
+  .top > * { pointer-events: auto; }
+  .redondo { width: 44px; height: 44px; border-radius: 50%; background: var(--glass); border: 2px solid var(--borde); display: grid; place-items: center; flex: 0 0 auto; transition: transform .12s var(--ease); }
+  .redondo:active { transform: scale(.92); }
+  .pill { height: 40px; padding: 0 12px 0 5px; border-radius: 999px; background: var(--glass); border: 2px solid var(--borde); display: inline-flex; align-items: center; gap: 7px; font-weight: 900; font-size: 16px; font-variant-numeric: tabular-nums; }
+  .pill .ic { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, #ffe98f, #e8a910); color: #4a2f00; font-size: 15px; }
+  .espacio { flex: 1; }
+  .marcador { position: fixed; left: 0; right: 0; z-index: 4; text-align: center; pointer-events: none; }
+  .marcador .pts { font-size: 46px; font-weight: 900; line-height: 1; letter-spacing: .02em; text-shadow: 0 3px 0 rgba(0, 0, 0, .35), 0 0 24px rgba(255, 210, 90, .35); font-variant-numeric: tabular-nums; }
+  .marcador .pts.pop { animation: pop .35s var(--resorte); }
+  @keyframes pop { 40% { transform: scale(1.18); } }
+  .marcador .mejor { font-size: 13px; font-weight: 800; opacity: .8; margin-top: 2px; }
+  .verso { position: fixed; left: 12px; right: 12px; z-index: 4; text-align: center; font-family: Georgia, "Times New Roman", serif; font-size: 14.5px; line-height: 1.35; pointer-events: none; min-height: 40px; }
+  .verso span { opacity: .28; transition: opacity .4s, color .4s, text-shadow .4s; }
+  .verso span.ya { opacity: 1; color: #fff3c4; text-shadow: 0 0 12px rgba(255, 210, 90, .8); }
+  .verso span.nueva { animation: palabra .7s var(--resorte); display: inline-block; }
+  @keyframes palabra { 0% { transform: scale(1.8); } }
+  .verso small { display: block; font-family: inherit; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; opacity: .6; margin-top: 2px; }
+  .poderes { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); display: flex; justify-content: center; gap: 10px; z-index: 5; }
+  .poder { position: relative; height: 50px; min-width: 96px; padding: 0 14px; border-radius: 16px; background: linear-gradient(180deg, rgba(110, 60, 170, .95), rgba(60, 28, 100, .95)); border: 2px solid rgba(255, 255, 255, .25); box-shadow: 0 4px 0 #2a1248, 0 8px 18px rgba(0, 0, 0, .35); font-weight: 900; font-size: 13px; display: flex; align-items: center; gap: 6px; transition: transform .12s var(--ease); }
+  .poder:active { transform: translateY(3px); box-shadow: 0 1px 0 #2a1248; }
+  .poder .n { position: absolute; top: -8px; right: -8px; min-width: 24px; height: 24px; border-radius: 12px; background: var(--gold); color: #3b2300; font-size: 13px; display: grid; place-items: center; padding: 0 6px; box-shadow: 0 2px 6px rgba(0, 0, 0, .4); }
+  .poder.activo { background: linear-gradient(180deg, #ffe48a, #f0b326); color: #3b2300; animation: late 1s ease-in-out infinite; }
+  @keyframes late { 50% { box-shadow: 0 4px 0 #a36e06, 0 0 22px rgba(255, 210, 90, .9); } }
+  .poder svg { width: 22px; height: 22px; }
+  /* Pantallas */
+  .pantalla { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: calc(env(safe-area-inset-top, 0px) + 60px) 18px calc(env(safe-area-inset-bottom, 0px) + 20px); background: rgba(14, 6, 26, .55); backdrop-filter: blur(3px); overflow: auto; }
+  .logo { text-align: center; font-family: Georgia, serif; line-height: .95; margin-bottom: 10px; }
+  .logo .a { display: block; font-size: 54px; font-weight: 700; letter-spacing: .01em; background: linear-gradient(180deg, #fff6c8, #ffd25a 50%, #c98f12); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 0 #5a2a00) drop-shadow(0 10px 18px rgba(0, 0, 0, .5)); }
+  .logo .b { display: block; font-size: 22px; letter-spacing: .3em; text-transform: uppercase; margin-top: 6px; }
+  .logo-bloques { display: grid; grid-template-columns: repeat(4, 34px); gap: 5px; justify-content: center; margin: 12px auto 16px; animation: flota 3.5s ease-in-out infinite; }
+  .logo-bloques i { width: 34px; height: 34px; border-radius: 8px; box-shadow: inset 0 3px 0 rgba(255, 255, 255, .45), inset 0 -4px 0 rgba(0, 0, 0, .25), 0 6px 12px rgba(0, 0, 0, .35); animation: aparece .5s var(--resorte) both; }
+  @keyframes aparece { from { transform: scale(0) rotate(-40deg); } }
+  @keyframes flota { 50% { transform: translateY(-8px); } }
+  .tarjeta { width: 100%; max-width: 400px; background: rgba(30, 14, 54, .82); border: 2px solid rgba(255, 255, 255, .16); border-radius: 24px; padding: 16px; box-shadow: 0 20px 50px rgba(0, 0, 0, .5); }
+  .rango { display: flex; align-items: center; gap: 12px; }
+  .rango .medalla { width: 56px; height: 56px; flex: 0 0 auto; }
+  .rango b { font-size: 19px; color: var(--gold); display: block; }
+  .rango small { font-size: 12.5px; opacity: .8; }
+  .barra { height: 12px; border-radius: 6px; background: rgba(0, 0, 0, .4); overflow: hidden; margin-top: 6px; }
+  .barra i { display: block; height: 100%; background: linear-gradient(90deg, #ffd25a, #fff3b0); border-radius: 6px; transition: width .8s var(--ease); }
+  .btn-grande { width: 100%; max-width: 400px; height: 64px; border-radius: 999px; margin-top: 14px; font-size: 24px; font-weight: 900; letter-spacing: .04em; color: #fff; background: linear-gradient(180deg, #62c943, #3a9a22); box-shadow: 0 6px 0 #2e7d20, 0 14px 24px rgba(0, 0, 0, .35); text-shadow: 0 2px 0 rgba(0, 0, 0, .25); transition: transform .12s var(--ease); }
+  .btn-grande:active { transform: translateY(4px); box-shadow: 0 2px 0 #2e7d20; }
+  .btn-sec { width: 100%; max-width: 400px; height: 50px; border-radius: 999px; margin-top: 10px; font-weight: 800; font-size: 16px; background: rgba(255, 255, 255, .1); border: 2px solid rgba(255, 255, 255, .22); }
+  .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 400px; }
+  .temas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .tema { border-radius: 14px; padding: 8px 4px; background: rgba(255, 255, 255, .06); border: 2px solid rgba(255, 255, 255, .14); font-size: 12px; font-weight: 800; text-align: center; }
+  .tema canvas { width: 54px; height: 54px; display: block; margin: 0 auto 4px; }
+  .tema[aria-pressed="true"] { border-color: var(--gold); background: rgba(255, 210, 90, .16); }
+  .tema:disabled { opacity: .45; }
+  .tienda { display: grid; gap: 8px; margin-top: 8px; }
+  .item { display: flex; align-items: center; gap: 10px; background: rgba(255, 255, 255, .06); border-radius: 14px; padding: 8px 10px; }
+  .item b { display: block; font-size: 15px; }
+  .item small { font-size: 12px; opacity: .75; }
+  .item .comprar { margin-left: auto; height: 40px; padding: 0 14px; border-radius: 999px; background: linear-gradient(180deg, #ffe48a, #f0b326); color: #3b2300; font-weight: 900; white-space: nowrap; box-shadow: 0 3px 0 #a36e06; }
+  .item .comprar:disabled { background: #6b5e78; color: #c9bfd6; box-shadow: none; }
+  h3 { margin: 0 0 8px; font-family: Georgia, serif; font-size: 20px; color: #fff3c4; }
+  .fin-pts { font-size: 64px; font-weight: 900; text-align: center; line-height: 1; text-shadow: 0 4px 0 rgba(0, 0, 0, .3), 0 0 30px rgba(255, 210, 90, .5); }
+  .nuevo { display: inline-block; margin: 6px auto; padding: 4px 12px; border-radius: 999px; background: #e1304a; font-weight: 900; font-size: 13px; animation: pop .6s var(--resorte) infinite alternate; }
+  .cita { font-family: Georgia, serif; font-style: italic; text-align: center; font-size: 16px; line-height: 1.45; margin: 12px 0 4px; color: #fff3c4; }
+  .cita small { display: block; font-style: normal; font-size: 12px; opacity: .7; margin-top: 4px; letter-spacing: .06em; }
+  .entra { animation: entra .5s var(--resorte) both; }
+  @keyframes entra { from { transform: translateY(24px) scale(.92); opacity: 0; } }
+  .aviso-grande { position: fixed; left: 0; right: 0; top: 42%; z-index: 15; text-align: center; pointer-events: none; font-weight: 900; font-size: 44px; letter-spacing: .02em; color: #fff; text-shadow: 0 4px 0 #7a3a00, 0 0 30px rgba(255, 210, 90, .9); animation: grande 1.3s var(--resorte) forwards; }
+  .aviso-grande small { display: block; font-size: 18px; color: #fff3c4; margin-top: 4px; text-shadow: 0 2px 6px rgba(0, 0, 0, .8); }
+  @keyframes grande { 0% { transform: scale(.3); opacity: 0; } 18% { transform: scale(1.1); opacity: 1; } 30% { transform: scale(1); } 80% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-40px); } }
+  .verso-completo { position: fixed; left: 16px; right: 16px; top: 30%; z-index: 16; pointer-events: none; text-align: center; background: linear-gradient(180deg, rgba(255, 248, 222, .97), rgba(250, 230, 180, .97)); color: #3b2300; border-radius: 22px; padding: 16px; font-family: Georgia, serif; font-size: 18px; line-height: 1.4; box-shadow: 0 0 0 3px #ffd25a, 0 0 40px rgba(255, 210, 90, .8), 0 20px 40px rgba(0, 0, 0, .5); animation: verso 3.6s var(--ease) forwards; }
+  .verso-completo b { display: block; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #8a3fbf; margin-bottom: 6px; font-family: "Trebuchet MS", sans-serif; }
+  .verso-completo small { display: block; font-size: 13px; margin-top: 6px; opacity: .7; }
+  @keyframes verso { 0% { transform: scale(.6) rotate(-3deg); opacity: 0; } 12% { transform: scale(1.04); opacity: 1; } 18% { transform: scale(1); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(-30px); } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .motas { display: none; } }
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<div class="motas" id="motas" aria-hidden="true"></div>
+<canvas id="c" aria-label="Tablero de bloques"></canvas>
+<header class="top">
+  <button class="redondo" id="btn-cerrar" type="button" aria-label="Salir"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <button class="redondo" id="btn-menu" type="button" aria-label="Menú" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
+  <div class="espacio"></div>
+  <button class="redondo" id="btn-sonido" type="button" aria-label="Sonido"></button>
+  <div class="pill" title="Puntos misioneros"><span class="ic">★</span><span id="t-estrellas">0</span></div>
+</header>
+<div class="marcador" id="marcador" hidden><div class="pts" id="t-pts">0</div><div class="mejor" id="t-mejor">Récord 0</div></div>
+<div class="verso" id="verso" hidden></div>
+<div class="poderes" id="poderes" hidden></div>
+
+<section class="pantalla" id="p-menu">
+  <div class="logo"><span class="a">Bloques</span><span class="b">de fe</span></div>
+  <div class="logo-bloques" id="logo-bloques"></div>
+  <div class="tarjeta entra" style="animation-delay:.1s">
+    <div class="rango" id="rango"></div>
+    <p style="margin:12px 0 0;font-size:14px;line-height:1.45;opacity:.9">Arrastra las piezas al tablero. Completa filas o columnas para borrarlas. <b style="color:var(--gold)">Cada línea revela una palabra de la Biblia</b>: completa el versículo y gana bendiciones.</p>
+  </div>
+  <button class="btn-grande entra" id="btn-jugar" type="button" style="animation-delay:.2s">JUGAR</button>
+  <div class="fila entra" style="animation-delay:.3s"><button class="btn-sec" id="btn-tienda" type="button">Tienda y mejoras</button><button class="btn-sec" id="btn-temas" type="button">Estilos de bloques</button></div>
+</section>
+
+<section class="pantalla" id="p-tienda" hidden>
+  <div class="tarjeta entra">
+    <h3>Tienda de mejoras</h3>
+    <p style="margin:0 0 6px;font-size:13px;opacity:.8">Compra con tus ★ puntos misioneros. Ganas ★ en cada partida según tus puntos.</p>
+    <div class="tienda" id="tienda"></div>
+  </div>
+  <button class="btn-sec" type="button" data-volver>Volver</button>
+</section>
+
+<section class="pantalla" id="p-temas" hidden>
+  <div class="tarjeta entra">
+    <h3>Estilos de bloques</h3>
+    <p style="margin:0;font-size:13px;opacity:.8">Sube de rango para desbloquear nuevos estilos.</p>
+    <div class="temas" id="temas"></div>
+  </div>
+  <button class="btn-sec" type="button" data-volver>Volver</button>
+</section>
+
+<section class="pantalla" id="p-fin" hidden>
+  <div class="tarjeta entra" id="fin"></div>
+  <button class="btn-grande" id="btn-otra" type="button">JUGAR DE NUEVO</button>
+  <button class="btn-sec" type="button" data-volver>Menú</button>
+</section>
+
+<script src="lib/sonido.js"></script>
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const rnd = Math.random;
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const N = 8;
+
+/* ---------- Guardado y progreso ---------- */
+const CLAVE = 'juma-bloques-v1';
+let S = { estrellas: 0, mejor: 0, total: 0, partidas: 0, tema: 'vitral', inv: { martillo: 1, bomba: 0, cambio: 1 }, mejoras: { vista: 0, gracia: 0 }, versos: 0, sonido: true };
+try { const d = JSON.parse(localStorage.getItem(CLAVE) || 'null'); if (d) S = Object.assign(S, d, { inv: Object.assign({}, S.inv, d.inv), mejoras: Object.assign({}, S.mejoras, d.mejoras) }); } catch (e) { /* sin datos */ }
+function guardar() {
+  try { localStorage.setItem(CLAVE, JSON.stringify(S)); } catch (e) { /* lleno */ }
+  try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', juego: 'bloques', total: S.estrellas }, location.origin); } catch (e) { /* fuera de la app */ }
+}
+// Rangos: se suben con los puntos de todas las partidas
+const RANGOS = [
+  { n: 'Aspirante', p: 0, c: '#b07a4a' }, { n: 'Discípulo', p: 600, c: '#c0c8d4' }, { n: 'Peregrino', p: 2000, c: '#ffd25a' },
+  { n: 'Apóstol', p: 5000, c: '#7ad0ff' }, { n: 'Misionero', p: 11000, c: '#b48cff' }, { n: 'Evangelizador', p: 22000, c: '#ff7aa8' }, { n: 'Santo', p: 40000, c: '#fff3b0' }
+];
+const rangoDe = (t) => { let i = 0; RANGOS.forEach((r, k) => { if (t >= r.p) i = k; }); return i; };
+
+/* ---------- Versículos que se revelan palabra por palabra ---------- */
+const VERSOS = [
+  ['Yo soy la luz del mundo', 'Juan 8, 12'], ['Todo lo puedo en Cristo que me fortalece', 'Filipenses 4, 13'],
+  ['Id y haced discípulos a todas las naciones', 'Mateo 28, 19'], ['El Señor es mi pastor, nada me falta', 'Salmo 23, 1'],
+  ['Amaos unos a otros como yo os he amado', 'Juan 13, 34'], ['Dios es amor', '1 Juan 4, 8'],
+  ['Hágase en mí según tu palabra', 'Lucas 1, 38'], ['Vosotros sois la sal de la tierra', 'Mateo 5, 13'],
+  ['Yo estoy con vosotros todos los días', 'Mateo 28, 20'], ['Lámpara es tu palabra para mis pasos', 'Salmo 119, 105'],
+  ['Venid a mí los que estáis cansados', 'Mateo 11, 28'], ['La alegría del Señor es nuestra fuerza', 'Nehemías 8, 10'],
+  ['Misioneros en la cabeza, en la boca y en el corazón', 'San José Allamano']
+];
+let versoI = 0, versoPal = [], versoN = 0;
+function nuevoVerso() {
+  versoI = (S.versos + Math.floor(rnd() * 3)) % VERSOS.length;
+  versoPal = VERSOS[versoI][0].split(' '); versoN = 0; pintarVerso(-1);
+}
+function pintarVerso(nuevas) {
+  const v = $('verso');
+  v.innerHTML = versoPal.map((p, i) => `<span class="${i < versoN ? 'ya' : ''}${i >= versoN - nuevas && i < versoN ? ' nueva' : ''}">${i < versoN ? p : p.replace(/./g, '·')}</span>`).join(' ') + `<small>${VERSOS[versoI][1]}</small>`;
+}
+
+/* ---------- Sonido ---------- */
+const JS = window.JumaSonido;
+JS.permitido = () => S.sonido;
+JS.musicaPermitida = () => S.sonido && enJuego;
+JS.eco(0.22);
+const ESC = [72, 74, 76, 79, 81, 84, 86, 88, 91, 93];
+const SND = {
+  tomar() { JS.E.clic(0.7); JS.marimba(JS.m2f(79), 0.25, 0.05); },
+  soltar() { JS.osc({ f: 160, f2: 70, dur: 0.14, vol: 0.18, eco: 0.05 }); JS.ruido({ dur: 0.06, vol: 0.12, f: 1800, tipo: 'bandpass', eco: 0.05 }); },
+  malo() { JS.E.soplo(0.25, 0.08, 1400, 500); },
+  linea(n, combo) { const b = Math.min(combo, 6); for (let i = 0; i < Math.min(n + 2, 6); i++) JS.marimba(JS.m2f(ESC[Math.min(ESC.length - 1, b + i)]), 0.7, 0.13, { ret: i * 0.06, eco: 0.35 }); JS.E.soplo(0.4, 0.12, 800, 5000); JS.osc({ f: 120, f2: 50, dur: 0.3, vol: 0.2, eco: 0.2 }); if (n >= 2) JS.E.magia(0.6); if (n >= 3) JS.coro([523.25, 659.25, 783.99, 1046.5], 1.4, 0.12, { at: 0.08 }); JS.vibrar(n >= 2 ? [25, 30, 40] : 20); },
+  palabra() { JS.campana(1568, 0.8, 0.06, { razon: 2, indice: 0.7, ret: 0.15 }); },
+  verso() { JS.organo([261.63, 329.63, 392, 523.25], 2.4, 0.16); JS.coro([523.25, 659.25, 783.99, 1046.5], 2.6, 0.13, { at: 0.4 }); [1046.5, 1318.5, 1568, 2093].forEach((f, i) => JS.campana(f, 1.8, 0.05, { ret: 0.3 + i * 0.18, eco: 0.8 })); JS.vibrar([30, 40, 30, 40, 60]); },
+  fin() { JS.organo([196, 233.08, 293.66], 2.4, 0.15); JS.timbal(65, { vol: 0.4 }); },
+  record() { JS.E.fanfarria(); JS.coro([523.25, 659.25, 783.99], 2.2, 0.1, { ret: 0.35, at: 0.3 }); },
+  poder() { JS.E.magia(0.9); },
+  bomba() { JS.E.golpe(1.4); JS.ruido({ dur: 1, vol: 0.2, f: 2500, f2: 120, tipo: 'lowpass', eco: 0.5 }); JS.E.vidrio(0.4); JS.vibrar([50, 30, 80]); },
+  martillo() { JS.E.golpe(0.8); JS.ruido({ dur: 0.25, vol: 0.2, f: 1300, tipo: 'bandpass', ret: 0.02 }); JS.vibrar(40); },
+  boton() { JS.E.clic(); },
+  compra() { JS.E.moneda(4); JS.E.moneda(9, { ret: 0.08 }); }
+};
+function pintarSonido() { $('btn-sonido').innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="#fff"/>' + (S.sonido ? '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>') + '</svg>'; }
+$('btn-sonido').onclick = () => { S.sonido = !S.sonido; guardar(); pintarSonido(); if (S.sonido) { JS.ctx(); SND.boton(); } };
+pintarSonido();
+
+/* ---------- Estilos (temas) de los bloques ---------- */
+const TEMAS = {
+  vitral: { n: 'Vitral', rango: 0, colores: ['#ff4d6d', '#ffb02e', '#ffe14d', '#3ed36b', '#33b6ff', '#8a5cff', '#ff6ad5'] },
+  oro: { n: 'Mármol y oro', rango: 2, colores: ['#f2e6d0', '#e8c56a', '#c9a24a', '#f7f1e3', '#d9c08a', '#b88a2a', '#ead8b0'] },
+  luz: { n: 'Luz celestial', rango: 4, colores: ['#9fe8ff', '#c9b6ff', '#ffd9f2', '#b8ffd9', '#fff1a8', '#a8c8ff', '#ffc8a8'] }
+};
+const ICONOS = ['cruz', 'corazon', 'estrella', 'paloma', 'pez', 'corona', 'llama'];
+function aclarar(hex, k) { const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255; const f = k > 0 ? (c) => c + (255 - c) * k : (c) => c * (1 + k); return `rgb(${f(r) | 0},${f(g) | 0},${f(b) | 0})`; }
+function iconoFe(g, tipo, c, s) {
+  g.beginPath();
+  if (tipo === 'cruz') { g.rect(c - s * 0.07, c - s * 0.22, s * 0.14, s * 0.44); g.rect(c - s * 0.18, c - s * 0.11, s * 0.36, s * 0.13); }
+  else if (tipo === 'corazon') { g.moveTo(c, c + s * 0.2); g.bezierCurveTo(c - s * 0.32, c - s * 0.02, c - s * 0.16, c - s * 0.28, c, c - s * 0.1); g.bezierCurveTo(c + s * 0.16, c - s * 0.28, c + s * 0.32, c - s * 0.02, c, c + s * 0.2); }
+  else if (tipo === 'estrella') { for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? s * 0.09 : s * 0.22; g.lineTo(c + Math.cos(a) * r, c + Math.sin(a) * r); } g.closePath(); }
+  else if (tipo === 'paloma') { g.moveTo(c - s * 0.24, c + s * 0.04); g.quadraticCurveTo(c - s * 0.05, c - s * 0.05, c + s * 0.02, c - s * 0.2); g.quadraticCurveTo(c + s * 0.06, c - s * 0.02, c + s * 0.2, c - s * 0.06); g.quadraticCurveTo(c + s * 0.14, c + s * 0.12, c - s * 0.02, c + s * 0.14); g.closePath(); }
+  else if (tipo === 'pez') { g.moveTo(c - s * 0.24, c); g.quadraticCurveTo(c - s * 0.02, c - s * 0.2, c + s * 0.16, c); g.lineTo(c + s * 0.26, c - s * 0.1); g.lineTo(c + s * 0.26, c + s * 0.1); g.lineTo(c + s * 0.16, c); g.quadraticCurveTo(c - s * 0.02, c + s * 0.2, c - s * 0.24, c); }
+  else if (tipo === 'corona') { g.moveTo(c - s * 0.22, c + s * 0.14); g.lineTo(c - s * 0.24, c - s * 0.12); g.lineTo(c - s * 0.1, c); g.lineTo(c, c - s * 0.18); g.lineTo(c + s * 0.1, c); g.lineTo(c + s * 0.24, c - s * 0.12); g.lineTo(c + s * 0.22, c + s * 0.14); g.closePath(); }
+  else { g.moveTo(c, c - s * 0.24); g.bezierCurveTo(c + s * 0.2, c - s * 0.02, c + s * 0.16, c + s * 0.2, c, c + s * 0.2); g.bezierCurveTo(c - s * 0.16, c + s * 0.2, c - s * 0.2, c - s * 0.02, c, c - s * 0.24); }
+  g.fill();
+}
+// Dibuja un bloque con relieve, brillo de cristal e icono grabado (se guarda por tamaño)
+const cacheBloque = new Map();
+function bloque(ci, s, tema) {
+  tema = tema || S.tema;
+  const k = tema + ci + '_' + s;
+  if (cacheBloque.has(k)) return cacheBloque.get(k);
+  const T = TEMAS[tema], base = ci === 7 ? '#ffd25a' : T.colores[ci % T.colores.length];
+  const cv = document.createElement('canvas'); cv.width = cv.height = s;
+  const g = cv.getContext('2d'), r = s * 0.16, m = s * 0.04;
+  const caja = (x, y, w, h, rr) => { g.beginPath(); g.moveTo(x + rr, y); g.arcTo(x + w, y, x + w, y + h, rr); g.arcTo(x + w, y + h, x, y + h, rr); g.arcTo(x, y + h, x, y, rr); g.arcTo(x, y, x + w, y, rr); g.closePath(); };
+  // Cuerpo con degradado
+  let gr = g.createLinearGradient(0, m, 0, s - m);
+  gr.addColorStop(0, aclarar(base, 0.35)); gr.addColorStop(0.5, base); gr.addColorStop(1, aclarar(base, -0.35));
+  caja(m, m, s - 2 * m, s - 2 * m, r); g.fillStyle = gr; g.fill();
+  // Bisel: borde claro arriba-izquierda y oscuro abajo-derecha
+  g.save(); caja(m, m, s - 2 * m, s - 2 * m, r); g.clip();
+  g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(m, s - m - s * 0.12, s, s * 0.12); g.fillRect(s - m - s * 0.1, m, s * 0.1, s);
+  g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(m, m, s, s * 0.1); g.fillRect(m, m, s * 0.09, s);
+  // Cara interior
+  const i0 = s * 0.17;
+  gr = g.createLinearGradient(0, i0, 0, s - i0);
+  gr.addColorStop(0, aclarar(base, 0.18)); gr.addColorStop(1, aclarar(base, -0.12));
+  caja(i0, i0, s - 2 * i0, s - 2 * i0, r * 0.6); g.fillStyle = gr; g.fill();
+  // Icono grabado
+  g.fillStyle = tema === 'oro' ? 'rgba(120,80,10,.32)' : 'rgba(255,255,255,.34)'; iconoFe(g, ICONOS[ci % ICONOS.length], s / 2, s);
+  g.globalCompositeOperation = 'source-atop';
+  g.fillStyle = 'rgba(0,0,0,.12)'; g.translate(s * 0.015, s * 0.02); iconoFe(g, ICONOS[ci % ICONOS.length], s / 2, s);
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over';
+  // Reflejo de cristal
+  gr = g.createLinearGradient(0, 0, s, s);
+  gr.addColorStop(0, 'rgba(255,255,255,.55)'); gr.addColorStop(0.35, 'rgba(255,255,255,.08)'); gr.addColorStop(0.36, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, s, s);
+  if (tema === 'oro') { g.strokeStyle = 'rgba(160,110,20,.35)'; g.lineWidth = s * 0.02; for (let v = 0; v < 3; v++) { g.beginPath(); g.moveTo(rnd() * s, 0); g.bezierCurveTo(rnd() * s, s * 0.3, rnd() * s, s * 0.7, rnd() * s, s); g.stroke(); } }
+  if (tema === 'luz') { const rg = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s * 0.6); rg.addColorStop(0, 'rgba(255,255,255,.55)'); rg.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, s, s); }
+  g.restore();
+  if (ci === 7) { g.strokeStyle = '#fff7c8'; g.lineWidth = s * 0.05; caja(m, m, s - 2 * m, s - 2 * m, r); g.stroke(); }
+  cacheBloque.set(k, cv);
+  return cv;
+}
+
+/* ---------- Piezas ---------- */
+const FORMAS = [
+  [[0, 0]], [[0, 0], [1, 0]], [[0, 0], [0, 1]], [[0, 0], [1, 0], [2, 0]], [[0, 0], [0, 1], [0, 2]],
+  [[0, 0], [1, 0], [2, 0], [3, 0]], [[0, 0], [0, 1], [0, 2], [0, 3]], [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]], [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]],
+  [[0, 0], [1, 0], [0, 1], [1, 1]], [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [1, 2], [2, 2]],
+  [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1]], [[0, 0], [1, 0], [0, 1], [1, 1], [0, 2], [1, 2]],
+  [[0, 0], [0, 1], [1, 1]], [[1, 0], [0, 1], [1, 1]], [[0, 0], [1, 0], [0, 1]], [[0, 0], [1, 0], [1, 1]],
+  [[0, 0], [0, 1], [0, 2], [1, 2]], [[1, 0], [1, 1], [1, 2], [0, 2]], [[0, 0], [1, 0], [2, 0], [0, 1]], [[0, 0], [1, 0], [2, 0], [2, 1]],
+  [[0, 0], [1, 0], [1, 1], [1, 2]], [[0, 0], [1, 0], [0, 1], [0, 2]], [[0, 1], [1, 1], [2, 1], [2, 0]], [[0, 0], [0, 1], [1, 1], [2, 1]],
+  [[0, 0], [1, 0], [2, 0], [1, 1]], [[1, 0], [0, 1], [1, 1], [2, 1]], [[0, 0], [0, 1], [0, 2], [1, 1]], [[1, 0], [1, 1], [1, 2], [0, 1]],
+  [[0, 0], [1, 0], [1, 1], [2, 1]], [[1, 0], [2, 0], [0, 1], [1, 1]], [[0, 0], [0, 1], [1, 1], [1, 2]], [[1, 0], [1, 1], [0, 1], [0, 2]],
+  [[0, 0], [1, 1]], [[1, 0], [0, 1]], [[0, 0], [1, 0], [2, 0], [0, 1], [0, 2]], [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]]
+];
+const PESOS = FORMAS.map((f) => (f.length === 1 ? 2 : f.length === 9 ? 1.2 : f.length >= 5 ? 1.6 : 3));
+function formaAzar(facil) {
+  let tot = 0; const pesos = PESOS.map((p, i) => (facil && FORMAS[i].length > 4 ? p * 0.2 : p)); pesos.forEach((p) => { tot += p; });
+  let x = rnd() * tot; for (let i = 0; i < FORMAS.length; i++) { x -= pesos[i]; if (x <= 0) return FORMAS[i]; }
+  return FORMAS[0];
+}
+function cabe(f, cx, cy) { for (const [x, y] of f) { const X = cx + x, Y = cy + y; if (X < 0 || Y < 0 || X >= N || Y >= N || tab[Y][X] >= 0) return false; } return true; }
+function cabeAlguna(f) { for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (cabe(f, x, y)) return true; return false; }
+function nuevasPiezas() {
+  // Al menos una pieza siempre cabe; si el tablero está lleno, ayuda con piezas pequeñas
+  let intento = 0, lista;
+  const lleno = tab.flat().filter((v) => v >= 0).length / (N * N);
+  do {
+    lista = [0, 1, 2].map(() => { const f = formaAzar(lleno > 0.55 || intento > 6); const ci = Math.floor(rnd() * 7); return { f, ci: rnd() < 0.05 + S.mejoras.gracia * 0.03 ? 7 : ci, usada: false, anim: 0 }; });
+    intento++;
+  } while (!lista.some((p) => cabeAlguna(p.f)) && intento < 30);
+  bandeja = lista;
+  bandeja.forEach((p, i) => { p.anim = -i * 0.08; });
+}
+
+/* ---------- Estado de la partida ---------- */
+let tab, bandeja = [], puntos = 0, combo = 0, sinLinea = 0, enJuego = false, arrastre = null, poderActivo = null;
+let parts = [], flotantes = [], borrando = [], sacudida = 0, pulsos = [], puesto = [];
+const cv = $('c'), g = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1, L = { bx: 0, by: 0, cs: 40, ty: 0, ts: 24 };
+function ajustar() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2.5);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  const arriba = 178;
+  const abajo = 76;
+  const libre = H - arriba - abajo;
+  const cs = Math.floor(Math.min((W - 28) / N, (libre * 0.68) / N, 54));
+  L.cs = cs; L.bx = Math.round((W - cs * N) / 2); L.by = arriba;
+  L.ty = L.by + cs * N + Math.max(16, (libre - cs * N) * 0.12);
+  L.ts = Math.min(Math.floor(cs * 0.7), Math.floor((libre - cs * N - 20) / 4.4));
+  $('marcador').style.top = (L.by - 124) + 'px';
+  $('verso').style.top = (L.by - 58) + 'px';
+  cacheBloque.clear(); fondoTab = null;
+}
+addEventListener('resize', ajustar);
+
+function nuevaPartida() {
+  tab = Array.from({ length: N }, () => Array(N).fill(-1));
+  puesto = Array.from({ length: N }, () => Array(N).fill(0));
+  puntos = 0; combo = 0; sinLinea = 0; parts = []; flotantes = []; borrando = []; poderActivo = null;
+  enJuego = true;
+  nuevasPiezas(); nuevoVerso();
+  $('t-pts').textContent = '0'; $('t-mejor').textContent = 'Récord ' + S.mejor.toLocaleString('es');
+  ['p-menu', 'p-fin', 'p-tienda', 'p-temas'].forEach((id) => { $(id).hidden = true; });
+  ['marcador', 'verso', 'poderes', 'btn-menu'].forEach((id) => { $(id).hidden = false; });
+  pintarPoderes();
+  if (JS.ctx()) JS.musica('dulce');
+}
+
+/* ---------- Entrada: arrastrar piezas ---------- */
+function centroBandeja(i) { return { x: W * (i + 0.5) / 3, y: L.ty + L.ts * 2.5 }; }
+function anchoPieza(f) { let w = 0, h = 0; for (const [x, y] of f) { w = Math.max(w, x + 1); h = Math.max(h, y + 1); } return { w, h }; }
+function celdaBajo(px, py) { return { x: Math.floor((px - L.bx) / L.cs), y: Math.floor((py - L.by) / L.cs) }; }
+cv.addEventListener('pointerdown', (e) => {
+  if (!enJuego) return;
+  JS.ctx();
+  if (poderActivo) { usarPoderEn(e.clientX, e.clientY); return; }
+  for (let i = 0; i < 3; i++) {
+    const p = bandeja[i]; if (!p || p.usada) continue;
+    const c = centroBandeja(i);
+    if (Math.abs(e.clientX - c.x) < W / 6 && Math.abs(e.clientY - c.y) < L.ts * 3) {
+      const { w, h } = anchoPieza(p.f);
+      // La pieza se ve arriba del dedo, como en el juego original
+      arrastre = { i, x: e.clientX, y: e.clientY, ox: -w * L.cs / 2, oy: -h * L.cs - L.cs * (1.1 + S.mejoras.vista * 0.25), destino: null, esc: 0.5 };
+      cv.setPointerCapture(e.pointerId);
+      SND.tomar();
+      return;
+    }
+  }
+});
+cv.addEventListener('pointermove', (e) => {
+  if (!arrastre) return;
+  arrastre.x = e.clientX; arrastre.y = e.clientY;
+  const p = bandeja[arrastre.i];
+  const px = arrastre.x + arrastre.ox + L.cs / 2, py = arrastre.y + arrastre.oy + L.cs / 2;
+  const c = celdaBajo(px, py);
+  arrastre.destino = cabe(p.f, c.x, c.y) ? c : null;
+});
+const soltar = () => {
+  if (!arrastre) return;
+  const a = arrastre; arrastre = null;
+  const p = bandeja[a.i];
+  if (a.destino) colocar(p, a.destino.x, a.destino.y);
+  else { p.vuelve = { x: a.x + a.ox, y: a.y + a.oy, t: 0 }; SND.malo(); }
+};
+cv.addEventListener('pointerup', soltar);
+cv.addEventListener('pointercancel', soltar);
+
+function lineasCompletas(extra) {
+  const fil = [], col = [];
+  const lleno = (x, y) => tab[y][x] >= 0 || (extra && extra.has(y * N + x));
+  for (let y = 0; y < N; y++) { let ok = true; for (let x = 0; x < N; x++) if (!lleno(x, y)) { ok = false; break; } if (ok) fil.push(y); }
+  for (let x = 0; x < N; x++) { let ok = true; for (let y = 0; y < N; y++) if (!lleno(x, y)) { ok = false; break; } if (ok) col.push(x); }
+  return { fil, col };
+}
+function colocar(p, cx, cy) {
+  for (const [x, y] of p.f) { tab[cy + y][cx + x] = p.ci; puesto[cy + y][cx + x] = 1; }
+  p.usada = true;
+  puntos += p.f.length;
+  SND.soltar();
+  const { fil, col } = lineasCompletas();
+  const n = fil.length + col.length;
+  if (n) {
+    combo = sinLinea <= 2 && combo > 0 ? combo + 1 : 1; sinLinea = 0;
+    const celdas = new Set();
+    fil.forEach((y) => { for (let x = 0; x < N; x++) celdas.add(y * N + x); });
+    col.forEach((x) => { for (let y = 0; y < N; y++) celdas.add(y * N + x); });
+    let oro = 0;
+    celdas.forEach((k) => { if (tab[Math.floor(k / N)][k % N] === 7) oro++; });
+    const ganado = Math.round(10 * celdas.size * n * (1 + (combo - 1) * 0.5) + oro * 25);
+    puntos += ganado;
+    // Bloques que saltan con física al borrarse
+    let i = 0;
+    celdas.forEach((k) => {
+      const y = Math.floor(k / N), x = k % N, ci = tab[y][x];
+      borrando.push({ x, y, ci, t: -(fil.includes(y) ? x : y) * 0.025 });
+      tab[y][x] = -1;
+      i++;
+    });
+    const cxp = L.bx + (cx + 1) * L.cs, cyp = L.by + (cy + 0.5) * L.cs;
+    flotantes.push({ txt: '+' + ganado.toLocaleString('es'), x: cxp, y: cyp, t: 0, tam: 26 + Math.min(n, 4) * 6 });
+    sacudida = Math.min(14, 3 + n * 3 + combo);
+    SND.linea(n, combo);
+    if (n >= 2) avisoGrande(['', '', '¡Bien!', '¡Gloria!', '¡Aleluya!', '¡Hosanna!', '¡Hosanna!'][Math.min(n, 6)], n >= 3 ? 'Bendición ×' + n : '');
+    else if (combo >= 3) avisoGrande('Combo ×' + combo, 'Sigue así');
+    if (oro) flotantes.push({ txt: '¡Gracia! +' + oro * 25, x: W / 2, y: L.by + L.cs * 2, t: 0, tam: 22, oro: true });
+    // Cada línea revela palabras del versículo
+    const antes = versoN;
+    versoN = Math.min(versoPal.length, versoN + n);
+    pintarVerso(versoN - antes); SND.palabra();
+    if (versoN >= versoPal.length) setTimeout(versoCompleto, 500);
+  } else { sinLinea++; if (sinLinea > 2) combo = 0; }
+  pulsoPts();
+  if (bandeja.every((q) => q.usada)) nuevasPiezas();
+  setTimeout(revisarFin, 450);
+}
+function versoCompleto() {
+  const v = VERSOS[versoI];
+  const d = document.createElement('div'); d.className = 'verso-completo';
+  d.innerHTML = '<b>¡Versículo completo! +300</b>«' + v[0] + '»<small>' + v[1] + '</small>';
+  document.body.appendChild(d); setTimeout(() => d.remove(), 3700);
+  puntos += 300; S.versos++; S.estrellas += 5; guardar(); pulsoPts();
+  for (let k = 0; k < 60; k++) chispa(W / 2, H * 0.36, k % 3 ? '#ffd25a' : '#fff');
+  SND.verso();
+  nuevoVerso();
+}
+function revisarFin() {
+  if (!enJuego || borrando.length) { if (enJuego && borrando.length) setTimeout(revisarFin, 200); return; }
+  const quedan = bandeja.filter((p) => !p.usada);
+  if (quedan.length && !quedan.some((p) => cabeAlguna(p.f))) finPartida();
+}
+function finPartida() {
+  enJuego = false;
+  const record = puntos > S.mejor;
+  const ganadas = Math.floor(puntos / 60);
+  S.mejor = Math.max(S.mejor, puntos); S.total += puntos; S.partidas++; S.estrellas += ganadas;
+  const rAntes = rangoDe(S.total - puntos), rAhora = rangoDe(S.total);
+  guardar();
+  const v = VERSOS[Math.floor(rnd() * VERSOS.length)];
+  $('fin').innerHTML = `<h3 style="text-align:center">${record ? '¡Nuevo récord!' : 'Sin espacio'}</h3>
+    <div class="fin-pts">${puntos.toLocaleString('es')}</div>
+    ${record ? '<div style="text-align:center"><span class="nuevo">RÉCORD</span></div>' : `<p style="text-align:center;margin:6px 0;opacity:.8">Récord: ${S.mejor.toLocaleString('es')}</p>`}
+    <p style="text-align:center;margin:8px 0;font-weight:800;color:var(--gold)">+${ganadas} ★ puntos misioneros</p>
+    ${rAhora > rAntes ? `<p style="text-align:center;font-weight:900;font-size:18px">¡Subiste a ${RANGOS[rAhora].n}!</p>` : ''}
+    <div class="cita">«${v[0]}»<small>${v[1]}</small></div>`;
+  ['marcador', 'verso', 'poderes', 'btn-menu'].forEach((id) => { $(id).hidden = true; });
+  $('p-fin').hidden = false;
+  if (record) SND.record(); else SND.fin();
+  JS.pararMusica();
+  $('t-estrellas').textContent = S.estrellas.toLocaleString('es');
+}
+
+/* ---------- Poderes (se compran con ★) ---------- */
+const PODERES = {
+  martillo: { n: 'Martillo', d: 'Quita un bloque', precio: 40, svg: '<svg viewBox="0 0 24 24" fill="#fff"><path d="M3 21l9-9 2 2-9 9zM12 4l6 0 2 2v4l-3 1-6-6z"/></svg>' },
+  bomba: { n: 'Bomba de luz', d: 'Borra un área de 3×3', precio: 90, svg: '<svg viewBox="0 0 24 24" fill="#fff"><circle cx="11" cy="14" r="7"/><path d="M15 7l3-3M18 3l2 2" stroke="#fff" stroke-width="2"/></svg>' },
+  cambio: { n: 'Piezas nuevas', d: 'Cambia las tres piezas', precio: 30, svg: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 0 1 14-5M20 12a8 8 0 0 1-14 5M18 3v4h-4M6 21v-4h4"/></svg>' }
+};
+const MEJORAS = {
+  gracia: { n: 'Bloques de gracia', d: 'Más bloques dorados que valen +25', precio: (k) => 150 + k * 150, max: 3 },
+  vista: { n: 'Mano firme', d: 'La pieza se ve más lejos del dedo', precio: (k) => 80 + k * 80, max: 2 }
+};
+function pintarPoderes() {
+  $('poderes').innerHTML = Object.entries(PODERES).map(([k, p]) => `<button type="button" class="poder${poderActivo === k ? ' activo' : ''}" data-poder="${k}">${p.svg}${p.n}<span class="n">${S.inv[k] || 0}</span></button>`).join('');
+  $('t-estrellas').textContent = S.estrellas.toLocaleString('es');
+}
+$('poderes').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-poder]'); if (!b || !enJuego) return;
+  const k = b.dataset.poder;
+  if ((S.inv[k] || 0) <= 0) { if (S.estrellas >= PODERES[k].precio) { S.estrellas -= PODERES[k].precio; S.inv[k] = 1; SND.compra(); guardar(); } else { avisoGrande('Faltan ★', 'Juega para ganar más'); return; } }
+  if (k === 'cambio') { S.inv.cambio--; guardar(); nuevasPiezas(); SND.poder(); pintarPoderes(); return; }
+  poderActivo = poderActivo === k ? null : k; SND.boton(); pintarPoderes();
+});
+function usarPoderEn(px, py) {
+  const c = celdaBajo(px, py);
+  if (c.x < 0 || c.y < 0 || c.x >= N || c.y >= N) { poderActivo = null; pintarPoderes(); return; }
+  const k = poderActivo;
+  const area = k === 'bomba' ? 1 : 0;
+  let n = 0;
+  for (let y = c.y - area; y <= c.y + area; y++) for (let x = c.x - area; x <= c.x + area; x++) {
+    if (x < 0 || y < 0 || x >= N || y >= N || tab[y][x] < 0) continue;
+    borrando.push({ x, y, ci: tab[y][x], t: 0 }); tab[y][x] = -1; n++;
+  }
+  if (!n) { SND.malo(); return; }
+  S.inv[k]--; guardar(); poderActivo = null; pintarPoderes();
+  sacudida = k === 'bomba' ? 12 : 5;
+  if (k === 'bomba') { SND.bomba(); for (let i = 0; i < 40; i++) chispa(L.bx + (c.x + 0.5) * L.cs, L.by + (c.y + 0.5) * L.cs, i % 2 ? '#fff3b0' : '#ffd25a'); } else SND.martillo();
+}
+
+/* ---------- Efectos ---------- */
+function chispa(x, y, col) { const a = rnd() * Math.PI * 2, v = 120 + rnd() * 380; parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, t: 0, vida: 0.6 + rnd() * 0.6, col, tam: 2 + rnd() * 4, chispa: true }); }
+function avisoGrande(txt, sub) {
+  document.querySelectorAll('.aviso-grande').forEach((d) => d.remove());
+  const d = document.createElement('div'); d.className = 'aviso-grande'; d.innerHTML = txt + (sub ? '<small>' + sub + '</small>' : '');
+  document.body.appendChild(d); setTimeout(() => d.remove(), 1350);
+}
+function pulsoPts() { const el = $('t-pts'); el.textContent = puntos.toLocaleString('es'); el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+
+/* ---------- Dibujo ---------- */
+let fondoTab = null;
+function dibujarFondoTablero() {
+  const cs = L.cs, w = cs * N;
+  fondoTab = document.createElement('canvas'); fondoTab.width = (w + 24) * DPR; fondoTab.height = (w + 24) * DPR;
+  const f = fondoTab.getContext('2d'); f.scale(DPR, DPR);
+  // Marco dorado con sombra
+  f.shadowColor = 'rgba(0,0,0,.55)'; f.shadowBlur = 24; f.shadowOffsetY = 10;
+  const gr = f.createLinearGradient(0, 0, 0, w + 24); gr.addColorStop(0, '#ffe9a0'); gr.addColorStop(0.5, '#c98f12'); gr.addColorStop(1, '#7a4a08');
+  f.fillStyle = gr; f.beginPath(); f.roundRect ? f.roundRect(0, 0, w + 24, w + 24, 18) : f.rect(0, 0, w + 24, w + 24); f.fill();
+  f.shadowColor = 'transparent';
+  f.fillStyle = '#1c0f33'; f.beginPath(); f.roundRect ? f.roundRect(8, 8, w + 8, w + 8, 12) : f.rect(8, 8, w + 8, w + 8); f.fill();
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const X = 12 + x * cs, Y = 12 + y * cs;
+    const cg = f.createLinearGradient(X, Y, X, Y + cs); cg.addColorStop(0, 'rgba(255,255,255,.03)'); cg.addColorStop(1, 'rgba(0,0,0,.25)');
+    f.fillStyle = (x + y) % 2 ? 'rgba(70,40,110,.55)' : 'rgba(58,32,96,.55)'; f.fillRect(X + 1, Y + 1, cs - 2, cs - 2);
+    f.fillStyle = cg; f.fillRect(X + 1, Y + 1, cs - 2, cs - 2);
+    f.strokeStyle = 'rgba(0,0,0,.35)'; f.lineWidth = 1; f.strokeRect(X + 1.5, Y + 1.5, cs - 3, cs - 3);
+  }
+}
+function dibujarPieza(p, x0, y0, cs, alfa) {
+  const s = Math.round(cs * DPR), img = bloque(p.ci, s);
+  g.globalAlpha = alfa == null ? 1 : alfa;
+  for (const [x, y] of p.f) g.drawImage(img, x0 + x * cs, y0 + y * cs, cs, cs);
+  g.globalAlpha = 1;
+}
+let ultimo = performance.now(), reloj = 0;
+function cuadro(ahora) {
+  const dt = Math.min(0.05, (ahora - ultimo) / 1000); ultimo = ahora; reloj += dt;
+  g.setTransform(DPR, 0, 0, DPR, 0, 0);
+  g.clearRect(0, 0, W, H);
+  if (!tab) { requestAnimationFrame(cuadro); return; }
+  if (!fondoTab) dibujarFondoTablero();
+  let sx = 0, sy = 0;
+  if (sacudida > 0) { sx = (rnd() - 0.5) * sacudida; sy = (rnd() - 0.5) * sacudida; sacudida = Math.max(0, sacudida - dt * 40); }
+  g.save(); g.translate(sx, sy);
+  const cs = L.cs, s = Math.round(cs * DPR);
+  g.drawImage(fondoTab, L.bx - 12, L.by - 12, cs * N + 24, cs * N + 24);
+  // Vista previa: dónde caerá la pieza y qué líneas se completarán
+  let previa = null, lineas = null;
+  if (arrastre && arrastre.destino) {
+    const p = bandeja[arrastre.i]; previa = new Set(p.f.map(([x, y]) => (arrastre.destino.y + y) * N + arrastre.destino.x + x));
+    lineas = lineasCompletas(previa);
+  }
+  const brillaFila = new Set(lineas ? lineas.fil : []), brillaCol = new Set(lineas ? lineas.col : []);
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const v = tab[y][x], X = L.bx + x * cs, Y = L.by + y * cs;
+    if (v >= 0) {
+      let esc = 1;
+      if (puesto[y][x] > 0) { puesto[y][x] = Math.max(0, puesto[y][x] - dt * 4.5); const k = puesto[y][x]; esc = 1 + Math.sin(k * Math.PI) * 0.14; }
+      const ci = (brillaFila.has(y) || brillaCol.has(x)) && arrastre ? bandeja[arrastre.i].ci : v;
+      g.drawImage(bloque(ci, s), X + cs * (1 - esc) / 2, Y + cs * (1 - esc) / 2, cs * esc, cs * esc);
+    } else if (previa && previa.has(y * N + x)) {
+      g.globalAlpha = 0.45; g.drawImage(bloque(bandeja[arrastre.i].ci, s), X, Y, cs, cs); g.globalAlpha = 1;
+    }
+  }
+  // Líneas por completarse: brillo pulsante
+  if (lineas && (lineas.fil.length || lineas.col.length)) {
+    g.globalCompositeOperation = 'lighter';
+    const a = 0.18 + Math.sin(reloj * 10) * 0.08;
+    g.fillStyle = `rgba(255,230,150,${a})`;
+    lineas.fil.forEach((y) => g.fillRect(L.bx, L.by + y * cs, cs * N, cs));
+    lineas.col.forEach((x) => g.fillRect(L.bx + x * cs, L.by, cs, cs * N));
+    g.globalCompositeOperation = 'source-over';
+  }
+  // Bloques borrándose: brillan, se encogen y salen volando con gravedad
+  for (let i = borrando.length - 1; i >= 0; i--) {
+    const b = borrando[i]; b.t += dt;
+    const X = L.bx + b.x * cs, Y = L.by + b.y * cs;
+    if (b.t < 0) { g.drawImage(bloque(b.ci, s), X, Y, cs, cs); continue; }
+    if (b.t < 0.12) {
+      g.drawImage(bloque(b.ci, s), X, Y, cs, cs);
+      g.globalCompositeOperation = 'lighter'; g.fillStyle = `rgba(255,255,255,${0.8 * (1 - b.t / 0.12)})`; g.fillRect(X + 2, Y + 2, cs - 4, cs - 4); g.globalCompositeOperation = 'source-over';
+      continue;
+    }
+    if (!b.lanzado) {
+      b.lanzado = true;
+      parts.push({ x: X + cs / 2, y: Y + cs / 2, vx: (rnd() - 0.5) * 380, vy: -180 - rnd() * 320, t: 0, vida: 1.3, ci: b.ci, rot: 0, vr: (rnd() - 0.5) * 12 });
+      for (let k = 0; k < 4; k++) chispa(X + cs / 2, Y + cs / 2, k % 2 ? '#fff' : TEMAS[S.tema].colores[b.ci % 7]);
+      borrando.splice(i, 1);
+    }
+  }
+  g.restore();
+  // Partículas con física (gravedad, giro y desvanecido)
+  g.save(); g.translate(sx, sy);
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i]; p.t += dt;
+    if (p.t > p.vida) { parts.splice(i, 1); continue; }
+    p.vy += (p.chispa ? 500 : 1500) * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+    const k = 1 - p.t / p.vida;
+    if (p.chispa) { g.globalCompositeOperation = 'lighter'; g.globalAlpha = k; g.fillStyle = p.col; g.beginPath(); g.arc(p.x, p.y, p.tam * k + 0.5, 0, 7); g.fill(); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; }
+    else { p.rot += p.vr * dt; g.save(); g.translate(p.x, p.y); g.rotate(p.rot); g.globalAlpha = Math.min(1, k * 1.5); const t2 = cs * (0.5 + k * 0.5); g.drawImage(bloque(p.ci, s), -t2 / 2, -t2 / 2, t2, t2); g.restore(); g.globalAlpha = 1; }
+  }
+  g.restore();
+  // Bandeja con las tres piezas
+  const ts = L.ts;
+  for (let i = 0; i < 3; i++) {
+    const p = bandeja[i]; if (!p || p.usada) continue;
+    if (arrastre && arrastre.i === i) continue;
+    p.anim = Math.min(1, p.anim + dt * 3.5);
+    const ap = clamp(p.anim, 0, 1), esc = ap <= 0 ? 0 : 1 - Math.pow(1 - ap, 3) * (1 + 2.2 * (1 - ap));
+    const { w, h } = anchoPieza(p.f), c = centroBandeja(i);
+    let x0 = c.x - w * ts / 2, y0 = c.y - h * ts / 2;
+    if (p.vuelve) { p.vuelve.t += dt * 4; const k = suave(Math.min(1, p.vuelve.t)); x0 = p.vuelve.x + (x0 - p.vuelve.x) * k; y0 = p.vuelve.y + (y0 - p.vuelve.y) * k; if (k >= 1) p.vuelve = null; }
+    const cabeEn = cabeAlguna(p.f);
+    g.save(); g.translate(c.x, c.y); g.scale(esc, esc); g.translate(-c.x, -c.y);
+    dibujarPieza(p, x0, y0, p.vuelve ? cs : ts, cabeEn ? 1 : 0.35);
+    g.restore();
+  }
+  // Pieza arrastrada (grande, sobre el dedo, con sombra)
+  if (arrastre) {
+    const p = bandeja[arrastre.i];
+    arrastre.esc = Math.min(1, arrastre.esc + dt * 9);
+    const sc = ts / cs + (1 - ts / cs) * suave(arrastre.esc);
+    const x0 = arrastre.x + arrastre.ox * sc, y0 = arrastre.y + arrastre.oy * sc;
+    g.save(); g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 18; g.shadowOffsetY = 12;
+    dibujarPieza(p, x0, y0, cs * sc, 1); g.restore();
+  }
+  // Puntos flotantes
+  for (let i = flotantes.length - 1; i >= 0; i--) {
+    const f = flotantes[i]; f.t += dt; if (f.t > 1.2) { flotantes.splice(i, 1); continue; }
+    const k = f.t / 1.2, e = f.t < 0.15 ? f.t / 0.15 : 1;
+    g.save(); g.globalAlpha = 1 - Math.max(0, k - 0.6) / 0.4; g.translate(f.x, f.y - k * 60); g.scale(0.6 + e * 0.4, 0.6 + e * 0.4);
+    g.font = `900 ${f.tam}px "Trebuchet MS", sans-serif`; g.textAlign = 'center'; g.lineWidth = 6; g.strokeStyle = 'rgba(60,20,0,.85)'; g.strokeText(f.txt, 0, 0);
+    g.fillStyle = f.oro ? '#ffd25a' : '#fff'; g.fillText(f.txt, 0, 0); g.restore();
+  }
+  // Modo poder: indicar que se toca una casilla
+  if (poderActivo) {
+    g.strokeStyle = `rgba(255,210,90,${0.5 + Math.sin(reloj * 8) * 0.4})`; g.lineWidth = 4; g.strokeRect(L.bx - 2, L.by - 2, cs * N + 4, cs * N + 4);
+    g.font = '900 16px "Trebuchet MS", sans-serif'; g.textAlign = 'center'; g.fillStyle = '#fff3c4';
+    g.fillText(poderActivo === 'bomba' ? 'Toca donde quieres soltar la bomba' : 'Toca el bloque que quieres quitar', W / 2, L.by + cs * N + 26);
+  }
+  requestAnimationFrame(cuadro);
+}
+const suave = (t) => t * t * (3 - 2 * t);
+
+/* ---------- Pantallas ---------- */
+function medalla(i) {
+  const r = RANGOS[i];
+  return `<svg class="medalla" viewBox="0 0 56 56"><defs><radialGradient id="m${i}" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="${r.c}"/><stop offset="1" stop-color="#3a2150"/></radialGradient></defs><path d="M18 2h8l2 14-6 4zM38 2h-8l-2 14 6 4z" fill="#c0262f"/><circle cx="28" cy="34" r="19" fill="url(#m${i})" stroke="#fff3c4" stroke-width="2"/><path d="M28 23v22M20 31h16" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".9"/></svg>`;
+}
+function pintarMenu() {
+  const i = rangoDe(S.total), sig = RANGOS[i + 1];
+  const pr = sig ? (S.total - RANGOS[i].p) / (sig.p - RANGOS[i].p) : 1;
+  $('rango').innerHTML = medalla(i) + `<div style="flex:1"><small>Tu rango</small><b>${RANGOS[i].n}</b><div class="barra"><i style="width:${(pr * 100).toFixed(1)}%"></i></div><small>${sig ? 'Faltan ' + (sig.p - S.total).toLocaleString('es') + ' puntos para ' + sig.n : 'Llegaste al rango más alto'} · Récord ${S.mejor.toLocaleString('es')}</small></div>`;
+  $('t-estrellas').textContent = S.estrellas.toLocaleString('es');
+  const cols = TEMAS[S.tema].colores;
+  $('logo-bloques').innerHTML = [0, 1, 2, 3, 4, 5, 6, 0].map((c, k) => `<i style="background:linear-gradient(180deg,${aclarar(cols[c], 0.3)},${cols[c]} 50%,${aclarar(cols[c], -0.35)});animation-delay:${0.05 * k}s"></i>`).join('');
+}
+function pintarTienda() {
+  let h = Object.entries(PODERES).map(([k, p]) => `<div class="item">${p.svg.replace('<svg', '<svg width="30" height="30"')}<div><b>${p.n} <small>(tienes ${S.inv[k] || 0})</small></b><small>${p.d}</small></div><button class="comprar" type="button" data-comprar="${k}" ${S.estrellas < p.precio ? 'disabled' : ''}>★ ${p.precio}</button></div>`).join('');
+  h += Object.entries(MEJORAS).map(([k, m]) => { const nv = S.mejoras[k] || 0, lleno = nv >= m.max, pr = m.precio(nv); return `<div class="item"><div style="width:30px;text-align:center;font-weight:900;color:var(--gold)">${nv}/${m.max}</div><div><b>${m.n}</b><small>${m.d}</small></div><button class="comprar" type="button" data-mejora="${k}" ${lleno || S.estrellas < pr ? 'disabled' : ''}>${lleno ? 'Al máximo' : '★ ' + pr}</button></div>`; }).join('');
+  $('tienda').innerHTML = h;
+  $('t-estrellas').textContent = S.estrellas.toLocaleString('es');
+}
+function pintarTemas() {
+  const r = rangoDe(S.total);
+  $('temas').innerHTML = Object.entries(TEMAS).map(([k, t]) => `<button type="button" class="tema" data-tema="${k}" aria-pressed="${S.tema === k}" ${r < t.rango ? 'disabled' : ''}><canvas width="108" height="108" data-prev="${k}"></canvas>${t.n}${r < t.rango ? '<br><small>Rango ' + RANGOS[t.rango].n + '</small>' : ''}</button>`).join('');
+  document.querySelectorAll('[data-prev]').forEach((c) => { const x = c.getContext('2d'); [0, 3, 4, 5].forEach((ci, i) => x.drawImage(bloque(ci, 54, c.dataset.prev), (i % 2) * 54, Math.floor(i / 2) * 54)); });
+}
+function mostrar(id) { ['p-menu', 'p-tienda', 'p-temas', 'p-fin'].forEach((p) => { $(p).hidden = p !== id; }); if (id === 'p-menu') pintarMenu(); if (id === 'p-tienda') pintarTienda(); if (id === 'p-temas') pintarTemas(); }
+$('btn-jugar').onclick = () => { JS.ctx(); SND.boton(); nuevaPartida(); };
+$('btn-otra').onclick = () => { SND.boton(); nuevaPartida(); };
+$('btn-tienda').onclick = () => { SND.boton(); mostrar('p-tienda'); };
+$('btn-temas').onclick = () => { SND.boton(); mostrar('p-temas'); };
+document.querySelectorAll('[data-volver]').forEach((b) => { b.onclick = () => { SND.boton(); mostrar('p-menu'); }; });
+$('btn-menu').onclick = () => { if (!enJuego) return; if (confirm('¿Terminar esta partida?')) finPartida(); };
+$('tienda').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-comprar]'), m = e.target.closest('[data-mejora]');
+  if (b) { const k = b.dataset.comprar; if (S.estrellas >= PODERES[k].precio) { S.estrellas -= PODERES[k].precio; S.inv[k] = (S.inv[k] || 0) + 1; SND.compra(); guardar(); pintarTienda(); } }
+  if (m) { const k = m.dataset.mejora, M = MEJORAS[k], nv = S.mejoras[k] || 0; if (nv < M.max && S.estrellas >= M.precio(nv)) { S.estrellas -= M.precio(nv); S.mejoras[k] = nv + 1; SND.compra(); guardar(); pintarTienda(); } }
+});
+$('temas').addEventListener('click', (e) => { const b = e.target.closest('[data-tema]'); if (!b || b.disabled) return; S.tema = b.dataset.tema; guardar(); cacheBloque.clear(); SND.boton(); pintarTemas(); });
+$('btn-cerrar').onclick = () => { try { window.parent.postMessage({ tipo: 'juma-cerrar' }, location.origin); } catch (e) { /* nada */ } };
+
+$('motas').innerHTML = Array.from({ length: 14 }, () => `<i style="left:${(rnd() * 100).toFixed(1)}%;--t:${(4 + rnd() * 9).toFixed(0)}px;--d:${(9 + rnd() * 10).toFixed(1)}s;--r:-${(rnd() * 18).toFixed(1)}s;--x:${(rnd() * 80 - 40).toFixed(0)}px"></i>`).join('');
+ajustar();
+mostrar('p-menu');
+guardar();
+requestAnimationFrame(cuadro);
+window.__bloques = { L, get tab() { return tab; }, get bandeja() { return bandeja; }, colocar, nuevaPartida, finPartida, get S() { return S; }, cabe };
+</script>
+</body>
+</html>
