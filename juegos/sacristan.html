@@ -139,6 +139,8 @@
   .ayuda:disabled { opacity: .35; }
   .angel { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: radial-gradient(circle, #fff, #9ad0ff 60%, rgba(154,208,255,0)); animation: late 1s ease-in-out infinite alternate; font-size: 16px; }
   .momento { padding: 2px 4px; }
+  .postura { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(255,255,255,.12); color: #fff3c4; font-size: 10.5px; letter-spacing: .06em; }
+  .postura:empty { display: none; }
   .momento h2 { font-size: 25px; margin: 3px 0; }
   .momento .que { font-size: 14.5px; padding: 8px 12px; }
   .momento .pide { margin-top: 0; }
@@ -347,7 +349,10 @@ const PREGUNTAS = [
   ['¿Qué hacemos al pasar frente al Sagrario?', ['Una genuflexión', 'Aplaudir', 'Nada'], 0],
   ['La Misa es memorial de…', ['La muerte y resurrección de Jesús', 'El nacimiento de María', 'La creación del mundo'], 2],
   ['¿Qué significa «misa»?', ['Viene de «missio»: envío', 'Fiesta', 'Comida'], 3],
-  ['¿Qué parte de la Misa es la más importante?', ['La consagración', 'La colecta', 'Los avisos'], 0]
+  ['¿Qué parte de la Misa es la más importante?', ['La consagración', 'La colecta', 'Los avisos'], 0],
+  ['¿Cómo escuchamos el Evangelio?', ['De pie', 'Sentados', 'De rodillas'], 1],
+  ['¿Cómo está la asamblea durante la consagración?', ['De rodillas, adorando', 'Sentada', 'Caminando'], 1],
+  ['¿Cómo escuchamos la homilía y las primeras lecturas?', ['Sentados', 'De rodillas', 'Caminando'], 1]
 ];
 // Rangos del servidor del altar
 const RANGOS = [{ n: 'Monaguillo', p: 0 }, { n: 'Acólito', p: 2500 }, { n: 'Turiferario', p: 7000 }, { n: 'Sacristán', p: 15000 }, { n: 'Maestro de ceremonias', p: 30000 }];
@@ -444,6 +449,7 @@ $('btn-misal').onclick = () => {
 
 /* ---------- Fase 1: preparar el altar ---------- */
 function empezar(i, hoy) {
+  quitar3D();
   nM = i; esHoy = !!hoy; M = MISAS[i];
   if (esHoy) M = Object.assign({}, MISAS[TL.base], { n: 'Misa de hoy', s: TL.n, color: TL.color, tm: Math.max(4.5, MISAS[TL.base].tm - 0.5) });
   puntos = 0; vidas = 3; racha = 0; aprendidos = new Set(); angel = false; $('angel').hidden = true; ayudas = 1 + Math.min(2, rangoDe(S.total || 0));
@@ -491,7 +497,16 @@ function faseAltar() {
   if (vidas <= 0) return;
   $('a-sub').textContent = 'Arrastra cada objeto a su lugar. ¡Lo que no va, déjalo en la bandeja!';
   $('a-reloj').parentElement.style.visibility = 'visible';
-  $('escena').innerHTML = `<svg class="fondo" viewBox="0 0 300 220" preserveAspectRatio="none">
+  quitar3D();
+  if (window.Presb3D) {
+    try {
+      $('escena').innerHTML = '<div class="zona" data-zona="altar"><span class="rot">Altar</span></div><div class="zona" data-zona="ambon"><span class="rot">Ambón</span></div><div class="zona" data-zona="credencia"><span class="rot">Credencia</span></div>';
+      P3 = window.Presb3D.crear($('escena'), { vacio: true, cirio: !!M.pascua, color: COLORES[M.color][0], solemne: !!M.solemne, sotana: SOTANAS[rangoDe(S.total || 0)] });
+      const zonas = () => { if (!P3 || $('v-altar').hidden) return; const z = P3.zonasPantalla(); for (const el of document.querySelectorAll('#escena .zona')) { const r = z[el.dataset.zona]; el.style.left = r.x + 'px'; el.style.top = r.y + 'px'; el.style.width = r.w + 'px'; el.style.height = r.h + 'px'; } requestAnimationFrame(zonas); };
+      requestAnimationFrame(zonas);
+    } catch (e) { P3 = null; }
+  }
+  if (!P3) $('escena').innerHTML = `<svg class="fondo" viewBox="0 0 300 220" preserveAspectRatio="none">
     <defs><linearGradient id="mad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5030"/><stop offset="1" stop-color="#4a2410"/></linearGradient><radialGradient id="luz2" cx=".5" cy=".1" r=".8"><stop offset="0" stop-color="#fff0c0" stop-opacity=".5"/><stop offset="1" stop-color="#fff0c0" stop-opacity="0"/></radialGradient></defs>
     <rect width="300" height="220" fill="url(#luz2)"/>
     <path d="M0 150h300v70H0z" fill="#5a3a24"/><path d="M0 150h300" stroke="#c9a040" stroke-width="2"/>
@@ -503,6 +518,7 @@ function faseAltar() {
   <div class="zona" data-zona="altar" style="left:23%;top:30%;width:54%;height:42%"><span class="rot">Altar</span></div>
   <div class="zona" data-zona="ambon" style="left:1%;top:24%;width:23%;height:50%"><span class="rot">Ambón</span></div>
   <div class="zona" data-zona="credencia" style="left:77%;top:32%;width:22%;height:44%"><span class="rot">Credencia</span></div>`;
+  if (P3) $('escena').querySelectorAll('.zona').forEach((z) => { z.style.zIndex = 2; });
   const items = barajar(M.obj.concat(barajar(DISTRACTORES).slice(0, M.dis)));
   faltan = M.obj.length;
   $('bandeja').innerHTML = items.map((k, i) => `<div class="obj" data-obj="${k}" style="--d:${i * 40}ms">${svg(k)}<span>${NOMBRE[k]}</span></div>`).join('');
@@ -542,7 +558,7 @@ const soltar = (e) => {
   const lugar = z.dataset.zona;
   if (LUGAR[d.k] === lugar) {
     racha++; SND.poner(); sumar(20 + racha * 5, z);
-    z.insertAdjacentHTML('beforeend', `<span class="puesto" title="${NOMBRE[d.k]}">${svg(d.k)}</span>`);
+    if (P3) P3.poner(d.k); else z.insertAdjacentHTML('beforeend', `<span class="puesto" title="${NOMBRE[d.k]}">${svg(d.k)}</span>`);
     d.o.remove(); aprender(d.k); faltan--;
     if (faltan <= 0) { clearInterval(timer); const bono = Math.round(tAltar - (performance.now() / 1000) % 1); SND.bien(6); aviso('¡Altar listo!'); sumar(80, $('escena')); setTimeout(faseMisa, 1200); }
   } else {
@@ -562,13 +578,14 @@ let momentos = [], iMom = 0, tIni = 0, tLim = 0, respondido = false, imprevistos
 const ACCIONES = ['rezar', 'cantar', 'silencio', 'paz', 'campanilla', 'vinajeras', 'jarra', 'copon', 'misal', 'purificador', 'incensario', 'cruzalta', 'mision', 'baculo'];
 // Dibuja el presbiterio: retablo, Sagrario, altar con velas, ambón, el sacerdote y el acólito
 let P3 = null;
+const SOTANAS = ['#c0262f', '#c0262f', '#1a1a2a', '#6a2aa0', '#1a1a2a'];
 function quitar3D() { if (P3) { try { P3.destruir(); } catch (e) { /* nada */ } P3 = null; } }
 function escenaMisa() {
   quitar3D();
   if (window.Presb3D) {
     try {
       $('presb').innerHTML = ''; $('presb').className = 'presb';
-      P3 = window.Presb3D.crear($('presb'), { color: COLORES[M.color][0], solemne: !!M.solemne, sotana: ['#c0262f', '#c0262f', '#1a1a2a', '#6a2aa0', '#1a1a2a'][rangoDe(S.total || 0)] });
+      P3 = window.Presb3D.crear($('presb'), { color: COLORES[M.color][0], solemne: !!M.solemne, sotana: SOTANAS[rangoDe(S.total || 0)], cirio: !!M.pascua });
       return;
     } catch (e) { P3 = null; }
   }
@@ -613,7 +630,7 @@ function escenaMisa() {
 }
 // Postura del sacerdote según el momento de la Misa
 function poseCura(m) {
-  if (P3) { P3.pose(m.n, m.consagra); return; }
+  if (P3) { const ps = P3.pose(m.n, m.consagra); const c = $('postura'); if (c && ps) c.textContent = 'Asamblea: ' + ps.toLowerCase(); return; }
   const bi = document.getElementById('bi'), bd = document.getElementById('bd'), cura = document.getElementById('cura'), ho = document.getElementById('hostia'), pr = $('presb');
   if (!bi) return;
   let i = 0, d = 0, x = 0, h = false;
@@ -669,7 +686,8 @@ $('presb').addEventListener('pointerdown', (e) => {
 function faseMisa() {
   if (vidas <= 0) return;
   vista('misa');
-  escenaMisa();
+  if (P3) { $('presb').innerHTML = ''; $('presb').className = 'presb'; P3.mover($('presb')); P3.todoListo(); P3.verPlano('general'); }
+  else escenaMisa();
   momentos = momentosDe(M); iMom = 0;
   // Preguntas extra al azar (más en las Misas difíciles)
   const extra = barajar(PREGUNTAS).slice(0, 1 + Math.min(3, Math.floor(nM / 2)));
@@ -686,7 +704,7 @@ function siguienteMomento() {
   // Progreso por secciones
   for (let s = 0; s < 4; s++) { const tot = momentos.filter((x) => x.sec === s).length, hechos = momentos.slice(0, iMom).filter((x) => x.sec === s).length; $('sec' + s).style.transform = 'scaleX(' + (hechos / tot).toFixed(2) + ')'; }
   tLim = (m.pregunta ? M.tm + 3 : M.tm);
-  $('momento').innerHTML = `<div class="seccion">${SECCIONES[m.sec]}</div><h2>${esc(m.n)}</h2><div class="que">${esc(m.que)}</div><div class="barra-mom"><svg class="anillo" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="6"/><circle id="anillo" cx="32" cy="32" r="27" fill="none" stroke="#ffd25a" stroke-width="6" stroke-linecap="round" stroke-dasharray="169.6" transform="rotate(-90 32 32)"/></svg><div class="pide">${m.pregunta ? 'Elige la respuesta' : '¿Qué haces ahora?'}</div><button type="button" class="ayuda" id="b-ayuda" ${ayudas > 0 ? '' : 'disabled'}>Ayuda del padre (${ayudas})</button></div>`;
+  $('momento').innerHTML = `<div class="seccion">${SECCIONES[m.sec]} <span class="postura" id="postura"></span></div><h2>${esc(m.n)}</h2><div class="que">${esc(m.que)}</div><div class="barra-mom"><svg class="anillo" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="6"/><circle id="anillo" cx="32" cy="32" r="27" fill="none" stroke="#ffd25a" stroke-width="6" stroke-linecap="round" stroke-dasharray="169.6" transform="rotate(-90 32 32)"/></svg><div class="pide">${m.pregunta ? 'Elige la respuesta' : '¿Qué haces ahora?'}</div><button type="button" class="ayuda" id="b-ayuda" ${ayudas > 0 ? '' : 'disabled'}>Ayuda del padre (${ayudas})</button></div>`;
   poseCura(m); acolitoLleva(null);
   if (imprevistos.has(iMom)) setTimeout(imprevistoVela, 700);
   if (m.pregunta) {

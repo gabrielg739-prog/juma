@@ -1,7 +1,7 @@
 /* Service worker: funciona sin conexión + avisos en segundo plano.
    Es el ÚNICO service worker de la página: la app registra solo este archivo y los avisos (FCM)
    usan este mismo registro, así no llegan avisos repetidos. */
-const CACHE = 'juma-v90';
+const CACHE = 'juma-v91';
 /* Cachés con otro nombre que la app sigue usando (no se borran al actualizar) */
 const CACHES_QUE_SE_CONSERVAN = ['juma-cloud-videos-v1'];
 /* Lo esencial se guarda al instalar; las fotos, el audio y los mockups se guardan a medida que se usan. */
