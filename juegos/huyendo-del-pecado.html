@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2a1450">
+<title>Huyendo del pecado · JUMA</title>
+<style>
+  :root { --oro: #FFD25A; --oro2: #C98F12; --texto: #fff6e0; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: #2a1450; overflow: hidden; font-family: "Trebuchet MS", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--texto); user-select: none; -webkit-user-select: none; touch-action: none; }
+  #c { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  .hud { position: fixed; inset: 0; pointer-events: none; display: none; }
+  .hud.on { display: block; }
+  .marcador { position: absolute; left: 12px; top: calc(env(safe-area-inset-top,0px) + 12px); font-size: 15px; line-height: 1.5; font-weight: 800; text-shadow: 0 2px 6px #000, 0 0 2px #000; }
+  .marcador b { color: var(--oro); font-size: 22px; }
+  .monedas { position: absolute; right: 70px; top: calc(env(safe-area-inset-top,0px) + 14px); font-size: 18px; font-weight: 900; text-shadow: 0 2px 6px #000; display: flex; align-items: center; gap: 6px; }
+  .moneda-ico { width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff3b0, #e0a526 70%); border: 2px solid #fff3c4; box-shadow: 0 2px 6px rgba(0,0,0,.5); }
+  .poderes { position: absolute; left: 12px; top: 96px; display: flex; flex-direction: column; gap: 8px; }
+  .poder { min-width: 104px; padding: 6px 10px; border-radius: 999px; background: rgba(12,6,20,.7); border: 2px solid rgba(255,255,255,.35); font-size: 13px; font-weight: 800; display: flex; justify-content: space-between; gap: 6px; }
+  .poder i { display: block; position: absolute; left: 0; bottom: 0; height: 3px; background: var(--oro); border-radius: 3px; }
+  .poder { position: relative; overflow: hidden; }
+  .pausa-btn { position: absolute; right: 12px; top: calc(env(safe-area-inset-top,0px) + 12px); width: 46px; height: 46px; border-radius: 50%; background: rgba(12,6,20,.7); border: 2px solid rgba(255,255,255,.35); color: #fff; font-weight: 900; font-size: 18px; pointer-events: auto; }
+  .aviso { position: absolute; left: 50%; top: 34%; transform: translateX(-50%); font-size: 24px; font-weight: 900; text-align: center; color: var(--oro); text-shadow: 0 0 10px #000, 0 2px 4px #000; white-space: nowrap; animation: subir 1.2s ease-out forwards; }
+  @keyframes subir { 0% { opacity: 0; transform: translate(-50%, 10px) scale(.8); } 15% { opacity: 1; transform: translate(-50%, 0) scale(1.05); } 100% { opacity: 0; transform: translate(-50%, -50px); } }
+  .pantalla { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(20,8,36,.7); backdrop-filter: blur(3px); }
+  .pantalla[hidden] { display: none; }
+  .tarjeta { width: 100%; max-width: 420px; max-height: 92vh; overflow: auto; text-align: center; padding: 22px 20px 20px; border-radius: 26px; background: linear-gradient(180deg, rgba(60,28,80,.96), rgba(24,10,40,.97)); border: 2px solid rgba(255,210,90,.55); box-shadow: 0 20px 50px rgba(0,0,0,.6); }
+  .tarjeta h1 { margin: 6px 0 4px; font-size: 30px; color: var(--oro); text-shadow: 0 3px 0 #000; }
+  .tarjeta h2 { margin: 6px 0; font-size: 22px; color: var(--oro); }
+  .tarjeta p { margin: 8px 0; line-height: 1.45; font-size: 15px; }
+  .pequeno { font-size: 13px; opacity: .85; }
+  .lista { text-align: left; font-size: 14.5px; line-height: 1.5; margin: 10px 0; }
+  .lista b { color: var(--oro); }
+  .boton { display: block; width: 100%; height: 56px; margin-top: 12px; border-radius: 999px; border: 0; font: inherit; font-weight: 900; font-size: 19px; color: #fff; background: linear-gradient(180deg, #6fd14d, #2e8a1f); box-shadow: 0 5px 0 #17521a; cursor: pointer; }
+  .boton.sec { background: rgba(255,255,255,.12); box-shadow: 0 5px 0 rgba(0,0,0,.4); border: 2px solid rgba(255,255,255,.3); }
+  .boton:active { transform: translateY(3px); }
+  @media (prefers-reduced-motion: reduce) { .aviso { animation: none; opacity: 1; } }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="hud" id="hud">
+  <div class="marcador">
+    <div>Distancia <b id="h-dist">0</b> m</div>
+    <div>Puntos <b id="h-pts">0</b></div>
+  </div>
+  <div class="monedas"><span class="moneda-ico"></span><span id="h-monedas">0</span></div>
+  <button class="pausa-btn" id="b-pausa" type="button" aria-label="Pausa">II</button>
+  <div class="poderes" id="poderes"></div>
+</div>
+
+<div class="pantalla" id="menu">
+  <div class="tarjeta">
+    <h1>Huyendo del pecado</h1>
+    <p class="pequeno">Un misionero corre sin parar por el camino. Esquiva las sombras del pecado, recoge las monedas de gracia y llega lo más lejos posible.</p>
+    <div class="lista">
+      <p>• <b>Cambiar de carril:</b> izquierda y derecha, o desliza en la pantalla.</p>
+      <p>• <b>Saltar:</b> arriba o Espacio, o desliza hacia arriba.</p>
+      <p>• <b>Agacharse:</b> abajo, o desliza hacia abajo, para pasar bajo los arcos.</p>
+      <p>• <b>Poderes:</b> el <b>Escudo de la fe</b> protege de un golpe, el <b>Imán</b> atrae las monedas y el <b>Agua bendita</b> da velocidad.</p>
+    </div>
+    <button class="boton" id="b-correr" type="button">CORRER</button>
+    <p class="pequeno" id="m-mejor" style="margin-top:12px"></p>
+  </div>
+</div>
+
+<div class="pantalla" id="pausa" hidden>
+  <div class="tarjeta">
+    <h2>Pausa</h2>
+    <button class="boton" id="b-seguir" type="button">SEGUIR</button>
+    <button class="boton sec" id="b-salir" type="button">Volver al menú</button>
+  </div>
+</div>
+
+<div class="pantalla" id="fin" hidden>
+  <div class="tarjeta" id="fin-tarjeta"></div>
+</div>
+
+<script>
+const CLAVE = 'juma-huyendo-v1';
+const ZMAX = 60;
+const CARRILES = [-1, 0, 1];
+const VERSOS = [
+  'Corred de modo que lo alcancéis.|1 Corintios 9, 24',
+  'Mas en todas estas cosas somos más que vencedores.|Romanos 8, 37',
+  'Huye de las pasiones juveniles.|2 Timoteo 2, 22',
+  'Huid de la idolatría.|1 Corintios 10, 14',
+  'Corramos con perseverancia la carrera que tenemos por delante.|Hebreos 12, 1'
+];
+
+// ---------- Guardado ----------
+let S = { puntos: 0, mejorDist: 0, mejorPts: 0 };
+try { const d = JSON.parse(localStorage.getItem(CLAVE) || 'null'); if (d) S = Object.assign(S, d); } catch (e) {}
+function guardar() {
+  try { localStorage.setItem(CLAVE, JSON.stringify(S)); } catch (e) {}
+  try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', juego: 'huir', total: S.puntos }, location.origin); } catch (e) {}
+}
+
+// ---------- Sonido ----------
+let AC = null, sonidoOn = true;
+function ac() {
+  if (!sonidoOn) return null;
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  if (AC.state === 'suspended') AC.resume();
+  return AC;
+}
+function tono(f, dur, tipo, vol, retardo, hasta) {
+  const a = ac(); if (!a) return;
+  const t0 = a.currentTime + (retardo || 0);
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = tipo || 'triangle'; o.frequency.setValueAtTime(f, t0);
+  if (hasta) o.frequency.exponentialRampToValueAtTime(hasta, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol || 0.12, t0 + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + dur + 0.03);
+}
+const SND = {
+  moneda() { tono(1320, 0.12, 'triangle', 0.1); tono(1760, 0.14, 'triangle', 0.08, 0.05); },
+  salto() { tono(300, 0.2, 'sine', 0.08, 0, 620); },
+  carril() { tono(420, 0.08, 'triangle', 0.05, 0, 520); },
+  poder() { [660, 880, 1320].forEach((f, i) => tono(f, 0.22, 'sine', 0.1, i * 0.07)); },
+  choque() { tono(160, 0.35, 'sawtooth', 0.12, 0, 60); },
+  fin() { [392, 330, 262, 196].forEach((f, i) => tono(f, 0.4, 'triangle', 0.12, i * 0.16)); }
+};
+
+// ---------- Canvas ----------
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+let W = 0, H = 0;
+function ajustar() {
+  const f = Math.min(devicePixelRatio || 1, 1.5);
+  W = cv.width = Math.round(innerWidth * f);
+  H = cv.height = Math.round(innerHeight * f);
+}
+addEventListener('resize', ajustar);
+ajustar();
+
+// ---------- Proyección pseudo 3D ----------
+function proy(carril, z, altura) {
+  const s = 1 / (1 + z * 0.085);
+  const hor = H * 0.40, base = H * 0.96;
+  return { x: W / 2 + carril * W * 0.27 * s, y: hor + (base - hor) * s - (altura || 0) * H * 0.55 * s, s };
+}
+
+// ---------- Estado ----------
+let estado = 'menu';
+let t = 0, distancia = 0, monedasN = 0, puntosRun = 0;
+let carril = 1, carrilX = 1, salto = { y: 0, v: 0, en: false }, agachado = 0;
+let velocidad = 14, objetos = [], fondoOff = 0;
+let escudo = 0, iman = 0, agua = 0, hurtT = 0, avisoT = 0;
+let siguienteSpawn = 0, rachaLimpia = 0;
+let arrastre = null;
+const teclas = {};
+
+// ---------- Generación de la pista ----------
+function spawnPatron(zb) {
+  const z0 = zb === undefined ? ZMAX - 4 : zb;
+  const dif = Math.min(1, distancia / 900);
+  const r = Math.random();
+  const libre = Math.floor(Math.random() * 3);
+  if (r < 0.25) {
+    // Fila de monedas en un carril
+    const c = CARRILES[Math.floor(Math.random() * 3)];
+    for (let k = 0; k < 6; k++) objetos.push({ tipo: 'moneda', carril: c, z: z0 - k * 1.1, done: false });
+    return;
+  }
+  if (r < 0.31) {
+    // Poderes ocasionales
+    const tipoP = ['escudo', 'iman', 'agua'][Math.floor(Math.random() * 3)];
+    objetos.push({ tipo: tipoP, carril: CARRILES[libre], z: z0, done: false });
+    return;
+  }
+  // Obstáculos: siempre queda al menos un carril libre
+  const otros = CARRILES.filter((c) => c !== libre);
+  const bloqueados = dif > 0.5 && Math.random() < 0.5 ? otros : [otros[Math.floor(Math.random() * 2)]];
+  const elegido = Math.random() < 0.4 ? 'barrera' : (Math.random() < 0.5 ? 'arco' : 'bloque');
+  bloqueados.forEach((c) => objetos.push({ tipo: elegido, carril: c, z: z0, done: false }));
+  // Monedas en el carril libre, tras el obstáculo
+  for (let k = 0; k < 4; k++) objetos.push({ tipo: 'moneda', carril: CARRILES[libre], z: z0 - 10 - k * 1.1, done: false });
+}
+
+function reiniciarEstado() {
+  t = 0; distancia = 0; monedasN = 0; puntosRun = 0;
+  carril = 1; carrilX = 1; salto = { y: 0, v: 0, en: false }; agachado = 0;
+  velocidad = 14; objetos = []; fondoOff = 0;
+  escudo = 0; iman = 0; agua = 0; hurtT = 0; avisoT = 0;
+  siguienteSpawn = 0; rachaLimpia = 0; arrastre = null;
+  // Primeros patrones repartidos a distintas distancias, para no solaparse
+  [42, 30, 18].forEach((z) => spawnPatron(z));
+}
+
+// ---------- Acciones del jugador ----------
+function cambiarCarril(d) {
+  if (estado !== 'jugando') return;
+  const n = Math.max(0, Math.min(2, carril + d));
+  if (n !== carril) { carril = n; SND.carril(); }
+}
+function saltar() {
+  if (estado !== 'jugando' || salto.en || agachado > 0) return;
+  salto.en = true; salto.v = 9.2; SND.salto();
+}
+function agacharse() {
+  if (estado !== 'jugando' || salto.en) return;
+  agachado = 0.7;
+}
+
+// ---------- Actualización ----------
+function aviso(txt) {
+  const d = document.createElement('div');
+  d.className = 'aviso'; d.textContent = txt;
+  document.getElementById('hud').appendChild(d);
+  setTimeout(() => d.remove(), 1200);
+}
+function actualizar(dt) {
+  t += dt;
+  velocidad = Math.min(26, 14 + t * 0.22) * (agua > 0 ? 1.6 : 1);
+  const avance = velocidad * dt;
+  distancia += avance * 0.5;
+  fondoOff += avance;
+  carrilX += (carril - carrilX) * Math.min(1, dt * 14);
+  if (Math.abs(carril - carrilX) < 0.01) carrilX = carril;
+  // Salto
+  if (salto.en) {
+    salto.v -= 26 * dt;
+    salto.y += salto.v * dt;
+    if (salto.y <= 0) { salto.y = 0; salto.v = 0; salto.en = false; }
+  }
+  agachado = Math.max(0, agachado - dt);
+  escudo = Math.max(0, escudo - dt); iman = Math.max(0, iman - dt); agua = Math.max(0, agua - dt);
+  hurtT = Math.max(0, hurtT - dt);
+  // Generación
+  siguienteSpawn -= avance;
+  while (siguienteSpawn <= 0) {
+    spawnPatron();
+    siguienteSpawn += 9 + Math.random() * 5 - Math.min(3, distancia / 500);
+  }
+  // Objetos
+  for (let i = objetos.length - 1; i >= 0; i--) {
+    const o = objetos[i];
+    o.z -= avance;
+    if (iman > 0 && o.tipo === 'moneda' && !o.done && o.z < 10 && Math.abs(o.carril - carrilX) < 1.2) {
+      o.carril += (carrilX - o.carril) * Math.min(1, dt * 8);
+      o.z -= dt * 6;
+    }
+    if (o.z < -2) { objetos.splice(i, 1); continue; }
+    if (o.done || o.z > 0.9 || o.z < -0.5) continue;
+    if (Math.abs(o.carril - carril) > 0.5) continue;
+    // Choque o recogida
+    if (o.tipo === 'moneda') { o.done = true; monedasN++; puntosRun += 2; SND.moneda(); continue; }
+    if (o.tipo === 'escudo') { o.done = true; escudo = 8; SND.poder(); aviso('Escudo de la fe'); continue; }
+    if (o.tipo === 'iman') { o.done = true; iman = 7; SND.poder(); aviso('Imán de gracia'); continue; }
+    if (o.tipo === 'agua') { o.done = true; agua = 5; SND.poder(); aviso('¡Agua bendita!'); continue; }
+    const esquivado = (o.tipo === 'barrera' && salto.en && salto.y > 0.45) || (o.tipo === 'arco' && agachado > 0);
+    if (esquivado) continue;
+    if (agua > 0) { o.done = true; puntosRun += 5; continue; }
+    if (escudo > 0) { escudo = 0; o.done = true; hurtT = 0.3; aviso('¡La fe te protegió!'); SND.choque(); continue; }
+    return chocar();
+  }
+  puntosRun = Math.max(puntosRun, 0);
+  actualizarHud();
+}
+function chocar() {
+  estado = 'pausa'; SND.choque();
+  const pts = Math.floor(distancia) + monedasN * 2;
+  const bono = Math.floor(pts / 20);
+  S.puntos += bono;
+  S.mejorDist = Math.max(S.mejorDist, Math.floor(distancia));
+  S.mejorPts = Math.max(S.mejorPts, pts);
+  guardar();
+  const v = VERSOS[Math.floor(Math.random() * VERSOS.length)].split('|');
+  document.getElementById('hud').classList.remove('on');
+  document.getElementById('fin-tarjeta').innerHTML =
+    '<h1>Te alcanzó el pecado</h1>' +
+    '<p>Distancia: <b>' + Math.floor(distancia) + ' m</b> · Monedas: <b>' + monedasN + '</b></p>' +
+    '<p>Puntuación: <b>' + pts + '</b></p>' +
+    '<p>+' + bono + ' ★ puntos misioneros</p>' +
+    '<div class="lista" style="text-align:center"><p>“' + v[0] + '”<br><span class="pequeno">' + v[1] + '</span></p></div>' +
+    '<button class="boton" type="button" id="b-otra">CORRER DE NUEVO</button>' +
+    '<button class="boton sec" type="button" id="b-menu2">Volver al menú</button>';
+  document.getElementById('fin').hidden = false;
+  document.getElementById('b-otra').onclick = () => { document.getElementById('fin').hidden = true; empezar(); };
+  document.getElementById('b-menu2').onclick = volverMenu;
+  return;
+}
+function actualizarHud() {
+  document.getElementById('h-dist').textContent = Math.floor(distancia);
+  document.getElementById('h-pts').textContent = Math.floor(distancia) + monedasN * 2;
+  document.getElementById('h-monedas').textContent = monedasN;
+  const p = document.getElementById('poderes');
+  const lista = [['Escudo de la fe', escudo, 8], ['Imán de gracia', iman, 7], ['Agua bendita', agua, 5]].filter((x) => x[1] > 0);
+  p.innerHTML = lista.map((x) => '<div class="poder"><span>' + x[0] + '</span><span>' + Math.ceil(x[1]) + 's</span><i style="width:' + (x[1] / x[2] * 100) + '%"></i></div>').join('');
+}
+
+// ---------- Dibujo ----------
+function dibujarFondo() {
+  const g = ctx.createLinearGradient(0, 0, 0, H * 0.45);
+  g.addColorStop(0, '#2a1450'); g.addColorStop(0.55, '#8a3a6e'); g.addColorStop(1, '#ffb36b');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H * 0.45);
+  const hor = H * 0.40;
+  const sol = ctx.createRadialGradient(W / 2, hor, 4, W / 2, hor, H * 0.25);
+  sol.addColorStop(0, 'rgba(255,240,190,1)'); sol.addColorStop(0.4, 'rgba(255,190,100,.6)'); sol.addColorStop(1, 'rgba(255,190,100,0)');
+  ctx.fillStyle = sol; ctx.fillRect(0, 0, W, hor + 10);
+  // Montañas con paralaje
+  const par = -carrilX * W * 0.03;
+  ctx.fillStyle = '#5a2d5e';
+  ctx.beginPath(); ctx.moveTo(-50, hor);
+  for (let x = -50; x <= W + 50; x += 60) ctx.lineTo(x + par, hor - 30 - Math.sin(x * 0.013) * 22 - Math.sin(x * 0.031) * 10);
+  ctx.lineTo(W + 50, hor); ctx.fill();
+  ctx.fillStyle = '#3e1d4a';
+  ctx.beginPath(); ctx.moveTo(-50, hor);
+  for (let x = -50; x <= W + 50; x += 40) ctx.lineTo(x + par * 1.8, hor - 12 - Math.sin(x * 0.02 + 1) * 10);
+  ctx.lineTo(W + 50, hor); ctx.fill();
+  // Iglesia silueteada
+  const ix = W * 0.22 + par * 2.4;
+  ctx.fillStyle = '#2a1238';
+  ctx.fillRect(ix, hor - 56, 46, 56);
+  ctx.beginPath(); ctx.moveTo(ix - 4, hor - 56); ctx.lineTo(ix + 23, hor - 96); ctx.lineTo(ix + 50, hor - 56); ctx.fill();
+  ctx.fillRect(ix + 20, hor - 116, 6, 22); ctx.fillRect(ix + 16, hor - 110, 14, 4);
+  // Terreno
+  ctx.fillStyle = '#4a2a3e'; ctx.fillRect(0, hor, W, H - hor);
+}
+function dibujarCamino() {
+  const hor = H * 0.40;
+  const fase = (fondoOff * 0.5) % 8;
+  for (let z = 0; z < ZMAX; z += 2) {
+    const z1 = z, z2 = z + 2;
+    const a = proy(-1.6, z1), b = proy(1.6, z1), c = proy(-1.6, z2), d = proy(1.6, z2);
+    const par = Math.floor((z + fase) / 2) % 2;
+    ctx.fillStyle = par ? '#c48a5a' : '#b57a4c';
+    ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.lineTo(b.x, b.y); ctx.lineTo(a.x, a.y); ctx.closePath(); ctx.fill();
+  }
+  // Líneas de carril
+  ctx.strokeStyle = 'rgba(255,240,200,.55)';
+  for (const lx of [-0.5, 0.5]) {
+    ctx.beginPath();
+    for (let z = 0; z <= ZMAX; z += 2) { const p = proy(lx, z); if (z === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); }
+    ctx.lineWidth = 2; ctx.stroke();
+  }
+  // Niebla hacia el horizonte
+  const f = ctx.createLinearGradient(0, hor, 0, hor + H * 0.25);
+  f.addColorStop(0, 'rgba(255,170,110,.75)'); f.addColorStop(1, 'rgba(255,170,110,0)');
+  ctx.fillStyle = f; ctx.fillRect(0, hor, W, H * 0.25);
+}
+function dibujarMisionero(x, y, s, correr, agachadoV) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+  const ph = correr;
+  const aguado = agachadoV > 0 ? 0.6 : 1;
+  ctx.scale(1, aguado);
+  // Piernas
+  ctx.fillStyle = '#1a1020';
+  ctx.beginPath(); ctx.moveTo(-14, -60); ctx.lineTo(-22 + Math.sin(ph) * 16, 0); ctx.lineTo(-8 + Math.sin(ph) * 16, 0); ctx.lineTo(-4, -60); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(14, -60); ctx.lineTo(22 - Math.sin(ph) * 16, 0); ctx.lineTo(8 - Math.sin(ph) * 16, 0); ctx.lineTo(4, -60); ctx.fill();
+  // Sotana
+  ctx.fillStyle = '#1d1426';
+  ctx.beginPath(); ctx.moveTo(-26, -58); ctx.lineTo(-34, -150); ctx.lineTo(34, -150); ctx.lineTo(26, -58); ctx.closePath(); ctx.fill();
+  // Brazos
+  ctx.strokeStyle = '#1d1426'; ctx.lineWidth = 11; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-28, -140); ctx.lineTo(-42 + Math.sin(ph + Math.PI) * 18, -100 + Math.cos(ph) * 6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(28, -140); ctx.lineTo(42 + Math.sin(ph) * 18, -100 - Math.cos(ph) * 6); ctx.stroke();
+  // Mochila
+  ctx.fillStyle = '#7a4a22'; ctx.fillRect(-30, -150, 60, 42);
+  ctx.fillStyle = '#5a3416'; ctx.fillRect(-30, -150, 60, 8);
+  // Alzacuello blanco y cruz
+  ctx.fillStyle = '#fff'; ctx.fillRect(-10, -152, 20, 10);
+  ctx.fillStyle = '#ffd25a'; ctx.fillRect(-2, -146, 4, 12); ctx.fillRect(-6, -142, 12, 4);
+  // Cabeza y sombrero misionero
+  ctx.fillStyle = '#e0a77a'; ctx.beginPath(); ctx.arc(0, -172, 20, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#2a1a10'; ctx.beginPath(); ctx.arc(0, -180, 21, Math.PI, 0); ctx.fill();
+  ctx.fillStyle = '#1d1426';
+  ctx.beginPath(); ctx.ellipse(0, -186, 40, 8, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-18, -186); ctx.lineTo(-16, -206); ctx.lineTo(16, -206); ctx.lineTo(18, -186); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#7a4a22'; ctx.fillRect(-18, -192, 36, 4);
+  // Ojos sonrientes
+  ctx.fillStyle = '#1a1020';
+  ctx.beginPath(); ctx.arc(-7, -172, 2.4, 0, Math.PI * 2); ctx.arc(7, -172, 2.4, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#1a1020'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, -166, 6, 0.2, Math.PI - 0.2); ctx.stroke();
+  ctx.restore();
+}
+function dibujarObjeto(o) {
+  const p = proy(o.carril, o.z, 0);
+  const s = p.s;
+  const tam = H * 0.22 * s;
+  if (o.tipo === 'moneda') {
+    const yy = proy(o.carril, o.z, 0.8).y;
+    const spin = Math.abs(Math.cos(t * 6 + o.z));
+    ctx.save(); ctx.translate(p.x, yy);
+    ctx.scale(Math.max(0.1, spin), 1);
+    const r = Math.max(4, H * 0.035 * s);
+    const g = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 1, 0, 0, r);
+    g.addColorStop(0, '#fff7c4'); g.addColorStop(0.6, '#f0b429'); g.addColorStop(1, '#b07d12');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#fff3c4'; ctx.lineWidth = Math.max(1, r * 0.15); ctx.stroke();
+    ctx.fillStyle = '#8a5a00'; ctx.fillRect(-r * 0.1, -r * 0.55, r * 0.2, r * 1.1); ctx.fillRect(-r * 0.4, -r * 0.1, r * 0.8, r * 0.2);
+    ctx.restore();
+    return;
+  }
+  if (o.tipo === 'escudo' || o.tipo === 'iman' || o.tipo === 'agua') {
+    const yy = proy(o.carril, o.z, 0.7).y;
+    const r = Math.max(8, H * 0.05 * s);
+    const col = o.tipo === 'escudo' ? '#8fd6ff' : (o.tipo === 'iman' ? '#fff3b0' : '#7fd3ff');
+    const g = ctx.createRadialGradient(p.x, yy, 2, p.x, yy, r * 2);
+    g.addColorStop(0, col); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, yy, r * 2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fffdf5'; ctx.beginPath(); ctx.arc(p.x, yy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = col; ctx.lineWidth = Math.max(2, r * 0.2); ctx.stroke();
+    ctx.fillStyle = '#c98f12'; ctx.fillRect(p.x - r * 0.12, yy - r * 0.6, r * 0.24, r * 1.2); ctx.fillRect(p.x - r * 0.5, yy - r * 0.12, r, r * 0.24);
+    return;
+  }
+  if (o.tipo === 'barrera') {
+    const w = W * 0.2 * s, h = H * 0.12 * s;
+    ctx.fillStyle = '#6a3b1c'; ctx.fillRect(p.x - w / 2, p.y - h, w, h);
+    ctx.fillStyle = '#9a5e2e'; for (let k = 0; k < 4; k++) ctx.fillRect(p.x - w / 2 + k * w / 4 + 3, p.y - h + 4, w / 4 - 6, h - 8);
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(p.x, p.y, w / 2, w * 0.08, 0, 0, Math.PI * 2); ctx.fill();
+    return;
+  }
+  if (o.tipo === 'bloque') {
+    const w = W * 0.2 * s, h = H * 0.42 * s;
+    ctx.fillStyle = '#1f0f2c'; ctx.fillRect(p.x - w / 2, p.y - h, w, h);
+    ctx.fillStyle = '#3b1f52'; ctx.fillRect(p.x - w / 2 + 4, p.y - h + 4, w - 8, h * 0.2);
+    const g = ctx.createRadialGradient(p.x, p.y - h * 0.55, 2, p.x, p.y - h * 0.55, w * 0.5);
+    g.addColorStop(0, 'rgba(255,80,160,.55)'); g.addColorStop(1, 'rgba(255,80,160,0)');
+    ctx.fillStyle = g; ctx.fillRect(p.x - w, p.y - h, w * 2, h);
+    ctx.fillStyle = '#ff5fa8'; ctx.beginPath(); ctx.arc(p.x - w * 0.15, p.y - h * 0.6, Math.max(2, w * 0.05), 0, Math.PI * 2); ctx.arc(p.x + w * 0.15, p.y - h * 0.6, Math.max(2, w * 0.05), 0, Math.PI * 2); ctx.fill();
+    return;
+  }
+  if (o.tipo === 'arco') {
+    const w = W * 0.5 * s, bh = H * 0.1 * s;
+    const top = proy(o.carril, o.z, 1.1).y;
+    ctx.fillStyle = '#2a1238';
+    ctx.fillRect(p.x - w / 2, top, w, bh);
+    ctx.fillStyle = '#4a2a5e'; ctx.fillRect(p.x - w / 2, top, w, bh * 0.3);
+    ctx.fillRect(p.x - w / 2 - H * 0.01 * s, top, H * 0.02 * s, p.y - top);
+    ctx.fillRect(p.x + w / 2 - H * 0.01 * s, top, H * 0.02 * s, p.y - top);
+    return;
+  }
+}
+function dibujar() {
+  dibujarFondo();
+  dibujarCamino();
+  // Objetos del más lejano al más cercano
+  const ord = objetos.filter((o) => o.z > -0.5 && o.z < ZMAX && !o.done).sort((a, b) => b.z - a.z);
+  ord.forEach(dibujarObjeto);
+  // Personaje
+  const pJ = proy(carrilX, 1.2, salto.y);
+  const sc = pJ.s * H * 0.00165;
+  if (escudo > 0) {
+    const r = H * 0.14 * pJ.s * 1.4 + 20;
+    const g = ctx.createRadialGradient(pJ.x, pJ.y - H * 0.08 * pJ.s, r * 0.2, pJ.x, pJ.y - H * 0.08 * pJ.s, r);
+    g.addColorStop(0, 'rgba(143,214,255,0)'); g.addColorStop(0.8, 'rgba(143,214,255,.35)'); g.addColorStop(1, 'rgba(255,255,255,.7)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(pJ.x, pJ.y - H * 0.08 * pJ.s, r, 0, Math.PI * 2); ctx.fill();
+  }
+  if (hurtT > 0) ctx.globalAlpha = 0.5 + Math.sin(t * 40) * 0.4;
+  dibujarMisionero(pJ.x, pJ.y, sc, t * (velocidad * 0.35), agachado);
+  ctx.globalAlpha = 1;
+  if (agua > 0) {
+    ctx.fillStyle = 'rgba(127,211,255,.12)'; ctx.fillRect(0, 0, W, H);
+  }
+}
+
+// ---------- Bucle ----------
+let ultimo = 0;
+function bucle(now) {
+  requestAnimationFrame(bucle);
+  const dt = Math.min(0.033, (now - (ultimo || now)) / 1000); ultimo = now;
+  if (estado === 'jugando') actualizar(dt);
+  if (estado === 'jugando' || estado === 'menu' || estado === 'pausa') {
+    if (estado === 'menu') { t += dt; fondoOff += dt * 8; }
+    dibujar();
+  }
+}
+
+// ---------- Pantallas ----------
+function pintarMenu() {
+  document.getElementById('m-mejor').textContent = 'Mejor distancia: ' + S.mejorDist + ' m · ★ ' + S.puntos + ' puntos misioneros';
+}
+function empezar() {
+  reiniciarEstado();
+  estado = 'jugando';
+  document.getElementById('menu').hidden = true;
+  document.getElementById('pausa').hidden = true;
+  document.getElementById('fin').hidden = true;
+  document.getElementById('hud').classList.add('on');
+  actualizarHud();
+}
+function pausar() {
+  if (estado !== 'jugando') return;
+  estado = 'pausa'; document.getElementById('pausa').hidden = false;
+  for (const k in teclas) teclas[k] = false;
+}
+function seguir() {
+  if (estado !== 'pausa' || !document.getElementById('fin').hidden) return;
+  document.getElementById('pausa').hidden = true; estado = 'jugando';
+}
+function volverMenu() {
+  estado = 'menu';
+  document.getElementById('pausa').hidden = true; document.getElementById('fin').hidden = true;
+  document.getElementById('hud').classList.remove('on');
+  document.getElementById('menu').hidden = false;
+  pintarMenu();
+}
+
+// ---------- Controles ----------
+addEventListener('keydown', (e) => {
+  if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) e.preventDefault();
+  if (e.repeat) return;
+  if (e.code === 'ArrowLeft' || e.code === 'KeyA') cambiarCarril(-1);
+  else if (e.code === 'ArrowRight' || e.code === 'KeyD') cambiarCarril(1);
+  else if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') saltar();
+  else if (e.code === 'ArrowDown' || e.code === 'KeyS') agacharse();
+  else if (e.code === 'Escape' || e.code === 'KeyP') { if (estado === 'jugando') pausar(); else if (estado === 'pausa' && document.getElementById('fin').hidden) seguir(); }
+});
+addEventListener('blur', () => pausar());
+addEventListener('visibilitychange', () => { if (document.hidden) pausar(); });
+
+function gesto(dx, dy) {
+  if (Math.abs(dx) > Math.abs(dy)) cambiarCarril(dx > 0 ? 1 : -1);
+  else if (dy < 0) saltar();
+  else agacharse();
+}
+cv.addEventListener('pointerdown', (e) => { arrastre = { x: e.clientX, y: e.clientY, hecho: false }; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
+cv.addEventListener('pointermove', (e) => {
+  if (!arrastre || arrastre.hecho) return;
+  const dx = e.clientX - arrastre.x, dy = e.clientY - arrastre.y;
+  if (Math.hypot(dx, dy) > 34) { arrastre.hecho = true; gesto(dx, dy); }
+});
+cv.addEventListener('pointerup', () => { arrastre = null; });
+cv.addEventListener('pointercancel', () => { arrastre = null; });
+document.getElementById('b-pausa').onclick = pausar;
+document.getElementById('b-seguir').onclick = seguir;
+document.getElementById('b-salir').onclick = volverMenu;
+document.getElementById('b-correr').onclick = empezar;
+
+// Fondo animado en el menú
+reiniciarEstado();
+pintarMenu();
+requestAnimationFrame(bucle);
+</script>
+</body>
+</html>
