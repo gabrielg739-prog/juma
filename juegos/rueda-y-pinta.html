@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fff3d6">
+<title>Rueda y pinta · JUMA</title>
+<style>
+  :root {
+    --crema: #fff3d6; --crema-2: #fffaf0; --tinta: #2b1a3f; --muted: #7a6a8c;
+    --plum: #3a1f5a; --plum-2: #1f0f33; --oro: #ffd25a; --oro-2: #c98f12; --linea: #e4cf98;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: "Trebuchet MS", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--tinta); background-color: var(--crema); overflow-x: hidden;
+    background-image: radial-gradient(rgba(150, 105, 30, .13) 1.2px, transparent 1.4px);
+    background-size: 18px 18px;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
+  button:focus-visible { outline: 3px solid var(--oro-2); outline-offset: 2px; }
+  button:disabled { cursor: default; opacity: .45; }
+  svg { display: block; }
+  .app { position: relative; max-width: 480px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px calc(env(safe-area-inset-bottom, 0px) + 18px); display: flex; flex-direction: column; gap: 14px; }
+  .vista { display: flex; flex-direction: column; gap: 14px; }
+
+  /* Cabecera */
+  .top { display: flex; align-items: center; gap: 10px; }
+  .redondo { width: 46px; height: 46px; border-radius: 50%; background: #fff; border: 2px solid var(--linea); box-shadow: 0 3px 0 var(--linea); display: grid; place-items: center; flex: 0 0 auto; transition: transform .12s var(--ease), box-shadow .12s var(--ease); }
+  .redondo:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--linea); }
+  .titulo { flex: 1; min-width: 0; text-align: center; }
+  .titulo b { display: block; font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 24px; color: var(--plum); line-height: 1.1; }
+  .titulo small { display: block; margin-top: 3px; font-size: 13px; font-weight: 700; color: var(--muted); }
+  .pill { height: 40px; padding: 0 14px; border-radius: 999px; background: #fff; border: 2px solid var(--linea); display: inline-flex; align-items: center; gap: 4px; font-weight: 800; font-size: 15px; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--plum); }
+  .pill b { font-weight: 900; }
+
+  /* Mapa de niveles */
+  .intro { margin: 2px 0 0; font-size: 15px; line-height: 1.45; text-align: center; }
+  .mapa { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .nivel { aspect-ratio: 1; border-radius: 18px; background: #fff; border: 2px solid var(--linea); box-shadow: 0 4px 0 var(--linea); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 20px; color: var(--plum); transition: transform .12s var(--ease); }
+  .nivel b { font-weight: 900; }
+  .nivel.listo { background: #fff8d8; border-color: var(--oro-2); }
+  .nivel.bloq { opacity: .42; box-shadow: none; }
+  .nivel:not(:disabled):active { transform: translateY(2px); }
+  .progreso { margin: 0; text-align: center; font-weight: 700; font-size: 14px; color: var(--muted); }
+
+  /* Estrellas */
+  .estrellas { display: inline-flex; gap: 2px; }
+  .st svg { width: 14px; height: 14px; }
+  .st.on svg { fill: #ffc83a; stroke: #a86a00; stroke-width: 1.2; }
+  .st.off svg { fill: #efe2c0; }
+
+  /* Juego */
+  .hud { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .hud .pill { height: 36px; font-size: 14px; padding: 0 12px; }
+  .mesa { background: #fff; border: 2px solid var(--linea); border-radius: 26px; box-shadow: 0 6px 0 var(--linea), 0 14px 26px rgba(43, 26, 63, .12); padding: 16px; display: grid; place-items: center; touch-action: none; user-select: none; -webkit-user-select: none; }
+  #tablero { position: relative; }
+  .casilla, .muro { position: absolute; border-radius: var(--rr, 10px); }
+  .casilla { background: #fffdf5; box-shadow: inset 0 -4px 0 #eadbb0, 0 0 0 1px #efe3c4; transition: background-color .2s var(--ease), box-shadow .2s var(--ease); }
+  .casilla.pintada { background: var(--pc); box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .12), inset 0 3px 0 rgba(255, 255, 255, .45); }
+  .muro { background: linear-gradient(160deg, #6a4290, var(--plum) 58%, var(--plum-2)); box-shadow: inset 0 3px 0 rgba(255, 255, 255, .18), inset 0 -4px 0 rgba(0, 0, 0, .35); }
+  #bola { position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none; will-change: transform; }
+  .bola-in { width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 34% 30%, #fffbe6 0, #ffe27a 22%, var(--oro) 52%, var(--oro-2) 100%); box-shadow: 0 4px 0 rgba(122, 74, 8, .45), 0 8px 14px rgba(43, 26, 63, .25); }
+  .bola-in.nop { animation: nop .32s var(--ease); }
+  @keyframes nop { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  .acciones { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .btn-sec { height: 44px; padding: 0 14px; border-radius: 999px; background: #fff; border: 2px solid var(--linea); font-weight: 800; font-size: 14px; box-shadow: 0 3px 0 var(--linea); transition: transform .12s var(--ease); }
+  .btn-sec:active { transform: translateY(2px); }
+  .btn-pri { height: 48px; padding: 0 18px; border-radius: 999px; background: linear-gradient(180deg, #7b4cb0, var(--plum)); color: #fff; font-weight: 800; font-size: 15px; box-shadow: 0 5px 0 var(--plum-2); transition: transform .12s var(--ease), box-shadow .12s var(--ease); }
+  .btn-pri:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--plum-2); }
+  .dpad { display: grid; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(3, 52px); gap: 6px; justify-content: center; }
+  .dpad button { border-radius: 18px; background: #fff; border: 2px solid var(--linea); box-shadow: 0 4px 0 var(--linea); font-size: 22px; font-weight: 900; color: var(--plum); display: grid; place-items: center; transition: transform .12s var(--ease), box-shadow .12s var(--ease); }
+  .dpad button:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--linea); }
+  .dpad button.pista { background: #fff1bd; border-color: var(--oro-2); }
+  .d-U { grid-area: 1 / 2; } .d-L { grid-area: 2 / 1; } .d-R { grid-area: 2 / 3; } .d-D { grid-area: 3 / 2; }
+  .aviso { min-height: 42px; margin: 0; text-align: center; font-size: 15px; line-height: 1.4; font-weight: 700; color: var(--plum); }
+
+  /* Pantalla de nivel completado */
+  .fondo { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(43, 26, 63, .55); }
+  .tarjeta { width: 100%; max-width: 360px; background: var(--crema-2); border: 2px solid var(--linea); border-radius: 26px; padding: 22px 20px 20px; text-align: center; box-shadow: 0 18px 40px rgba(43, 26, 63, .35); }
+  .fin-est { display: flex; justify-content: center; }
+  .fin-est .estrellas { gap: 6px; }
+  .fin-est .st svg { width: 42px; height: 42px; }
+  .fin-est .st.on { animation: pop .5s var(--ease) both; animation-delay: calc(var(--i) * 140ms + 120ms); }
+  @keyframes pop { 0% { transform: scale(.4) rotate(-20deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+  .tarjeta h2 { margin: 8px 0 6px; font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 30px; color: var(--plum); }
+  .tarjeta p { margin: 6px 0; font-size: 15px; line-height: 1.4; }
+  .tarjeta .sub { color: var(--muted); font-size: 14px; }
+  .botones { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+
+  /* Movimiento reducido: sin sacudidas ni rebotes de estrellas */
+  @media (prefers-reduced-motion: reduce) {
+    .bola-in.nop, .fin-est .st.on { animation: none; }
+  }
+  /* Pantallas con cursor: resaltar al pasar el ratón */
+  @media (hover: hover) and (pointer: fine) {
+    .nivel:not(.listo):not(:disabled):hover, .btn-sec:not(:disabled):hover, .redondo:hover { background: #fffdf3; }
+    .dpad button:hover { background: #fffdf3; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <button class="redondo" id="btn-izq" type="button" aria-label="Cerrar juego"></button>
+    <div class="titulo"><b>Rueda y pinta</b><small id="sub-tit">Niveles</small></div>
+    <span class="pill" id="pts"></span>
+  </header>
+
+  <section id="vista-mapa" class="vista">
+    <p class="intro">Desliza la bola: rueda en línea recta hasta chocar con un muro. Cada casilla por la que pasa queda pintada. Pinta todo el camino para ganar.</p>
+    <div class="mapa" id="mapa"></div>
+    <p class="progreso" id="progreso"></p>
+  </section>
+
+  <section id="vista-juego" class="vista" hidden>
+    <div class="hud">
+      <span class="pill" id="nivel-num">Nivel 1</span>
+      <span class="pill">Movimientos <b id="movs">0</b></span>
+      <span class="pill">Meta <b id="meta">3</b></span>
+    </div>
+    <div class="mesa" id="mesa"><div id="tablero"></div></div>
+    <div class="acciones">
+      <button class="btn-sec" id="btn-deshacer" type="button">↶ Deshacer</button>
+      <button class="btn-sec" id="btn-reiniciar" type="button">↻ Reiniciar</button>
+      <button class="btn-sec" id="btn-pista" type="button">💡 <span id="pista-txt">Pista</span></button>
+    </div>
+    <div class="dpad">
+      <button class="d-U" type="button" data-dir="U" aria-label="Deslizar arriba">↑</button>
+      <button class="d-L" type="button" data-dir="L" aria-label="Deslizar a la izquierda">←</button>
+      <button class="d-R" type="button" data-dir="R" aria-label="Deslizar a la derecha">→</button>
+      <button class="d-D" type="button" data-dir="D" aria-label="Deslizar abajo">↓</button>
+    </div>
+    <p class="aviso" id="aviso" aria-live="polite"></p>
+  </section>
+</div>
+
+<div class="fondo" id="fin" hidden>
+  <div class="tarjeta" role="dialog" aria-modal="true" aria-labelledby="fin-t">
+    <div class="fin-est" id="fin-est"></div>
+    <h2 id="fin-t">¡BIEN HECHO!</h2>
+    <p id="fin-mov"></p>
+    <p class="sub" id="fin-txt"></p>
+    <div class="botones">
+      <button class="btn-sec" id="fin-mapa" type="button">Ver niveles</button>
+      <button class="btn-pri" id="fin-sig" type="button">Siguiente nivel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const CLAVE = 'juma-rueda-v1';
+/* Niveles verificados con un buscador exhaustivo: '#' y 'S' se pisan, 'X' es muro, '.' es hueco.
+   opt = número mínimo de movimientos. */
+const NIVELES = [{"g":["##X.","##..","##.X","SX.."],"opt":3},{"g":["#....","#X...","S#X..","###XX"],"opt":5},{"g":["##.S",".#.#",".###","..##"],"opt":6},{"g":["###X.","#.#.X","#S#..","###X."],"opt":5},{"g":["#S##","####","#X.#","####"],"opt":6},{"g":["X###.","#####","#S###","###.#"],"opt":9},{"g":["X####","X#S#.","###..","###X."],"opt":9},{"g":[".####","X#S#.","#####","X#.##","X####"],"opt":9},{"g":[".###S#","######","##.#X#","##.###"],"opt":9},{"g":["#####","##S#X","#X###","#####"],"opt":9},{"g":["#.#.#S","######","#X#.#.","###.##",".#####"],"opt":12},{"g":["###.","####","###S","####",".###"],"opt":9},{"g":["#.##","####","X###","##X.","##S#","XX.#",".X.#"],"opt":15},{"g":["S#####","###X##",".#####","..###."],"opt":9},{"g":["..X###","...###","X..X##","...###",".X#S#.","X#####"],"opt":12}];
+const COLORES = ['#ff9b8a', '#ffc35c', '#f3e25a', '#a5e27a', '#6fd3bf', '#7cc4ff', '#a79cff', '#e79ae0', '#ff9fc0', '#9ee3a0', '#ffb37a', '#8fd9ff', '#c9a6ff', '#ffd87a', '#7fe0d0'];
+const FRASES = ['Cada paso con Jesús deja huella.', 'Ir a todos: ese es el camino de la misión.', 'Dios camina contigo en cada paso.', 'Pequeños pasos, gran misión.', 'Quien sigue a Cristo nunca se pierde.'];
+const DIR = { U: [-1, 0], D: [1, 0], L: [0, -1], R: [0, 1] };
+const NOMBRE = { U: 'arriba', D: 'abajo', L: 'izquierda', R: 'derecha' };
+const TECLAS = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R' };
+const PASO = 85; /* milisegundos por casilla */
+const ESTRELLA = '<svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.3l-5.6 2.9 1.1-6.3-4.6-4.4 6.3-.9z"/></svg>';
+const ICONO_X = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const ICONO_ATRAS = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+
+/* ---------- Guardado (puntos = 5 por estrella; cada nivel guarda su mejor resultado) ---------- */
+let S = { nivelMax: 1, estrellas: {} };
+try {
+  const d = JSON.parse(localStorage.getItem(CLAVE) || 'null');
+  if (d && typeof d === 'object') {
+    S = {
+      nivelMax: Math.max(1, Math.min(NIVELES.length, Number(d.nivelMax) || 1)),
+      estrellas: d.estrellas && typeof d.estrellas === 'object' ? d.estrellas : {}
+    };
+  }
+} catch (e) { /* sin datos guardados */ }
+const puntos = () => Object.values(S.estrellas).reduce((a, b) => a + (Number(b) || 0), 0) * 5;
+function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(S)); } catch (e) { /* sin almacenamiento */ } }
+function avisarPuntos() {
+  try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', juego: 'rueda', total: puntos() }, location.origin); } catch (e) { /* nada */ }
+}
+function estrellas(n) {
+  let h = '';
+  for (let i = 0; i < 3; i++) h += `<span class="st ${i < n ? 'on' : 'off'}" style="--i:${i}">${ESTRELLA}</span>`;
+  return `<span class="estrellas">${h}</span>`;
+}
+
+/* ---------- Estado del nivel ---------- */
+const tablero = $('tablero');
+const mesa = $('mesa');
+const bola = document.createElement('div');
+bola.id = 'bola';
+bola.innerHTML = '<div class="bola-in"></div>';
+const bolaIn = bola.firstChild;
+let k = 0, W = 1, H = 1, CH = [], TILE = [], START = 0, FULL = 0;
+let pos = 0, mask = 0, movs = 0, pila = [], celdas = [];
+let ocupado = false, ganado = false, pistaUsada = false;
+let cs = 40, OFF = 0, bd = 0;
+
+/* Casillas por las que pasa la bola al deslizarse en una dirección (vacío si está bloqueada). */
+function recorrer(p, d) {
+  let r = Math.floor(p / W), c = p % W;
+  const [dr, dc] = DIR[d];
+  const cel = [];
+  for (;;) {
+    const nr = r + dr, nc = c + dc;
+    if (nr < 0 || nc < 0 || nr >= H || nc >= W || TILE[nr * W + nc] < 0) break;
+    r = nr; c = nc;
+    cel.push(r * W + c);
+  }
+  return cel;
+}
+
+/* Búsqueda en anchura sobre (posición, casillas pintadas): primer movimiento de una solución mínima. */
+function mejorPaso(p0, m0) {
+  const inicio = p0 * 1073741824 + m0;
+  const padre = new Map([[inicio, null]]);
+  const cola = [[p0, m0, inicio]];
+  let h = 0;
+  while (h < cola.length) {
+    if (padre.size > 300000) return null;
+    const [p, m, kk] = cola[h++];
+    if (m === FULL) {
+      let x = kk, d = null;
+      while (x !== inicio) { const e = padre.get(x); d = e.d; x = e.k; }
+      return d;
+    }
+    for (const d of ['U', 'D', 'L', 'R']) {
+      const cel = recorrer(p, d);
+      if (!cel.length) continue;
+      const fin = cel[cel.length - 1];
+      let nm = m;
+      for (const c of cel) nm |= 1 << TILE[c];
+      const nk = fin * 1073741824 + nm;
+      if (!padre.has(nk)) { padre.set(nk, { k: kk, d }); cola.push([fin, nm, nk]); }
+    }
+  }
+  return null;
+}
+
+function medir() {
+  const ancho = Math.min(window.innerWidth - 72, 404);
+  const alto = Math.max(200, window.innerHeight - 460);
+  cs = Math.max(26, Math.min(66, Math.floor(Math.min(ancho / W, alto / H))));
+  bd = Math.round(cs * 0.62);
+  OFF = Math.round((cs - bd) / 2);
+}
+
+function ponerBola(p, dur) {
+  const r = Math.floor(p / W), c = p % W;
+  bola.style.transition = dur ? `transform ${dur}ms linear` : 'none';
+  bola.style.transform = `translate(${c * cs + OFF}px, ${r * cs + OFF}px)`;
+}
+
+function dibujar() {
+  medir();
+  const m = 3;
+  tablero.style.width = W * cs + 'px';
+  tablero.style.height = H * cs + 'px';
+  tablero.style.setProperty('--pc', COLORES[k % COLORES.length]);
+  tablero.style.setProperty('--rr', Math.round(cs * 0.22) + 'px');
+  bola.style.width = bd + 'px';
+  bola.style.height = bd + 'px';
+  celdas = new Array(W * H).fill(null);
+  const nodos = [];
+  for (let r = 0; r < H; r++) {
+    for (let c = 0; c < W; c++) {
+      const ch = CH[r][c], p = r * W + c;
+      if (ch === '.') continue;
+      const el = document.createElement('div');
+      el.className = ch === 'X' ? 'muro' : 'casilla';
+      el.style.cssText = `left:${c * cs + m}px;top:${r * cs + m}px;width:${cs - 2 * m}px;height:${cs - 2 * m}px`;
+      if (ch !== 'X') {
+        celdas[p] = el;
+        if (mask & (1 << TILE[p])) el.classList.add('pintada');
+      }
+      nodos.push(el);
+    }
+  }
+  tablero.replaceChildren(...nodos, bola);
+  ponerBola(pos, 0);
+}
+
+function repintar() {
+  for (let p = 0; p < W * H; p++) {
+    if (celdas[p]) celdas[p].classList.toggle('pintada', !!(mask & (1 << TILE[p])));
+  }
+  ponerBola(pos, 0);
+}
+
+function cargar(i) {
+  k = i;
+  const lv = NIVELES[k];
+  H = lv.g.length;
+  W = Math.max(...lv.g.map((r) => r.length));
+  CH = lv.g.map((r) => r.padEnd(W, '.').split(''));
+  TILE = new Array(W * H).fill(-1);
+  let n = 0;
+  START = 0;
+  for (let r = 0; r < H; r++) {
+    for (let c = 0; c < W; c++) {
+      const ch = CH[r][c];
+      if (ch === '#' || ch === 'S') TILE[r * W + c] = n++;
+      if (ch === 'S') START = r * W + c;
+    }
+  }
+  FULL = 2 ** n - 1;
+  pos = START;
+  mask = 1 << TILE[START];
+  movs = 0; pila = []; ocupado = false; ganado = false;
+  dibujar();
+  aviso('');
+  actualizar();
+}
+
+function entrarNivel(i) {
+  pistaUsada = false;
+  cargar(i);
+  mostrarVista('juego');
+}
+
+function reiniciar() {
+  if (ocupado) return;
+  quitarPista();
+  cargar(k);
+}
+
+function deshacer() {
+  if (ocupado || !pila.length) return;
+  const e = pila.pop();
+  pos = e.pos; mask = e.mask; movs = e.movs; ganado = false;
+  quitarPista();
+  repintar();
+  aviso('');
+  actualizar();
+}
+
+function sacudir() {
+  bolaIn.classList.remove('nop');
+  void bolaIn.offsetWidth;
+  bolaIn.classList.add('nop');
+}
+
+function mover(d) {
+  if (ocupado || ganado) return;
+  const cel = recorrer(pos, d);
+  quitarPista();
+  if (!cel.length) { sacudir(); return; }
+  pila.push({ pos, mask, movs });
+  movs++;
+  ocupado = true;
+  aviso('');
+  actualizar();
+  ponerBola(cel[cel.length - 1], cel.length * PASO);
+  let i = 0;
+  const paso = () => {
+    const p = cel[i];
+    pos = p;
+    mask |= 1 << TILE[p];
+    if (celdas[p]) celdas[p].classList.add('pintada');
+    if (++i < cel.length) setTimeout(paso, PASO);
+    else { ocupado = false; alTerminar(); }
+  };
+  setTimeout(paso, PASO);
+}
+
+function sinSalida() { return !['U', 'D', 'L', 'R'].some((d) => recorrer(pos, d).length > 0); }
+
+function alTerminar() {
+  if (mask === FULL) { ganar(); return; }
+  aviso(sinSalida() ? 'Sin salida: deshaz o reinicia el nivel.' : '');
+  actualizar();
+}
+
+function ganar() {
+  ganado = true;
+  const opt = NIVELES[k].opt;
+  let est = movs <= opt ? 3 : (movs <= opt + 2 ? 2 : 1);
+  if (pistaUsada) est = Math.min(est, 2);
+  const previa = S.estrellas[k] || 0;
+  if (est > previa) S.estrellas[k] = est;
+  S.nivelMax = Math.max(S.nivelMax, Math.min(k + 2, NIVELES.length));
+  guardar();
+  if (est > previa) avisarPuntos();
+  actualizar();
+  actualizarPuntos();
+  $('fin-t').textContent = est === 3 ? '¡BRILLANTE!' : (est === 2 ? '¡GENIAL!' : '¡BIEN HECHO!');
+  $('fin-est').innerHTML = estrellas(est);
+  $('fin-mov').textContent = `Lo resolviste en ${movs} movimientos. La meta eran ${opt}.`;
+  $('fin-txt').textContent = (est > previa ? `+${(est - previa) * 5} puntos misioneros. ` : '') + FRASES[k % FRASES.length];
+  $('fin-sig').textContent = k + 1 < NIVELES.length ? 'Siguiente nivel' : 'Ver niveles';
+  $('fin').hidden = false;
+  $('fin-sig').focus();
+}
+
+function pista() {
+  if (ocupado || ganado || pistaUsada) return;
+  const d = mejorPaso(pos, mask);
+  if (!d) { aviso('No encuentro una pista desde aquí. Prueba deshacer o reiniciar.'); return; }
+  pistaUsada = true;
+  resaltar(d);
+  aviso(`Pista: desliza hacia la ${NOMBRE[d]}. Con pista, el máximo son 2 estrellas.`);
+  actualizar();
+}
+
+function quitarPista() { document.querySelectorAll('.dpad .pista').forEach((b) => b.classList.remove('pista')); }
+function resaltar(d) {
+  quitarPista();
+  const b = document.querySelector(`.dpad [data-dir="${d}"]`);
+  if (b) b.classList.add('pista');
+}
+
+function aviso(t) { $('aviso').textContent = t; }
+
+function actualizar() {
+  $('movs').textContent = movs;
+  $('meta').textContent = NIVELES[k].opt;
+  $('nivel-num').textContent = 'Nivel ' + (k + 1);
+  $('btn-deshacer').disabled = ocupado || pila.length === 0;
+  $('btn-pista').disabled = ocupado || ganado || pistaUsada;
+  $('pista-txt').textContent = pistaUsada ? 'Pista usada' : 'Pista';
+}
+
+function actualizarPuntos() { $('pts').innerHTML = '★ <b>' + puntos() + '</b> pts'; }
+
+function pintarMapa() {
+  mapa.replaceChildren(...NIVELES.map((lv, i) => {
+    const libre = i + 1 <= S.nivelMax;
+    const est = S.estrellas[i] || 0;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'nivel' + (est ? ' listo' : '') + (libre ? '' : ' bloq');
+    b.disabled = !libre;
+    b.setAttribute('aria-label', `Nivel ${i + 1}` + (libre ? (est ? `, ${est} de 3 estrellas` : '') : ', bloqueado'));
+    b.innerHTML = `<b>${i + 1}</b>` + (libre ? estrellas(est) : '');
+    b.addEventListener('click', () => entrarNivel(i));
+    return b;
+  }));
+  const hechos = Object.keys(S.estrellas).filter((x) => S.estrellas[x] > 0).length;
+  $('progreso').textContent = `${hechos} de ${NIVELES.length} niveles completados`;
+}
+const mapa = $('mapa');
+
+function mostrarVista(v) {
+  const juego = v === 'juego';
+  $('vista-mapa').hidden = juego;
+  $('vista-juego').hidden = !juego;
+  $('fin').hidden = true;
+  $('sub-tit').textContent = juego ? `Nivel ${k + 1} de ${NIVELES.length}` : 'Niveles';
+  $('btn-izq').innerHTML = juego ? ICONO_ATRAS : ICONO_X;
+  $('btn-izq').setAttribute('aria-label', juego ? 'Volver a los niveles' : 'Cerrar juego');
+  if (!juego) pintarMapa();
+  actualizarPuntos();
+}
+
+/* ---------- Controles ---------- */
+$('btn-izq').addEventListener('click', () => {
+  if (!$('vista-juego').hidden) { if (!ocupado) mostrarVista('mapa'); return; }
+  if (window.parent && window.parent !== window) {
+    try { window.parent.postMessage({ tipo: 'juma-cerrar' }, location.origin); } catch (e) { /* nada */ }
+  } else if (history.length > 1) {
+    history.back();
+  }
+});
+$('btn-deshacer').addEventListener('click', deshacer);
+$('btn-reiniciar').addEventListener('click', reiniciar);
+$('btn-pista').addEventListener('click', pista);
+document.querySelectorAll('.dpad button').forEach((b) => b.addEventListener('click', () => mover(b.dataset.dir)));
+$('fin-sig').addEventListener('click', () => {
+  if (k + 1 < NIVELES.length) entrarNivel(k + 1);
+  else mostrarVista('mapa');
+});
+$('fin-mapa').addEventListener('click', () => mostrarVista('mapa'));
+
+/* Deslizar el dedo o el ratón sobre el tablero */
+let sx = null, sy = 0, sid = null;
+mesa.addEventListener('pointerdown', (e) => { sx = e.clientX; sy = e.clientY; sid = e.pointerId; });
+mesa.addEventListener('pointerup', (e) => {
+  if (sx === null || e.pointerId !== sid) return;
+  const dx = e.clientX - sx, dy = e.clientY - sy;
+  sx = null;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+  if (Math.abs(dx) > Math.abs(dy)) mover(dx > 0 ? 'R' : 'L');
+  else mover(dy > 0 ? 'D' : 'U');
+});
+mesa.addEventListener('pointercancel', () => { sx = null; });
+
+document.addEventListener('keydown', (e) => {
+  if ($('vista-juego').hidden || !$('fin').hidden) return;
+  const d = TECLAS[e.key];
+  if (d) { e.preventDefault(); mover(d); }
+});
+
+let rz = 0;
+window.addEventListener('resize', () => {
+  if ($('vista-juego').hidden || ocupado) return;
+  cancelAnimationFrame(rz);
+  rz = requestAnimationFrame(dibujar);
+});
+
+mostrarVista('mapa');
+</script>
+</body>
+</html>
