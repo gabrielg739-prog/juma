@@ -1,7 +1,7 @@
 {
- "version": "f4ff52690c33",
+ "version": "570701167a31",
  "recursos": "juma-recursos-v1",
- "tamano": 52013327,
+ "tamano": 52025196,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -741,12 +741,12 @@
   {
    "ruta": "index.html",
    "tamano": 147037,
-   "hash": "9ae3e270aa4c"
+   "hash": "918c8f45f8d2"
   },
   {
    "ruta": "js/app.js",
-   "tamano": 488753,
-   "hash": "19eb0360c76d"
+   "tamano": 488759,
+   "hash": "2341b5f75e51"
   },
   {
    "ruta": "js/fe.js",
@@ -780,8 +780,8 @@
   },
   {
    "ruta": "juegos/carrera-de-la-fe.html",
-   "tamano": 41147,
-   "hash": "053a38982178"
+   "tamano": 53010,
+   "hash": "e54a0d8421c7"
   },
   {
    "ruta": "juegos/cuadros/cap1-consolata.jpg",

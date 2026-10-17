@@ -134,7 +134,9 @@
   </div>
 
 </div>
-<script>
+<script type="module">
+import * as THREE from './lib/three.module.min.js';
+
 /* ---------- Datos de las pistas, personajes y reglas ---------- */
 const CLAVE = 'juma-kart-v1';
 const PUNTOS_POS = [30, 24, 20, 16, 12, 8];
@@ -245,8 +247,8 @@ function puntosTotales(d) { return Object.values(d.mejores).reduce((s, v) => s +
 function avisarPuntos(total) {
   try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', juego: 'kart', total }, location.origin); } catch (e) { /* nada */ }
 }
-</script>
-<script>
+
+
 /* ---------- Física, rivales y objetos ---------- */
 const VMAX = 330, ACEL = 300, FRENO = 520, FRICC = 220, GIRO = 2.6, AGARRE = 6.0, AGARRE_DERIVA = 2.0;
 const TOPE_ATRAS = -120;
@@ -418,8 +420,8 @@ function revisarCajas(dt) {
     }
   }
 }
-</script>
-<script>
+
+
 /* ---------- Objetos en juego, choques y paso del tiempo ---------- */
 let raceT = 0;
 
@@ -542,26 +544,45 @@ function actualizarMundo(dt, ctlJugador) {
   revisarCajas(dt);
   /* Las cajas de gracia se reponen solas */
 }
-</script>
-<script>
-/* ---------- Dibujo (vista desde arriba que sigue al jugador) ---------- */
-const cv = document.getElementById('lienzo');
-const ctx = cv.getContext('2d');
-let W = 1, H = 1, DPR = 1, decor = [];
 
+/* ---------- Escena 3D: cielo, pasto, pista, adornos y montañas ---------- */
+const cv = document.getElementById('lienzo');
+const COLOR_NIEBLA = '#ffe9c2';
+const BLANCO = '#ffffff';
+let renderer = null, escena = null, camara = null, W = 1, H = 1, DPR = 1, decor = [], camPos = null, cosasGrupo = null;
+const ayuda = new THREE.Object3D();
+const matC = (color) => new THREE.MeshLambertMaterial({ color });
+
+function iniciarRender() {
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
+  } catch (e) {
+    renderer = null;
+    ui.aviso.textContent = 'Tu navegador no puede mostrar gráficos 3D.';
+    ui.aviso.hidden = false;
+    return;
+  }
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  camara = new THREE.PerspectiveCamera(60, 1, 2, 6000);
+}
 function ajustarLienzo() {
-  DPR = Math.min(2, window.devicePixelRatio || 1);
+  if (!renderer) return;
+  DPR = Math.min(1.5, window.devicePixelRatio || 1);
   const r = cv.getBoundingClientRect();
   W = Math.max(1, r.width); H = Math.max(1, r.height);
-  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  renderer.setPixelRatio(DPR);
+  renderer.setSize(W, H, false);
+  camara.aspect = W / H;
+  camara.updateProjectionMatrix();
 }
 window.addEventListener('resize', ajustarLienzo);
 
-/* Adornos alrededor de la pista: siempre los mismos para cada pista (semilla fija) */
+/* Números "al azar" que siempre salen igual para cada pista */
 function generaRuido(semilla) {
   let s = semilla >>> 0;
   return () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
+/* Adornos a los lados de la pista (en coordenadas 2D: x, y) */
 function crearDecor(P) {
   const ruido = generaRuido(P.def.id.length * 977 + P.def.r[3] * 13);
   const lista = [];
@@ -575,105 +596,338 @@ function crearDecor(P) {
   }
   return lista;
 }
-function dibujarDecor(d) {
-  if (d.tipo === 'arbol') {
-    ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.arc(d.x + 5, d.y + 6, 26, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#2f7a3c'; ctx.beginPath(); ctx.arc(d.x, d.y, 26, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#4fa35a'; ctx.beginPath(); ctx.arc(d.x - 7, d.y - 8, 12, 0, Math.PI * 2); ctx.fill();
-  } else if (d.tipo === 'piedra') {
-    ctx.fillStyle = '#9a8d7e'; ctx.beginPath(); ctx.ellipse(d.x, d.y, 16, 11, d.k * 3, 0, Math.PI * 2); ctx.fill();
-  } else if (d.tipo === 'cruz') {
-    ctx.fillStyle = '#7a4a1e'; ctx.fillRect(d.x - 3, d.y - 22, 6, 40); ctx.fillRect(d.x - 14, d.y - 10, 28, 6);
-    ctx.fillStyle = '#f3e6c8'; ctx.fillRect(d.x - 1, d.y - 22, 2, 36);
+
+/* Muchos objetos iguales en una sola llamada de dibujo */
+function instanciar(geo, lista) {
+  const im = new THREE.InstancedMesh(geo, matC(BLANCO), lista.length);
+  lista.forEach((d, i) => {
+    ayuda.position.set(d.x, d.y, d.z);
+    ayuda.rotation.set(0, d.ry || 0, 0);
+    ayuda.scale.set(d.sc[0], d.sc[1], d.sc[2]);
+    ayuda.updateMatrix();
+    im.setMatrixAt(i, ayuda.matrix);
+    im.setColorAt(i, new THREE.Color(d.col));
+  });
+  im.instanceMatrix.needsUpdate = true;
+  if (im.instanceColor) im.instanceColor.needsUpdate = true;
+  return im;
+}
+
+function cielo() {
+  const geo = new THREE.SphereGeometry(4000, 24, 12);
+  const pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
+  const arriba = new THREE.Color('#4f9fe8'), horizonte = new THREE.Color(COLOR_NIEBLA), c = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) {
+    c.lerpColors(horizonte, arriba, Math.min(1, Math.max(0, pos.getY(i) / 2200)));
+    col.set([c.r, c.g, c.b], i * 3);
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
+  m.renderOrder = -1;
+  return m;
+}
+function sueloBase(color) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(9000, 9000), matC(color));
+  m.rotation.x = -Math.PI / 2;
+  return m;
+}
+/* Manchas más oscuras de pasto, para que el campo no se vea liso */
+function manchasPasto(color, ruido) {
+  const g = new THREE.Group();
+  const geo = new THREE.CircleGeometry(1, 18);
+  const mat = matC(new THREE.Color(color).offsetHSL(0, 0, -0.05));
+  for (let n = 0; n < 45; n++) {
+    const a = ruido() * Math.PI * 2, r = 400 + ruido() * 1500, s = 120 + ruido() * 260;
+    const m = new THREE.Mesh(geo, mat);
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(Math.cos(a) * r, 0.3, Math.sin(a) * r);
+    m.scale.set(s, s * (0.5 + ruido() * 0.5), 1);
+    g.add(m);
+  }
+  return g;
+}
+
+function texturaCanvas(w, h, pintar) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  pintar(c.getContext('2d'));
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const texturaRayas = (a, b) => texturaCanvas(128, 8, (x) => { x.fillStyle = a; x.fillRect(0, 0, 64, 8); x.fillStyle = b; x.fillRect(64, 0, 64, 8); });
+const texturaPuntos = () => texturaCanvas(128, 8, (x) => { x.fillStyle = BLANCO; x.fillRect(0, 0, 80, 8); });
+
+/* Franja de pista a lo largo de la curva: se calcula con los mismos puntos que la física */
+function cinta(P, mitadW, y, material, escalaU) {
+  const N = P.N;
+  const pos = new Float32Array((N + 1) * 2 * 3), uv = new Float32Array((N + 1) * 2 * 2), idx = [];
+  for (let i = 0; i <= N; i++) {
+    const j = i % N;
+    const nx = -P.ty[j], nz = P.tx[j], cx = P.xs[j], cz = P.ys[j];
+    const a = i * 2, b = i * 2 + 1;
+    pos.set([cx + nx * mitadW, y, cz + nz * mitadW], a * 3);
+    pos.set([cx - nx * mitadW, y, cz - nz * mitadW], b * 3);
+    const u = P.S[i] / escalaU;
+    uv.set([u, 0], a * 2); uv.set([u, 1], b * 2);
+    if (i < N) { const c = (i + 1) * 2, d = (i + 1) * 2 + 1; idx.push(a, c, b, b, c, d); }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  return new THREE.Mesh(geo, material);
+}
+/* Línea de salida a cuadros, atravesando la pista */
+function lineaSalida(P) {
+  const tex = texturaCanvas(64, 16, (x) => {
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) { x.fillStyle = (i + j) % 2 ? BLANCO : '#2b1a3f'; x.fillRect(i * 16, j * 8, 16, 8); }
+  });
+  tex.magFilter = THREE.NearestFilter;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(P.mitad * 2, 16), new THREE.MeshLambertMaterial({ map: tex }));
+  m.rotation.set(-Math.PI / 2, Math.atan2(-P.tx[0], -P.ty[0]), 0, 'YXZ');
+  m.position.set(P.xs[0], 1.2, P.ys[0]);
+  return m;
+}
+
+function cruz(x, z) {
+  const g = new THREE.Group(), m = matC('#7a4a1e');
+  const palo = new THREE.Mesh(new THREE.BoxGeometry(4, 44, 4), m); palo.position.y = 22;
+  const brazo = new THREE.Mesh(new THREE.BoxGeometry(28, 5, 4), m); brazo.position.y = 34;
+  g.add(palo, brazo);
+  g.position.set(x, 0, z);
+  return g;
+}
+function capilla(x, z, k) {
+  const g = new THREE.Group(), muro = matC('#f3e6c8'), techo = matC('#8a2c2c');
+  const cuerpo = new THREE.Mesh(new THREE.BoxGeometry(48, 30, 34), muro); cuerpo.position.y = 15;
+  const tejado = new THREE.Mesh(new THREE.ConeGeometry(34, 26, 4), techo); tejado.position.y = 43; tejado.rotation.y = Math.PI / 4;
+  const torre = new THREE.Mesh(new THREE.BoxGeometry(12, 40, 12), muro); torre.position.set(16, 20, 0);
+  const pico = new THREE.Mesh(new THREE.ConeGeometry(9, 16, 4), techo); pico.position.set(16, 48, 0);
+  const cruzTorre = new THREE.Mesh(new THREE.BoxGeometry(3, 12, 3), matC('#ffd25a')); cruzTorre.position.set(16, 62, 0);
+  g.add(cuerpo, tejado, torre, pico, cruzTorre);
+  g.position.set(x, 0, z);
+  g.rotation.y = k * Math.PI * 2;
+  return g;
+}
+
+function adornos() {
+  const g = new THREE.Group();
+  const arboles = decor.filter((d) => d.tipo === 'arbol');
+  const sc = (d) => 0.8 + d.k * 0.6;
+  g.add(instanciar(new THREE.CylinderGeometry(3.5, 4.5, 22, 7), arboles.map((d) => ({ x: d.x, y: 11 * sc(d), z: d.y, sc: [sc(d), sc(d), sc(d)], col: '#7a4a1e' }))));
+  const hojas = ['#2f7a3c', '#3c8a48', '#2a6a3a'];
+  g.add(instanciar(new THREE.ConeGeometry(24, 58, 8), arboles.map((d) => ({ x: d.x, y: 44 * sc(d), z: d.y, sc: [sc(d), sc(d), sc(d)], col: hojas[Math.floor(d.k * 3) % 3] }))));
+  g.add(instanciar(new THREE.DodecahedronGeometry(12, 0), decor.filter((d) => d.tipo === 'piedra').map((d) => ({ x: d.x, y: 5, z: d.y, sc: [0.8 + d.k, (0.8 + d.k) * 0.6, 0.8 + d.k], ry: d.k * 6, col: '#9a8d7e' }))));
+  for (const d of decor) {
+    if (d.tipo === 'cruz') g.add(cruz(d.x, d.y));
+    else if (d.tipo === 'capilla') g.add(capilla(d.x, d.y, d.k));
+  }
+  return g;
+}
+/* Montañas lejanas y nubes: dan profundidad al horizonte */
+function montanas(ruido) {
+  const lista = [];
+  for (let n = 0; n < 36; n++) {
+    const a = ruido() * Math.PI * 2, r = 2600 + ruido() * 500, h = 380 + ruido() * 420, w = 260 + ruido() * 220;
+    lista.push({ x: Math.cos(a) * r, y: h / 2 - 10, z: Math.sin(a) * r, sc: [w, h, w], ry: ruido() * 6, col: ruido() < 0.5 ? '#7d6aa8' : '#9686bf' });
+  }
+  return instanciar(new THREE.ConeGeometry(1, 1, 6), lista);
+}
+function nubes(ruido) {
+  const g = new THREE.Group();
+  const geo = new THREE.SphereGeometry(1, 10, 8);
+  const mat = new THREE.MeshLambertMaterial({ color: BLANCO, transparent: true, opacity: 0.92 });
+  for (let n = 0; n < 12; n++) {
+    const c = new THREE.Group();
+    for (let m = 0; m < 4; m++) {
+      const s = new THREE.Mesh(geo, mat);
+      s.position.set((m - 1.5) * 40, ruido() * 16, ruido() * 30 - 15);
+      s.scale.setScalar(36 + ruido() * 26);
+      c.add(s);
+    }
+    const a = ruido() * Math.PI * 2, r = 700 + ruido() * 1600;
+    c.position.set(Math.cos(a) * r, 380 + ruido() * 90, Math.sin(a) * r);
+    g.add(c);
+  }
+  return g;
+}
+
+/* Arma toda la escena de la pista actual (se llama al empezar cada pista) */
+function construirEscena() {
+  if (!renderer) return;
+  if (escena) escena.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
+  escena = new THREE.Scene();
+  escena.fog = new THREE.Fog(COLOR_NIEBLA, 900, 3400);
+  renderer.setClearColor(COLOR_NIEBLA);
+  const ruido = generaRuido(P.N * 31 + 7);
+  const sol = new THREE.DirectionalLight('#fff4dc', 2.1);
+  sol.position.set(400, 900, 300);
+  escena.add(new THREE.HemisphereLight('#ffffff', '#6a8a4a', 1.5), sol);
+  escena.add(cielo(), sueloBase(P.def.hierba), manchasPasto(P.def.hierba, ruido));
+  escena.add(
+    cinta(P, P.mitad + 9, 0.5, new THREE.MeshLambertMaterial({ map: texturaRayas('#d8362e', '#fff7e6'), side: THREE.DoubleSide }), 60),
+    cinta(P, P.mitad, 0.7, new THREE.MeshLambertMaterial({ color: P.def.arena, side: THREE.DoubleSide }), 1),
+    cinta(P, 2.5, 0.9, new THREE.MeshLambertMaterial({ map: texturaPuntos(), transparent: true, alphaTest: 0.5, side: THREE.DoubleSide }), 40),
+    lineaSalida(P), adornos(), montanas(ruido), nubes(ruido)
+  );
+  cosasGrupo = new THREE.Group();
+  escena.add(cosasGrupo);
+  for (const c of cajas) { c.m = hacerCaja(); escena.add(c.m); }
+  for (const k of karts) { k.m = hacerKart(k); escena.add(k.m.g); }
+  camPos = null;
+}
+
+/* ---------- Coches, cajas, objetos y cámara en 3D ---------- */
+const RUEDA = new THREE.CylinderGeometry(6, 6, 5, 12);
+
+/* Texto que siempre mira a la cámara (nombres de los corredores) */
+function etiqueta(texto, color) {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+  const x = c.getContext('2d');
+  x.font = '800 34px "Trebuchet MS", Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.lineWidth = 8; x.strokeStyle = 'rgba(20,8,36,.85)'; x.strokeText(texto, 128, 34);
+  x.fillStyle = color; x.fillText(texto, 128, 34);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false });
+}
+function emojiMat(txt) {
+  const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+  const x = c.getContext('2d');
+  x.font = '96px serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(txt, 64, 70);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false });
+}
+
+/* Kart de bloques: cuerpo de color, piloto con gorra, ruedas, alerón y efectos */
+function hacerKart(k) {
+  const g = new THREE.Group();
+  g.rotation.order = 'YXZ';
+  const col = matC(k.color), bor = matC(k.borde), negro = matC('#1d1420'), piel = matC('#ffe0bd');
+  const pieza = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); g.add(m); return m; };
+  pieza(new THREE.BoxGeometry(30, 9, 20), col, 0, 9, 0);
+  pieza(new THREE.BoxGeometry(32, 4, 22), bor, 0, 3.5, 0);
+  pieza(new THREE.BoxGeometry(8, 6, 14), col, 19, 8, 0);
+  pieza(new THREE.BoxGeometry(3, 8, 3), bor, -15, 14, 10);
+  pieza(new THREE.BoxGeometry(3, 8, 3), bor, -15, 14, -10);
+  pieza(new THREE.BoxGeometry(6, 2, 26), bor, -15, 19, 0);
+  pieza(new THREE.SphereGeometry(7, 14, 10), piel, -1, 21, 0);
+  pieza(new THREE.SphereGeometry(7.6, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), bor, -1, 21.5, 0);
+  const ruedas = [];
+  for (const [x, z] of [[12, 12], [12, -12], [-11, 12], [-11, -12]]) {
+    const piv = new THREE.Group(); piv.position.set(x, 6, z); piv.rotation.x = Math.PI / 2;
+    const r = new THREE.Mesh(RUEDA, negro); piv.add(r); g.add(piv); ruedas.push(r);
+  }
+  const sombra = new THREE.Mesh(new THREE.CircleGeometry(24, 16), new THREE.MeshBasicMaterial({ color: '#000000', transparent: true, opacity: 0.22, depthWrite: false }));
+  sombra.rotation.x = -Math.PI / 2; sombra.position.y = 0.4; g.add(sombra);
+  const nombre = new THREE.Sprite(etiqueta(k.nombre, k.humano ? '#ffd25a' : '#ffffff'));
+  nombre.scale.set(30, 7.5, 1); nombre.position.y = 50; g.add(nombre);
+  const escudo = new THREE.Mesh(new THREE.TorusGeometry(26, 2, 8, 28), new THREE.MeshBasicMaterial({ color: '#ffe68c' }));
+  escudo.rotation.x = Math.PI / 2; escudo.position.y = 14; escudo.visible = false; g.add(escudo);
+  const llama = new THREE.Mesh(new THREE.ConeGeometry(5, 18, 8), new THREE.MeshBasicMaterial({ color: '#ffb040' }));
+  llama.rotation.z = Math.PI / 2; llama.position.set(-26, 10, 0); llama.visible = false; g.add(llama);
+  const nube = new THREE.Mesh(new THREE.SphereGeometry(26, 12, 8), new THREE.MeshBasicMaterial({ color: '#8fe07a', transparent: true, opacity: 0.45, depthWrite: false }));
+  nube.position.y = 16; nube.visible = false; g.add(nube);
+  const estrellas = new THREE.Group(), estrella = new THREE.SphereGeometry(3, 8, 6), amarillo = matC('#ffd25a');
+  for (let n = 0; n < 3; n++) estrellas.add(new THREE.Mesh(estrella, amarillo));
+  estrellas.visible = false; g.add(estrellas);
+  return { g, ruedas, nombre, escudo, llama, nube, estrellas };
+}
+
+/* Caja de gracia: cubo dorado con una cruz blanca que gira */
+function hacerCaja() {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(22, 22, 22), matC('#ffd25a')));
+  const blanco = matC(BLANCO);
+  const a = new THREE.Mesh(new THREE.BoxGeometry(7, 7, 24), blanco);
+  const b = new THREE.Mesh(new THREE.BoxGeometry(24, 7, 7), blanco);
+  g.add(a, b);
+  return g;
+}
+
+/* Objetos en el camino: incienso (nube), campanilla (onda) y paloma */
+function crearCosa(c) {
+  let m;
+  if (c.tipo === 'nube') {
+    m = new THREE.Group();
+    const mat = new THREE.MeshLambertMaterial({ color: '#8a8590', transparent: true, opacity: 0.6, depthWrite: false });
+    for (const [x, z, r] of [[0, 0, 30], [-22, 8, 22], [22, -6, 24], [6, 20, 20]]) {
+      const s = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), mat);
+      s.position.set(x, 18, z); m.add(s);
+    }
+  } else if (c.tipo === 'onda') {
+    m = new THREE.Mesh(new THREE.RingGeometry(0.9, 1, 48), new THREE.MeshBasicMaterial({ color: '#ffe68c', transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+    m.rotation.x = -Math.PI / 2;
   } else {
-    ctx.fillStyle = '#f3e6c8'; ctx.fillRect(d.x - 24, d.y - 16, 48, 34);
-    ctx.fillStyle = '#8a2c2c'; ctx.beginPath(); ctx.moveTo(d.x - 30, d.y - 16); ctx.lineTo(d.x, d.y - 40); ctx.lineTo(d.x + 30, d.y - 16); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#ffd25a'; ctx.fillRect(d.x - 2, d.y - 52, 4, 14); ctx.fillRect(d.x - 6, d.y - 47, 12, 4);
+    m = new THREE.Sprite(emojiMat('🕊️')); m.scale.set(40, 40, 1);
+  }
+  m.userData.ref = c;
+  return m;
+}
+function sincronizarCosas() {
+  for (const m of [...cosasGrupo.children]) if (!cosas.includes(m.userData.ref)) cosasGrupo.remove(m);
+  for (const c of cosas) {
+    if (!c.m) { c.m = crearCosa(c); cosasGrupo.add(c.m); }
+    const m = c.m;
+    if (c.tipo === 'nube') m.position.set(c.x, 0, c.y);
+    else if (c.tipo === 'onda') { m.position.set(c.x, 2, c.y); m.scale.setScalar(Math.max(0.01, c.r)); m.material.opacity = Math.max(0, c.t / 0.6); }
+    else m.position.set(c.x, 26 + Math.sin(raceT * 10) * 3, c.y);
   }
 }
 
-function trazarPista(anchoLinea, color, discont) {
-  const xs = P.xs, ys = P.ys, N = P.N;
-  ctx.beginPath();
-  ctx.moveTo(xs[0], ys[0]);
-  for (let i = 2; i < N; i += 2) ctx.lineTo(xs[i], ys[i]);
-  ctx.closePath();
-  ctx.lineWidth = anchoLinea; ctx.strokeStyle = color;
-  if (discont) ctx.setLineDash(discont); else ctx.setLineDash([]);
-  ctx.stroke();
-}
-
-function dibujarKart(k) {
-  ctx.save();
-  ctx.translate(k.x, k.y);
-  if (k.lento > 0) { ctx.fillStyle = 'rgba(120,200,90,.45)'; ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.fill(); }
-  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(3, 5, 15, 22, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.rotate(k.h);
-  if (k.turbo > 0) { ctx.fillStyle = 'rgba(255,190,80,.85)'; ctx.beginPath(); ctx.arc(-19, 0, 5 + Math.random() * 3, 0, Math.PI * 2); ctx.fill(); }
-  ctx.fillStyle = '#1d1420';
-  ctx.fillRect(-16, -16, 6, 10); ctx.fillRect(10, -16, 6, 10); ctx.fillRect(-16, 6, 6, 10); ctx.fillRect(10, 6, 6, 10);
-  ctx.fillStyle = k.color; ctx.strokeStyle = k.borde; ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.roundRect(-13, -18, 26, 36, 9); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#bfe6ff'; ctx.beginPath(); ctx.roundRect(-8, -9, 16, 10, 4); ctx.fill();
-  ctx.fillStyle = '#ffe0bd'; ctx.strokeStyle = k.borde; ctx.beginPath(); ctx.arc(1, 9, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.restore();
-  if (k.escudo > 0) { ctx.strokeStyle = 'rgba(255,230,140,.95)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(k.x, k.y, 30, 0, Math.PI * 2); ctx.stroke(); }
-  if (k.aturd > 0) {
-    ctx.fillStyle = '#ffd25a';
-    for (let j = 0; j < 3; j++) { const a = raceT * 8 + j * 2.1; ctx.beginPath(); ctx.arc(k.x + Math.cos(a) * 22, k.y + Math.sin(a) * 22 - 6, 3.5, 0, Math.PI * 2); ctx.fill(); }
+function pintarKarts(dt) {
+  for (const k of karts) {
+    const m = k.m; if (!m) continue;
+    const v = Math.hypot(k.vx, k.vy), avance = k.vx * Math.cos(k.h) + k.vy * Math.sin(k.h);
+    m.g.position.set(k.x, 0, k.y);
+    m.g.rotation.y = -k.h;
+    m.g.rotation.x = -k.giroVis * 0.16 * Math.min(1, v / VMAX);
+    for (const r of m.ruedas) r.rotation.y += avance * dt / 6;
+    m.escudo.visible = k.escudo > 0;
+    m.llama.visible = k.turbo > 0;
+    if (m.llama.visible) m.llama.scale.setScalar(0.8 + Math.random() * 0.5);
+    m.nube.visible = k.lento > 0;
+    m.estrellas.visible = k.aturd > 0;
+    if (m.estrellas.visible) m.estrellas.children.forEach((s, i) => { const a = raceT * 8 + i * 2.1; s.position.set(Math.cos(a) * 16, 46, Math.sin(a) * 16); });
   }
-  ctx.font = '800 13px "Trebuchet MS", Arial, sans-serif'; ctx.textAlign = 'center';
-  ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(20,8,36,.8)'; ctx.strokeText(k.nombre, k.x, k.y - 34);
-  ctx.fillStyle = '#fff'; ctx.fillText(k.nombre, k.x, k.y - 34);
 }
-
-function dibujar() {
-  if (!P || !jugador) return;
-  const s = Math.min(W, H * 1.15) / 620;
-  const v = Math.hypot(jugador.vx, jugador.vy) * 0.12;
-  const cx = jugador.x + Math.cos(jugador.h) * v, cy = jugador.y + Math.sin(jugador.h) * v;
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  ctx.fillStyle = P.def.hierba; ctx.fillRect(0, 0, W, H);
-  ctx.setTransform(DPR * s, 0, 0, DPR * s, DPR * (W / 2 - cx * s), DPR * (H / 2 - cy * s));
-  for (const d of decor) { if (Math.abs(d.x - cx) < W / s / 2 + 60 && Math.abs(d.y - cy) < H / s / 2 + 60) dibujarDecor(d); }
-  trazarPista(P.mitad * 2 + 18, '#fff7e6', null);
-  trazarPista(P.mitad * 2, P.def.arena, null);
-  trazarPista(4, 'rgba(255,255,255,.75)', [18, 22]);
-  /* Línea de salida y meta */
-  const x0 = P.xs[0], y0 = P.ys[0], nx = -P.ty[0], ny = P.tx[0];
-  ctx.strokeStyle = '#2b1a3f'; ctx.lineWidth = 12; ctx.setLineDash([8, 8]);
-  ctx.beginPath(); ctx.moveTo(x0 + nx * P.mitad, y0 + ny * P.mitad); ctx.lineTo(x0 - nx * P.mitad, y0 - ny * P.mitad); ctx.stroke();
-  ctx.setLineDash([]);
-  /* Cajas de gracia */
+function pintarCajas() {
   for (const c of cajas) {
+    if (!c.m) continue;
+    c.m.visible = c.vivo;
     if (!c.vivo) continue;
     const p = posCaja(c);
-    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(raceT * 1.5);
-    ctx.fillStyle = '#ffd25a'; ctx.strokeStyle = '#a86a00'; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.roundRect(-14, -14, 28, 28, 8); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#fff'; ctx.fillRect(-2.5, -8, 5, 16); ctx.fillRect(-8, -2.5, 16, 5);
-    ctx.restore();
+    c.m.position.set(p.x, 16 + Math.sin(raceT * 3 + c.d) * 2, p.y);
+    c.m.rotation.y = raceT * 1.5;
   }
-  /* Objetos en el camino */
-  for (const c of cosas) {
-    if (c.tipo === 'nube') {
-      ctx.fillStyle = 'rgba(120,110,120,.45)';
-      ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2); ctx.fill();
-    } else if (c.tipo === 'onda') {
-      ctx.strokeStyle = `rgba(255,230,140,${Math.max(0, c.t / 0.6)})`; ctx.lineWidth = 6;
-      ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2); ctx.stroke();
-    } else if (c.tipo === 'paloma') {
-      ctx.font = '34px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('🕊️', c.x, c.y);
-      ctx.textBaseline = 'alphabetic';
-    }
-  }
-  /* Karts: primero los de atrás para que el jugador quede encima */
-  for (const k of karts.slice().sort((a, b) => a.dist - b.dist)) dibujarKart(k);
-  ctx.setLineDash([]);
 }
-</script>
-<script>
+
+/* Cámara detrás del jugador: se acerca más rápido cuando va rápido */
+function seguirCamara(dt) {
+  const j = jugador;
+  const fx = Math.cos(j.h), fz = Math.sin(j.h);
+  const destino = new THREE.Vector3(j.x - fx * 135, 74, j.y - fz * 135);
+  if (!camPos) camPos = destino.clone();
+  camPos.lerp(destino, 1 - Math.exp(-dt * 7));
+  camara.position.copy(camPos);
+  camara.lookAt(j.x + fx * 90, 14, j.y + fz * 90);
+  const fovNuevo = 60 + 8 * Math.min(1, Math.hypot(j.vx, j.vy) / VMAX);
+  if (Math.abs(camara.fov - fovNuevo) > 0.05) { camara.fov = fovNuevo; camara.updateProjectionMatrix(); }
+}
+
+/* Dibuja un cuadro: se llama en cada vuelta del bucle principal */
+function dibujar(dt = 1 / 60) {
+  if (!renderer || !escena || !jugador) return;
+  pintarKarts(dt);
+  pintarCajas();
+  sincronizarCosas();
+  seguirCamara(dt);
+  renderer.render(escena, camara);
+}
+
+
 /* ---------- Pantallas, controles y flujo de la carrera ---------- */
 const $ = (s) => document.querySelector(s);
 const ui = { menu: $('#menu'), hud: $('#hud'), controles: $('#controles'), velo: $('#velo'), veloT: $('#veloTitulo'), veloC: $('#veloCuerpo'), aviso: $('#avisoTxt'), elige: $('#elige'), mejor: $('#mejor') };
@@ -720,6 +974,7 @@ function iniciarPista(i) {
   crearPista(PISTAS[i]);
   decor = crearDecor(P);
   crearCarrera();
+  construirEscena();
   ajustarLienzo();
   actualizarCajaItem();
   mostrarHUD(true);
@@ -837,20 +1092,31 @@ function actualizarHUD() {
   $('#puesto').textContent = puesto();
 }
 function frame(ts) {
-  const dt = Math.min(1 / 30, (ts - last) / 1000 || 1 / 60);
+  /* PASO_FIJO: la física avanza en pasos de 1/60 s según el reloj real, aunque la pantalla vaya lenta */
+  const dt = Math.min(0.1, (ts - last) / 1000 || 1 / 60);
   last = ts;
   if (fase === 'cuenta') revisarCuenta(dt);
   else if (fase === 'corre') {
-    actualizarMundo(dt, ctlJugador());
+    let resto = dt;
+    while (resto > 1e-6) { const h = Math.min(1 / 60, resto); actualizarMundo(h, ctlJugador()); resto -= h; }
     if (jugador.listo) { finT += dt; if (finT > 1.4) terminarPista(); }
     else if (karts.every((k) => k.listo)) terminarPista();
   }
-  if (fase === 'cuenta' || fase === 'corre' || fase === 'pausa' || fase === 'fin') { dibujar(); actualizarHUD(); }
+  if (fase === 'cuenta' || fase === 'corre' || fase === 'pausa' || fase === 'fin') { dibujar(dt); actualizarHUD(); }
   requestAnimationFrame(frame);
 }
+iniciarRender();
 ajustarLienzo();
 pintarMenu();
 requestAnimationFrame(frame);
+window.__carrera = {
+  get fase() { return fase; }, get jugador() { return jugador; }, get karts() { return karts; },
+  get cosas() { return cosas; }, get cajas() { return cajas; }, get P() { return P; },
+  get copa() { return copa; }, get raceT() { return raceT; }, get escena() { return escena; },
+  usarObjeto, clasificacion, lateral, enDistancia
+};
+
+
 </script>
 </body>
 </html>
