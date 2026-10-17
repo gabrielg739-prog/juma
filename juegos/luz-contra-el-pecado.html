@@ -114,6 +114,12 @@
   .dones-lista small { display: block; font-weight: 400; font-size: 11px; opacity: .85; }
   .barra-don { height: 8px; border-radius: 4px; background: rgba(0,0,0,.4); overflow: hidden; margin-top: 8px; }
   .barra-don i { display: block; height: 100%; background: linear-gradient(90deg,#ffd25a,#fff3b0); }
+  .bt.hab { width: 58px; height: 58px; font-size: 10px; background: conic-gradient(rgba(0,0,0,.55) var(--cd, 0deg), transparent 0) , radial-gradient(circle at 50% 35%, #fff6d0, #d9a632 75%); position: relative; }
+  .bt.hab.espera { filter: saturate(.4) brightness(.8); }
+  #miedo { background: radial-gradient(ellipse at center, rgba(120,0,0,0) 35%, rgba(150,0,10,.85) 100%); opacity: 0; }
+  #miedo.on { animation: miedo 1.1s ease-out; }
+  @keyframes miedo { 0% { opacity: 1; } 15% { opacity: .5; } 25% { opacity: .9; } 100% { opacity: 0; } }
+  #fe { background: radial-gradient(ellipse at center, rgba(255,220,120,0) 45%, rgba(255,210,90,.45) 85%, rgba(255,240,180,.8) 100%); opacity: 0; transition: opacity .15s; }
 </style>
 </head>
 <body>
@@ -121,6 +127,8 @@
 <div class="capa" id="dano"></div>
 <div class="capa" id="curar"></div>
 <div class="capa" id="vineta"></div>
+<div class="capa" id="miedo"></div>
+<div class="capa" id="fe"></div>
 
 <div class="hud" id="hud">
   <div class="arriba">
@@ -134,6 +142,7 @@
   <div class="mira" id="mira" aria-hidden="true"></div>
   <div class="joy" id="joy"><i id="joy-k"></i></div>
   <div class="botones" id="botones">
+    <div class="fila-b"><button class="bt hab" id="b-fe" type="button">ESCUDO</button><button class="bt hab" id="b-esquivar" type="button">ESQUIVAR</button></div>
     <div class="fila-b"><button class="bt super" id="b-super" type="button">SÚPER</button><button class="bt arma" id="b-arma" type="button">ARMA</button></div>
     <button class="bt fuego" id="b-fuego" type="button">BENDECIR</button>
   </div>
@@ -216,12 +225,12 @@ const NIVELES = [
   { nombre: 'El Tentador', tema: 'abismo', tam: 31, salas: 7, enemigos: { envidia: 3, ira: 3, soberbia: 2 }, jefe: true, frase: 'No tengáis miedo: la gracia de Dios es más fuerte.' }
 ];
 const TIPOS = {
-  pereza: { nombre: 'Pereza', vida: 7, vel: 0.75, dano: 15, ataque: 'cuerpo', alcance: 1.05, espera: 0.55, cad: 1.4, pts: 3, alto: 0.82, radio: 0.42, desc: 'Lenta y pesada; cerca de ella te mueves más lento.' },
-  soberbia: { nombre: 'Soberbia', vida: 5, vel: 1.3, dano: 10, ataque: 'triple', alcance: 9, espera: 0.45, cad: 2.1, pts: 4, alto: 1.02, radio: 0.32, desc: 'Lanza tres rayos a la vez y guarda distancia.' },
-  envidia: { nombre: 'Envidia', vida: 3, vel: 2.7, dano: 8, ataque: 'cuerpo', alcance: 0.95, espera: 0.25, cad: 0.75, pts: 3, alto: 0.72, radio: 0.3, desc: 'Muy rápida, corre en zigzag y muerde.' },
-  ira: { nombre: 'Ira', vida: 10, vel: 1.45, dano: 22, ataque: 'embestida', alcance: 6.5, espera: 0.6, cad: 3.2, pts: 6, alto: 1.0, radio: 0.4, desc: 'Se lanza contra ti con toda su fuerza.' },
-  avaricia: { nombre: 'Avaricia', vida: 6, vel: 1.1, dano: 9, ataque: 'monedas', alcance: 10, espera: 0.5, cad: 2.4, pts: 5, alto: 0.95, radio: 0.34, flota: 0.18, desc: 'Flota y dispara monedas que te persiguen.' },
-  tentador: { nombre: 'El Tentador', vida: 150, vel: 1.2, dano: 14, ataque: 'jefe', alcance: 14, espera: 0.7, cad: 1.6, pts: 60, alto: 1.75, radio: 0.75, desc: 'La serpiente antigua.' }
+  pereza: { nombre: 'Pereza', vida: 9, vel: 0.8, dano: 17, ataque: 'cuerpo', alcance: 1.05, espera: 0.55, cad: 1.4, pts: 3, alto: 0.95, radio: 0.42, desc: 'Un cadáver encadenado. Cerca de ella te mueves lento y escupe babas que te frenan.' },
+  soberbia: { nombre: 'Soberbia', vida: 6.5, vel: 1.35, dano: 12, ataque: 'triple', alcance: 9, espera: 0.45, cad: 2.0, pts: 4, alto: 1.15, radio: 0.32, desc: 'Lanza tres rayos y desaparece en humo para aparecer a tu lado.' },
+  envidia: { nombre: 'Envidia', vida: 4, vel: 2.8, dano: 9, ataque: 'cuerpo', alcance: 0.95, espera: 0.25, cad: 0.75, pts: 3, alto: 0.8, radio: 0.3, desc: 'Corre en cuatro patas, en zigzag, y salta sobre ti desde lejos.' },
+  ira: { nombre: 'Ira', vida: 13, vel: 1.5, dano: 25, ataque: 'embestida', alcance: 6.5, espera: 0.6, cad: 3.0, pts: 6, alto: 1.15, radio: 0.4, desc: 'Embiste, golpea el suelo con temblores y se enfurece cuando está herida.' },
+  avaricia: { nombre: 'Avaricia', vida: 7.5, vel: 1.15, dano: 10, ataque: 'monedas', alcance: 10, espera: 0.5, cad: 2.3, pts: 5, alto: 1.05, radio: 0.34, flota: 0.18, desc: 'Monedas que te persiguen; si se acerca, te roba munición y huye.' },
+  tentador: { nombre: 'El Tentador', vida: 200, vel: 1.25, dano: 16, ataque: 'jefe', alcance: 14, espera: 0.7, cad: 1.5, pts: 60, alto: 1.95, radio: 0.75, desc: 'La serpiente antigua. Herido, se enfurece y se teletransporta.' }
 };
 const ARMAS = [
   { id: 'hisopo', nombre: 'HISOPO', mun: 'agua', cad: 0.5 },
@@ -287,7 +296,16 @@ const SND = {
   nivel() { JS.organo([261.63, 329.63, 392, 523.25], 2.4, 0.2); JS.coro([523.25, 659.25, 783.99], 2.4, 0.12, { at: 0.4 }); [1046.5, 1318.5, 1568].forEach((f, i) => JS.campana(f, 2, 0.06, { ret: 0.3 + i * 0.25, eco: 0.8 })); },
   derrota() { JS.organo([196, 233.08, 293.66], 2.2, 0.16); JS.timbal(65, { vol: 0.45 }); },
   cambio() { JS.E.clic(1); JS.E.soplo(0.25, 0.08, 600, 1500, { ret: 0.04 }); },
-  pisada() { JS.E.paso(0.45, { eco: 0.5 }); }
+  pisada() { JS.E.paso(0.45, { eco: 0.5 }); },
+  // Grito de terror: voz demoníaca aguda + chillido + golpe grave
+  grito(x, y, tipo) { const v = volDist(x, y), pan = panDe(x, y), f = (VOZ[tipo] || 100) * 2.4; vozDemonio(f, 0.9, 0.2 * v, pan); JS.osc({ f: f * 3, f2: f * 1.6, dur: 0.7, vol: 0.06 * v, tipo: 'sawtooth', coro: [-40, 35], filtro: { tipo: 'bandpass', f: 2400, q: 2 }, vib: [30, 80], pan, eco: 0.5 }); JS.osc({ f: 70, f2: 35, dur: 0.6, vol: 0.25 * v, eco: 0.3 }); },
+  baba(x, y) { const v = volDist(x, y), pan = panDe(x, y); JS.ruido({ dur: 0.45, vol: 0.2 * v, f: 500, f2: 1400, tipo: 'bandpass', q: 3, pan, eco: 0.3 }); JS.osc({ f: 120, f2: 60, dur: 0.4, vol: 0.1 * v, tipo: 'sawtooth', filtro: { f: 400 }, pan }); },
+  temblor(x, y) { const v = volDist(x, y); JS.E.golpe(1.8 * v); JS.ruido({ dur: 1.4, vol: 0.3 * v, f: 220, f2: 60, tipo: 'lowpass', eco: 0.6 }); JS.vibrar([60, 30, 90]); },
+  robo(x, y) { const v = volDist(x, y), pan = panDe(x, y); for (let i = 0; i < 6; i++) JS.E.moneda(10 - i, { ret: i * 0.05, pan }); vozDemonio(240, 0.5, 0.1 * v, pan); },
+  teletransporte(x, y) { const v = volDist(x, y), pan = panDe(x, y); JS.E.soplo(0.5, 0.2 * v, 3000, 200, { pan }); JS.osc({ f: 900, f2: 120, dur: 0.4, vol: 0.06 * v, tipo: 'sine', pan, eco: 0.6 }); },
+  esquivar() { JS.E.soplo(0.25, 0.22, 600, 3400); JS.E.paso(1.2); },
+  escudoFe() { JS.coro([523.25, 659.25, 783.99, 1046.5], 2.6, 0.14, { at: 0.06 }); JS.campana(1568, 1.5, 0.08, { eco: 0.7 }); JS.vibrar(30); },
+  bloqueo() { JS.campana(2093 + rnd() * 400, 0.5, 0.07, { razon: 1.5, indice: 1.2 }); JS.E.clic(1); }
 };
 window.__SND = SND;
 /* =====================================================================
@@ -467,175 +485,257 @@ const TEMAS = {
   abismo: { muro: M.roca, muro2: M.infierno, salaPiso: 3, pasilloPiso: 2, techo: 2, amb: [0.16, 0.06, 0.07], niebla: [16, 3, 6], dens: 0.08, vitral: false }
 };
 
-/* ---------- Figuras de los pecados ---------- */
-function sombraSuelo(g, cx, y, rx) { g.fillStyle = 'rgba(0,0,0,.4)'; elipse(g, cx, y, rx, rx * 0.16); }
+/* ---------- Figuras de los pecados (estilo de terror) ---------- */
+function sombraSuelo(g, cx, y, rx) { g.fillStyle = 'rgba(0,0,0,.5)'; elipse(g, cx, y, rx, rx * 0.16); }
+// Humo oscuro que sale de los pies
+function humoBase(g, cx, y, ancho, f, color) {
+  for (let i = 0; i < 18; i++) {
+    const a = i * 2.39 + f * 0.6, x = cx + Math.sin(a) * ancho * (0.3 + (i % 5) * 0.15), yy = y - (i % 6) * 4 - Math.abs(Math.cos(a)) * 6;
+    g.fillStyle = color || `rgba(10,4,14,${0.18 + (i % 3) * 0.08})`; elipse(g, x, yy, 7 + (i % 4) * 3, 4 + (i % 3) * 2);
+  }
+}
+// Piel con manchas, venas y grietas
+function pielEnferma(g, cx, cy, rx, ry, manchas, venas) {
+  g.save(); g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); g.clip();
+  for (let i = 0; i < 26; i++) { g.fillStyle = manchas; elipse(g, cx + (hash(i, 1) - 0.5) * rx * 2, cy + (hash(i, 2) - 0.5) * ry * 2, 2 + hash(i, 3) * 6, 1.5 + hash(i, 4) * 4); }
+  g.strokeStyle = venas; g.lineWidth = 1;
+  for (let i = 0; i < 7; i++) { g.beginPath(); let x = cx + (hash(i, 5) - 0.5) * rx * 1.6, y = cy + (hash(i, 6) - 0.5) * ry * 1.6; g.moveTo(x, y); for (let k = 0; k < 4; k++) { x += (hash(i, k + 7) - 0.5) * 14; y += (hash(i, k + 11) - 0.3) * 10; g.lineTo(x, y); } g.stroke(); }
+  g.restore();
+}
+// Ojo que brilla en la oscuridad
+function ojoMalo(g, gl, x, y, r, iris, pupila, alargado) {
+  g.fillStyle = '#050205'; elipse(g, x, y, r * 1.5, r * 1.15);
+  for (const ctx of [g, gl]) { ctx.fillStyle = radial(ctx, x, y, 0, x, y, r, [[0, '#ffffff'], [0.35, iris], [1, 'rgba(0,0,0,0)']]); elipse(ctx, x, y, r, r * 0.85); }
+  gl.fillStyle = radial(gl, x, y, 0, x, y, r * 2.6, [[0, iris], [1, 'rgba(0,0,0,0)']]); elipse(gl, x, y, r * 2.6, r * 2);
+  g.fillStyle = pupila || '#000'; if (alargado) elipse(g, x, y, r * 0.18, r * 0.75); else elipse(g, x, y, r * 0.28, r * 0.28);
+}
+function dientes(g, x0, x1, y, n, largo, haciaAbajo, color) {
+  g.fillStyle = color || '#e8dcc0';
+  const paso = (x1 - x0) / n;
+  for (let i = 0; i < n; i++) { const x = x0 + i * paso, l = largo * (0.6 + hash(i, n) * 0.6); g.beginPath(); g.moveTo(x, y); g.lineTo(x + paso / 2, y + (haciaAbajo ? l : -l)); g.lineTo(x + paso, y); g.fill(); }
+}
+function garra(g, x, y, ang, largo, color) {
+  g.strokeStyle = color || '#d8d0b8'; g.lineWidth = 1.6; g.lineCap = 'round';
+  for (let k = -1; k <= 1; k++) { const a = ang + k * 0.35; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + Math.cos(a) * largo * 0.6, y + Math.sin(a) * largo * 0.6 - 2, x + Math.cos(a + 0.3) * largo, y + Math.sin(a + 0.3) * largo); g.stroke(); }
+}
 const PINTORES = {
+  // Pereza: un cadáver hinchado y encadenado que arrastra los brazos, con la boca colgando
   pereza(g, gl, pose, f) {
     const t = (f / 4) * Math.PI * 2, at = pose === 'ataque';
-    sombraSuelo(g, 64, 122, 46);
-    g.fillStyle = 'rgba(120,170,110,.35)'; elipse(g, 64, 121, 50, 7);
-    const sq = at ? 1.06 : 1 + Math.sin(t) * 0.035;
-    const cuerpo = radial(g, 48, 70, 6, 64, 88, 64, [[0, '#b4bfdf'], [0.45, '#6e7ba2'], [0.85, '#363e5e'], [1, '#1d2236']]);
-    g.fillStyle = '#3c4568';
-    elipse(g, 22, 96 + Math.sin(t) * 2, 10, 17, 0.35); elipse(g, 106, 96 - Math.sin(t) * 2, 10, 17, -0.35);
-    g.fillStyle = cuerpo; elipse(g, 64, 88 + (1 - sq) * 18, 46 * sq, 36 / sq);
-    g.fillStyle = radial(g, 54, 38, 4, 62, 48, 36, [[0, '#c0c9e6'], [0.5, '#7884aa'], [1, '#2a3150']]); elipse(g, 64, 48 + Math.sin(t) * 1.5, 31, 25);
-    g.fillStyle = 'rgba(210,220,250,.16)'; elipse(g, 58, 92, 26, 17);
-    g.strokeStyle = 'rgba(20,25,45,.4)'; g.lineWidth = 2; g.beginPath(); g.arc(64, 84, 30, 0.3, Math.PI - 0.3); g.stroke();
+    sombraSuelo(g, 64, 123, 48);
+    humoBase(g, 64, 124, 46, f, 'rgba(40,60,30,.22)');
+    const resp = Math.sin(t) * 2;
+    // Brazos largos que se arrastran
+    g.strokeStyle = '#3a4234'; g.lineWidth = 8; g.lineCap = 'round';
     for (const l of [-1, 1]) {
-      const x = 64 + l * 12, y = 45;
-      g.fillStyle = '#f2e9b0'; elipse(g, x, y, 7, 5);
-      g.fillStyle = '#1a1020'; elipse(g, x, y + 2, 2.4, 2.4);
-      gl.fillStyle = 'rgba(255,230,120,.8)'; elipse(gl, x, y + 1.5, 4, 2.2);
-      g.fillStyle = '#56618a'; g.beginPath(); g.ellipse(x, y - 0.5, 8, 6.5, 0, Math.PI, 0); g.fill();
-      g.fillStyle = 'rgba(40,40,70,.5)'; elipse(g, x, y + 6, 6, 1.5);
+      const mx = 64 + l * (at ? 52 : 44), my = at ? 40 + resp : 118;
+      g.beginPath(); g.moveTo(64 + l * 30, 66); g.quadraticCurveTo(64 + l * 52, 84, mx, my); g.stroke();
+      garra(g, mx, my, at ? -Math.PI / 2 + l * 0.4 : Math.PI / 2 - l * 0.3, 12, '#c8c4a8');
     }
-    const boca = at ? 15 : 7 + Math.sin(t) * 2;
-    g.fillStyle = '#1a0c14'; elipse(g, 64, 64, 10 + boca * 0.35, boca);
-    g.fillStyle = '#c45a7a'; elipse(g, 64, 64 + boca * 0.55, 7, 4);
-    if (at) { g.fillStyle = '#efe6d0'; for (let i = -2; i <= 2; i++) { g.beginPath(); g.moveTo(64 + i * 5 - 2, 64 - boca + 1); g.lineTo(64 + i * 5, 64 - boca + 7); g.lineTo(64 + i * 5 + 2, 64 - boca + 1); g.fill(); } }
-    g.fillStyle = 'rgba(170,225,160,.85)'; elipse(g, 57, 66 + boca + 3 + f, 2.2, 3.5);
+    // Cuerpo hinchado
+    g.fillStyle = radial(g, 52, 62, 6, 64, 86, 56, [[0, '#8e9a7c'], [0.45, '#55624a'], [0.85, '#252c20'], [1, '#0e120c']]);
+    elipse(g, 64, 88 - resp * 0.5, 42 + resp * 0.4, 34);
+    pielEnferma(g, 64, 88, 42, 34, 'rgba(30,40,20,.35)', 'rgba(70,20,40,.45)');
+    // Cadenas que lo atan
+    g.lineWidth = 2.6;
+    for (let i = 0; i < 9; i++) {
+      const x = 26 + i * 9.5, y = 74 + Math.sin(i * 0.8) * 6 + i * 2.2;
+      g.strokeStyle = '#2a2a30'; g.beginPath(); g.ellipse(x, y, 5, 3, 0.5, 0, Math.PI * 2); g.stroke();
+      g.strokeStyle = 'rgba(200,200,210,.45)'; g.beginPath(); g.ellipse(x - 1, y - 1, 4, 2, 0.5, 3.6, 5.2); g.stroke();
+    }
+    // Cabeza caída, casi una calavera
+    const hy = 50 + resp;
+    g.fillStyle = radial(g, 58, hy - 8, 3, 64, hy, 28, [[0, '#a8b098'], [0.55, '#5c6652'], [1, '#1c2218']]);
+    elipse(g, 64, hy, 24, 26);
+    pielEnferma(g, 64, hy, 24, 26, 'rgba(20,30,15,.35)', 'rgba(90,30,40,.4)');
+    for (const l of [-1, 1]) { g.fillStyle = '#060406'; elipse(g, 64 + l * 10, hy - 4, 7.5, 9); ojoMalo(g, gl, 64 + l * 10, hy - 2, 2.6, '#d8ff7a'); }
+    g.fillStyle = '#060406'; g.beginPath(); g.moveTo(61, hy + 6); g.lineTo(64, hy + 1); g.lineTo(67, hy + 6); g.fill();
+    // Boca colgante hasta el pecho, con babas
+    const boca = at ? 26 : 16 + Math.sin(t) * 3;
+    g.fillStyle = '#0a0306'; elipse(g, 64, hy + 14 + boca * 0.5, 9 + (at ? 3 : 0), boca * 0.65);
+    dientes(g, 56, 72, hy + 12, 5, 5, true, '#cfc6a0');
+    dientes(g, 56, 72, hy + 14 + boca, 5, 4, false, '#a89e7c');
+    g.strokeStyle = 'rgba(190,230,150,.7)'; g.lineWidth = 1.4;
+    for (const dx of [-5, 2, 6]) { g.beginPath(); g.moveTo(64 + dx, hy + 14 + boca); g.quadraticCurveTo(64 + dx + 1, hy + 24 + boca + f * 2, 64 + dx, hy + 30 + boca + f * 3); g.stroke(); }
   },
+  // Soberbia: figura altísima con manto rasgado, máscara de porcelana rota y corona de espinas
   soberbia(g, gl, pose, f) {
     const t = (f / 4) * Math.PI * 2, at = pose === 'ataque';
-    sombraSuelo(g, 64, 123, 28);
+    sombraSuelo(g, 64, 124, 30);
+    humoBase(g, 64, 124, 30, f, 'rgba(40,10,50,.25)');
     const ond = Math.sin(t) * 3;
-    g.fillStyle = '#2a0f3a'; g.beginPath(); g.moveTo(42, 30); g.quadraticCurveTo(14 + ond, 80, 22 + ond, 124); g.lineTo(106 - ond, 124); g.quadraticCurveTo(114 - ond, 80, 86, 30); g.closePath(); g.fill();
-    g.fillStyle = lineal(g, 40, 0, 88, 0, [[0, '#3a1252'], [0.45, '#8a3ab8'], [0.6, '#6a2496'], [1, '#2a0c3c']]);
-    g.beginPath(); g.moveTo(48, 36); g.lineTo(36 + ond * 0.5, 124); g.lineTo(92 - ond * 0.5, 124); g.lineTo(80, 36); g.closePath(); g.fill();
-    g.fillStyle = '#e0b040'; g.fillRect(36, 117, 56, 5); g.fillRect(62, 40, 4, 80);
-    g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(52, 40, 4, 80);
-    g.fillStyle = '#e0b040'; g.beginPath(); g.moveTo(44, 34); g.quadraticCurveTo(64, 46, 84, 34); g.lineTo(80, 28); g.quadraticCurveTo(64, 38, 48, 28); g.fill();
-    const manoY = at ? 26 : 78 + Math.sin(t) * 2;
-    g.strokeStyle = '#5a1f80'; g.lineWidth = 9; g.lineCap = 'round';
-    g.beginPath(); g.moveTo(48, 42); g.lineTo(32, manoY); g.stroke();
-    g.beginPath(); g.moveTo(80, 42); g.lineTo(90, 76); g.stroke();
-    g.fillStyle = '#e8d6e8'; elipse(g, 32, manoY, 4.5, 4.5); elipse(g, 90, 77, 4.5, 4.5);
-    g.strokeStyle = '#d9a632'; g.lineWidth = 3; g.beginPath(); g.moveTo(32, manoY + 26); g.lineTo(32, manoY - 18); g.stroke();
-    for (const ctx of [g, gl]) { ctx.fillStyle = radial(ctx, 32, manoY - 22, 1, 32, manoY - 22, at ? 14 : 8, [[0, '#ffffff'], [0.4, '#ff6ad0'], [1, 'rgba(255,60,200,0)']]); elipse(ctx, 32, manoY - 22, at ? 14 : 8, at ? 14 : 8); }
-    g.fillStyle = radial(g, 60, 22, 2, 64, 26, 16, [[0, '#fbf2f8'], [0.6, '#cdb6d2'], [1, '#7a5f84']]); elipse(g, 64, 26, 11, 14);
-    g.strokeStyle = '#3a2040'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(54, 21); g.lineTo(61, 23); g.moveTo(74, 21); g.lineTo(67, 23); g.stroke();
-    g.beginPath(); g.moveTo(59, 34); g.quadraticCurveTo(64, 36, 70, 33); g.stroke();
-    for (const ctx of [g, gl]) { ctx.fillStyle = '#ff4d9a'; elipse(ctx, 58.5, 25.5, 2.6, 1.3); elipse(ctx, 69.5, 25.5, 2.6, 1.3); }
-    g.fillStyle = '#f2c240';
-    g.beginPath(); g.moveTo(51, 15); for (let i = 0; i <= 5; i++) { g.lineTo(51 + i * 5.2, i % 2 ? 1 : 9); } g.lineTo(77, 15); g.closePath(); g.fill();
-    g.fillStyle = '#d63a5a'; elipse(g, 64, 11, 2.2, 2.2); g.fillStyle = '#3a8ad6'; elipse(g, 56, 12, 1.6, 1.6); elipse(g, 72, 12, 1.6, 1.6);
+    // Manto negro y morado, con jirones abajo
+    g.fillStyle = lineal(g, 30, 0, 98, 0, [[0, '#0c0412'], [0.45, '#3a1250'], [0.6, '#24093a'], [1, '#08020c']]);
+    g.beginPath(); g.moveTo(46, 30); g.quadraticCurveTo(18 + ond, 78, 24 + ond, 116);
+    for (let i = 0; i <= 8; i++) g.lineTo(24 + ond + i * 10 - ond * (i / 8) * 2, 116 + (i % 2 ? 9 : -2) + Math.sin(t + i) * 3);
+    g.quadraticCurveTo(112 - ond, 78, 82, 30); g.closePath(); g.fill();
+    g.strokeStyle = 'rgba(200,120,255,.18)'; g.lineWidth = 1; for (let i = 0; i < 6; i++) { g.beginPath(); g.moveTo(50 + i * 5, 40); g.lineTo(40 + i * 9 + ond, 112); g.stroke(); }
+    g.fillStyle = '#c9a03a'; g.fillRect(60, 40, 3, 70);
+    // Brazos esqueléticos con garras; uno sostiene el cetro
+    const manoY = at ? 22 : 76 + Math.sin(t) * 2;
+    g.strokeStyle = '#1a0824'; g.lineWidth = 7; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(48, 42); g.lineTo(28, manoY); g.stroke();
+    g.beginPath(); g.moveTo(80, 42); g.quadraticCurveTo(100, 60, 96, at ? 50 : 84); g.stroke();
+    g.fillStyle = '#d8cfd8'; elipse(g, 28, manoY, 3.5, 4);
+    garra(g, 96, at ? 50 : 84, at ? -0.6 : 1.2, 14, '#e8dde8');
+    g.strokeStyle = '#3a2a10'; g.lineWidth = 3; g.beginPath(); g.moveTo(28, manoY + 30); g.lineTo(28, manoY - 16); g.stroke();
+    for (const ctx of [g, gl]) { ctx.fillStyle = radial(ctx, 28, manoY - 20, 0, 28, manoY - 20, at ? 16 : 9, [[0, '#ffffff'], [0.35, '#ff3ad8'], [1, 'rgba(255,40,200,0)']]); elipse(ctx, 28, manoY - 20, at ? 16 : 9, at ? 16 : 9); }
+    // Capucha y máscara de porcelana agrietada
+    g.fillStyle = '#0a030e'; g.beginPath(); g.moveTo(40, 40); g.quadraticCurveTo(42, 2, 64, 4); g.quadraticCurveTo(86, 2, 88, 40); g.closePath(); g.fill();
+    g.fillStyle = radial(g, 60, 18, 2, 64, 24, 18, [[0, '#ffffff'], [0.6, '#d8d0d4'], [1, '#7a6a72']]); elipse(g, 64, 24, 12, 16);
+    g.strokeStyle = '#2a1a22'; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(66, 9); g.lineTo(62, 18); g.lineTo(68, 24); g.lineTo(63, 32); g.lineTo(66, 39); g.stroke();
+    g.beginPath(); g.moveTo(58, 34); g.quadraticCurveTo(64, at ? 40 : 37, 70, 34); g.stroke();
+    for (const l of [-1, 1]) { g.fillStyle = '#000'; elipse(g, 64 + l * 5, 22, 3.6, 2.2, l * 0.3); ojoMalo(g, gl, 64 + l * 5, 22, 1.8, '#ff3ad8'); }
+    gl.fillStyle = 'rgba(255,40,180,.6)'; g.fillStyle = 'rgba(120,0,40,.9)'; for (const l of [-1, 1]) { g.fillRect(64 + l * 5 - 0.6, 24, 1.2, 8); gl.fillRect(64 + l * 5 - 0.6, 24, 1.2, 6); }
+    // Corona de espinas negras con oro
+    g.fillStyle = '#120812';
+    for (let i = 0; i < 9; i++) { const x = 46 + i * 4.5; g.beginPath(); g.moveTo(x - 2, 10); g.lineTo(x + (i - 4) * 0.8, -2 - (i % 2) * 6 - (i === 4 ? 6 : 0)); g.lineTo(x + 2, 10); g.fill(); }
+    g.fillStyle = '#c9a03a'; g.fillRect(46, 8, 37, 3);
   },
+  // Envidia: criatura flaca que corre en cuatro patas, con cuatro ojos y una sonrisa de agujas
   envidia(g, gl, pose, f) {
     const t = (f / 4) * Math.PI * 2, at = pose === 'ataque';
-    sombraSuelo(g, 64, 123, 34);
-    const paso = Math.sin(t) * 7;
-    g.strokeStyle = '#2f6a24'; g.lineCap = 'round'; g.lineWidth = 9;
-    g.beginPath(); g.moveTo(52, 92); g.lineTo(42 + paso, 108); g.lineTo(46 + paso, 122); g.stroke();
-    g.beginPath(); g.moveTo(76, 92); g.lineTo(86 - paso, 108); g.lineTo(82 - paso, 122); g.stroke();
-    g.fillStyle = radial(g, 56, 76, 4, 64, 86, 34, [[0, '#a8ec74'], [0.5, '#4d9a36'], [1, '#173e18']]);
-    elipse(g, 64, 86, 27, 21, 0.1);
-    g.fillStyle = '#245a1c'; for (let i = 0; i < 5; i++) { g.beginPath(); g.moveTo(46 + i * 8, 70 - Math.abs(i - 2) * 2); g.lineTo(50 + i * 8, 58 - Math.abs(i - 2) * 3); g.lineTo(54 + i * 8, 70 - Math.abs(i - 2) * 2); g.fill(); }
-    const brazoX = at ? 0 : paso * 0.6;
-    g.strokeStyle = '#3d8a2e'; g.lineWidth = 7;
-    g.beginPath(); g.moveTo(42, 80); g.quadraticCurveTo(22 - brazoX, 92, at ? 18 : 26 - brazoX, at ? 70 : 116); g.stroke();
-    g.beginPath(); g.moveTo(86, 80); g.quadraticCurveTo(106 + brazoX, 92, at ? 110 : 102 + brazoX, at ? 70 : 116); g.stroke();
-    g.strokeStyle = '#e8e0b0'; g.lineWidth = 2;
-    for (const [x, y] of [[at ? 18 : 26 - brazoX, at ? 70 : 116], [at ? 110 : 102 + brazoX, at ? 70 : 116]]) for (let k = -1; k <= 1; k++) { g.beginPath(); g.moveTo(x, y); g.lineTo(x + k * 5, y + (at ? -7 : 6)); g.stroke(); }
-    g.fillStyle = radial(g, 54, 42, 4, 64, 52, 32, [[0, '#b4f080'], [0.5, '#56a63c'], [1, '#1c4a1c']]);
-    elipse(g, 64, 52, 27, 22);
-    g.beginPath(); g.moveTo(40, 46); g.lineTo(24, 30); g.lineTo(46, 40); g.fill(); g.beginPath(); g.moveTo(88, 46); g.lineTo(104, 30); g.lineTo(82, 40); g.fill();
-    for (const l of [-1, 1]) {
-      const x = 64 + l * 11;
-      g.fillStyle = '#f6f07a'; elipse(g, x, 47, 8, 10, l * 0.2);
-      gl.fillStyle = 'rgba(220,255,90,.9)'; elipse(gl, x, 47, 7, 9, l * 0.2);
-      g.fillStyle = '#0c1408'; elipse(g, x + l * 1, 48, 1.8, 7);
+    sombraSuelo(g, 64, 123, 38);
+    const paso = Math.sin(t) * 8;
+    // Patas delgadas con codos marcados
+    g.strokeStyle = '#2a3a24'; g.lineCap = 'round'; g.lineWidth = 5;
+    for (const [bx, s] of [[40, 1], [88, -1]]) {
+      g.beginPath(); g.moveTo(bx, 92); g.lineTo(bx - 12 * s + paso * s, 100); g.lineTo(bx - 6 * s + paso * s, 122); g.stroke();
+      garra(g, bx - 6 * s + paso * s, 122, Math.PI / 2, 7, '#d8d0a0');
     }
-    g.fillStyle = '#0c1408'; g.beginPath(); g.moveTo(44, 60); g.quadraticCurveTo(64, at ? 82 : 72, 84, 60); g.quadraticCurveTo(64, at ? 70 : 66, 44, 60); g.fill();
-    g.fillStyle = '#f2ecd0'; for (let i = 0; i < 7; i++) { const x = 47 + i * 5.5; g.beginPath(); g.moveTo(x, 61); g.lineTo(x + 2.5, at ? 69 : 65.5); g.lineTo(x + 5, 61); g.fill(); }
+    // Cuerpo encorvado con costillas y espinas
+    g.fillStyle = radial(g, 58, 78, 4, 64, 86, 38, [[0, '#6a7a58'], [0.5, '#2a3e22'], [1, '#060c05']]);
+    g.beginPath(); g.moveTo(30, 96); g.quadraticCurveTo(40, 62, 64, 62); g.quadraticCurveTo(92, 62, 100, 96); g.quadraticCurveTo(64, 104, 30, 96); g.fill();
+    g.strokeStyle = 'rgba(10,20,8,.6)'; g.lineWidth = 1.6; for (let i = 0; i < 6; i++) { g.beginPath(); g.arc(64, 98, 12 + i * 4.5, Math.PI * 1.15, Math.PI * 1.85); g.stroke(); }
+    g.fillStyle = '#0e1a0c'; for (let i = 0; i < 7; i++) { const x = 40 + i * 8; g.beginPath(); g.moveTo(x - 3, 66 - Math.abs(i - 3) * 1.5); g.lineTo(x + 1, 46 - (3 - Math.abs(i - 3)) * 4); g.lineTo(x + 4, 66 - Math.abs(i - 3) * 1.5); g.fill(); }
+    // Brazos largos hacia adelante
+    g.strokeStyle = '#3a5230'; g.lineWidth = 5;
+    for (const l of [-1, 1]) {
+      const hx = 64 + l * (at ? 50 : 34), hy = at ? 58 : 110;
+      g.beginPath(); g.moveTo(64 + l * 20, 74); g.quadraticCurveTo(64 + l * 44, 70, hx, hy); g.stroke();
+      garra(g, hx, hy, at ? -Math.PI / 2 + l * 0.6 : Math.PI / 2, 11, '#e8e0b0');
+    }
+    // Cabeza alargada con cuatro ojos
+    const hy = at ? 50 : 54;
+    g.fillStyle = radial(g, 58, hy - 8, 3, 64, hy, 26, [[0, '#7a8e64'], [0.6, '#2a4020'], [1, '#050a04']]);
+    g.beginPath(); g.ellipse(64, hy, 22, 18, 0, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.moveTo(44, hy - 6); g.lineTo(26, hy - 24); g.lineTo(48, hy - 14); g.fill(); g.beginPath(); g.moveTo(84, hy - 6); g.lineTo(102, hy - 24); g.lineTo(80, hy - 14); g.fill();
+    for (const [x, y, r] of [[55, hy - 8, 4.2], [73, hy - 8, 4.2], [50, hy - 1, 2.6], [78, hy - 1, 2.6]]) ojoMalo(g, gl, x, y, r, '#ffd000', '#400000', true);
+    // Sonrisa que parte la cara, llena de agujas
+    const abre = at ? 12 : 4 + Math.sin(t * 2) * 1.5;
+    g.fillStyle = '#060204'; g.beginPath(); g.moveTo(42, hy + 4); g.quadraticCurveTo(64, hy + 10 + abre * 1.6, 86, hy + 4); g.quadraticCurveTo(64, hy + 8, 42, hy + 4); g.fill();
+    dientes(g, 44, 84, hy + 5.5, 12, 4 + abre * 0.5, true, '#f2ecd0');
+    dientes(g, 48, 80, hy + 6 + abre * 1.3, 10, 3 + abre * 0.3, false, '#d8d0b0');
   },
+  // Ira: demonio enorme de roca negra con grietas de lava, cuernos y cabeza en llamas
   ira(g, gl, pose, f) {
     const t = (f / 4) * Math.PI * 2, at = pose === 'ataque';
-    sombraSuelo(g, 64, 123, 40);
+    sombraSuelo(g, 64, 124, 44);
     const paso = Math.sin(t) * 5;
-    g.fillStyle = '#5a1410';
-    g.beginPath(); g.moveTo(46, 90); g.lineTo(38 + paso, 122); g.lineTo(54 + paso, 122); g.lineTo(60, 92); g.fill();
-    g.beginPath(); g.moveTo(82, 90); g.lineTo(90 - paso, 122); g.lineTo(74 - paso, 122); g.lineTo(68, 92); g.fill();
-    g.fillStyle = radial(g, 54, 52, 6, 64, 66, 52, [[0, '#ff8a5a'], [0.4, '#c8321e'], [0.85, '#5c0e0a'], [1, '#2a0606']]);
-    g.beginPath(); g.moveTo(26, 44); g.quadraticCurveTo(64, 30, 102, 44); g.lineTo(88, 96); g.quadraticCurveTo(64, 104, 40, 96); g.closePath(); g.fill();
-    g.strokeStyle = 'rgba(40,0,0,.5)'; g.lineWidth = 2;
-    g.beginPath(); g.moveTo(64, 50); g.lineTo(64, 96); g.moveTo(52, 70); g.lineTo(76, 70); g.moveTo(52, 82); g.lineTo(76, 82); g.stroke();
-    g.beginPath(); g.arc(52, 56, 10, 0.2, 2.6); g.arc(76, 56, 10, 0.5, 2.9); g.stroke();
-    const brY = at ? -30 : 0;
-    g.fillStyle = '#a82a1a';
+    for (const ctx of [g, gl]) { ctx.fillStyle = radial(ctx, 64, 122, 0, 64, 122, 40, [[0, 'rgba(255,90,20,.45)'], [1, 'rgba(255,40,0,0)']]); elipse(ctx, 64, 122, 40, 8); }
+    g.fillStyle = '#140606';
+    g.beginPath(); g.moveTo(46, 90); g.lineTo(36 + paso, 122); g.lineTo(56 + paso, 122); g.lineTo(60, 92); g.fill();
+    g.beginPath(); g.moveTo(82, 90); g.lineTo(92 - paso, 122); g.lineTo(72 - paso, 122); g.lineTo(68, 92); g.fill();
+    // Torso de obsidiana
+    g.fillStyle = radial(g, 54, 54, 6, 64, 66, 54, [[0, '#4a2a26'], [0.4, '#22100e'], [1, '#060202']]);
+    g.beginPath(); g.moveTo(22, 42); g.quadraticCurveTo(64, 26, 106, 42); g.lineTo(90, 98); g.quadraticCurveTo(64, 106, 38, 98); g.closePath(); g.fill();
+    // Grietas de lava que brillan
+    const lava = (ctx, a) => { ctx.strokeStyle = `rgba(255,${120 + f * 20},30,${a})`; ctx.lineWidth = 2; for (let i = 0; i < 9; i++) { ctx.beginPath(); let x = 34 + hash(i, 1) * 60, y = 44 + hash(i, 2) * 50; ctx.moveTo(x, y); for (let k = 0; k < 4; k++) { x += (hash(i, k + 3) - 0.5) * 14; y += hash(i, k + 9) * 9; ctx.lineTo(x, y); } ctx.stroke(); } };
+    lava(g, 0.9); lava(gl, 1);
+    // Brazos enormes con puños
+    const brY = at ? -34 : 0;
     for (const l of [-1, 1]) {
-      g.beginPath(); g.moveTo(64 + l * 36, 46); g.quadraticCurveTo(64 + l * 54, 70 + brY, 64 + l * 46, at ? 18 : 92 + paso * l); g.lineTo(64 + l * 34, at ? 22 : 90 + paso * l); g.quadraticCurveTo(64 + l * 40, 66 + brY, 64 + l * 26, 52); g.fill();
-      g.fillStyle = '#7a1a10'; elipse(g, 64 + l * 40, at ? 16 : 96 + paso * l, 9, 8); g.fillStyle = '#a82a1a';
+      g.fillStyle = '#1c0a08';
+      g.beginPath(); g.moveTo(64 + l * 36, 44); g.quadraticCurveTo(64 + l * 58, 70 + brY, 64 + l * 48, at ? 14 : 92 + paso * l); g.lineTo(64 + l * 34, at ? 18 : 90 + paso * l); g.quadraticCurveTo(64 + l * 40, 64 + brY, 64 + l * 24, 50); g.fill();
+      g.fillStyle = radial(g, 64 + l * 41, (at ? 12 : 96) - 3, 1, 64 + l * 41, at ? 12 : 96, 12, [[0, '#5a2a20'], [1, '#100404']]); elipse(g, 64 + l * 41, at ? 12 : 96 + paso * l, 11, 10);
+      for (const ctx of [g, gl]) { ctx.fillStyle = 'rgba(255,110,20,.8)'; elipse(ctx, 64 + l * 41, (at ? 12 : 96 + paso * l) + 2, 6, 1.5); }
     }
-    g.fillStyle = radial(g, 60, 30, 2, 64, 34, 18, [[0, '#ff7a4a'], [1, '#6a0e0a']]); elipse(g, 64, 34, 15, 14);
-    g.fillStyle = lineal(g, 0, 10, 0, 30, [[0, '#f4e8c8'], [1, '#6a5a40']]);
-    for (const l of [-1, 1]) { g.beginPath(); g.moveTo(64 + l * 9, 26); g.quadraticCurveTo(64 + l * 26, 22, 64 + l * 24, 4); g.quadraticCurveTo(64 + l * 18, 18, 64 + l * 5, 22); g.fill(); }
+    // Cráneo con cuernos y llamas
+    g.fillStyle = radial(g, 60, 28, 2, 64, 32, 18, [[0, '#d8c8b0'], [0.6, '#6a5a4a'], [1, '#1a1008']]); elipse(g, 64, 32, 14, 15);
+    g.fillStyle = lineal(g, 0, 0, 0, 30, [[0, '#f0e6d0'], [1, '#2a1a10']]);
+    for (const l of [-1, 1]) { g.beginPath(); g.moveTo(64 + l * 9, 24); g.bezierCurveTo(64 + l * 30, 20, 64 + l * 34, 2, 64 + l * 22, -2); g.quadraticCurveTo(64 + l * 24, 14, 64 + l * 5, 20); g.fill(); }
     for (const ctx of [g, gl]) {
-      ctx.fillStyle = radial(ctx, 64, 20, 1, 64, 14, at ? 20 : 14, [[0, 'rgba(255,255,200,1)'], [0.4, 'rgba(255,170,40,.95)'], [1, 'rgba(255,60,0,0)']]);
-      ctx.beginPath(); ctx.moveTo(52, 24); ctx.quadraticCurveTo(54, 6 - f * 2, 60, 12); ctx.quadraticCurveTo(64, -2 + f, 68, 12); ctx.quadraticCurveTo(74, 6 - f, 76, 24); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = radial(ctx, 64, 18, 1, 64, 10, at ? 26 : 18, [[0, 'rgba(255,255,210,1)'], [0.35, 'rgba(255,150,30,.95)'], [1, 'rgba(255,40,0,0)']]);
+      ctx.beginPath(); ctx.moveTo(48, 26); ctx.quadraticCurveTo(50, 4 - f * 3, 58, 12); ctx.quadraticCurveTo(64, -6 + f * 2, 70, 12); ctx.quadraticCurveTo(78, 4 - f * 2, 80, 26); ctx.closePath(); ctx.fill();
     }
-    for (const ctx of [g, gl]) { ctx.fillStyle = '#ffe23a'; ctx.beginPath(); ctx.moveTo(53, 30); ctx.lineTo(62, 33); ctx.lineTo(54, 35); ctx.fill(); ctx.beginPath(); ctx.moveTo(75, 30); ctx.lineTo(66, 33); ctx.lineTo(74, 35); ctx.fill(); }
-    g.fillStyle = '#1a0404'; if (at) elipse(g, 64, 42, 7, 5); else g.fillRect(57, 40, 14, 3);
-    g.fillStyle = '#f4ecd8'; g.beginPath(); g.moveTo(58, 38); g.lineTo(60, 44); g.lineTo(62, 38); g.moveTo(66, 38); g.lineTo(68, 44); g.lineTo(70, 38); g.fill();
+    for (const l of [-1, 1]) { g.fillStyle = '#000'; elipse(g, 64 + l * 6, 30, 4.5, 4); ojoMalo(g, gl, 64 + l * 6, 30, 2.4, '#ffb020'); }
+    g.fillStyle = '#060000'; elipse(g, 64, 42, at ? 8 : 6, at ? 6 : 3);
+    if (at) for (const ctx of [g, gl]) { ctx.fillStyle = radial(ctx, 64, 44, 0, 64, 44, 10, [[0, '#ffffd0'], [0.5, '#ff7a10'], [1, 'rgba(255,40,0,0)']]); elipse(ctx, 64, 44, 8, 6); }
+    dientes(g, 57, 71, 39, 5, 3, true, '#e8dcc0');
   },
+  // Avaricia: espectro encapuchado con máscara de oro, manos de hueso y monedas que lo rodean
   avaricia(g, gl, pose, f) {
     const t = (f / 4) * Math.PI * 2, at = pose === 'ataque';
-    g.fillStyle = 'rgba(0,0,0,.25)'; elipse(g, 64, 124, 22, 3);
+    g.fillStyle = 'rgba(0,0,0,.3)'; elipse(g, 64, 124, 22, 3);
     const fl = Math.sin(t) * 3;
-    g.fillStyle = lineal(g, 30, 0, 98, 0, [[0, '#3a2810'], [0.5, '#8a6424'], [1, '#2a1c0a']]);
-    g.beginPath(); g.moveTo(64, 10 + fl); g.quadraticCurveTo(100, 20 + fl, 96, 70 + fl);
-    for (let i = 0; i <= 6; i++) g.lineTo(96 - i * 10.6, 108 + fl + (i % 2 ? 10 : 0) + Math.sin(t + i) * 3);
-    g.quadraticCurveTo(28, 20 + fl, 64, 10 + fl); g.fill();
-    g.fillStyle = '#e0b040'; g.fillRect(36, 66 + fl, 56, 3);
-    g.fillStyle = '#0a0604'; elipse(g, 64, 36 + fl, 17, 19);
-    for (const ctx of [g, gl]) { ctx.fillStyle = '#ffd23a'; elipse(ctx, 57, 34 + fl, 3, 2); elipse(ctx, 71, 34 + fl, 3, 2); }
-    for (const ctx of [g, gl]) { ctx.fillStyle = '#f0c030'; ctx.beginPath(); ctx.moveTo(54, 44 + fl); ctx.quadraticCurveTo(64, at ? 56 : 50, 74, 44 + fl); ctx.quadraticCurveTo(64, 48 + fl, 54, 44 + fl); ctx.fill(); }
-    g.fillStyle = radial(g, 58, 78, 2, 64, 84, 18, [[0, '#a07a4a'], [1, '#4a3014']]); elipse(g, 64, 84 + fl, 15, 13);
-    g.fillStyle = '#3a2408'; g.fillRect(58, 70 + fl, 12, 4);
-    g.fillStyle = '#e8dcc0'; elipse(g, 48, 80 + fl, 6, 4); elipse(g, 80, 80 + fl, 6, 4);
-    g.strokeStyle = '#e8dcc0'; g.lineWidth = 1.5; for (let k = 0; k < 3; k++) { g.beginPath(); g.moveTo(52 + k * 2, 80 + fl); g.lineTo(56 + k * 2, 86 + fl); g.stroke(); g.beginPath(); g.moveTo(76 - k * 2, 80 + fl); g.lineTo(72 - k * 2, 86 + fl); g.stroke(); }
-    for (let k = 0; k < 4; k++) {
-      const a = t + k * (Math.PI / 2), x = 64 + Math.cos(a) * 40, y = 64 + Math.sin(a) * 12 + fl;
-      for (const ctx of [g, gl]) { ctx.fillStyle = radial(ctx, x - 1, y - 1, 0.5, x, y, 6, [[0, '#fff6b0'], [0.6, '#f0b020'], [1, '#a06a00']]); elipse(ctx, x, y, 5 * Math.abs(Math.cos(a * 2)) + 1.5, 5); }
+    // Túnica podrida con jirones
+    g.fillStyle = lineal(g, 30, 0, 98, 0, [[0, '#120c04'], [0.5, '#3a2a0e'], [1, '#0c0802']]);
+    g.beginPath(); g.moveTo(64, 8 + fl); g.quadraticCurveTo(102, 18 + fl, 98, 68 + fl);
+    for (let i = 0; i <= 8; i++) g.lineTo(98 - i * 8.5, 104 + fl + (i % 2 ? 14 : 0) + Math.sin(t + i) * 4);
+    g.quadraticCurveTo(26, 18 + fl, 64, 8 + fl); g.fill();
+    g.strokeStyle = '#a07a20'; g.lineWidth = 2; g.beginPath(); g.moveTo(40, 64 + fl); g.quadraticCurveTo(64, 72 + fl, 88, 64 + fl); g.stroke();
+    // Rostro: calavera dorada dentro de la capucha
+    g.fillStyle = '#030201'; elipse(g, 64, 36 + fl, 18, 21);
+    g.fillStyle = radial(g, 60, 30 + fl, 1, 64, 36 + fl, 14, [[0, '#fff0a0'], [0.5, '#c9900e'], [1, '#4a3000']]); elipse(g, 64, 38 + fl, 11, 13);
+    for (const l of [-1, 1]) { g.fillStyle = '#000'; elipse(g, 64 + l * 4.5, 35 + fl, 3.2, 3.6); ojoMalo(g, gl, 64 + l * 4.5, 35.5 + fl, 1.4, '#fff060'); }
+    g.fillStyle = '#000'; g.beginPath(); g.moveTo(62.5, 42 + fl); g.lineTo(64, 39 + fl); g.lineTo(65.5, 42 + fl); g.fill();
+    dientes(g, 58, 70, 45 + fl, 6, 3, true, '#e8c870');
+    // Manos de hueso con anillos
+    const ab = at ? -16 : 0;
+    for (const l of [-1, 1]) {
+      const hx = 64 + l * (at ? 40 : 30), hy = 82 + fl + ab;
+      g.strokeStyle = '#d8ccb0'; g.lineWidth = 2.4; g.beginPath(); g.moveTo(64 + l * 18, 64 + fl); g.lineTo(hx, hy); g.stroke();
+      garra(g, hx, hy, at ? -Math.PI / 2 + l * 0.5 : Math.PI / 2 - l * 0.2, 10, '#e8dcc0');
+      for (const ctx of [g, gl]) { ctx.fillStyle = '#ffd040'; elipse(ctx, hx, hy + 1, 2, 2); }
     }
-    if (at) for (const ctx of [g, gl]) { ctx.fillStyle = radial(ctx, 64, 84, 2, 64, 84, 26, [[0, 'rgba(255,230,120,.9)'], [1, 'rgba(255,200,60,0)']]); elipse(ctx, 64, 84 + fl, 26, 26); }
+    // Monedas malditas que orbitan
+    for (let k = 0; k < 6; k++) {
+      const a = t + k * (Math.PI / 3), x = 64 + Math.cos(a) * 46, y = 70 + Math.sin(a) * 14 + fl;
+      for (const ctx of [g, gl]) { ctx.fillStyle = radial(ctx, x - 1, y - 1, 0.5, x, y, 6, [[0, '#fff6b0'], [0.6, '#e0a010'], [1, '#6a4000']]); elipse(ctx, x, y, 5 * Math.abs(Math.cos(a * 2)) + 1.2, 5); }
+    }
+    if (at) for (const ctx of [g, gl]) { ctx.fillStyle = radial(ctx, 64, 76, 2, 64, 76, 30, [[0, 'rgba(255,220,90,.85)'], [1, 'rgba(255,180,40,0)']]); elipse(ctx, 64, 76 + fl, 30, 30); }
   },
+  // El Tentador: la serpiente antigua, con cuernos, muchos ojos y fuego en la boca
   tentador(g, gl, pose, f) {
     const t = (f / 4) * Math.PI * 2, at = pose === 'ataque';
-    const W = 192;
-    g.fillStyle = 'rgba(0,0,0,.45)'; elipse(g, 96, 186, 80, 10);
+    g.fillStyle = 'rgba(0,0,0,.55)'; elipse(g, 96, 186, 84, 11);
+    humoBase(g, 96, 188, 80, f, 'rgba(30,0,10,.3)');
     const esc = (cx, cy, rx, ry) => {
-      g.fillStyle = radial(g, cx - rx * 0.3, cy - ry * 0.5, 2, cx, cy, rx, [[0, '#4a8a3a'], [0.55, '#1f4a20'], [1, '#08160a']]); elipse(g, cx, cy, rx, ry);
-      g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 1.5;
-      for (let i = -rx + 6; i < rx - 4; i += 9) { g.beginPath(); g.arc(cx + i, cy - ry * 0.2, 5, 0, Math.PI); g.stroke(); }
-      g.fillStyle = 'rgba(200,220,120,.35)'; elipse(g, cx, cy + ry * 0.55, rx * 0.8, ry * 0.25);
+      g.fillStyle = radial(g, cx - rx * 0.3, cy - ry * 0.5, 2, cx, cy, rx, [[0, '#3a5a2a'], [0.55, '#122a12'], [1, '#030803']]); elipse(g, cx, cy, rx, ry);
+      g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = 1.5;
+      for (let i = -rx + 6; i < rx - 4; i += 8) { g.beginPath(); g.arc(cx + i, cy - ry * 0.2, 5, 0, Math.PI); g.stroke(); }
+      for (const ctx of [g, gl]) { ctx.fillStyle = 'rgba(255,60,20,.35)'; elipse(ctx, cx, cy + ry * 0.55, rx * 0.7, ry * 0.18); }
     };
-    esc(96, 172, 82, 16); esc(70, 156, 56, 14); esc(124, 150, 52, 13);
+    esc(96, 172, 84, 16); esc(68, 156, 58, 14); esc(126, 150, 54, 13);
     const ond = Math.sin(t) * 6;
     g.lineCap = 'round';
-    g.strokeStyle = '#123a14'; g.lineWidth = 34; g.beginPath(); g.moveTo(110, 148); g.bezierCurveTo(150 + ond, 110, 60 - ond, 90, 96 + ond * 0.5, 58); g.stroke();
-    g.strokeStyle = '#2f6a2a'; g.lineWidth = 26; g.beginPath(); g.moveTo(110, 148); g.bezierCurveTo(150 + ond, 110, 60 - ond, 90, 96 + ond * 0.5, 58); g.stroke();
-    g.strokeStyle = 'rgba(210,230,140,.45)'; g.lineWidth = 9; g.beginPath(); g.moveTo(104, 146); g.bezierCurveTo(140 + ond, 112, 66 - ond, 94, 92 + ond * 0.5, 62); g.stroke();
+    g.strokeStyle = '#061206'; g.lineWidth = 36; g.beginPath(); g.moveTo(110, 148); g.bezierCurveTo(150 + ond, 110, 60 - ond, 90, 96 + ond * 0.5, 58); g.stroke();
+    g.strokeStyle = '#1c3a18'; g.lineWidth = 28; g.beginPath(); g.moveTo(110, 148); g.bezierCurveTo(150 + ond, 110, 60 - ond, 90, 96 + ond * 0.5, 58); g.stroke();
+    g.strokeStyle = 'rgba(160,40,30,.5)'; g.lineWidth = 8; g.beginPath(); g.moveTo(104, 146); g.bezierCurveTo(140 + ond, 112, 66 - ond, 94, 92 + ond * 0.5, 62); g.stroke();
     const hx = 96 + ond * 0.5, hy = 46;
-    g.fillStyle = '#1a3a16';
-    for (let i = 0; i < 5; i++) { g.beginPath(); g.moveTo(hx - 20 + i * 10, hy - 18); g.lineTo(hx - 16 + i * 10, hy - 38 - (i === 2 ? 8 : 0)); g.lineTo(hx - 12 + i * 10, hy - 18); g.fill(); }
-    g.fillStyle = radial(g, hx - 10, hy - 14, 3, hx, hy, 40, [[0, '#6aa84a'], [0.5, '#2c5a26'], [1, '#0a1a0a']]);
-    g.beginPath(); g.moveTo(hx - 34, hy - 6); g.quadraticCurveTo(hx, hy - 34, hx + 34, hy - 6); g.lineTo(hx + 22, hy + (at ? 6 : 16)); g.quadraticCurveTo(hx, hy + (at ? 12 : 22), hx - 22, hy + (at ? 6 : 16)); g.closePath(); g.fill();
+    // Cuernos grandes
+    g.fillStyle = lineal(g, 0, 0, 0, 40, [[0, '#e8dcc0'], [1, '#2a1a10']]);
+    for (const l of [-1, 1]) { g.beginPath(); g.moveTo(hx + l * 16, hy - 16); g.bezierCurveTo(hx + l * 44, hy - 24, hx + l * 50, hy - 50, hx + l * 34, hy - 58); g.quadraticCurveTo(hx + l * 38, hy - 34, hx + l * 8, hy - 20); g.fill(); }
+    g.fillStyle = '#0c1c0a'; for (let i = 0; i < 5; i++) { g.beginPath(); g.moveTo(hx - 20 + i * 10, hy - 18); g.lineTo(hx - 16 + i * 10, hy - 36 - (i === 2 ? 8 : 0)); g.lineTo(hx - 12 + i * 10, hy - 18); g.fill(); }
+    g.fillStyle = radial(g, hx - 10, hy - 14, 3, hx, hy, 42, [[0, '#4a7a3a'], [0.5, '#16341a'], [1, '#020802']]);
+    g.beginPath(); g.moveTo(hx - 36, hy - 6); g.quadraticCurveTo(hx, hy - 36, hx + 36, hy - 6); g.lineTo(hx + 24, hy + (at ? 6 : 16)); g.quadraticCurveTo(hx, hy + (at ? 12 : 22), hx - 24, hy + (at ? 6 : 16)); g.closePath(); g.fill();
     if (at) {
-      g.fillStyle = '#2a0808'; g.beginPath(); g.moveTo(hx - 22, hy + 8); g.quadraticCurveTo(hx, hy + 44, hx + 22, hy + 8); g.closePath(); g.fill();
-      for (const ctx of [g, gl]) { ctx.fillStyle = radial(ctx, hx, hy + 22, 2, hx, hy + 22, 22, [[0, 'rgba(255,255,200,1)'], [0.4, 'rgba(255,140,30,.95)'], [1, 'rgba(255,40,0,0)']]); elipse(ctx, hx, hy + 22, 16, 14); }
-      g.fillStyle = '#f2ecd0'; for (const l of [-1, 1]) { g.beginPath(); g.moveTo(hx + l * 16, hy + 9); g.lineTo(hx + l * 12, hy + 24); g.lineTo(hx + l * 9, hy + 10); g.fill(); }
+      g.fillStyle = '#1a0202'; g.beginPath(); g.moveTo(hx - 24, hy + 8); g.quadraticCurveTo(hx, hy + 48, hx + 24, hy + 8); g.closePath(); g.fill();
+      for (const ctx of [g, gl]) { ctx.fillStyle = radial(ctx, hx, hy + 24, 2, hx, hy + 24, 26, [[0, 'rgba(255,255,200,1)'], [0.4, 'rgba(255,120,20,.95)'], [1, 'rgba(255,30,0,0)']]); elipse(ctx, hx, hy + 24, 18, 16); }
+      dientes(g, hx - 20, hx + 20, hy + 9, 8, 9, true, '#f2ecd0');
     } else {
-      g.fillStyle = '#2a3a1a'; g.beginPath(); g.moveTo(hx - 20, hy + 14); g.quadraticCurveTo(hx, hy + 24, hx + 20, hy + 14); g.quadraticCurveTo(hx, hy + 19, hx - 20, hy + 14); g.fill();
+      dientes(g, hx - 20, hx + 20, hy + 14, 8, 6, true, '#e8dcc0');
       g.strokeStyle = '#d42a3a'; g.lineWidth = 2.5; const lt = 10 + Math.sin(t * 2) * 6;
       g.beginPath(); g.moveTo(hx, hy + 19); g.lineTo(hx, hy + 19 + lt); g.lineTo(hx - 4, hy + 25 + lt); g.moveTo(hx, hy + 19 + lt); g.lineTo(hx + 4, hy + 25 + lt); g.stroke();
     }
-    for (const ctx of [g, gl]) { for (const l of [-1, 1]) { ctx.fillStyle = '#ff2a2a'; ctx.beginPath(); ctx.ellipse(hx + l * 15, hy - 6, 7, 4, l * 0.35, 0, Math.PI * 2); ctx.fill(); } }
-    g.fillStyle = '#1a0000'; for (const l of [-1, 1]) elipse(g, hx + l * 15, hy - 6, 1.6, 4);
-    void W;
+    // Seis ojos rojos
+    for (const [dx, dy, r] of [[-16, -6, 4.5], [16, -6, 4.5], [-24, -14, 2.6], [24, -14, 2.6], [-8, -18, 2.2], [8, -18, 2.2]]) ojoMalo(g, gl, hx + dx, hy + dy, r, '#ff2020', '#000', true);
   }
 };
-const TAM_ENEMIGO = { tentador: 192 };
+const TAM_ENEMIGO = { tentador: 288 };
+const BASE_ENEMIGO = { tentador: 192 };
+
 function hash(x, y) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
 function disolver(fr, pasos) {
   const res = [];
@@ -659,9 +759,12 @@ function disolver(fr, pasos) {
 }
 const SPRITE_ENEMIGO = {};
 for (const tipo of Object.keys(PINTORES)) {
-  const tam = TAM_ENEMIGO[tipo] || 128;
-  const paso = [0, 1, 2, 3].map((f) => capturar(tam, tam, (g, gl) => PINTORES[tipo](g, gl, 'paso', f)));
-  const ataque = [0, 1].map((f) => capturar(tam, tam, (g, gl) => PINTORES[tipo](g, gl, 'ataque', f)));
+  const tam = TAM_ENEMIGO[tipo] || 192, k = tam / (BASE_ENEMIGO[tipo] || 128);
+  const b = BASE_ENEMIGO[tipo] || 128, red = tipo === 'avaricia' ? 1 : 0.88;
+  // Se dibuja un poco más pequeño, apoyado en el suelo, para que cuernos y coronas no se corten
+  const pinta = (pose, f) => capturar(tam, tam, (g, gl) => { for (const c of [g, gl]) { c.scale(k, k); c.translate(b / 2, b); c.scale(red, red); c.translate(-b / 2, -b); } PINTORES[tipo](g, gl, pose, f); });
+  const paso = [0, 1, 2, 3].map((f) => pinta('paso', f));
+  const ataque = [0, 1].map((f) => pinta('ataque', f));
   SPRITE_ENEMIGO[tipo] = { paso, ataque, muerte: disolver(paso[0], 6) };
 }
 
@@ -1029,8 +1132,9 @@ function generarNivel(n) {
 function armasDisponibles(n) { const a = ['hisopo']; for (let k = 0; k <= n; k++) if (NIVELES[k].arma && k < n) a.push(NIVELES[k].arma); return a; }
 function crearEnemigo(tipo, x, y) {
   const t = TIPOS[tipo];
-  const vida = t.vida * DIF.vida;
-  return { tipo, x, y, vida, vidaMax: vida, estado: 'dormido', t: 0, cool: 0.6 + rnd() * 1.2, flash: 0, muerteT: 0, fase: rnd() * 10, dirA: rnd() * 6.28, dirT: 0, ataqueT: 0, dashX: 0, dashY: 0, dashT: 0, zig: rnd() * 6.28, fasesJefe: 0, invocT: 8, ultimoVisto: 0 };
+  const mayor = tipo !== 'tentador' && rnd() < 0.07 + nivel * 0.035;
+  const vida = t.vida * DIF.vida * (mayor ? 2.3 : 1);
+  return { tipo, x, y, vida, vidaMax: vida, mayor, mult: mayor ? 1.4 : 1, cool2: 2 + rnd() * 3, furia: false, huyeT: 0, estado: 'dormido', t: 0, cool: 0.6 + rnd() * 1.2, flash: 0, muerteT: 0, fase: rnd() * 10, dirA: rnd() * 6.28, dirT: 0, ataqueT: 0, dashX: 0, dashY: 0, dashT: 0, zig: rnd() * 6.28, fasesJefe: 0, invocT: 8, ultimoVisto: 0 };
 }
 function distancias(ox, oy, conPuertaOro) {
   const d = new Int16Array(T * T).fill(-1);
@@ -1194,6 +1298,26 @@ function sinMunicion() {
   const orden = ['incensario', 'cruz', 'rosario', 'hisopo'];
   for (const id of orden) if (J.armas.includes(id) && (id === 'hisopo' || J.mun[armaDef(id).mun] > 0)) { cambiarArma(id); break; }
 }
+let pedirEsquivar = false, pedirFe = false;
+function esquivar(avance, lado) {
+  if (J.esqCD > 0 || estado !== 'jugando') return;
+  const ca = Math.cos(J.a), sa = Math.sin(J.a);
+  let dx = ca * avance - sa * lado, dy = sa * avance + ca * lado;
+  if (Math.hypot(dx, dy) < 0.1) { dx = -ca; dy = -sa; } // sin dirección: salta hacia atrás
+  const l = Math.hypot(dx, dy); J.dashX = dx / l; J.dashY = dy / l;
+  J.dashT = 0.2; J.invulT = 0.35; J.esqCD = 2.2; J.roll += (lado || 0) * 0.12;
+  SND.esquivar(); actualizarBotones();
+}
+function escudoFe() {
+  if (J.feCD > 0 || estado !== 'jugando') return;
+  J.feT = 2.6; J.feCD = 12;
+  explotar(J.x, J.y, 'oro', 30, 0.5);
+  SND.escudoFe(); aviso('Escudo de la fe'); actualizarBotones();
+}
+function actualizarBotones() {
+  const pinta = (id, cd, max) => { const b = $(id); if (!b) return; b.style.setProperty('--cd', cd > 0 ? (cd / max * 360).toFixed(0) + 'deg' : '0deg'); b.classList.toggle('espera', cd > 0); };
+  pinta('b-esquivar', J.esqCD, 2.2); pinta('b-fe', J.feCD, 12);
+}
 function superPoder() {
   if (estado !== 'jugando' || poder < 3) return;
   poder = 0;
@@ -1214,6 +1338,9 @@ function superPoder() {
 }
 function danoJugador(d, ox, oy) {
   if (estado !== 'jugando') return;
+  // Escudo de la fe: no entra ningún daño; esquivar da un instante de protección
+  if (J.feT > 0) { explotar(ox != null ? (ox + J.x) / 2 : J.x, oy != null ? (oy + J.y) / 2 : J.y, 'oro', 10, 0.6); SND.bloqueo(); return; }
+  if (J.invulT > 0) return;
   d *= DIF.dano;
   if (J.escudo > 0) { const abs = Math.min(J.escudo, d * 0.5); J.escudo -= abs; d -= abs; }
   J.vida = Math.max(0, J.vida - d);
@@ -1224,7 +1351,21 @@ function danoJugador(d, ox, oy) {
   if (J.vida <= 0) perder();
   actualizarHud();
 }
-function despertar(e) { if (e.estado === 'dormido') { e.estado = 'caza'; SND.gruñido(e.x, e.y, e.tipo); } }
+function despertar(e) {
+  if (e.estado !== 'dormido') return;
+  e.estado = 'caza'; SND.gruñido(e.x, e.y, e.tipo);
+  const d = Math.hypot(e.x - J.x, e.y - J.y);
+  if ((d < 5.5 || e.mayor) && tiempoJuego - ultimoSusto > 6) { ultimoSusto = tiempoJuego; susto(e); }
+}
+/* Susto: grito, pantalla roja y sacudida cuando un pecado te descubre de cerca */
+let ultimoSusto = -10;
+function susto(e) {
+  SND.grito(e.x, e.y, e.tipo);
+  const v = $('miedo'); v.classList.remove('on'); void v.offsetWidth; v.classList.add('on');
+  J.sacudida = Math.max(J.sacudida, 0.45);
+  if (e.mayor) aviso('¡Un pecado mayor: ' + TIPOS[e.tipo].nombre + '!');
+  JS.vibrar([30, 40, 60]);
+}
 /* Dones del Espíritu: con más puntos misioneros, el misionero se vuelve más fuerte */
 const DONES = [
   { p: 250, n: 'Fortaleza I', d: '+10% de poder en las armas' }, { p: 700, n: 'Fe I', d: '+20 de salud máxima' },
@@ -1240,6 +1381,7 @@ function herir(e, d, sinPuntos) {
   if (e.muerto) return;
   d *= DON.poder;
   e.vida -= d; e.flash = 0.12;
+  if (e.tipo === 'soberbia' && e.vida > 0 && rnd() < 0.3 && e.cool2 < 2) { e.cool2 = 3; setTimeout(() => { if (!e.muerto) teletransportar(e, 3, 6); }, 120); }
   stats.aciertos++;
   marcarAcierto();
   despertar(e);
@@ -1259,7 +1401,7 @@ const VIRTUDES = {
 function matarEnemigo(e, sinPoder) {
   e.muerto = true; e.muerteT = 0; e.estado = 'muerto';
   if (!sinPoder) poder = Math.min(3, poder + 1);
-  const pts = Math.round(TIPOS[e.tipo].pts * DIF.pts);
+  const pts = Math.round(TIPOS[e.tipo].pts * DIF.pts * (e.mayor ? 2.5 : 1));
   stats.puntos += pts; S.puntos += pts; guardar();
   explotar(e.x, e.y, 'oro', e.tipo === 'tentador' ? 80 : 26, 0.45);
   explotar(e.x, e.y, 'azul', e.tipo === 'tentador' ? 40 : 12, 0.6);
@@ -1267,6 +1409,8 @@ function matarEnemigo(e, sinPoder) {
   sinPecados--;
   // Cada pecado vencido recuerda la virtud que lo derrota
   if (e.tipo !== 'tentador' && sinPecados > 0 && tiempoJuego - ultimaVirtud > 3) { ultimaVirtud = tiempoJuego; aviso(VIRTUDES[e.tipo]); }
+  if (e.robado) { const def = armaDef(J.arma); aviso('Recuperaste la munición robada'); for (const k in J.mun) if (J.mun[k] !== undefined && def.mun === k) J.mun[k] += e.robado; }
+  if (e.mayor) pickups.push({ tipo: 'caliz', x: e.x, y: e.y, ya: false });
   if (rnd() < 0.3 * DIF.ayudas && e.tipo !== 'tentador') pickups.push({ tipo: elegir(['hostia', 'agua', J.armas.includes('rosario') ? 'cuentas' : 'agua']), x: e.x, y: e.y, ya: false });
   if (e.tipo === 'tentador') { aviso('¡Cristo vence! El Tentador fue derrotado'); for (const o of enemigos) if (!o.muerto) matarEnemigo(o, true); $('jefe').hidden = true; }
   else if (sinPecados <= 0) aviso('¡Todos los pecados vencidos! Ve al Sagrario');
@@ -1298,8 +1442,51 @@ function lanzarProyectil(e, ang, vel, spr, dano, extra) {
   const p = Object.assign({ x: e.x + dx * 0.4, y: e.y + dy * 0.4, z: z0, vz: (OJO - 0.1 - z0) * vel / d, vx: dx * vel, vy: dy * vel, vida: 4, dano, mio: false, spr, tam: 0.14, luz: [1, 0.3, 0.6, 2] }, extra || {});
   proyectiles.push(p);
 }
-function ejecutarAtaque(e, cfg, d, ang) {
+/* Habilidades especiales de cada pecado */
+function habilidad(e, k, cfg, d, ang) {
   const v = DIF.vel;
+  if (k === 'baba') {
+    // Pereza escupe una baba que te vuelve lento
+    lanzarProyectil(e, ang, 4 * v, SPR.p.verde || SPR.oscuro, cfg.dano * 0.5, { tam: 0.22, lento: 2.2, g: 1.2, vz: 0.9, luz: [0.4, 1, 0.3, 1.8] });
+    SND.baba(e.x, e.y);
+  } else if (k === 'salto') {
+    // Envidia salta sobre ti desde lejos
+    e.estado = 'embestida'; e.dashT = 0.42; e.dashV = 10; e.dashX = Math.cos(ang); e.dashY = Math.sin(ang); e.golpeo = false;
+    SND.grito(e.x, e.y, 'envidia');
+    return;
+  } else if (k === 'temblor') {
+    // Ira golpea el suelo: onda expansiva
+    for (let q = 0; q < 40; q++) { const a = (q / 40) * Math.PI * 2; particulas.push({ x: e.x, y: e.y, z: 0.05, vx: Math.cos(a) * 5, vy: Math.sin(a) * 5, vz: 0.6, g: 2, vida: 0.6, max: 0.6, spr: SPR.p.rojo, tam: 0.1 }); }
+    explotar(e.x, e.y, 'rojo', 20, 0.1);
+    if (d < 2.8) { danoJugador(cfg.dano * 0.8, e.x, e.y); const l = d || 1; J.vx += (J.x - e.x) / l * 6; J.vy += (J.y - e.y) / l * 6; }
+    J.sacudida = Math.max(J.sacudida, d < 6 ? 0.7 : 0.3);
+    SND.temblor(e.x, e.y);
+  } else if (k === 'robo') {
+    // Avaricia te roba munición del arma que llevas y huye
+    const def = armaDef(J.arma);
+    if (def.mun && J.mun[def.mun] > 0) { const q = Math.ceil(J.mun[def.mun] * 0.3); J.mun[def.mun] -= q; e.robado = (e.robado || 0) + q; aviso('¡La avaricia te robó ' + q + ' de munición!'); }
+    else danoJugador(cfg.dano, e.x, e.y);
+    e.huyeT = 2.2; SND.robo(e.x, e.y); actualizarHud();
+  } else if (k === 'teletransporte') {
+    teletransportar(e, 3, 6);
+  }
+  e.estado = 'caza';
+}
+// Desaparece en humo y reaparece en otro lugar cerca de ti
+function teletransportar(e, dmin, dmax) {
+  for (let intento = 0; intento < 20; intento++) {
+    const a = rnd() * 6.28, r = dmin + rnd() * (dmax - dmin), x = J.x + Math.cos(a) * r, y = J.y + Math.sin(a) * r;
+    if (!puedeEn(x, y, TIPOS[e.tipo].radio * 0.7, e) || !visible(x, y, J.x, J.y)) continue;
+    explotar(e.x, e.y, 'sombra', 26, 0.6); SND.teletransporte(e.x, e.y);
+    e.x = x; e.y = y; explotar(x, y, 'sombra', 26, 0.6);
+    return true;
+  }
+  return false;
+}
+function ejecutarAtaque(e, cfg, d, ang) {
+  const v = DIF.vel * (e.furia ? 1.3 : 1);
+  cfg = e.mult !== 1 ? Object.assign({}, cfg, { dano: cfg.dano * e.mult }) : cfg;
+  if (e.especial) { const k = e.especial; e.especial = null; habilidad(e, k, cfg, d, ang); return; }
   if (cfg.ataque === 'cuerpo') {
     if (d < cfg.alcance + 0.25 && visible(e.x, e.y, J.x, J.y)) danoJugador(cfg.dano, e.x, e.y);
   } else if (cfg.ataque === 'triple') {
@@ -1309,7 +1496,7 @@ function ejecutarAtaque(e, cfg, d, ang) {
     for (const da of [-0.12, 0.12]) lanzarProyectil(e, ang + da, 3.6 * v, SPR.moneda, cfg.dano, { guia: 1.6, vida: 5, tam: 0.15, luz: [1, 0.8, 0.2, 1.8] });
     SND.disparoEnemigo(e.x, e.y);
   } else if (cfg.ataque === 'embestida') {
-    e.estado = 'embestida'; e.dashT = 0.75; e.dashX = Math.cos(ang); e.dashY = Math.sin(ang); e.golpeo = false;
+    e.estado = 'embestida'; e.dashT = 0.75; e.dashV = 7; e.dashX = Math.cos(ang); e.dashY = Math.sin(ang); e.golpeo = false;
     SND.gruñido(e.x, e.y, 'ira');
     return;
   } else if (cfg.ataque === 'jefe') {
@@ -1332,7 +1519,7 @@ function actualizarEnemigos(dt) {
     if (e.muerto) { e.muerteT += dt; continue; }
     const cfg = TIPOS[e.tipo];
     if (e.kx || e.ky) { const pesado = e.tipo === 'tentador' ? 0.15 : 1; mover(e, e.kx * dt * pesado, e.ky * dt * pesado, cfg.radio * 0.7); const fr = Math.exp(-dt * 7); e.kx *= fr; e.ky *= fr; if (Math.abs(e.kx) + Math.abs(e.ky) < 0.03) { e.kx = 0; e.ky = 0; } }
-    const vel = cfg.vel * DIF.vel;
+    const vel = cfg.vel * DIF.vel * (e.furia ? 1.35 : 1) * (e.mayor ? 1.1 : 1);
     const dx = J.x - e.x, dy = J.y - e.y, d = Math.hypot(dx, dy), ang = Math.atan2(dy, dx);
     e.fase += dt * (1 + vel);
     const ve = d < 14 && visible(e.x, e.y, J.x, J.y);
@@ -1354,14 +1541,37 @@ function actualizarEnemigos(dt) {
     }
     if (e.estado === 'embestida') {
       e.dashT -= dt;
-      const ok = mover(e, e.dashX * 7 * DIF.vel * dt, e.dashY * 7 * DIF.vel * dt, cfg.radio * 0.8);
-      if (!e.golpeo && d < cfg.radio + 0.45) { e.golpeo = true; danoJugador(cfg.dano, e.x, e.y); mover(J, e.dashX * 0.6, e.dashY * 0.6, 0.22); }
+      const ok = mover(e, e.dashX * (e.dashV || 7) * DIF.vel * dt, e.dashY * (e.dashV || 7) * DIF.vel * dt, cfg.radio * 0.8);
+      if (!e.golpeo && d < cfg.radio + 0.45) { e.golpeo = true; danoJugador(cfg.dano * e.mult, e.x, e.y); mover(J, e.dashX * 0.6, e.dashY * 0.6, 0.22); }
       if (e.dashT <= 0 || !ok) { e.estado = 'dolor'; e.t = ok ? 0.4 : 0.9; e.cool = cfg.cad; if (!ok) explotar(e.x + e.dashX * 0.4, e.y + e.dashY * 0.4, 'rojo', 10, 0.6); }
       continue;
     }
     // Caza
-    e.cool -= dt;
+    e.cool -= dt; e.cool2 -= dt;
+    if (!e.furia && e.tipo !== 'tentador' && e.vida < e.vidaMax * 0.45 && (e.tipo === 'ira' || e.mayor)) { e.furia = true; SND.grito(e.x, e.y, e.tipo); explotar(e.x, e.y, 'rojo', 18, 0.6); }
+    if (e.huyeT > 0) {
+      // Huye con lo que robó
+      e.huyeT -= dt;
+      const l = d || 1; mover(e, -dx / l * vel * 1.6 * dt, -dy / l * vel * 1.6 * dt, cfg.radio * 0.75);
+      continue;
+    }
+    if (ve && e.cool2 <= 0) {
+      let k = null;
+      if (e.tipo === 'pereza' && d > 2.4 && d < 7) k = 'baba';
+      else if (e.tipo === 'envidia' && d > 2 && d < 5.5) k = 'salto';
+      else if (e.tipo === 'ira' && d < 2.6) k = 'temblor';
+      else if (e.tipo === 'avaricia' && d < 1.5) k = 'robo';
+      else if (e.tipo === 'soberbia' && d < 3.5) k = 'teletransporte';
+      if (k) {
+        e.especial = k; e.estado = 'preparando'; e.t = (k === 'temblor' ? 0.75 : k === 'salto' ? 0.35 : 0.3) / DIF.vel;
+        e.cool2 = ({ baba: 4.5, salto: 3.5, temblor: 5, robo: 6, teletransporte: 4 }[k]) * (e.furia ? 0.65 : 1) * (0.8 + rnd() * 0.4) / DIF.vel;
+        if (k === 'temblor') SND.grito(e.x, e.y, 'ira');
+        continue;
+      }
+    }
     if (e.tipo === 'tentador') {
+      if (!e.furia && e.vida < e.vidaMax * 0.5) { e.furia = true; aviso('¡El Tentador se enfurece! Resiste con fe'); SND.grito(e.x, e.y, 'tentador'); J.sacudida = 0.8; }
+      if (e.furia) { e.tpT = (e.tpT || 6) - dt; if (e.tpT <= 0) { e.tpT = 6 + rnd() * 3; teletransportar(e, 4, 7); } }
       e.invocT -= dt;
       if (e.invocT <= 0 && enemigos.filter((o) => !o.muerto && o.tipo !== 'tentador').length < 5) {
         e.invocT = 11 / DIF.vel;
@@ -1438,6 +1648,13 @@ function actualizar(dt) {
   const tvx = (ca * avance - sa * lado) * velMax, tvy = (sa * avance + ca * lado) * velMax;
   const ka = 1 - Math.exp(-(avance || lado ? 11 : 9) * dt);
   J.vx += (tvx - J.vx) * ka; J.vy += (tvy - J.vy) * ka;
+  // Esquivar: un salto rápido hacia donde te mueves
+  J.esqCD = Math.max(0, (J.esqCD || 0) - dt); J.feCD = Math.max(0, (J.feCD || 0) - dt); J.feT = Math.max(0, (J.feT || 0) - dt); J.invulT = Math.max(0, (J.invulT || 0) - dt);
+  if (J.dashT > 0) { J.dashT -= dt; J.vx = J.dashX * 10; J.vy = J.dashY * 10; if (rnd() < 0.6) particulas.push({ x: J.x, y: J.y, z: 0.3 + rnd() * 0.4, vx: 0, vy: 0, vz: 0.3, g: 0, vida: 0.35, max: 0.35, spr: SPR.p.oro, tam: 0.06 }); }
+  if (pedirEsquivar) { pedirEsquivar = false; esquivar(avance, lado); }
+  if (pedirFe) { pedirFe = false; escudoFe(); }
+  if ((J.esqCD > 0 || J.feCD > 0) && Math.floor(tiempoJuego * 10) !== Math.floor((tiempoJuego - dt) * 10)) actualizarBotones();
+  $('fe').style.opacity = J.feT > 0 ? (0.75 + Math.sin(tiempoJuego * 12) * 0.25 * (J.feT < 0.8 ? 1 : 0.3)).toFixed(2) : '0';
   const ax = J.x, ay = J.y;
   mover(J, J.vx * dt, J.vy * dt, 0.22);
   if (Math.abs(J.x - ax) < Math.abs(J.vx * dt) * 0.5) J.vx *= 0.3;
@@ -1479,7 +1696,11 @@ function actualizar(dt) {
           if (!b.explota) { herir(e, b.dano); e.kx = (e.kx || 0) + b.vx * 0.05; e.ky = (e.ky || 0) + b.vy * 0.05; explotar(b.x, b.y, b.spr === SPR.gota ? 'azul' : 'oro', 6, b.z); SND.impacto(); }
           quitar = true; break;
         }
-      } else if (Math.hypot(J.x - b.x, J.y - b.y) < 0.32 && b.z < 0.95) { danoJugador(b.dano, b.x, b.y); explotar(b.x, b.y, 'sombra', 14, b.z); quitar = true; }
+      } else if (J.feT > 0 && Math.hypot(J.x - b.x, J.y - b.y) < 1.1) {
+        // El escudo de la fe devuelve los ataques a quien los lanzó
+        b.mio = true; b.vx = -b.vx * 1.3; b.vy = -b.vy * 1.3; b.vz = 0; b.guia = 0; b.dano = 5; b.vida = 2; b.spr = SPR.p.oro; b.luz = [1, 0.85, 0.4, 2];
+        explotar(b.x, b.y, 'oro', 8, b.z); SND.bloqueo();
+      } else if (Math.hypot(J.x - b.x, J.y - b.y) < 0.32 && b.z < 0.95) { danoJugador(b.dano, b.x, b.y); if (b.lento) J.lento = Math.max(J.lento, b.lento); explotar(b.x, b.y, b.lento ? 'verde' : 'sombra', 14, b.z); quitar = true; }
     }
     if (quitar) {
       if (b.explota) {
@@ -1824,6 +2045,10 @@ function actualizar3D(dt) {
     m.rotation.x = e.muerto ? -Math.min(1, e.muerteT / 0.5) * 0.9 : (e.estado === 'dolor' ? -0.12 : 0);
     const brillo = e.flash > 0 ? 3.2 : 1;
     mt.color.setScalar(brillo);
+    // Pecado mayor: más grande y con resplandor rojo; furia: late en naranja
+    const escala = e.mayor ? 1.3 : 1; if (m.scale.x !== escala) m.scale.setScalar(escala);
+    if (e.mayor || e.furia) { const p = 0.6 + Math.sin(tiempoJuego * (e.furia ? 12 : 4)) * 0.4; mt.emissive.setRGB(1, 0.35 + 0.3 * (1 - p), 0.25); mt.emissiveIntensity = 1.6 + p * 1.4; }
+    else if (mt.emissiveIntensity !== 1.6) { mt.emissive.setRGB(1, 1, 1); mt.emissiveIntensity = 1.6; }
   }
   // Objetos
   for (const p of pickups) {
@@ -2266,6 +2491,8 @@ addEventListener('keydown', (e) => {
     if (e.code === 'Space') fuego = true;
     if (/^Digit[1-4]$/.test(e.code)) cambiarArma(ARMAS[Number(e.code.slice(5)) - 1].id);
     if (e.code === 'KeyQ') siguienteArma(1);
+    if (e.code === 'KeyE' || e.code === 'ShiftRight') pedirEsquivar = true;
+    if (e.code === 'KeyF') pedirFe = true;
   }
   if (e.code === 'Escape' || e.code === 'KeyP') { if (estado === 'jugando') pausar(); else if (estado === 'pausa') seguir(); }
 });
@@ -2320,6 +2547,7 @@ bf.addEventListener('pointerup', (e) => { e.stopPropagation(); fuego = false; })
 bf.addEventListener('pointercancel', () => { fuego = false; });
 $('b-arma').addEventListener('click', () => siguienteArma(1));
 $('b-super').addEventListener('click', superPoder);
+for (const [id, fn] of [['b-esquivar', () => { pedirEsquivar = true; }], ['b-fe', () => { pedirFe = true; }]]) $(id).addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); fn(); });
 $('b-pausa').addEventListener('click', pausar);
 $('b-seguir').addEventListener('click', seguir);
 $('b-salir').addEventListener('click', volverMenu);
@@ -2335,7 +2563,7 @@ estado = 'menu';
 pintarMenu();
 pintarBestiario();
 requestAnimationFrame(bucle);
-window.__luz = { prueba(n) { const ini = generarNivel(n); const v = new Uint8Array(T * T), cola = [ini.cy * T + ini.cx]; v[cola[0]] = 1; const bloq = (i) => { const x = i % T + 0.5, y = ((i / T) | 0) + 0.5; return decor.some((d) => d.solido && Math.hypot(d.x - x, d.y - y) < d.solido + 0.25); }; while (cola.length) { const i = cola.pop(); for (const j of [i + 1, i - 1, i + T, i - T]) { if (v[j]) continue; const c = mapa[j]; if (c !== 0 && c !== M.PUERTA && c !== M.PUERTA_ORO) continue; if (bloq(j)) continue; v[j] = 1; cola.push(j); } } const ok = (x, y) => v[(y | 0) * T + (x | 0)]; return { salida: !!ok(salida.x, salida.y), objetos: pickups.every((p) => ok(p.x, p.y)), decor: decor.length }; }, get J() { return J; }, get enemigos() { return enemigos; }, cambiarArma, disparar, empezar, jugar, get estado() { return estado; } };
+window.__luz = { sprites: SPRITE_ENEMIGO, prueba(n) { const ini = generarNivel(n); const v = new Uint8Array(T * T), cola = [ini.cy * T + ini.cx]; v[cola[0]] = 1; const bloq = (i) => { const x = i % T + 0.5, y = ((i / T) | 0) + 0.5; return decor.some((d) => d.solido && Math.hypot(d.x - x, d.y - y) < d.solido + 0.25); }; while (cola.length) { const i = cola.pop(); for (const j of [i + 1, i - 1, i + T, i - T]) { if (v[j]) continue; const c = mapa[j]; if (c !== 0 && c !== M.PUERTA && c !== M.PUERTA_ORO) continue; if (bloq(j)) continue; v[j] = 1; cola.push(j); } } const ok = (x, y) => v[(y | 0) * T + (x | 0)]; return { salida: !!ok(salida.x, salida.y), objetos: pickups.every((p) => ok(p.x, p.y)), decor: decor.length }; }, get J() { return J; }, get enemigos() { return enemigos; }, cambiarArma, disparar, empezar, jugar, get estado() { return estado; } };
 </script>
 </body>
 </html>
