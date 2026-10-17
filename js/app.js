@@ -3427,7 +3427,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<button type="button" class="lib-close" data-cerrar-libro aria-label="Cerrar juego">${ic('x')}<span>Cerrar</span></button><iframe title="Juego" src="${esc(url)}" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=69" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }
@@ -3436,7 +3436,9 @@ document.addEventListener('click', (e) => {
 });
 /* El juego envía sus puntos misioneros; se guardan en el perfil público (miembros/{uid}) */
 window.addEventListener('message', (e) => {
-  if (e.origin !== location.origin || !e.data || e.data.tipo !== 'juma-puntos') return;
+  if (e.origin !== location.origin || !e.data) return;
+  if (e.data.tipo === 'juma-cerrar') { cerrarLibro(); return; }
+  if (e.data.tipo !== 'juma-puntos') return;
   guardarPuntosMisioneros(Number(e.data.total) || 0);
 });
 let ultimoEnvioPuntos = -1;
