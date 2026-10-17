@@ -129,6 +129,7 @@
     <div class="pill" id="p-pts" title="Puntos misioneros"><span class="ic">★</span><span id="t-pts">0</span></div>
     <div class="espacio"></div>
     <div class="pill vidas" id="p-vidas" title="Vidas"><span class="ic">♥</span><span id="t-vidas">5</span></div>
+    <button class="redondo" id="btn-sonido" type="button" aria-label="Sonido"></button>
     <button class="redondo" id="btn-ayuda" type="button" aria-label="Cómo jugar">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.4v.5"/><circle cx="12" cy="17" r=".6" fill="#fff"/></svg>
     </button>
@@ -225,7 +226,7 @@ const INTERVALO = MIN_VIDA * 60 * 1000;
 const CLAVE = 'juma-palabras-v3';
 const PT = { palabra: 10, base: 30, nivel: 50, pista: 15 };
 const PENA_MS = 5000;
-function fondo(ci) { document.getElementById('bg').style.backgroundImage = 'url(fondos/f' + (ci + 1) + '.jpg)'; }
+function fondo(ci) { const b = document.getElementById('bg'); b.style.backgroundImage = 'url(fondos/f' + (ci + 1) + '.jpg)'; b.style.backgroundPosition = ci === 0 ? 'center 18%' : 'center'; }
 function mosaicoHtml(img, piezas, grande) {
   let h = '<div class="mosaico' + (grande ? ' grande' : '') + '">';
   for (let i = 0; i < 20; i++) {
@@ -235,6 +236,57 @@ function mosaicoHtml(img, piezas, grande) {
   return h + '</div>';
 }
 const TOTAL_PALABRAS = (() => { const s = new Set(); NIVELES.forEach((n) => n.palabras.forEach((p) => s.add(p.w))); return s.size; })();
+
+
+// ---------- Sonidos (sintetizados, sin archivos) ----------
+let AC = null, sonidoOn = true;
+try { sonidoOn = localStorage.getItem('juma-palabras-sonido') !== '0'; } catch (e) {}
+function ac() {
+  if (!sonidoOn) return null;
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  if (AC.state === 'suspended') AC.resume();
+  return AC;
+}
+function tono(f, dur, tipo, vol, retardo, hasta) {
+  const a = ac(); if (!a) return;
+  const t0 = a.currentTime + (retardo || 0);
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = tipo || 'sine';
+  o.frequency.setValueAtTime(f, t0);
+  if (hasta) o.frequency.exponentialRampToValueAtTime(hasta, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol || 0.15, t0 + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(a.destination);
+  o.start(t0); o.stop(t0 + dur + 0.03);
+}
+const NOTAS = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.5];
+const SND = {
+  toque() { tono(660, 0.07, 'triangle', 0.08); },
+  letra(n) { tono(NOTAS[Math.min(n, NOTAS.length - 1)], 0.16, 'triangle', 0.14); },
+  acierto() { [523.25, 659.25, 783.99].forEach((f, i) => tono(f, 0.28, 'triangle', 0.15, i * 0.07)); },
+  base() { [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => tono(f, 0.4, 'triangle', 0.15, i * 0.08)); },
+  error() { tono(180, 0.22, 'sawtooth', 0.08, 0, 90); },
+  pista() { tono(1568, 0.18, 'sine', 0.12); tono(2093, 0.3, 'sine', 0.1, 0.1); },
+  mezclar() { tono(300, 0.12, 'triangle', 0.08, 0, 600); },
+  tic() { tono(900, 0.05, 'square', 0.04); },
+  nivel() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tono(f, 0.5, 'triangle', 0.16, i * 0.12)); tono(1318.5, 0.9, 'sine', 0.12, 0.5); },
+  capitulo() { [392, 523.25, 659.25, 783.99, 1046.5].forEach((f, i) => { tono(f, 1.2, 'sine', 0.13, i * 0.14); tono(f * 2, 1.0, 'sine', 0.04, i * 0.14); }); },
+  tiempo() { [440, 370, 311, 261].forEach((f, i) => tono(f, 0.3, 'triangle', 0.14, i * 0.16)); }
+};
+function pintarSonido() {
+  document.getElementById('btn-sonido').innerHTML = sonidoOn
+    ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="#fff"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>'
+    : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="#fff"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+}
+document.getElementById('btn-sonido').onclick = () => {
+  sonidoOn = !sonidoOn;
+  try { localStorage.setItem('juma-palabras-sonido', sonidoOn ? '1' : '0'); } catch (e) {}
+  pintarSonido();
+  if (sonidoOn) SND.acierto();
+};
+pintarSonido();
+document.addEventListener('click', (e) => { if (e.target.closest('button') && !e.target.closest('#btn-sonido,#btn-mezclar,#btn-pista')) SND.toque(); });
 
 // ---------- Guardado (este dispositivo) ----------
 let S;
@@ -357,6 +409,7 @@ function verSinVidas() {
 
 // ---------- Juego ----------
 let NV = null, encontradas = new Set(), reveladas = new Set(), celdas = new Map(), activa = 0;
+let ultimoSeg = -1;
 let letras = [], sel = [], arrastrando = false, juegoActivo = false, tiempoMs = 0, ultimoTick = 0;
 
 function mostrarVista(v) {
@@ -490,6 +543,7 @@ function inicioArrastre(e) {
   if (!el) return;
   arrastrando = true;
   sel = [Number(el.dataset.i)];
+  SND.letra(0);
   pintarFormada();
   try { document.getElementById('rueda').setPointerCapture(e.pointerId); } catch (err) {}
 }
@@ -499,7 +553,7 @@ function moverArrastre(e) {
   if (!el) return;
   const i = Number(el.dataset.i);
   if (sel.length > 1 && i === sel[sel.length - 2]) { sel.pop(); pintarFormada(); return; }
-  if (!sel.includes(i)) { sel.push(i); pintarFormada(); }
+  if (!sel.includes(i)) { sel.push(i); SND.letra(sel.length - 1); pintarFormada(); }
 }
 function finArrastre() {
   if (!arrastrando) return;
@@ -519,6 +573,7 @@ function probar(p) {
   if (idx < 0) {
     tiempoMs = Math.max(0, tiempoMs - PENA_MS);
     mensaje('"' + p + '" no está aquí: −5 segundos', 'mal');
+    SND.error();
     sacudir();
     pintarTiempo();
     return;
@@ -531,6 +586,7 @@ function probar(p) {
   if (!S.vocab.includes(p)) S.vocab.push(p);
   S.enCurso.enc = Array.from(encontradas);
   guardar();
+  if (esBase) SND.base(); else SND.acierto();
   mensaje((esBase ? '¡Palabra base! +' + PT.base : '¡Muy bien! +' + PT.palabra) + ' ★', 'ok');
   if (encontradas.size === NV.palabras.length) { juegoActivo = false; dibujarPista(); setTimeout(completarNivel, 500); return; }
   const sig = NV.palabras.findIndex((x) => !encontradas.has(x.w));
@@ -551,6 +607,7 @@ function pistaDeLetra() {
       S.puntos -= PT.pista;
       S.enCurso.rev = Array.from(reveladas);
       guardar();
+      SND.pista();
       mensaje('Pista: una letra de "' + p.w + '" en azul.', '');
       dibujarPista();
       return;
@@ -574,9 +631,11 @@ function completarNivel() {
   const v = VERSOS[(numero - 1) % VERSOS.length];
   if (numero === CAPS[ci].fin) {
     const cap = CAPS[ci];
+    SND.capitulo();
     abrirHoja('<h3>¡Capítulo completado!</h3><p class="sub">Reclama tu cuadro</p>' + mosaicoHtml(cap.cuadro, 20, true) + '<b style="font-size:18px">' + esc(cap.nombre) + '</b><p>' + esc(cap.desc) + '</p><button class="boton" type="button" data-accion="reclamar">RECLAMAR</button>');
     return;
   }
+  SND.nivel();
   abrirHoja('<h3>¡Felicidades!</h3><p class="estrellas">★ ★ ★</p><p>Nivel ' + numero + ' completado · <b>+' + bono + ' ★</b></p>' +
     '<div class="versiculo">“' + v.t + '”<small>' + v.r + '</small></div>' +
     (numero < NIVELES.length ? '<button class="boton" type="button" data-accion="siguiente">NIVEL ' + (numero + 1) + '</button>' : '') +
@@ -584,6 +643,7 @@ function completarNivel() {
 }
 function tiempoAgotado() {
   juegoActivo = false;
+  SND.tiempo();
   S.vidas = Math.max(0, S.vidas - 1);
   S.enCurso = null;
   guardar();
@@ -601,7 +661,7 @@ rueda.addEventListener('pointerdown', inicioArrastre);
 rueda.addEventListener('pointermove', moverArrastre);
 rueda.addEventListener('pointerup', finArrastre);
 rueda.addEventListener('pointercancel', finArrastre);
-document.getElementById('btn-mezclar').onclick = () => { letras = barajar(letras); sel = []; dibujarRueda(); };
+document.getElementById('btn-mezclar').onclick = () => { SND.mezclar(); letras = barajar(letras); sel = []; dibujarRueda(); };
 document.getElementById('btn-borrar').onclick = () => { sel = []; pintarFormada(); };
 document.getElementById('btn-pista').onclick = pistaDeLetra;
 document.getElementById('btn-salir').onclick = salirAlMapa;
@@ -641,7 +701,7 @@ setInterval(() => {
   if (juegoActivo && NV) {
     tiempoMs -= (ahora - ultimoTick);
     if (tiempoMs <= 0) { tiempoMs = 0; pintarTiempo(); tiempoAgotado(); }
-    else pintarTiempo();
+    else { pintarTiempo(); const seg = Math.ceil(tiempoMs / 1000); if (tiempoMs <= 10000 && seg !== ultimoSeg) { ultimoSeg = seg; SND.tic(); } }
   }
   ultimoTick = ahora;
   const antes = S.vidas;
