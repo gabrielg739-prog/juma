@@ -3413,6 +3413,11 @@ function renderJuegosView() {
     <p class="body" style="max-width:56ch;margin:10px 0 28px">Juega, aprende de la fe y de la misión, y suma puntos misioneros que aparecen en tu perfil.</p>
     <div class="lib-grid">
       <article class="lib-card">
+        <div class="lib-cover" style="--bk:#5A2A8E"><b>Bloques de fe</b></div>
+        <div class="lib-info"><h2>Bloques de fe</h2><small>Bloques · ¡Nuevo!</small><p>Encaja las piezas, borra filas y columnas y descubre un versículo palabra por palabra. Sube de rango, compra mejoras y desbloquea estilos.</p>
+        <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/bloques-de-fe.html">${ic('gamepad')}Jugar</button></div>
+      </article>
+      <article class="lib-card">
         <div class="lib-cover" style="--bk:#0A235C"><b>Palabras JUMA</b></div>
         <div class="lib-info"><h2>Palabras JUMA</h2><small>Crucigrama y rueda de letras</small><p>Forma palabras del manual y de la fe, completa los crucigramas y arma los cuadros de cada capítulo.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/palabras-juma.html">${ic('gamepad')}Jugar</button></div>
@@ -3447,7 +3452,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=85" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=86" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }
