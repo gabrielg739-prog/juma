@@ -130,11 +130,47 @@
   .como p { text-align: left; }
   .como b { color: #7A47B0; }
   @media (max-height: 700px) { .rueda { transform: scale(.88); margin: -18px auto -18px; } .insignia { width: 150px; height: 150px; } }
-  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  /* ---- Gráficos y animaciones ---- */
+  .motas { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .motas i { position: absolute; bottom: -20px; width: var(--t); height: var(--t); border-radius: 50%; background: radial-gradient(circle, rgba(255,236,170,.95), rgba(255,210,90,.35) 45%, rgba(255,210,90,0) 70%); animation: sube-mota var(--d) linear var(--r) infinite; opacity: 0; }
+  @keyframes sube-mota { 0% { transform: translate(0,0); opacity: 0; } 12% { opacity: .85; } 85% { opacity: .55; } 100% { transform: translate(var(--x), -105vh); opacity: 0; } }
+  .insignia { animation: flota-ins 4s ease-in-out infinite; position: relative; }
+  .insignia::before { content: ""; position: absolute; inset: -8px; border-radius: 50%; background: conic-gradient(from 0deg, rgba(255,210,90,0), rgba(255,210,90,.75), rgba(255,210,90,0) 30%, rgba(255,255,255,0) 50%, rgba(255,210,90,.6) 70%, rgba(255,210,90,0)); -webkit-mask: radial-gradient(circle, transparent 66%, #000 67%); mask: radial-gradient(circle, transparent 66%, #000 67%); animation: gira 6s linear infinite; }
+  @keyframes flota-ins { 50% { transform: translateY(-6px); } }
+  @keyframes gira { to { transform: rotate(360deg); } }
+  .ficha { box-shadow: inset 0 2px 0 rgba(255,255,255,.16), inset 0 -3px 0 rgba(0,0,0,.28), 0 4px 8px rgba(0,0,0,.35); }
+  .ficha.hecha { background: linear-gradient(180deg, #FFF0A8 0%, #FFD24A 45%, #E8A216 100%); box-shadow: inset 0 2px 0 rgba(255,255,255,.75), inset 0 -3px 0 rgba(150,90,0,.45), 0 4px 10px rgba(0,0,0,.35), 0 0 12px rgba(255,210,90,.35); text-shadow: 0 1px 0 rgba(255,255,255,.6); }
+  .ficha.pista { box-shadow: inset 0 2px 0 #fff, inset 0 -3px 0 rgba(120,90,40,.3), 0 0 0 2px #8fd6ff, 0 0 14px rgba(143,214,255,.7); }
+  .ficha.nueva { animation: ficha-entra .55s cubic-bezier(.34,1.56,.64,1) both; animation-delay: var(--d); }
+  @keyframes ficha-entra { 0% { transform: perspective(300px) rotateX(-95deg) scale(.7); filter: brightness(2); } 60% { filter: brightness(1.5); } 100% { transform: none; filter: none; } }
+  .ficha.ola { animation: ola .6s cubic-bezier(.34,1.56,.64,1) both; animation-delay: var(--d); }
+  @keyframes ola { 40% { transform: translateY(-12px) scale(1.12); filter: brightness(1.4); } }
+  .vuela { position: fixed; z-index: 50; pointer-events: none; border-radius: 50%; display: grid; place-items: center; font-weight: 900; color: #3B2300; background: radial-gradient(circle at 35% 30%, #FFF6C8, #F0B326); box-shadow: 0 6px 14px rgba(0,0,0,.4), 0 0 16px rgba(255,210,90,.8); }
+  .letra { background: radial-gradient(circle at 38% 30%, #ffffff, #efe4fb 70%); border: 2px solid rgba(122,71,176,.18); box-shadow: 0 3px 0 rgba(122,71,176,.22), 0 6px 12px rgba(58,33,80,.18); transition: transform .15s cubic-bezier(.34,1.56,.64,1), background .12s, color .12s, left .4s cubic-bezier(.23,1,.32,1), top .4s cubic-bezier(.23,1,.32,1); }
+  .letra.sel { background: radial-gradient(circle at 35% 30%, #9a63d6, #4a2a6e); border-color: #FFD25A; transform: scale(1.14); box-shadow: 0 0 0 4px rgba(255,210,90,.35), 0 6px 16px rgba(58,33,80,.5); }
+  .letra.entra { animation: letra-entra .45s cubic-bezier(.34,1.56,.64,1) both; animation-delay: var(--d); }
+  @keyframes letra-entra { from { transform: scale(0) rotate(-120deg); opacity: 0; } }
+  #trazo { filter: drop-shadow(0 0 5px rgba(150,90,220,.85)); }
+  .rueda.mal { animation: rueda-mal .4s; }
+  @keyframes rueda-mal { 20% { transform: translateX(-8px) rotate(-2deg); } 60% { transform: translateX(8px) rotate(2deg); } }
+  .rueda.bien .rueda-disco { animation: rueda-bien .6s ease-out; }
+  @keyframes rueda-bien { 30% { box-shadow: 0 14px 34px rgba(0,0,0,.45), 0 0 0 8px rgba(255,210,90,.45), 0 0 40px rgba(255,210,90,.7); } }
+  .mezclar svg { transition: transform .45s cubic-bezier(.23,1,.32,1); }
+  .mezclar.gira svg { transform: rotate(360deg); }
+  .msg.ok, .msg.mal { animation: msg-pop .4s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes msg-pop { from { transform: scale(.6); opacity: 0; } }
+  .formada span:not(.vacio) { animation: formada-pop .18s ease-out; }
+  @keyframes formada-pop { from { transform: scale(.92); } }
+  .estrellas-n span.e { display: inline-block; animation: estrella .55s cubic-bezier(.34,1.56,.64,1) both; }
+  @keyframes estrella { from { transform: scale(0) rotate(-90deg); opacity: 0; } }
+  .confeti { position: fixed; top: -12px; width: 9px; height: 14px; z-index: 25; pointer-events: none; border-radius: 2px; animation: confeti var(--d) cubic-bezier(.25,.6,.5,1) forwards; }
+  @keyframes confeti { to { transform: translate(var(--x), 105vh) rotate(var(--g)); } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .motas { display: none; } }
 </style>
 </head>
 <body>
 <div class="bg" id="bg"></div>
+<div class="motas" id="motas" aria-hidden="true"></div>
 <div class="app">
   <header class="top">
     <div class="pill" id="p-pts" title="Puntos misioneros"><span class="ic">★</span><span id="t-pts">0</span></div>
@@ -243,7 +279,7 @@ const DIFS = {
   dificil: { n: 'Difícil', d: 'Menos tiempo, 8 s menos por error y pistas al doble. Más ★ al terminar.', tiempo: 0.7, pena: 8000, costo: 2, letra: false, bono: 30 }
 };
 const DIF = () => DIFS[S.dificultad] || DIFS.normal;
-let ultimoAcierto = 0, racha = 0;
+let ultimoAcierto = 0, racha = 0, selUltima = [];
 const PENA_MS = 5000;
 function fondo(ci) { const b = document.getElementById('bg'); b.style.backgroundImage = 'url(fondos/f' + (ci + 1) + '.jpg)'; b.style.backgroundPosition = ci === 0 ? 'center 18%' : 'center'; }
 function mosaicoHtml(img, piezas, grande, nueva) {
@@ -470,8 +506,9 @@ function abrirNivel(n) {
   document.getElementById('msg').textContent = '';
   guardar();
   mostrarVista('juego');
+  sinAnim = true;
   dibujarTablero();
-  dibujarRueda();
+  dibujarRueda(true);
   dibujarPista();
   pintarTiempo();
   juegoActivo = true;
@@ -500,6 +537,7 @@ function resuelta(k) {
   if (reveladas.has(k)) return true;
   return celdas.get(k).idx.some((i) => encontradas.has(NV.palabras[i].w));
 }
+let prevOk = new Set(), ordenNueva = new Map(), sinAnim = true;
 function dibujarTablero() {
   const tab = document.getElementById('tablero');
   const ancho = Math.min(window.innerWidth, 480) - 28 - 16 - 8;
@@ -519,10 +557,13 @@ function dibujarTablero() {
     let cls = 'ficha';
     if (!ok) cls += ' vacia'; else cls += porPista ? ' pista' : ' hecha';
     if (actKeys.has(k)) cls += ' activa';
+    let dly = '';
+    if (ok && !prevOk.has(k) && !sinAnim) { cls += ' nueva'; dly = ';--d:' + (ordenNueva.has(k) ? 380 + ordenNueva.get(k) * 70 : 0) + 'ms'; }
     const n = numeros.get(k) ? '<span class="n">' + numeros.get(k) + '</span>' : '';
-    h += '<div class="' + cls + '" data-k="' + k + '" style="left:' + (c * cs) + 'px;top:' + (r * cs) + 'px;width:' + (cs - 4) + 'px;height:' + (cs - 4) + 'px;font-size:' + Math.round(cs * .5) + 'px">' + n + (ok ? info.ch : '') + '</div>';
+    h += '<div class="' + cls + '" data-k="' + k + '" style="left:' + (c * cs) + 'px;top:' + (r * cs) + 'px;width:' + (cs - 4) + 'px;height:' + (cs - 4) + 'px;font-size:' + Math.round(cs * .5) + 'px' + dly + '">' + n + (ok ? info.ch : '') + '</div>';
   });
   tab.innerHTML = h;
+  prevOk = new Set([...celdas.keys()].filter(resuelta)); sinAnim = false; ordenNueva = new Map();
 }
 function dibujarPista() {
   const p = NV.palabras[activa];
@@ -533,14 +574,15 @@ function dibujarPista() {
   box.innerHTML = '<small>' + dir + ' · ' + p.w.length + ' letras</small>' + (ya ? '<b>' + esc(p.w) + ':</b> ' : '') + esc(p.pista);
   dibujarTablero();
 }
-function dibujarRueda() {
+function dibujarRueda(entrada) {
   const rueda = document.getElementById('rueda');
   rueda.querySelectorAll('.letra').forEach((el) => el.remove());
   const N = letras.length, R = 102, C = 150;
   letras.forEach((ch, i) => {
     const ang = (2 * Math.PI * i / N) - Math.PI / 2;
     const el = document.createElement('div');
-    el.className = 'letra';
+    el.className = 'letra' + (entrada ? ' entra' : '');
+    if (entrada) { el.style.setProperty('--d', (200 + i * 70) + 'ms'); setTimeout(() => el.classList.remove('entra'), 800 + i * 70); }
     el.dataset.i = i;
     el.style.left = (C + R * Math.cos(ang)) + 'px';
     el.style.top = (C + R * Math.sin(ang)) + 'px';
@@ -589,6 +631,7 @@ function finArrastre() {
   if (!arrastrando) return;
   arrastrando = false;
   const palabra = sel.map((i) => letras[i]).join('');
+  selUltima = sel.slice();
   sel = [];
   pintarFormada();
   if (palabra.length >= 2) probar(palabra);
@@ -598,6 +641,38 @@ function sacudir() {
   if (!f) return;
   f.classList.remove('sacude'); void f.offsetWidth; f.classList.add('sacude');
 }
+function confeti(n) {
+  const cols = ['#FFD25A', '#FFF3B0', '#FF7AA8', '#8FD6FF', '#7AD07A', '#C79BFF'];
+  for (let k = 0; k < n; k++) {
+    const d = document.createElement('div'); d.className = 'confeti';
+    d.style.left = (Math.random() * 100) + 'vw'; d.style.background = cols[k % cols.length];
+    d.style.setProperty('--x', (Math.random() * 160 - 80) + 'px'); d.style.setProperty('--g', (Math.random() * 1080 - 540) + 'deg');
+    d.style.setProperty('--d', (1.6 + Math.random() * 1.6) + 's'); d.style.animationDelay = (Math.random() * 0.4) + 's';
+    document.body.appendChild(d); setTimeout(() => d.remove(), 3800);
+  }
+}
+function claseBreve(id, c, ms) { const el = document.getElementById(id); el.classList.remove(c); void el.offsetWidth; el.classList.add(c); setTimeout(() => el.classList.remove(c), ms); }
+/* Cada letra sale de la rueda y vuela a su casilla del tablero */
+function volarLetras(p, desde) {
+  const claves = [];
+  for (let i = 0; i < p.w.length; i++) claves.push((p.dir === 'H' ? p.r : p.r + i) + ',' + (p.dir === 'H' ? p.c + i : p.c));
+  claves.forEach((k, i) => { if (!prevOk.has(k)) ordenNueva.set(k, i); });
+  const origen = desde.map((li) => { const el = document.querySelector('.letra[data-i="' + li + '"]'); return el ? el.getBoundingClientRect() : null; });
+  requestAnimationFrame(() => claves.forEach((k, i) => {
+    const o = origen[i], dest = document.querySelector('.ficha[data-k="' + k + '"]');
+    if (!o || !dest || !dest.classList.contains('nueva') || !dest.animate) return;
+    const d = dest.getBoundingClientRect(), v = document.createElement('div');
+    v.className = 'vuela'; v.textContent = p.w[i];
+    v.style.left = o.left + 'px'; v.style.top = o.top + 'px'; v.style.width = o.width + 'px'; v.style.height = o.height + 'px'; v.style.fontSize = (o.width * 0.5) + 'px';
+    document.body.appendChild(v);
+    const dx = d.left + d.width / 2 - (o.left + o.width / 2), dy = d.top + d.height / 2 - (o.top + o.height / 2), sc = d.width / o.width;
+    v.animate([
+      { transform: 'translate(0,0) scale(1)', opacity: 1 },
+      { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 40}px) scale(${(1 + sc) / 2 * 1.15})`, opacity: 1, offset: 0.55 },
+      { transform: `translate(${dx}px, ${dy}px) scale(${sc})`, opacity: 0.2 }
+    ], { duration: 420, delay: i * 70, easing: 'cubic-bezier(.45,0,.3,1)', fill: 'both' }).onfinish = () => v.remove();
+  }));
+}
 function probar(p) {
   const idx = NV.palabras.findIndex((x) => x.w === p);
   if (idx < 0) {
@@ -606,7 +681,7 @@ function probar(p) {
     racha = 0;
     mensaje('"' + p + '" no está aquí: −' + Math.round(pena / 1000) + ' segundos', 'mal');
     SND.error();
-    sacudir();
+    sacudir(); claseBreve('rueda', 'mal', 420);
     pintarTiempo();
     return;
   }
@@ -625,8 +700,13 @@ function probar(p) {
   S.enCurso.enc = Array.from(encontradas);
   guardar();
   if (esBase) SND.base(); else SND.acierto();
+  volarLetras(NV.palabras[idx], selUltima); claseBreve('rueda', 'bien', 650);
   mensaje((esBase ? '¡Palabra base! +' + PT.base : '¡Muy bien! +' + PT.palabra) + ' ★' + extraRacha, 'ok');
-  if (encontradas.size === NV.palabras.length) { juegoActivo = false; dibujarPista(); setTimeout(completarNivel, 500); return; }
+  if (encontradas.size === NV.palabras.length) {
+    juegoActivo = false; dibujarPista();
+    setTimeout(() => { document.querySelectorAll('.ficha').forEach((f) => { const [r, c] = f.dataset.k.split(',').map(Number); f.classList.remove('nueva'); f.style.setProperty('--d', ((r + c) * 60) + 'ms'); f.classList.add('ola'); }); confeti(50); }, 700);
+    setTimeout(completarNivel, 1500); return;
+  }
   const sig = NV.palabras.findIndex((x) => !encontradas.has(x.w));
   if (sig >= 0) activa = sig;
   dibujarPista();
@@ -682,7 +762,7 @@ function completarNivel() {
     return;
   }
   SND.nivel();
-  abrirHoja('<h3>¡Felicidades!</h3><p class="estrellas-n">' + '★'.repeat(est) + '<span style="opacity:.25">' + '★'.repeat(3 - est) + '</span></p><p class="sub">Nivel ' + numero + ' completado en ' + DIF().n.toLowerCase() + ' · <b>+' + bono + ' ★</b></p>' + mosaico +
+  abrirHoja('<h3>¡Felicidades!</h3><p class="estrellas-n">' + [0, 1, 2].map((k) => '<span class="e" style="animation-delay:' + (0.25 + k * 0.18) + 's;' + (k < est ? '' : 'opacity:.25') + '">★</span>').join('') + '</p><p class="sub">Nivel ' + numero + ' completado en ' + DIF().n.toLowerCase() + ' · <b>+' + bono + ' ★</b></p>' + mosaico +
     '<p class="pieza-txt">Pieza ' + (idx + 1) + ' de 20 · ' + esc(cap.nombre) + '</p>' +
     '<div class="versiculo">“' + v.t + '”<small>' + v.r + '</small></div>' +
     (numero < NIVELES.length ? '<button class="boton" type="button" data-accion="siguiente">NIVEL ' + (numero + 1) + '</button>' : '') +
@@ -708,7 +788,20 @@ rueda.addEventListener('pointerdown', inicioArrastre);
 rueda.addEventListener('pointermove', moverArrastre);
 rueda.addEventListener('pointerup', finArrastre);
 rueda.addEventListener('pointercancel', finArrastre);
-document.getElementById('btn-mezclar').onclick = () => { SND.mezclar(); letras = barajar(letras); sel = []; dibujarRueda(); };
+document.getElementById('btn-mezclar').onclick = () => {
+  SND.mezclar(); sel = [];
+  // Las letras se deslizan a su nuevo lugar en la rueda
+  const orden = barajar(letras.map((_, i) => i));
+  const N = letras.length, R = 102, C = 150, nuevas = [];
+  const els = [...document.querySelectorAll('.letra')];
+  orden.forEach((viejo, nuevo) => { nuevas[nuevo] = letras[viejo]; });
+  els.forEach((el) => {
+    const viejo = Number(el.dataset.i), nuevo = orden.indexOf(viejo), ang = (2 * Math.PI * nuevo / N) - Math.PI / 2;
+    el.dataset.i = nuevo; el.style.left = (C + R * Math.cos(ang)) + 'px'; el.style.top = (C + R * Math.sin(ang)) + 'px';
+  });
+  letras = nuevas; pintarFormada();
+  const b = document.getElementById('btn-mezclar'); b.classList.remove('gira'); void b.offsetWidth; b.classList.add('gira');
+};
 document.getElementById('btn-borrar').onclick = () => { sel = []; pintarFormada(); };
 document.getElementById('btn-pista').onclick = pistaDeLetra;
 document.getElementById('btn-salir').onclick = salirAlMapa;
@@ -771,6 +864,7 @@ setInterval(() => {
 cargar();
 pintarDific();
 pintarMapa();
+document.getElementById("motas").innerHTML = Array.from({ length: 14 }, () => `<i style="left:${(Math.random() * 100).toFixed(1)}%;--t:${(4 + Math.random() * 9).toFixed(0)}px;--d:${(9 + Math.random() * 10).toFixed(1)}s;--r:-${(Math.random() * 18).toFixed(1)}s;--x:${(Math.random() * 80 - 40).toFixed(0)}px"></i>`).join("");
 mostrarVista('mapa');
 </script>
 </body>
