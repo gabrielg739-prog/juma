@@ -3453,6 +3453,11 @@ function renderJuegosView() {
         <div class="lib-info"><h2>Huyendo del pecado</h2><small>Carrera sin fin · San José Allamano</small><p>Corre por el camino, esquiva las sombras del pecado, recoge monedas de gracia y usa el escudo de la fe, el imán y el agua bendita.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/huyendo-del-pecado.html">${ic('gamepad')}Jugar</button></div>
       </article>
+      <article class="lib-card">
+        <div class="lib-cover" style="--bk:#17675C" role="img" aria-label="Portada de Rueda y pinta"><b>Rueda y pinta</b></div>
+        <div class="lib-info"><h2>Rueda y pinta</h2><small>Puzle de caminos · 15 niveles · ¡Nuevo!</small><p>Desliza la bola: rueda en línea recta hasta chocar y pinta cada casilla por la que pasa. Pinta todo el camino con los menos movimientos posibles y gana estrellas.</p>
+        <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/rueda-y-pinta.html">${ic('gamepad')}Jugar</button></div>
+      </article>
       <article class="lib-card lib-soon"><div class="lib-cover lib-cover-empty" aria-hidden="true">${ic('gamepad')}</div><div class="lib-info"><h2>Próximamente</h2><p>Aquí aparecerán nuevos juegos.</p></div></article>
     </div></div>`;
 }
@@ -3463,7 +3468,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=99" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=100" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }
