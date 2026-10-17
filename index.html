@@ -598,7 +598,7 @@ html,body{-webkit-tap-highlight-color:transparent}
     padding: 14px 18px !important;
     touch-action: pan-y !important;
   }
-  .sheet > div:not(.sheet-head) {
+  .sheet:not(.p-modal) > div:not(.sheet-head) {
     flex: 1 1 auto !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
@@ -669,6 +669,7 @@ html,body{-webkit-tap-highlight-color:transparent}
 .p-modal > * { flex-shrink: 0; }
 .p-cover {
   position: relative;
+  flex: 0 0 140px;
   height: 140px;
   background: linear-gradient(135deg, #061536 0%, #103687 50%, #2452C8 100%);
   display: flex;
@@ -1786,8 +1787,8 @@ body.is-guest .solo-miembros { display: none !important; }
 <div id="modal-root"></div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=107"></script>
-<script type="module" src="js/offline.js?v=107"></script>
+<script type="module" src="js/app.js?v=108"></script>
+<script type="module" src="js/offline.js?v=108"></script>
 <script type="module" src="js/fe.js?v=65"></script>
 </body>
 </html>
