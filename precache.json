@@ -1,7 +1,7 @@
 {
- "version": "570701167a31",
+ "version": "a62d8bf23731",
  "recursos": "juma-recursos-v1",
- "tamano": 52025196,
+ "tamano": 52091018,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -741,12 +741,12 @@
   {
    "ruta": "index.html",
    "tamano": 147037,
-   "hash": "918c8f45f8d2"
+   "hash": "d4cba8002369"
   },
   {
    "ruta": "js/app.js",
    "tamano": 488759,
-   "hash": "2341b5f75e51"
+   "hash": "fe033e77a14d"
   },
   {
    "ruta": "js/fe.js",
@@ -779,9 +779,79 @@
    "hash": "025d6e4a100b"
   },
   {
+   "ruta": "juegos/carrera/camara.js",
+   "tamano": 2081,
+   "hash": "8c5ed2b82073"
+  },
+  {
+   "ruta": "juegos/carrera/datos.js",
+   "tamano": 4678,
+   "hash": "00afd345e989"
+  },
+  {
+   "ruta": "juegos/carrera/decor.js",
+   "tamano": 11090,
+   "hash": "4aa0d53ff3a7"
+  },
+  {
+   "ruta": "juegos/carrera/escena.js",
+   "tamano": 12252,
+   "hash": "0ced11baa1f3"
+  },
+  {
+   "ruta": "juegos/carrera/fisica.js",
+   "tamano": 6896,
+   "hash": "e668a313171e"
+  },
+  {
+   "ruta": "juegos/carrera/hud.js",
+   "tamano": 3948,
+   "hash": "9da9e5b880ed"
+  },
+  {
+   "ruta": "juegos/carrera/ia.js",
+   "tamano": 3093,
+   "hash": "5d0797f247c6"
+  },
+  {
+   "ruta": "juegos/carrera/karts.js",
+   "tamano": 7409,
+   "hash": "20a4d2ebf064"
+  },
+  {
+   "ruta": "juegos/carrera/main.js",
+   "tamano": 20908,
+   "hash": "eba93b757117"
+  },
+  {
+   "ruta": "juegos/carrera/objetos.js",
+   "tamano": 7821,
+   "hash": "d471d7e637aa"
+  },
+  {
+   "ruta": "juegos/carrera/particulas.js",
+   "tamano": 5657,
+   "hash": "1238bd0280b4"
+  },
+  {
+   "ruta": "juegos/carrera/pista.js",
+   "tamano": 4144,
+   "hash": "6ce7365f77b3"
+  },
+  {
+   "ruta": "juegos/carrera/sonido.js",
+   "tamano": 6657,
+   "hash": "0ba1a903dcc5"
+  },
+  {
+   "ruta": "juegos/carrera/texturas.js",
+   "tamano": 8731,
+   "hash": "1251e454b112"
+  },
+  {
    "ruta": "juegos/carrera-de-la-fe.html",
-   "tamano": 53010,
-   "hash": "e54a0d8421c7"
+   "tamano": 13467,
+   "hash": "3ca51277192f"
   },
   {
    "ruta": "juegos/cuadros/cap1-consolata.jpg",
