@@ -1,7 +1,7 @@
 {
- "version": "cf8be8e1f64f",
+ "version": "e80cbb06e65a",
  "recursos": "juma-recursos-v1",
- "tamano": 51970538,
+ "tamano": 51971541,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -741,12 +741,12 @@
   {
    "ruta": "index.html",
    "tamano": 147037,
-   "hash": "4be8585e9237"
+   "hash": "39d99f001799"
   },
   {
    "ruta": "js/app.js",
    "tamano": 488114,
-   "hash": "e9162e42bf90"
+   "hash": "96e91372cdbd"
   },
   {
    "ruta": "js/fe.js",
@@ -915,8 +915,8 @@
   },
   {
    "ruta": "juegos/sacristan.html",
-   "tamano": 85882,
-   "hash": "4f55c0e18dae"
+   "tamano": 86885,
+   "hash": "092a7050c2c4"
   },
   {
    "ruta": "manifest.webmanifest",
