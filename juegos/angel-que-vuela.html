@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#7fbcff">
+<title>Ángel que vuela · JUMA</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #10244d; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; font-family: "Trebuchet MS", system-ui, Arial, sans-serif; }
+  #j { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .ui { position: fixed; left: 0; right: 0; top: 0; display: flex; justify-content: flex-end; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 0; pointer-events: none; }
+  #salir { pointer-events: auto; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1.5px solid rgba(255, 255, 255, .6); background: rgba(16, 36, 77, .55); color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+</style>
+</head>
+<body>
+<canvas id="j" aria-label="Juego: un ángel de la guarda vuela entre columnas y toma gracias doradas"></canvas>
+<div class="ui"><button id="salir" type="button">Salir</button></div>
+<script>
+/* Ángel que vuela · juego de esquivar columnas, sin imágenes externas.
+   Tocar la pantalla (o la tecla Espacio) hace que el ángel suba; la gravedad lo baja.
+   Pasar una columna da 1 punto; tomar una gracia dorada da 3. */
+const W = 360, H = 640, SUELO = 40;
+const GRAV = 1500, IMPULSO = -440, HUECO = 156, SEP = 215, ANCHO = 58, AX = 92, R = 15;
+const CLAVE = 'juma-angel-v1';
+
+const cv = document.getElementById('j'), g = cv.getContext('2d');
+let dpr = 1, escala = 1, ox = 0, oy = 0;
+function ajustar() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+  escala = Math.min(innerWidth / W, innerHeight / H);
+  ox = (innerWidth - W * escala) / 2; oy = (innerHeight - H * escala) / 2;
+}
+addEventListener('resize', ajustar);
+ajustar();
+
+let estado = 'listo', y = H * 0.42, vy = 0, velo = 140, puntos = 0, mejor = leerMejor(), t = 0, muerte = 0;
+let pilares = [], gracias = [], particulas = [];
+const nubes = [];
+for (let i = 0; i < 7; i++) nubes.push({ x: Math.random() * W, y: 40 + Math.random() * 240, s: 14 + Math.random() * 16, v: 14 + Math.random() * 18 });
+
+function leerMejor() { try { return Number(JSON.parse(localStorage.getItem(CLAVE) || '{}').mejor) || 0; } catch (e) { return 0; } }
+function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify({ mejor })); } catch (e) { /* almacenamiento lleno o bloqueado */ } }
+function enviarPuntos() {
+  try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', juego: 'angel', total: mejor }, location.origin); } catch (e) { /* fuera de la app */ }
+}
+
+function nuevoPilar(x) {
+  const gt = 110 + Math.random() * (H - SUELO - HUECO - 220);
+  pilares.push({ x, gt, pasado: false });
+  if (Math.random() < 0.7) gracias.push({ x: x + ANCHO / 2, y: gt + HUECO / 2, tomada: false });
+}
+
+function reiniciar() {
+  y = H * 0.42; vy = 0; velo = 140; puntos = 0;
+  pilares = []; gracias = []; particulas = [];
+  let x = W + 80;
+  for (let i = 0; i < 4; i++) { nuevoPilar(x); x += SEP; }
+}
+
+function soplo() {
+  for (let i = 0; i < 3; i++) particulas.push({ x: AX - 10, y: y + 6, vx: -40 - Math.random() * 50, vy: (Math.random() - 0.5) * 60, vida: 0.45 });
+}
+
+function morir() {
+  estado = 'muerto'; muerte = performance.now();
+  if (puntos > mejor) mejor = puntos;
+  guardar(); enviarPuntos();
+  for (let i = 0; i < 14; i++) particulas.push({ x: AX, y, vx: (Math.random() - 0.5) * 220, vy: (Math.random() - 0.7) * 200, vida: 0.8 });
+}
+
+function accion() {
+  if (estado === 'listo') { reiniciar(); estado = 'jugando'; }
+  else if (estado === 'pausa') estado = 'jugando';
+  else if (estado === 'muerto') { if (performance.now() - muerte < 500) return; reiniciar(); estado = 'jugando'; }
+  if (estado === 'jugando') { vy = IMPULSO; soplo(); }
+}
+
+function actualizar(dt) {
+  t += dt;
+  for (const n of nubes) { n.x -= n.v * dt; if (n.x < -80) { n.x = W + 80; n.y = 40 + Math.random() * 240; } }
+  for (const p of particulas) { p.vida -= dt; p.x += p.vx * dt; p.y += p.vy * dt; }
+  particulas = particulas.filter((p) => p.vida > 0);
+  if (estado === 'listo') { y = H * 0.42 + Math.sin(t * 3) * 8; return; }
+  if (estado !== 'jugando') return;
+
+  velo = Math.min(240, 140 + puntos * 3);
+  vy += GRAV * dt; y += vy * dt;
+  for (const p of pilares) p.x -= velo * dt;
+  for (const q of gracias) q.x -= velo * dt;
+  pilares = pilares.filter((p) => p.x + ANCHO > -10);
+  gracias = gracias.filter((q) => q.x > -20 && !q.tomada);
+  while (!pilares.length || pilares[pilares.length - 1].x < W + 40) {
+    nuevoPilar(pilares.length ? pilares[pilares.length - 1].x + SEP : W + 80);
+  }
+
+  if (y - R < 0 || y + R > H - SUELO) return morir();
+  for (const p of pilares) {
+    if (AX + R > p.x && AX - R < p.x + ANCHO && (y - R < p.gt || y + R > p.gt + HUECO)) return morir();
+    if (!p.pasado && p.x + ANCHO < AX - R) { p.pasado = true; puntos++; }
+  }
+  for (const q of gracias) {
+    if (!q.tomada && Math.hypot(q.x - AX, q.y - y) < 26) { q.tomada = true; puntos += 3; }
+  }
+}
+
+/* ---------- dibujo ---------- */
+function columna(x, y0, y1, arriba) {
+  const h = y1 - y0;
+  const piedra = g.createLinearGradient(x, 0, x + ANCHO, 0);
+  piedra.addColorStop(0, '#fff6df'); piedra.addColorStop(0.55, '#e2cf9f'); piedra.addColorStop(1, '#b9995e');
+  g.fillStyle = piedra; g.fillRect(x, y0, ANCHO, h);
+  g.lineWidth = 3; g.strokeStyle = '#6b4f24'; g.strokeRect(x, y0, ANCHO, h);
+  /* Capitel: la parte más ancha junto al hueco */
+  const cy = arriba ? y1 - 22 : y0;
+  g.fillStyle = '#f3e3b4'; g.fillRect(x - 7, cy, ANCHO + 14, 22);
+  g.strokeRect(x - 7, cy, ANCHO + 14, 22);
+  /* Cruz dorada en el centro de cada columna */
+  if (h > 120) {
+    const mx = x + ANCHO / 2, my = y0 + h / 2 - (arriba ? 10 : 0);
+    g.fillStyle = '#d7a53a';
+    g.fillRect(mx - 2.5, my - 14, 5, 28); g.fillRect(mx - 9, my - 5, 18, 5);
+  }
+}
+
+function dibujarAngel() {
+  g.save();
+  g.translate(AX, y);
+  g.rotate(Math.max(-0.5, Math.min(0.9, vy / 700)));
+  const f = Math.sin(t * 16); /* aleteo: sube y baja las alas */
+  const punta = -10 + f * 18;
+  g.fillStyle = '#ffffff'; g.strokeStyle = '#b9c7dd'; g.lineWidth = 2;
+  for (const d of [1, -1]) {
+    g.beginPath();
+    g.moveTo(-4 * d, -4);
+    g.quadraticCurveTo(-22 * d, punta - 6, -34 * d, punta);
+    g.quadraticCurveTo(-20 * d, punta + 14, -6 * d, 6);
+    g.closePath(); g.fill(); g.stroke();
+  }
+  /* Túnica */
+  g.beginPath(); g.ellipse(0, 4, 14, 17, 0, 0, Math.PI * 2); g.fill(); g.stroke();
+  g.fillStyle = '#7fb0ff'; g.fillRect(-12, 4, 24, 4);
+  /* Cabeza y cabello */
+  g.fillStyle = '#ffe0bd'; g.beginPath(); g.arc(0, -16, 10, 0, Math.PI * 2); g.fill(); g.stroke();
+  g.strokeStyle = '#c58b3f'; g.lineWidth = 3.5; g.beginPath(); g.arc(0, -17, 10.5, Math.PI * 1.1, Math.PI * 1.9); g.stroke();
+  g.fillStyle = '#2b1a3f';
+  g.beginPath(); g.arc(-3.5, -15, 1.4, 0, Math.PI * 2); g.arc(3.5, -15, 1.4, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = '#2b1a3f'; g.lineWidth = 1.4; g.beginPath(); g.arc(0, -12, 3, 0.2, Math.PI - 0.2); g.stroke();
+  /* Aureola */
+  g.shadowColor = '#ffd25a'; g.shadowBlur = 10;
+  g.strokeStyle = '#ffd25a'; g.lineWidth = 2.5; g.beginPath(); g.ellipse(0, -31, 11, 3.5, 0, 0, Math.PI * 2); g.stroke();
+  g.restore();
+}
+
+function panel(titulo, lineas, pie) {
+  const pw = 270, ph = 60 + lineas.length * 26 + 70, px = (W - pw) / 2, py = H / 2 - ph / 2;
+  g.fillStyle = 'rgba(16,36,77,.82)';
+  g.beginPath(); g.roundRect(px, py, pw, ph, 18); g.fill();
+  g.strokeStyle = '#ffd25a'; g.lineWidth = 2; g.stroke();
+  g.textAlign = 'center'; g.fillStyle = '#ffd25a'; g.font = '800 26px Georgia, "Times New Roman", serif';
+  g.fillText(titulo, W / 2, py + 40);
+  g.fillStyle = '#ffffff'; g.font = '600 15px "Trebuchet MS", Arial, sans-serif';
+  lineas.forEach((l, i) => g.fillText(l, W / 2, py + 72 + i * 26));
+  g.fillStyle = '#ffd25a'; g.font = '800 16px "Trebuchet MS", Arial, sans-serif';
+  g.fillText(pie, W / 2, py + ph - 22);
+}
+
+function dibujar() {
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.fillStyle = '#10244d'; g.fillRect(0, 0, cv.width, cv.height);
+  g.setTransform(dpr * escala, 0, 0, dpr * escala, dpr * ox, dpr * oy);
+
+  const cielo = g.createLinearGradient(0, 0, 0, H);
+  cielo.addColorStop(0, '#7fbcff'); cielo.addColorStop(0.7, '#dff0ff'); cielo.addColorStop(1, '#ffe7b0');
+  g.fillStyle = cielo; g.fillRect(0, 0, W, H);
+
+  g.fillStyle = 'rgba(255,255,255,.92)';
+  for (const n of nubes) {
+    g.beginPath();
+    g.arc(n.x, n.y, n.s, 0, Math.PI * 2);
+    g.arc(n.x + n.s * 0.9, n.y - n.s * 0.35, n.s * 0.8, 0, Math.PI * 2);
+    g.arc(n.x - n.s * 0.9, n.y - n.s * 0.2, n.s * 0.7, 0, Math.PI * 2);
+    g.fill();
+  }
+
+  for (const p of pilares) {
+    columna(p.x, 0, p.gt, true);
+    columna(p.x, p.gt + HUECO, H - SUELO, false);
+  }
+
+  for (const q of gracias) {
+    g.beginPath(); g.arc(q.x, q.y, 13, 0, Math.PI * 2);
+    g.fillStyle = 'rgba(255,220,90,.35)'; g.fill();
+    g.lineWidth = 3; g.strokeStyle = '#ffd25a'; g.stroke();
+    g.beginPath(); g.arc(q.x, q.y, 5, 0, Math.PI * 2); g.fillStyle = '#fff6c8'; g.fill();
+  }
+
+  g.fillStyle = '#6fae52'; g.fillRect(0, H - SUELO, W, 8);
+  g.fillStyle = '#c99a5b'; g.fillRect(0, H - SUELO + 8, W, SUELO - 8);
+
+  g.fillStyle = '#ffffff';
+  for (const p of particulas) { g.globalAlpha = Math.max(0, p.vida / 0.5); g.beginPath(); g.arc(p.x, p.y, 3, 0, Math.PI * 2); g.fill(); }
+  g.globalAlpha = 1;
+
+  dibujarAngel();
+
+  if (estado === 'jugando' || estado === 'pausa' || estado === 'muerto') {
+    g.textAlign = 'center'; g.font = '800 52px Georgia, "Times New Roman", serif';
+    g.lineWidth = 6; g.strokeStyle = 'rgba(20,40,80,.55)'; g.fillStyle = '#ffffff';
+    g.strokeText(String(puntos), W / 2, 80); g.fillText(String(puntos), W / 2, 80);
+  }
+  if (estado === 'listo') panel('Ángel que vuela', ['Toca para que el ángel suba.', 'Pasa entre las columnas.', 'Las gracias doradas valen 3.'], 'Toca para empezar');
+  if (estado === 'pausa') panel('Pausa', ['Tu vuelo está en espera.'], 'Toca para seguir volando');
+  if (estado === 'muerto') panel('¡Fin del vuelo!', ['Puntos: ' + puntos, 'Mejor: ' + mejor], 'Toca para volver a volar');
+}
+
+cv.addEventListener('pointerdown', (e) => { e.preventDefault(); accion(); });
+addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); accion(); } });
+document.addEventListener('visibilitychange', () => { if (document.hidden && estado === 'jugando') estado = 'pausa'; });
+document.getElementById('salir').addEventListener('click', () => {
+  try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-cerrar' }, location.origin); } catch (e) { /* fuera de la app */ }
+});
+
+let ultimo = performance.now();
+function bucle(ahora) {
+  const dt = Math.min(0.033, (ahora - ultimo) / 1000);
+  ultimo = ahora;
+  actualizar(dt);
+  dibujar();
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);
+
+/* Para pruebas automáticas */
+window.__angel = { get estado() { return estado; }, get puntos() { return puntos; }, get mejor() { return mejor; }, get y() { return y; }, get pilares() { return pilares; }, accion };
+</script>
+</body>
+</html>
