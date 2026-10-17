@@ -3427,6 +3427,11 @@ function renderJuegosView() {
         <div class="lib-info"><h2>Cuentas de gracia</h2><small>Tres en línea · símbolos de la fe</small><p>Une símbolos de la fe para limpiar el tablero y llegar a la meta en cada uno de los 20 niveles.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/cuentas-de-gracia.html">${ic('gamepad')}Jugar</button></div>
       </article>
+      <article class="lib-card">
+        <div class="lib-cover" style="--bk:#2A1640"><b>Luz contra el pecado</b></div>
+        <div class="lib-info"><h2>Luz contra el pecado</h2><small>Acción en primera persona · San José Allamano</small><p>Recorre cinco caminos oscuros, bendice a los pecados con el hisopo y abre el Sagrario en cada nivel.</p>
+        <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/luz-contra-el-pecado.html">${ic('gamepad')}Jugar</button></div>
+      </article>
       <article class="lib-card lib-soon"><div class="lib-cover lib-cover-empty" aria-hidden="true">${ic('gamepad')}</div><div class="lib-info"><h2>Próximamente</h2><p>Aquí aparecerán nuevos juegos.</p></div></article>
     </div></div>`;
 }
@@ -3437,7 +3442,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=74" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=75" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }
