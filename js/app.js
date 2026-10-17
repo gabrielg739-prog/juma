@@ -3480,12 +3480,13 @@ function renderJuegosView() {
 }
 /* Juego a pantalla completa (mismo marco que la Biblioteca) */
 function abrirJuego(url) {
-  if (!currentUser) { openAuthModal(); return; }
+  /* Sin internet y sin sesión también se puede jugar (los puntos misioneros se cuentan con cuenta) */
+  if (!currentUser && navigator.onLine !== false) { openAuthModal(); return; }
   if ($('#lib-reader')) return;
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=112" allow="fullscreen"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=113" allow="fullscreen"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
   document.body.appendChild(r);
   /* Botón Atrás del teléfono: cierra el juego en vez de salir de la app */
   try { history.pushState({ jumaJuego: 1 }, ''); } catch (e) {}
