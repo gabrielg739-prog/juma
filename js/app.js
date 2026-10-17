@@ -3400,8 +3400,10 @@ function abrirLibro(id) {
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }
-function cerrarLibro() {
+window.addEventListener('popstate', () => { if ($('#lib-reader')) cerrarLibro(true); });
+function cerrarLibro(porAtras) {
   const r = $('#lib-reader'); if (r) r.remove();
+  if (!porAtras && r && history.state && history.state.jumaJuego) { try { history.back(); } catch (e) {} }
   misioneros.terminarSesion();
   document.documentElement.style.overflow = '';
 }
@@ -3483,8 +3485,16 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=110" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=112" allow="fullscreen"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
   document.body.appendChild(r);
+  /* Botón Atrás del teléfono: cierra el juego en vez de salir de la app */
+  try { history.pushState({ jumaJuego: 1 }, ''); } catch (e) {}
+  const b = r.querySelector('.lib-salir'); let t = 0;
+  b.addEventListener('click', () => {
+    if (b.classList.contains('abierto')) { cerrarLibro(); return; }
+    b.classList.add('abierto'); b.textContent = 'Salir';
+    clearTimeout(t); t = setTimeout(() => { b.classList.remove('abierto'); b.textContent = '✕'; }, 3000);
+  });
   misioneros.iniciarSesion(url.replace(/^juegos\//, '').replace(/\.html$/, ''));
   document.documentElement.style.overflow = 'hidden';
 }

@@ -1043,6 +1043,8 @@ body{background:var(--paper);overflow-x:clip}
 .lib-info{display:flex;flex-direction:column;gap:6px;min-width:0}.lib-info h2{margin:0;font-size:18px;line-height:1.2}.lib-info small{color:var(--royal);font-weight:700}.lib-info p{margin:0 0 6px;font-size:14px;line-height:1.5;color:var(--ink)}
 .lib-info .btn{align-self:flex-start;margin-top:auto}.lib-soon{opacity:.7;border-style:dashed}
 #lib-reader{position:fixed;inset:0;z-index:100000;background:#0b1220}
+#lib-reader .lib-salir{position:absolute;top:calc(8px + env(safe-area-inset-top));left:calc(8px + env(safe-area-inset-left));z-index:2;min-width:36px;height:36px;padding:0 10px;border:0;border-radius:18px;background:rgba(0,0,0,.45);color:#fff;font:700 15px system-ui,sans-serif;opacity:.55;cursor:pointer;transition:opacity .15s,background .15s}
+#lib-reader .lib-salir.abierto{opacity:1;background:#b3261e}
 #lib-reader iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .lib-close{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;z-index:2;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:99px;border:1.5px solid rgba(255,255,255,.5);background:rgba(6,21,54,.88);color:#fff;font-weight:800;font-size:13.5px;cursor:pointer}
 .lib-close:active{transform:scale(.96)}
@@ -1798,8 +1800,8 @@ body.is-guest .solo-miembros { display: none !important; }
 <div id="modal-root"></div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=111"></script>
-<script type="module" src="js/offline.js?v=111"></script>
+<script type="module" src="js/app.js?v=112"></script>
+<script type="module" src="js/offline.js?v=112"></script>
 <script type="module" src="js/fe.js?v=65"></script>
 </body>
 </html>
