@@ -3457,17 +3457,17 @@ function renderJuegosView() {
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/huyendo-del-pecado.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
-        <div class="lib-cover" style="--bk:#17675C" role="img" aria-label="Portada de Rueda y pinta"><b>Rueda y pinta</b></div>
+        <div class="lib-cover con-img" style="--bk:#17675C;background-image:url(juegos/portadas/rueda.jpg)" role="img" aria-label="Portada de Rueda y pinta"><b>Rueda y pinta</b></div>
         <div class="lib-info"><h2>Rueda y pinta</h2><small>Puzle de caminos · 15 niveles · ¡Nuevo!</small><p>Desliza la bola: rueda en línea recta hasta chocar y pinta cada casilla por la que pasa. Pinta todo el camino con los menos movimientos posibles y gana estrellas.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/rueda-y-pinta.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
-        <div class="lib-cover" style="--bk:#B5462E" role="img" aria-label="Portada de Carrera de la fe"><b>Carrera de la fe</b></div>
+        <div class="lib-cover con-img" style="--bk:#B5462E;background-image:url(juegos/portadas/carrera.jpg)" role="img" aria-label="Portada de Carrera de la fe"><b>Carrera de la fe</b></div>
         <div class="lib-info"><h2>Carrera de la fe</h2><small>Carreras de karts en 3D · 8 personajes · 6 pistas · ¡Nuevo!</small><p>Elige tu personaje y tu kart: ocho personajes con habilidades propias y cuatro karts. Recoge cajas de gracia y usa la vela, el rosario, el incienso, la campanilla o la paloma para llegar primero.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/carrera-de-la-fe.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
-        <div class="lib-cover" style="--bk:#3D7BC9" role="img" aria-label="Portada de Ángel que vuela"><b>Ángel que vuela</b></div>
+        <div class="lib-cover con-img" style="--bk:#3D7BC9;background-image:url(juegos/portadas/angel.jpg)" role="img" aria-label="Portada de Ángel que vuela"><b>Ángel que vuela</b></div>
         <div class="lib-info"><h2>Ángel que vuela</h2><small>Vuelo de un toque · ¡Nuevo!</small><p>Toca para que tu ángel de la guarda suba y pase entre las columnas sin tocarlas. Toma las gracias doradas para sumar más puntos.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/angel-que-vuela.html">${ic('gamepad')}Jugar</button></div>
       </article>
@@ -3481,7 +3481,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=109" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=110" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }

@@ -8,19 +8,20 @@
 <style>
   html, body { margin: 0; height: 100%; background: #10244d; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; font-family: "Trebuchet MS", system-ui, Arial, sans-serif; }
   #j { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-  .ui { position: fixed; left: 0; right: 0; top: 0; display: flex; justify-content: flex-end; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 0; pointer-events: none; }
-  #salir { pointer-events: auto; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1.5px solid rgba(255, 255, 255, .6); background: rgba(16, 36, 77, .55); color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+  .ui { position: fixed; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; gap: 8px; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 0; pointer-events: none; }
+  .ui button { pointer-events: auto; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid rgba(255, 255, 255, .6); background: rgba(16, 36, 77, .55); color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
 </style>
 </head>
 <body>
 <canvas id="j" aria-label="Juego: un ángel de la guarda vuela entre columnas y toma gracias doradas"></canvas>
-<div class="ui"><button id="salir" type="button">Salir</button></div>
+<div class="ui"><button id="sonido" type="button">Sonido: sí</button><button id="salir" type="button">Salir</button></div>
+<script src="lib/sonido.js"></script>
 <script>
 /* Ángel que vuela · juego de esquivar columnas, sin imágenes externas.
    Tocar la pantalla (o la tecla Espacio) hace que el ángel suba; la gravedad lo baja.
-   Pasar una columna da 1 punto; tomar una gracia dorada da 3. */
+   Pasar una columna da 1 punto; tomar una gracia dorada da 3. Los sonidos son sintetizados (lib/sonido.js). */
 const W = 360, H = 640, SUELO = 40;
-const GRAV = 1500, IMPULSO = -440, HUECO = 156, SEP = 215, ANCHO = 58, AX = 92, R = 15;
+const GRAV = 1500, IMPULSO = -440, SEP = 215, ANCHO = 58, AX = 92, R = 15;
 const CLAVE = 'juma-angel-v1';
 
 const cv = document.getElementById('j'), g = cv.getContext('2d');
@@ -34,57 +35,91 @@ function ajustar() {
 addEventListener('resize', ajustar);
 ajustar();
 
-let estado = 'listo', y = H * 0.42, vy = 0, velo = 140, puntos = 0, mejor = leerMejor(), t = 0, muerte = 0;
-let pilares = [], gracias = [], particulas = [];
-const nubes = [];
-for (let i = 0; i < 7; i++) nubes.push({ x: Math.random() * W, y: 40 + Math.random() * 240, s: 14 + Math.random() * 16, v: 14 + Math.random() * 18 });
-
-function leerMejor() { try { return Number(JSON.parse(localStorage.getItem(CLAVE) || '{}').mejor) || 0; } catch (e) { return 0; } }
-function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify({ mejor })); } catch (e) { /* almacenamiento lleno o bloqueado */ } }
+/* ---------- Ajustes y puntajes guardados en este teléfono ---------- */
+function leerDatos() { try { return JSON.parse(localStorage.getItem(CLAVE) || '{}') || {}; } catch (e) { return {}; } }
+const datos = leerDatos();
+let mejor = Number(datos.mejor) || 0;
+let sonidoOn = datos.sonido !== false;
+function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify({ mejor, sonido: sonidoOn })); } catch (e) { /* almacenamiento lleno o bloqueado */ } }
 function enviarPuntos() {
   try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', juego: 'angel', total: mejor }, location.origin); } catch (e) { /* fuera de la app */ }
 }
 
+/* ---------- Sonido (síntesis propia, sin archivos) ---------- */
+const JS = window.JumaSonido || null;
+if (JS) { JS.permitido = () => sonidoOn; }
+function sonar(fn) { try { if (JS && sonidoOn) { JS.ctx(); fn(); } } catch (e) { /* sin audio */ } }
+function vibrar(p) { try { if (JS && sonidoOn) JS.vibrar(p); } catch (e) { /* sin vibración */ } }
+const SND = {
+  aleteo() { sonar(() => { JS.ruido({ dur: 0.1, vol: 0.14, f: 2600, tipo: 'bandpass', q: 0.8, eco: 0.05 }); JS.osc({ f: 620, f2: 980, dur: 0.1, vol: 0.1, tipo: 'sine', eco: 0.05 }); }); },
+  punto() { sonar(() => JS.marimba(988, 0.3, 0.2)); },
+  gracia() { sonar(() => JS.campana(1568, 0.9, 0.26)); setTimeout(() => sonar(() => JS.campana(2093, 0.9, 0.2)), 90); },
+  inicio() { [523, 659, 784].forEach((f, i) => setTimeout(() => sonar(() => JS.arpa(f, 0.5, 0.2)), i * 90)); },
+  golpe() { sonar(() => { JS.ruido({ dur: 0.35, vol: 0.38, f: 900, tipo: 'lowpass', eco: 0.1 }); JS.osc({ f: 260, f2: 70, dur: 0.5, vol: 0.3, tipo: 'triangle', eco: 0.1 }); }); vibrar([80, 40, 80]); },
+  mejor() { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => sonar(() => JS.campana(f, 1.1, 0.24)), i * 120)); vibrar([60, 60, 60]); }
+};
+
+/* ---------- Estado del juego ---------- */
+let estado = 'listo', y = H * 0.42, vy = 0, velo = 130, puntos = 0, t = 0, muerte = 0, sacudida = 0;
+let pilares = [], gracias = [], particulas = [];
+let mejorAntes = mejor, nuevoMejor = false, colinaX = 0;
+const nubes = [];
+for (let i = 0; i < 7; i++) nubes.push({ x: Math.random() * W, y: 40 + Math.random() * 240, s: 14 + Math.random() * 16, v: 14 + Math.random() * 18 });
+
+/* La abertura entre columnas se cierra poco a poco: 172 al empezar, 140 con 30 puntos */
+function huecoActual() { return Math.max(140, 172 - puntos * 1.1); }
+
 function nuevoPilar(x) {
-  const gt = 110 + Math.random() * (H - SUELO - HUECO - 220);
-  pilares.push({ x, gt, pasado: false });
-  if (Math.random() < 0.7) gracias.push({ x: x + ANCHO / 2, y: gt + HUECO / 2, tomada: false });
+  const h = huecoActual();
+  const gt = 110 + Math.random() * (H - SUELO - h - 220);
+  pilares.push({ x, gt, h, pasado: false });
+  if (puntos > 0 && Math.random() < 0.7) gracias.push({ x: x + ANCHO / 2, y: gt + h / 2, tomada: false });
 }
 
 function reiniciar() {
-  y = H * 0.42; vy = 0; velo = 140; puntos = 0;
-  pilares = []; gracias = []; particulas = [];
+  y = H * 0.42; vy = 0; velo = 130; puntos = 0; nuevoMejor = false;
+  pilares = []; gracias = []; particulas = []; sacudida = 0;
   let x = W + 80;
   for (let i = 0; i < 4; i++) { nuevoPilar(x); x += SEP; }
 }
 
+function chispas(x, yy, color, n) {
+  for (let i = 0; i < n; i++) particulas.push({ x, y: yy, vx: (Math.random() - 0.5) * 140, vy: (Math.random() - 0.7) * 140, vida: 0.5, c: color });
+}
+
 function soplo() {
-  for (let i = 0; i < 3; i++) particulas.push({ x: AX - 10, y: y + 6, vx: -40 - Math.random() * 50, vy: (Math.random() - 0.5) * 60, vida: 0.45 });
+  for (let i = 0; i < 3; i++) particulas.push({ x: AX - 10, y: y + 6, vx: -40 - Math.random() * 50, vy: (Math.random() - 0.5) * 60, vida: 0.45, c: '#ffffff' });
 }
 
 function morir() {
-  estado = 'muerto'; muerte = performance.now();
-  if (puntos > mejor) mejor = puntos;
+  estado = 'muerto'; muerte = performance.now(); sacudida = 9;
+  mejorAntes = mejor;
+  if (puntos > mejor) { mejor = puntos; nuevoMejor = puntos > 0; }
   guardar(); enviarPuntos();
-  for (let i = 0; i < 14; i++) particulas.push({ x: AX, y, vx: (Math.random() - 0.5) * 220, vy: (Math.random() - 0.7) * 200, vida: 0.8 });
+  chispas(AX, y, '#ffffff', 14);
+  SND.golpe();
+  if (nuevoMejor) setTimeout(() => { if (estado === 'muerto') SND.mejor(); }, 500);
 }
 
 function accion() {
-  if (estado === 'listo') { reiniciar(); estado = 'jugando'; }
+  if (JS) { try { JS.ctx(); } catch (e) { /* sin audio */ } }
+  if (estado === 'listo') { reiniciar(); estado = 'jugando'; SND.inicio(); }
   else if (estado === 'pausa') estado = 'jugando';
-  else if (estado === 'muerto') { if (performance.now() - muerte < 500) return; reiniciar(); estado = 'jugando'; }
-  if (estado === 'jugando') { vy = IMPULSO; soplo(); }
+  else if (estado === 'muerto') { if (performance.now() - muerte < 500) return; reiniciar(); estado = 'jugando'; SND.inicio(); }
+  if (estado === 'jugando') { vy = IMPULSO; soplo(); SND.aleteo(); }
 }
 
 function actualizar(dt) {
   t += dt;
+  sacudida *= Math.exp(-dt * 12);
+  colinaX += velo * 0.25 * dt;
   for (const n of nubes) { n.x -= n.v * dt; if (n.x < -80) { n.x = W + 80; n.y = 40 + Math.random() * 240; } }
-  for (const p of particulas) { p.vida -= dt; p.x += p.vx * dt; p.y += p.vy * dt; }
+  for (const p of particulas) { p.vida -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 300 * dt; }
   particulas = particulas.filter((p) => p.vida > 0);
   if (estado === 'listo') { y = H * 0.42 + Math.sin(t * 3) * 8; return; }
   if (estado !== 'jugando') return;
 
-  velo = Math.min(240, 140 + puntos * 3);
+  velo = Math.min(230, 130 + puntos * 2.5);
   vy += GRAV * dt; y += vy * dt;
   for (const p of pilares) p.x -= velo * dt;
   for (const q of gracias) q.x -= velo * dt;
@@ -96,26 +131,38 @@ function actualizar(dt) {
 
   if (y - R < 0 || y + R > H - SUELO) return morir();
   for (const p of pilares) {
-    if (AX + R > p.x && AX - R < p.x + ANCHO && (y - R < p.gt || y + R > p.gt + HUECO)) return morir();
-    if (!p.pasado && p.x + ANCHO < AX - R) { p.pasado = true; puntos++; }
+    if (AX + R > p.x && AX - R < p.x + ANCHO && (y - R < p.gt || y + R > p.gt + p.h)) return morir();
+    if (!p.pasado && p.x + ANCHO < AX - R) {
+      p.pasado = true; puntos++; SND.punto();
+    }
   }
   for (const q of gracias) {
-    if (!q.tomada && Math.hypot(q.x - AX, q.y - y) < 26) { q.tomada = true; puntos += 3; }
+    if (!q.tomada && Math.hypot(q.x - AX, q.y - y) < 26) {
+      q.tomada = true; puntos += 3; chispas(q.x, q.y, '#ffd25a', 10); SND.gracia();
+    }
   }
 }
 
-/* ---------- dibujo ---------- */
+/* ---------- Dibujo ---------- */
+function colinas(alt, color, velocidad, base) {
+  g.fillStyle = color;
+  g.beginPath(); g.moveTo(0, H - SUELO);
+  for (let x = -20; x <= W + 20; x += 6) {
+    const yy = H - SUELO - base - alt * (0.5 + 0.5 * Math.sin((x + colinaX * velocidad) * 0.018));
+    g.lineTo(x, yy);
+  }
+  g.lineTo(W, H - SUELO); g.closePath(); g.fill();
+}
+
 function columna(x, y0, y1, arriba) {
   const h = y1 - y0;
   const piedra = g.createLinearGradient(x, 0, x + ANCHO, 0);
   piedra.addColorStop(0, '#fff6df'); piedra.addColorStop(0.55, '#e2cf9f'); piedra.addColorStop(1, '#b9995e');
   g.fillStyle = piedra; g.fillRect(x, y0, ANCHO, h);
   g.lineWidth = 3; g.strokeStyle = '#6b4f24'; g.strokeRect(x, y0, ANCHO, h);
-  /* Capitel: la parte más ancha junto al hueco */
   const cy = arriba ? y1 - 22 : y0;
   g.fillStyle = '#f3e3b4'; g.fillRect(x - 7, cy, ANCHO + 14, 22);
   g.strokeRect(x - 7, cy, ANCHO + 14, 22);
-  /* Cruz dorada en el centro de cada columna */
   if (h > 120) {
     const mx = x + ANCHO / 2, my = y0 + h / 2 - (arriba ? 10 : 0);
     g.fillStyle = '#d7a53a';
@@ -127,7 +174,7 @@ function dibujarAngel() {
   g.save();
   g.translate(AX, y);
   g.rotate(Math.max(-0.5, Math.min(0.9, vy / 700)));
-  const f = Math.sin(t * 16); /* aleteo: sube y baja las alas */
+  const f = Math.sin(t * 16);
   const punta = -10 + f * 18;
   g.fillStyle = '#ffffff'; g.strokeStyle = '#b9c7dd'; g.lineWidth = 2;
   for (const d of [1, -1]) {
@@ -137,16 +184,13 @@ function dibujarAngel() {
     g.quadraticCurveTo(-20 * d, punta + 14, -6 * d, 6);
     g.closePath(); g.fill(); g.stroke();
   }
-  /* Túnica */
   g.beginPath(); g.ellipse(0, 4, 14, 17, 0, 0, Math.PI * 2); g.fill(); g.stroke();
   g.fillStyle = '#7fb0ff'; g.fillRect(-12, 4, 24, 4);
-  /* Cabeza y cabello */
   g.fillStyle = '#ffe0bd'; g.beginPath(); g.arc(0, -16, 10, 0, Math.PI * 2); g.fill(); g.stroke();
   g.strokeStyle = '#c58b3f'; g.lineWidth = 3.5; g.beginPath(); g.arc(0, -17, 10.5, Math.PI * 1.1, Math.PI * 1.9); g.stroke();
   g.fillStyle = '#2b1a3f';
   g.beginPath(); g.arc(-3.5, -15, 1.4, 0, Math.PI * 2); g.arc(3.5, -15, 1.4, 0, Math.PI * 2); g.fill();
   g.strokeStyle = '#2b1a3f'; g.lineWidth = 1.4; g.beginPath(); g.arc(0, -12, 3, 0.2, Math.PI - 0.2); g.stroke();
-  /* Aureola */
   g.shadowColor = '#ffd25a'; g.shadowBlur = 10;
   g.strokeStyle = '#ffd25a'; g.lineWidth = 2.5; g.beginPath(); g.ellipse(0, -31, 11, 3.5, 0, 0, Math.PI * 2); g.stroke();
   g.restore();
@@ -168,7 +212,8 @@ function panel(titulo, lineas, pie) {
 function dibujar() {
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.fillStyle = '#10244d'; g.fillRect(0, 0, cv.width, cv.height);
-  g.setTransform(dpr * escala, 0, 0, dpr * escala, dpr * ox, dpr * oy);
+  const sx = (Math.random() - 0.5) * sacudida, sy = (Math.random() - 0.5) * sacudida;
+  g.setTransform(dpr * escala, 0, 0, dpr * escala, dpr * (ox + sx * escala), dpr * (oy + sy * escala));
 
   const cielo = g.createLinearGradient(0, 0, 0, H);
   cielo.addColorStop(0, '#7fbcff'); cielo.addColorStop(0.7, '#dff0ff'); cielo.addColorStop(1, '#ffe7b0');
@@ -182,10 +227,12 @@ function dibujar() {
     g.arc(n.x - n.s * 0.9, n.y - n.s * 0.2, n.s * 0.7, 0, Math.PI * 2);
     g.fill();
   }
+  colinas(90, '#9cc9a8', 0.5, 60);
+  colinas(60, '#7db58c', 1, 0);
 
   for (const p of pilares) {
     columna(p.x, 0, p.gt, true);
-    columna(p.x, p.gt + HUECO, H - SUELO, false);
+    columna(p.x, p.gt + p.h, H - SUELO, false);
   }
 
   for (const q of gracias) {
@@ -198,8 +245,7 @@ function dibujar() {
   g.fillStyle = '#6fae52'; g.fillRect(0, H - SUELO, W, 8);
   g.fillStyle = '#c99a5b'; g.fillRect(0, H - SUELO + 8, W, SUELO - 8);
 
-  g.fillStyle = '#ffffff';
-  for (const p of particulas) { g.globalAlpha = Math.max(0, p.vida / 0.5); g.beginPath(); g.arc(p.x, p.y, 3, 0, Math.PI * 2); g.fill(); }
+  for (const p of particulas) { g.globalAlpha = Math.max(0, p.vida / 0.5); g.fillStyle = p.c; g.beginPath(); g.arc(p.x, p.y, 3, 0, Math.PI * 2); g.fill(); }
   g.globalAlpha = 1;
 
   dibujarAngel();
@@ -211,12 +257,23 @@ function dibujar() {
   }
   if (estado === 'listo') panel('Ángel que vuela', ['Toca para que el ángel suba.', 'Pasa entre las columnas.', 'Las gracias doradas valen 3.'], 'Toca para empezar');
   if (estado === 'pausa') panel('Pausa', ['Tu vuelo está en espera.'], 'Toca para seguir volando');
-  if (estado === 'muerto') panel('¡Fin del vuelo!', ['Puntos: ' + puntos, 'Mejor: ' + mejor], 'Toca para volver a volar');
+  if (estado === 'muerto') panel(nuevoMejor ? '¡Nuevo mejor!' : '¡Fin del vuelo!', ['Puntos: ' + puntos, 'Mejor: ' + mejor], 'Toca para volver a volar');
 }
 
+/* ---------- Entradas ---------- */
 cv.addEventListener('pointerdown', (e) => { e.preventDefault(); accion(); });
 addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); accion(); } });
 document.addEventListener('visibilitychange', () => { if (document.hidden && estado === 'jugando') estado = 'pausa'; });
+
+const botonSonido = document.getElementById('sonido');
+function pintarSonido() { botonSonido.textContent = 'Sonido: ' + (sonidoOn ? 'sí' : 'no'); }
+botonSonido.addEventListener('click', (e) => {
+  e.stopPropagation();
+  sonidoOn = !sonidoOn; guardar(); pintarSonido();
+  if (sonidoOn) sonar(() => JS.campana(784, 0.4, 0.2));
+});
+pintarSonido();
+
 document.getElementById('salir').addEventListener('click', () => {
   try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-cerrar' }, location.origin); } catch (e) { /* fuera de la app */ }
 });
@@ -232,7 +289,7 @@ function bucle(ahora) {
 requestAnimationFrame(bucle);
 
 /* Para pruebas automáticas */
-window.__angel = { get estado() { return estado; }, get puntos() { return puntos; }, get mejor() { return mejor; }, get y() { return y; }, get pilares() { return pilares; }, accion };
+window.__angel = { get estado() { return estado; }, get puntos() { return puntos; }, get mejor() { return mejor; }, get y() { return y; }, get pilares() { return pilares; }, get sonido() { return sonidoOn; }, accion };
 </script>
 </body>
 </html>
