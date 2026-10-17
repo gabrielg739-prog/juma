@@ -3468,7 +3468,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=100" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=101" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }
@@ -5052,7 +5052,11 @@ async function initFirebase() {
     const a = app.initializeApp(CFG);
     let db;
     try {
-      db = fs.initializeFirestore(a, { experimentalAutoDetectLongPolling: true });
+      /* Caché local de Firestore: los cambios hechos sin internet (puntos, perfil) se guardan en el
+         teléfono y se envían solos cuando vuelve la conexión */
+      let cache;
+      try { cache = fs.persistentLocalCache({ tabManager: fs.persistentMultipleTabManager() }); } catch (e) { cache = undefined; }
+      db = fs.initializeFirestore(a, { experimentalAutoDetectLongPolling: true, ...(cache ? { localCache: cache } : {}) });
     } catch (e) {
       db = fs.getFirestore(a);
     }

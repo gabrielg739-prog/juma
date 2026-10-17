@@ -1,0 +1,1003 @@
+{
+ "version": "cf8be8e1f64f",
+ "recursos": "juma-recursos-v1",
+ "tamano": 51970538,
+ "archivos": [
+  {
+   "ruta": "audio/cumpleanos.mp3",
+   "tamano": 338993,
+   "hash": "e12ec8f7a8c7"
+  },
+  {
+   "ruta": "biblioteca/los-quiero-asi.epub",
+   "tamano": 386314,
+   "hash": "150f4dc6fe12"
+  },
+  {
+   "ruta": "biblioteca/los-quiero-asi.html",
+   "tamano": 566963,
+   "hash": "83e8626d8e88"
+  },
+  {
+   "ruta": "biblioteca/los-quiero-asi.pdf",
+   "tamano": 577574,
+   "hash": "87ed9e434207"
+  },
+  {
+   "ruta": "biblioteca/manual-juma.html",
+   "tamano": 395128,
+   "hash": "a398a10d30c0"
+  },
+  {
+   "ruta": "caminata-misionera-2026.mp4",
+   "tamano": 6568342,
+   "hash": "35738cb2b891"
+  },
+  {
+   "ruta": "caminata-misionera-2026.png",
+   "tamano": 965726,
+   "hash": "96ae3e1409bd"
+  },
+  {
+   "ruta": "contenido.json",
+   "tamano": 2675,
+   "hash": "d18acc0e0f81"
+  },
+  {
+   "ruta": "descargar.html",
+   "tamano": 23357,
+   "hash": "44c371e197ea"
+  },
+  {
+   "ruta": "icons/badge-96.png",
+   "tamano": 981,
+   "hash": "c82515603cd0"
+  },
+  {
+   "ruta": "icons/icon-192.png",
+   "tamano": 11579,
+   "hash": "372e4b32e6ed"
+  },
+  {
+   "ruta": "icons/icon-512.png",
+   "tamano": 46347,
+   "hash": "916ebdb9145e"
+  },
+  {
+   "ruta": "img/alegria.jpg",
+   "tamano": 90350,
+   "hash": "c6076e59f7b1"
+  },
+  {
+   "ruta": "img/allamano-par.jpg",
+   "tamano": 114889,
+   "hash": "252e52cec20d"
+  },
+  {
+   "ruta": "img/allamano.jpg",
+   "tamano": 158663,
+   "hash": "18e2b0ea15e2"
+  },
+  {
+   "ruta": "img/bienvenidos.jpg",
+   "tamano": 234141,
+   "hash": "bc9424a30846"
+  },
+  {
+   "ruta": "img/calle.jpg",
+   "tamano": 253761,
+   "hash": "d5e939eb4c1e"
+  },
+  {
+   "ruta": "img/caminata-misionera-2026.mp4",
+   "tamano": 6568342,
+   "hash": "35738cb2b891"
+  },
+  {
+   "ruta": "img/caminata-misionera-2026.png",
+   "tamano": 965726,
+   "hash": "96ae3e1409bd"
+  },
+  {
+   "ruta": "img/camino.jpg",
+   "tamano": 164423,
+   "hash": "d7cacc58e811"
+  },
+  {
+   "ruta": "img/capilla-rural.jpg",
+   "tamano": 236159,
+   "hash": "f4d40952a735"
+  },
+  {
+   "ruta": "img/capilla.jpg",
+   "tamano": 146022,
+   "hash": "fde52814d8ba"
+  },
+  {
+   "ruta": "img/cena.jpg",
+   "tamano": 227781,
+   "hash": "87634a9b079a"
+  },
+  {
+   "ruta": "img/chicha.jpg",
+   "tamano": 228799,
+   "hash": "26fd7898894f"
+  },
+  {
+   "ruta": "img/circulo.jpg",
+   "tamano": 196459,
+   "hash": "ab9b26f84f10"
+  },
+  {
+   "ruta": "img/circulo2.jpg",
+   "tamano": 129370,
+   "hash": "27f074196752"
+  },
+  {
+   "ruta": "img/comunidad.jpg",
+   "tamano": 309696,
+   "hash": "3dbe1fa5b018"
+  },
+  {
+   "ruta": "img/consolata.jpg",
+   "tamano": 248152,
+   "hash": "352b7fe1428c"
+  },
+  {
+   "ruta": "img/coromoto.jpg",
+   "tamano": 250395,
+   "hash": "aabd0e4214bc"
+  },
+  {
+   "ruta": "img/cruz.jpg",
+   "tamano": 199525,
+   "hash": "663ec987d8be"
+  },
+  {
+   "ruta": "img/dinamica.jpg",
+   "tamano": 315101,
+   "hash": "d0bf69182ff9"
+  },
+  {
+   "ruta": "img/fatima-banderas.jpg",
+   "tamano": 146609,
+   "hash": "013ef45137a7"
+  },
+  {
+   "ruta": "img/fatima.jpg",
+   "tamano": 253211,
+   "hash": "bbc7e6143455"
+  },
+  {
+   "ruta": "img/formacion.jpg",
+   "tamano": 248452,
+   "hash": "367474fa4d35"
+  },
+  {
+   "ruta": "img/galeria/juma-01.jpg",
+   "tamano": 148828,
+   "hash": "f70cba24cfba"
+  },
+  {
+   "ruta": "img/galeria/juma-02.jpg",
+   "tamano": 229615,
+   "hash": "0d168665b92d"
+  },
+  {
+   "ruta": "img/galeria/juma-03.jpg",
+   "tamano": 306783,
+   "hash": "109a18df4539"
+  },
+  {
+   "ruta": "img/galeria/juma-04.jpg",
+   "tamano": 180671,
+   "hash": "9332d14579f6"
+  },
+  {
+   "ruta": "img/galeria/juma-05.jpg",
+   "tamano": 159517,
+   "hash": "a56a556f9f28"
+  },
+  {
+   "ruta": "img/galeria/juma-06.jpg",
+   "tamano": 188503,
+   "hash": "d8c64dee63ba"
+  },
+  {
+   "ruta": "img/galeria/juma-07.jpg",
+   "tamano": 145244,
+   "hash": "c1ab946fa3b9"
+  },
+  {
+   "ruta": "img/galeria/juma-08.jpg",
+   "tamano": 179626,
+   "hash": "71a46c5ce59b"
+  },
+  {
+   "ruta": "img/galeria/juma-09.jpg",
+   "tamano": 179096,
+   "hash": "c68dcb9a0fd5"
+  },
+  {
+   "ruta": "img/galeria/juma-10.jpg",
+   "tamano": 186497,
+   "hash": "ad39e53dff69"
+  },
+  {
+   "ruta": "img/galeria/juma-11.jpg",
+   "tamano": 144865,
+   "hash": "eef4fa7d6de0"
+  },
+  {
+   "ruta": "img/galeria/juma-12.jpg",
+   "tamano": 200408,
+   "hash": "1fe694c13632"
+  },
+  {
+   "ruta": "img/galeria/juma-13.jpg",
+   "tamano": 102030,
+   "hash": "415ad8541d24"
+  },
+  {
+   "ruta": "img/galeria/juma-14.jpg",
+   "tamano": 199202,
+   "hash": "4f465f58ba03"
+  },
+  {
+   "ruta": "img/galeria/juma-15.jpg",
+   "tamano": 319175,
+   "hash": "36a1ca2f8c3c"
+  },
+  {
+   "ruta": "img/galeria/juma-16.jpg",
+   "tamano": 125006,
+   "hash": "0c64f2bd0983"
+  },
+  {
+   "ruta": "img/galeria/juma-17.jpg",
+   "tamano": 220107,
+   "hash": "506465e9d03f"
+  },
+  {
+   "ruta": "img/galeria/juma-18.jpg",
+   "tamano": 74951,
+   "hash": "0e184bb024ce"
+  },
+  {
+   "ruta": "img/galeria/juma-19.jpg",
+   "tamano": 57748,
+   "hash": "f623969bf63f"
+  },
+  {
+   "ruta": "img/galeria/juma-20.jpg",
+   "tamano": 57168,
+   "hash": "e2ffd02b7006"
+  },
+  {
+   "ruta": "img/galeria/juma-21.jpg",
+   "tamano": 123378,
+   "hash": "944672362b98"
+  },
+  {
+   "ruta": "img/galeria/juma-22.jpg",
+   "tamano": 116284,
+   "hash": "01eebc254ead"
+  },
+  {
+   "ruta": "img/galeria/juma-23.jpg",
+   "tamano": 225122,
+   "hash": "9ad3b813b853"
+  },
+  {
+   "ruta": "img/galeria/juma-24.jpg",
+   "tamano": 204110,
+   "hash": "40ac35e2c69d"
+  },
+  {
+   "ruta": "img/galeria/juma-25.jpg",
+   "tamano": 287686,
+   "hash": "8c3d6086b788"
+  },
+  {
+   "ruta": "img/galeria/juma-26.jpg",
+   "tamano": 178745,
+   "hash": "22a5d0c25692"
+  },
+  {
+   "ruta": "img/galeria/juma-27.jpg",
+   "tamano": 253237,
+   "hash": "0f2331a1e381"
+  },
+  {
+   "ruta": "img/galeria/juma-28.jpg",
+   "tamano": 230888,
+   "hash": "adf86c9d8e24"
+  },
+  {
+   "ruta": "img/galeria/juma-29.jpg",
+   "tamano": 229669,
+   "hash": "9553f7e7ef81"
+  },
+  {
+   "ruta": "img/galeria/juma-30.jpg",
+   "tamano": 213154,
+   "hash": "5c71cbe32eca"
+  },
+  {
+   "ruta": "img/galeria/juma-31.jpg",
+   "tamano": 166761,
+   "hash": "48b8ec5b7ada"
+  },
+  {
+   "ruta": "img/galeria/juma-32.jpg",
+   "tamano": 137624,
+   "hash": "0d5ee2f44f57"
+  },
+  {
+   "ruta": "img/galeria/juma-33.jpg",
+   "tamano": 208788,
+   "hash": "5ef1afc3464a"
+  },
+  {
+   "ruta": "img/galeria/juma-34.jpg",
+   "tamano": 109616,
+   "hash": "b44b93a39951"
+  },
+  {
+   "ruta": "img/galeria/juma-35.jpg",
+   "tamano": 193114,
+   "hash": "f82b92f0ac38"
+  },
+  {
+   "ruta": "img/galeria/juma-36.jpg",
+   "tamano": 147930,
+   "hash": "4177711d366d"
+  },
+  {
+   "ruta": "img/galeria/juma-37.jpg",
+   "tamano": 136160,
+   "hash": "8deb504bf417"
+  },
+  {
+   "ruta": "img/galeria/juma-38.jpg",
+   "tamano": 121853,
+   "hash": "2b22a7365205"
+  },
+  {
+   "ruta": "img/galeria/juma-39.jpg",
+   "tamano": 174632,
+   "hash": "3bfc9c99af97"
+  },
+  {
+   "ruta": "img/galeria/juma-40.jpg",
+   "tamano": 161780,
+   "hash": "b6cc2600840b"
+  },
+  {
+   "ruta": "img/galeria/juma-41.jpg",
+   "tamano": 183757,
+   "hash": "3d81390901fd"
+  },
+  {
+   "ruta": "img/galeria/juma-42.jpg",
+   "tamano": 174989,
+   "hash": "cf1b59125f85"
+  },
+  {
+   "ruta": "img/galeria/juma-43.jpg",
+   "tamano": 283979,
+   "hash": "8418a2b2fb43"
+  },
+  {
+   "ruta": "img/galeria/juma-44.jpg",
+   "tamano": 230374,
+   "hash": "a69858ad8dd1"
+  },
+  {
+   "ruta": "img/galeria/juma-45.jpg",
+   "tamano": 366452,
+   "hash": "42da4b4da68f"
+  },
+  {
+   "ruta": "img/galeria/juma-46.jpg",
+   "tamano": 222546,
+   "hash": "d5ed39e486bf"
+  },
+  {
+   "ruta": "img/galeria/juma-47.jpg",
+   "tamano": 213821,
+   "hash": "59e126fbf57a"
+  },
+  {
+   "ruta": "img/galeria/juma-48.jpg",
+   "tamano": 73984,
+   "hash": "33cb0a8f2072"
+  },
+  {
+   "ruta": "img/galeria/juma-49.jpg",
+   "tamano": 217453,
+   "hash": "e8b3a9525f71"
+  },
+  {
+   "ruta": "img/galeria/juma-50.jpg",
+   "tamano": 211988,
+   "hash": "14c47cd8d468"
+  },
+  {
+   "ruta": "img/galeria/juma-51.jpg",
+   "tamano": 198651,
+   "hash": "7a87e819cd4d"
+  },
+  {
+   "ruta": "img/galeria/juma-52.jpg",
+   "tamano": 191949,
+   "hash": "9f02869aacb9"
+  },
+  {
+   "ruta": "img/galeria/juma-53.jpg",
+   "tamano": 209369,
+   "hash": "64276b7c3a23"
+  },
+  {
+   "ruta": "img/galeria/juma-54.jpg",
+   "tamano": 193546,
+   "hash": "08e8a011cdd6"
+  },
+  {
+   "ruta": "img/galeria/juma-55.jpg",
+   "tamano": 239643,
+   "hash": "096fafd9a258"
+  },
+  {
+   "ruta": "img/galeria/juma-56.jpg",
+   "tamano": 88448,
+   "hash": "04c7921f4730"
+  },
+  {
+   "ruta": "img/galeria/juma-57.jpg",
+   "tamano": 78178,
+   "hash": "953041431e46"
+  },
+  {
+   "ruta": "img/galeria/juma-58.jpg",
+   "tamano": 91332,
+   "hash": "afba918e374c"
+  },
+  {
+   "ruta": "img/galeria/juma-59.jpg",
+   "tamano": 126257,
+   "hash": "6ebf3b707482"
+  },
+  {
+   "ruta": "img/galeria/juma-60.jpg",
+   "tamano": 161806,
+   "hash": "775e43432de3"
+  },
+  {
+   "ruta": "img/galeria/juma-61.jpg",
+   "tamano": 153119,
+   "hash": "da12642d403e"
+  },
+  {
+   "ruta": "img/galeria/juma-62.jpg",
+   "tamano": 109043,
+   "hash": "a46ee651e1b3"
+  },
+  {
+   "ruta": "img/grupo-iglesia.jpg",
+   "tamano": 253476,
+   "hash": "982da36fe2e7"
+  },
+  {
+   "ruta": "img/hero-2200.jpg",
+   "tamano": 823761,
+   "hash": "0e62930e9143"
+  },
+  {
+   "ruta": "img/hero-900.jpg",
+   "tamano": 150986,
+   "hash": "37b4cef0d0db"
+  },
+  {
+   "ruta": "img/iglesia.jpg",
+   "tamano": 143402,
+   "hash": "004dfdf37eda"
+  },
+  {
+   "ruta": "img/joriel-avatar.png",
+   "tamano": 57709,
+   "hash": "ecec3a37e723"
+  },
+  {
+   "ruta": "img/joriel.jpg",
+   "tamano": 24839,
+   "hash": "03b721448c28"
+  },
+  {
+   "ruta": "img/ladrillo.jpg",
+   "tamano": 166797,
+   "hash": "7f37b86b8620"
+  },
+  {
+   "ruta": "img/liturgia.jpg",
+   "tamano": 271197,
+   "hash": "2551e7875e8a"
+  },
+  {
+   "ruta": "img/logo.png",
+   "tamano": 190240,
+   "hash": "10144c55d594"
+  },
+  {
+   "ruta": "img/manta.jpg",
+   "tamano": 122932,
+   "hash": "0e1a65d3115d"
+  },
+  {
+   "ruta": "img/mapa-consolata.svg",
+   "tamano": 121251,
+   "hash": "bf6b1f4e2b87"
+  },
+  {
+   "ruta": "img/mirador.jpg",
+   "tamano": 155127,
+   "hash": "45725495d63d"
+  },
+  {
+   "ruta": "img/mockup-hombre.jpg",
+   "tamano": 112005,
+   "hash": "671d8684a745"
+  },
+  {
+   "ruta": "img/mockup-mujer.jpg",
+   "tamano": 105588,
+   "hash": "e1c111b9cd8e"
+  },
+  {
+   "ruta": "img/new-abrazo-misa.jpg",
+   "tamano": 167316,
+   "hash": "f0c2cbdb88a2"
+  },
+  {
+   "ruta": "img/new-abrazo-sacerdotes.jpg",
+   "tamano": 171932,
+   "hash": "275decd17f3c"
+  },
+  {
+   "ruta": "img/new-abrazo-verde.jpg",
+   "tamano": 202237,
+   "hash": "274778c35524"
+  },
+  {
+   "ruta": "img/new-charla-pasillo.jpg",
+   "tamano": 251108,
+   "hash": "26da9ece2a8c"
+  },
+  {
+   "ruta": "img/new-chicas-capilla.jpg",
+   "tamano": 155826,
+   "hash": "bf5062cda7d3"
+  },
+  {
+   "ruta": "img/new-cruces-misa.jpg",
+   "tamano": 199282,
+   "hash": "0054cad1c83d"
+  },
+  {
+   "ruta": "img/new-danza-capilla.jpg",
+   "tamano": 180025,
+   "hash": "40a6e15a0c4a"
+  },
+  {
+   "ruta": "img/new-equipo-acompanamiento.jpg",
+   "tamano": 270612,
+   "hash": "b1d6eac0b844"
+  },
+  {
+   "ruta": "img/new-fam-grupo-frente.jpg",
+   "tamano": 237497,
+   "hash": "dd48a5d6e09b"
+  },
+  {
+   "ruta": "img/new-grupo-palmera.jpg",
+   "tamano": 348450,
+   "hash": "ed3924f68cdc"
+  },
+  {
+   "ruta": "img/new-grupo-presbiterio.jpg",
+   "tamano": 280067,
+   "hash": "0066cbb1d1fd"
+  },
+  {
+   "ruta": "img/new-hermana-flores.jpg",
+   "tamano": 195042,
+   "hash": "eac9eb92855a"
+  },
+  {
+   "ruta": "img/new-lectura-palabra.jpg",
+   "tamano": 198605,
+   "hash": "820613db4221"
+  },
+  {
+   "ruta": "img/new-plaza-sombrero.jpg",
+   "tamano": 166340,
+   "hash": "93a59728fcfb"
+  },
+  {
+   "ruta": "img/new-santo-cafasso.jpg",
+   "tamano": 31475,
+   "hash": "98ca601fa32a"
+  },
+  {
+   "ruta": "img/new-santo-irene.jpg",
+   "tamano": 21505,
+   "hash": "c6814e2e2ede"
+  },
+  {
+   "ruta": "img/new-santo-leonella.jpg",
+   "tamano": 33446,
+   "hash": "e3d89da9c859"
+  },
+  {
+   "ruta": "img/ourem.jpg",
+   "tamano": 300457,
+   "hash": "40afe8356692"
+  },
+  {
+   "ruta": "img/papa.jpg",
+   "tamano": 137510,
+   "hash": "d0feb6dc6c9c"
+  },
+  {
+   "ruta": "img/pareja.jpg",
+   "tamano": 123404,
+   "hash": "07b18aa187de"
+  },
+  {
+   "ruta": "img/parque.jpg",
+   "tamano": 252636,
+   "hash": "0d033091581a"
+  },
+  {
+   "ruta": "img/plaza.jpg",
+   "tamano": 419406,
+   "hash": "46600ce5dee3"
+  },
+  {
+   "ruta": "img/poster-virgen.jpg",
+   "tamano": 308971,
+   "hash": "0b3212c5f4ea"
+  },
+  {
+   "ruta": "img/puente.jpg",
+   "tamano": 127325,
+   "hash": "777b7a2ce416"
+  },
+  {
+   "ruta": "img/puente2.jpg",
+   "tamano": 131523,
+   "hash": "9f3b9bba1cf9"
+  },
+  {
+   "ruta": "img/retrato.jpg",
+   "tamano": 194385,
+   "hash": "f19fbf9a00eb"
+  },
+  {
+   "ruta": "img/risa.jpg",
+   "tamano": 80498,
+   "hash": "71d2f5e4e437"
+  },
+  {
+   "ruta": "img/selfie.jpg",
+   "tamano": 267368,
+   "hash": "ddefea886f5b"
+  },
+  {
+   "ruta": "img/subidas/convivencia-2026-1.jpg",
+   "tamano": 125232,
+   "hash": "47ccc0d1d0ba"
+  },
+  {
+   "ruta": "img/subidas/convivencia-2026-2.jpg",
+   "tamano": 139784,
+   "hash": "df1aa1ae2a24"
+  },
+  {
+   "ruta": "img/subidas/convivencia-2026-3.jpg",
+   "tamano": 156789,
+   "hash": "011fa2a6d720"
+  },
+  {
+   "ruta": "img/subidas/convivencia-2026-4.jpg",
+   "tamano": 167281,
+   "hash": "8d65094949bb"
+  },
+  {
+   "ruta": "img/suelo.jpg",
+   "tamano": 169618,
+   "hash": "9a6e8657a57f"
+  },
+  {
+   "ruta": "img/trio.jpg",
+   "tamano": 129784,
+   "hash": "47be270a111c"
+  },
+  {
+   "ruta": "img/valores.jpg",
+   "tamano": 237594,
+   "hash": "003596335749"
+  },
+  {
+   "ruta": "img/vitral.jpg",
+   "tamano": 317306,
+   "hash": "e294a95762d8"
+  },
+  {
+   "ruta": "img/volante.jpg",
+   "tamano": 219026,
+   "hash": "d2cacb432a0f"
+  },
+  {
+   "ruta": "index.html",
+   "tamano": 147037,
+   "hash": "4be8585e9237"
+  },
+  {
+   "ruta": "js/app.js",
+   "tamano": 488114,
+   "hash": "e9162e42bf90"
+  },
+  {
+   "ruta": "js/fe.js",
+   "tamano": 90930,
+   "hash": "35832d2d8d15"
+  },
+  {
+   "ruta": "js/firebase-config.js",
+   "tamano": 716,
+   "hash": "cb1880aaed72"
+  },
+  {
+   "ruta": "js/offline.js",
+   "tamano": 7143,
+   "hash": "691e5af2d67b"
+  },
+  {
+   "ruta": "js/qrcode.min.js",
+   "tamano": 20768,
+   "hash": "2737b9ebcabf"
+  },
+  {
+   "ruta": "juegos/bloques-de-fe.html",
+   "tamano": 52610,
+   "hash": "e6c261e9cb70"
+  },
+  {
+   "ruta": "juegos/camino-del-misionero.html",
+   "tamano": 146213,
+   "hash": "025d6e4a100b"
+  },
+  {
+   "ruta": "juegos/cuadros/cap1-consolata.jpg",
+   "tamano": 248152,
+   "hash": "352b7fe1428c"
+  },
+  {
+   "ruta": "juegos/cuadros/cap2-allamano.jpg",
+   "tamano": 158663,
+   "hash": "18e2b0ea15e2"
+  },
+  {
+   "ruta": "juegos/cuadros/cap3-irene-stefani.jpg",
+   "tamano": 21505,
+   "hash": "c6814e2e2ede"
+  },
+  {
+   "ruta": "juegos/cuadros/cap4-cafasso.jpg",
+   "tamano": 31475,
+   "hash": "98ca601fa32a"
+  },
+  {
+   "ruta": "juegos/cuadros/cap5-leonella.jpg",
+   "tamano": 33446,
+   "hash": "e3d89da9c859"
+  },
+  {
+   "ruta": "juegos/cuentas-de-gracia.html",
+   "tamano": 68275,
+   "hash": "a1217aaf0d52"
+  },
+  {
+   "ruta": "juegos/fondos/f1.jpg",
+   "tamano": 136914,
+   "hash": "8d40e7737409"
+  },
+  {
+   "ruta": "juegos/fondos/f2.jpg",
+   "tamano": 96042,
+   "hash": "16e9fc0a5165"
+  },
+  {
+   "ruta": "juegos/fondos/f3.jpg",
+   "tamano": 47522,
+   "hash": "97524f043cfa"
+  },
+  {
+   "ruta": "juegos/fondos/f4.jpg",
+   "tamano": 116451,
+   "hash": "2c68a9b165de"
+  },
+  {
+   "ruta": "juegos/fondos/f5.jpg",
+   "tamano": 104294,
+   "hash": "b324752ef48e"
+  },
+  {
+   "ruta": "juegos/huyendo-del-pecado.html",
+   "tamano": 150736,
+   "hash": "b3728691f6d6"
+  },
+  {
+   "ruta": "juegos/lib/presbiterio3d.js",
+   "tamano": 36454,
+   "hash": "3f7ec7d8ba4d"
+  },
+  {
+   "ruta": "juegos/lib/sonido.js",
+   "tamano": 21203,
+   "hash": "9da7de19ddb6"
+  },
+  {
+   "ruta": "juegos/lib/three.module.min.js",
+   "tamano": 687458,
+   "hash": "002ea1ddda2c"
+  },
+  {
+   "ruta": "juegos/luz-contra-el-pecado.html",
+   "tamano": 179453,
+   "hash": "a4ad6fe7ba70"
+  },
+  {
+   "ruta": "juegos/memoria-santos.html",
+   "tamano": 46075,
+   "hash": "7f7dec6ed1b9"
+  },
+  {
+   "ruta": "juegos/palabras-juma.html",
+   "tamano": 118358,
+   "hash": "d4e49044c94e"
+  },
+  {
+   "ruta": "juegos/portadas/bloques.jpg",
+   "tamano": 38954,
+   "hash": "a5c367c6ccee"
+  },
+  {
+   "ruta": "juegos/portadas/camino.jpg",
+   "tamano": 23815,
+   "hash": "287cb0ead62e"
+  },
+  {
+   "ruta": "juegos/portadas/cuentas.jpg",
+   "tamano": 62287,
+   "hash": "0fff26cac3b3"
+  },
+  {
+   "ruta": "juegos/portadas/huyendo.jpg",
+   "tamano": 67145,
+   "hash": "49c6e36c5aad"
+  },
+  {
+   "ruta": "juegos/portadas/luz.jpg",
+   "tamano": 33363,
+   "hash": "bdd1bd48ed2d"
+  },
+  {
+   "ruta": "juegos/portadas/memoria.jpg",
+   "tamano": 82676,
+   "hash": "c8fa0a06557b"
+  },
+  {
+   "ruta": "juegos/portadas/palabras.jpg",
+   "tamano": 53480,
+   "hash": "0961652f0183"
+  },
+  {
+   "ruta": "juegos/portadas/sacristan.jpg",
+   "tamano": 48150,
+   "hash": "16d61a272838"
+  },
+  {
+   "ruta": "juegos/rueda-y-pinta.html",
+   "tamano": 24135,
+   "hash": "233924fd4dc4"
+  },
+  {
+   "ruta": "juegos/sacristan.html",
+   "tamano": 85882,
+   "hash": "4f55c0e18dae"
+  },
+  {
+   "ruta": "manifest.webmanifest",
+   "tamano": 947,
+   "hash": "d49dbe008f59"
+  },
+  {
+   "ruta": "oraciones.json",
+   "tamano": 9887,
+   "hash": "67606a37bfdb"
+  },
+  {
+   "ruta": "video/v-baile.jpg",
+   "tamano": 65443,
+   "hash": "979269dcfc39"
+  },
+  {
+   "ruta": "video/v-baile.mp4",
+   "tamano": 1126150,
+   "hash": "372317063822"
+  },
+  {
+   "ruta": "video/v-camino.jpg",
+   "tamano": 55213,
+   "hash": "70e12b9089b8"
+  },
+  {
+   "ruta": "video/v-camino.mp4",
+   "tamano": 1377913,
+   "hash": "85431a12d669"
+  },
+  {
+   "ruta": "video/v-encuentro.jpg",
+   "tamano": 42077,
+   "hash": "6ddf5e14049b"
+  },
+  {
+   "ruta": "video/v-encuentro.mp4",
+   "tamano": 485358,
+   "hash": "c9faf58aa4ea"
+  },
+  {
+   "ruta": "video/v-noche.jpg",
+   "tamano": 20241,
+   "hash": "b14c5051fa94"
+  },
+  {
+   "ruta": "video/v-noche.mp4",
+   "tamano": 706560,
+   "hash": "4736911a1c9e"
+  },
+  {
+   "ruta": "video/v-padre.jpg",
+   "tamano": 65981,
+   "hash": "9bf67382d4c6"
+  },
+  {
+   "ruta": "video/v-padre.mp4",
+   "tamano": 836760,
+   "hash": "2efefb877056"
+  },
+  {
+   "ruta": "video/v-salon.jpg",
+   "tamano": 31324,
+   "hash": "bc1a97e3a6a0"
+  },
+  {
+   "ruta": "video/v-salon.mp4",
+   "tamano": 938558,
+   "hash": "e519dc2b972a"
+  }
+ ],
+ "externos": [
+  "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js",
+  "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js",
+  "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js",
+  "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js",
+  "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600&family=Instrument+Sans:wght@500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&display=swap",
+  "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+  "https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap",
+  "https://commons.wikimedia.org/wiki/Special:FilePath/",
+  "https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap"
+ ]
+}
