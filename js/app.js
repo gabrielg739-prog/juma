@@ -3367,7 +3367,8 @@ function renderComunidadMembersList(enfocar) {
 
 /* ===================== Biblioteca (libros 3D, se agregan progresivamente) ===================== */
 const LIBROS = [
-  { id: 'manual-juma', titulo: 'Manual de identidad JUMA', autor: 'Juventud Misionera Allamaniana', desc: 'Quiénes somos, nuestra identidad, estructura y camino de formación. Libro interactivo con índice y buscador.', url: 'biblioteca/manual-juma.html', color: '#0A235C', portada: 'img/logo.png' }
+  { id: 'manual-juma', titulo: 'Manual de identidad JUMA', autor: 'Juventud Misionera Allamaniana', desc: 'Quiénes somos, nuestra identidad, estructura y camino de formación. Libro interactivo con índice y buscador.', url: 'biblioteca/manual-juma.html', color: '#0A235C', portada: 'img/logo.png' },
+  { id: 'los-quiero-asi', titulo: 'Los quiero así', autor: 'José Allamano', desc: 'Espiritualidad y pedagogía misionera del beato José Allamano, fundador de los Misioneros y Misioneras de la Consolata, reunida a partir de sus conferencias y escritos.', url: 'biblioteca/los-quiero-asi.html', color: '#6b3d1e', portada: 'img/logo.png' }
   /* Para agregar un libro: sube su archivo .html a la carpeta biblioteca/ y añade una línea aquí. */
 ];
 function renderBibliotecaView() {
@@ -3462,7 +3463,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=94" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=95" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }
