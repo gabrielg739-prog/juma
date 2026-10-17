@@ -367,11 +367,11 @@ function nivelCfg(n) {
   const base = 24 + Math.floor(n / 6) - (metas.length > 1 ? -4 : 0);
   return {
     n, R, C, colores, forma, metas,
-    movs: Math.max(14, base - Math.floor(n / 4) + (metas.includes('campanas') ? 4 : 0) + DIFS[S.dificultad].m),
-    puntosMeta: 2000 + n * 140,
-    recoger: metas.includes('recoger') ? { colores: n < 10 ? 2 : 3, cant: 12 + Math.floor(n * 0.55) } : null,
-    sombras: metas.includes('sombras') ? (n < 15 ? 1 : 2) : 0,
-    rocas: metas.includes('rocas') ? 5 + Math.floor(n / 5) : (n > 20 && n % 4 === 1 ? 4 : 0),
+    movs: Math.max(12, base - Math.floor(n / 3) + (metas.includes('campanas') ? 4 : 0) + DIFS[S.dificultad].m),
+    puntosMeta: 2200 + n * 200,
+    recoger: metas.includes('recoger') ? { colores: n < 10 ? 2 : 3, cant: 14 + Math.floor(n * 0.75) } : null,
+    sombras: metas.includes('sombras') ? (n < 10 ? 1 : 2) : 0,
+    rocas: metas.includes('rocas') ? 6 + Math.floor(n / 4) : (n > 12 && n % 3 === 1 ? 4 + Math.floor(n / 10) : 0),
     campanas: metas.includes('campanas') ? 2 + Math.floor(n / 10) : 0
   };
 }

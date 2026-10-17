@@ -1588,13 +1588,13 @@ function generar() {
   let seguridad = 0;
   while (genS < dist + VISTA && seguridad++ < 40) {
     const s = genS;
-    const dif = clamp((dist - distInicio) / 3500, 0, 1);
+    const dif = clamp((dist - distInicio) / 2200, 0, 1);
     if (s >= proxPoder) { colocarPoder(s); proxPoder = s + 420 + rnd() * 380; }
     const r = rnd();
     if (r < 0.42 + dif * 0.1) filaTrenes(s, dif);
     else if (r < 0.86) filaBarreras(s, dif);
     else filaMonedas(s);
-    genS += (17 + rnd() * 11) * (0.72 + (velocidad || 17) / 60);
+    genS += (17 + rnd() * 11) * (0.72 + (velocidad || 17) / 60) * (1 - dif * 0.22);
   }
 }
 function generarCielo() {
@@ -1806,7 +1806,7 @@ function aviso(txt, sub, clase) {
 }
 function actualizar(dt) {
   tRun += dt; arranqueT += dt;
-  const base = 17 + 15 * (1 - Math.exp(-tRun / 110));
+  const base = 18 + 20 * (1 - Math.exp(-tRun / 90));
   velocidad = base * (0.35 + 0.65 * Math.min(1, arranqueT / 0.9));
   prevDist = dist;
   const d = velocidad * dt;
