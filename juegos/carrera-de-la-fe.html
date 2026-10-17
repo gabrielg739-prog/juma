@@ -7,9 +7,11 @@
 <title>Carrera de la fe · JUMA</title>
 <style>
   :root {
-    --crema: #fff3d6; --tinta: #2b1a3f; --muted: #7a6a8c; --plum: #3a1f5a; --plum-2: #1f0f33;
-    --oro: #ffd25a; --oro-2: #c98f12; --linea: #e4cf98;
+    --crema: #fff3d6; --tinta: #2b1a3f; --muted: #6f5f84; --plum: #3a1f5a; --plum-2: #1f0f33;
+    --oro: #ffd25a; --oro-2: #c98f12;
     --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    /* Tamaño de los botones táctiles: se ajusta a la altura de la pantalla (vertical u horizontal) */
+    --s: clamp(44px, 12.5vh, 70px);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   [hidden] { display: none !important; }
@@ -21,100 +23,175 @@
   }
   button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
   button:focus-visible { outline: 3px solid var(--oro); outline-offset: 2px; }
+  input, select { font: inherit; }
 
   .app { position: fixed; inset: 0; overflow: hidden; }
   #lienzo { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
-  /* ---------- Menú ---------- */
+  /* ---------- Menú: panel a la izquierda; a la derecha se ve la escena (la pista o el kart) ---------- */
   .menu {
-    position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 14px; padding: 20px; text-align: center; color: #fff; overflow-y: auto;
-    background: radial-gradient(ellipse at 50% 30%, rgba(90, 58, 142, .45) 0%, rgba(31, 15, 51, .78) 62%, rgba(20, 8, 36, .9) 100%);
+    position: absolute; top: 0; bottom: 0; left: 0; z-index: 5; width: min(600px, 60vw);
+    display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) calc(env(safe-area-inset-right, 0px) + 16px) calc(env(safe-area-inset-bottom, 0px) + 12px) calc(env(safe-area-inset-left, 0px) + 16px);
+    color: #fff;
+    background: linear-gradient(90deg, rgba(20, 8, 36, .94) 0%, rgba(31, 15, 51, .9) 74%, rgba(31, 15, 51, 0) 100%);
   }
-  .menu h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: clamp(30px, 7vw, 50px); color: var(--oro); line-height: 1.05; text-shadow: 0 3px 0 #6a3e0a; }
-  .menu p { margin: 0; max-width: 44ch; font-size: 15px; line-height: 1.45; color: #efe6ff; }
-  .elige { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 620px; }
-  .pista-btn { width: 178px; padding: 12px 10px; border-radius: 18px; background: #fff; color: var(--plum); border: 2px solid var(--oro-2); box-shadow: 0 5px 0 var(--oro-2); font-weight: 900; font-size: 15px; transition: transform .12s var(--ease), box-shadow .12s var(--ease); }
-  .pista-btn small { display: block; margin-top: 4px; font-weight: 700; font-size: 12px; color: var(--muted); }
-  .pista-btn.on { background: #fff8d8; outline: 3px solid var(--oro); outline-offset: 2px; }
-  .pista-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--oro-2); }
-  .gran { min-height: 56px; padding: 0 28px; border-radius: 999px; background: var(--oro); color: #3a2400; font-weight: 900; font-size: 20px; box-shadow: 0 6px 0 var(--oro-2); transition: transform .12s var(--ease), box-shadow .12s var(--ease); }
-  .gran:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--oro-2); }
-  .modos { display: flex; gap: 8px; }
-  .modo { height: 40px; padding: 0 16px; border-radius: 999px; background: rgba(255, 255, 255, .12); color: #fff; font-weight: 800; border: 2px solid rgba(255, 255, 255, .3); }
-  .modo.on { background: var(--oro); color: #3a2400; border-color: var(--oro-2); }
-  .mejor { font-size: 13px; color: #d9c9f2; min-height: 18px; }
-  .ajustes { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; align-items: center; font-size: 14px; font-weight: 700; color: #e9dcff; }
-  .ajustes select { font: inherit; padding: 6px 12px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .12); color: #fff; }
-  .ajustes option { color: var(--tinta); }
-  .ajustes input { width: 18px; height: 18px; margin: 0 6px 0 0; vertical-align: middle; }
-  .ayuda { font-size: 12px; color: #c9b8e6; max-width: 56ch; line-height: 1.45; }
+  .menu-cab h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: clamp(24px, 6vh, 40px); color: var(--oro); line-height: 1.05; text-shadow: 0 3px 0 #6a3e0a; }
+  .sub { margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #d9c9f2; min-height: 16px; }
+  .paso { display: flex; flex-direction: column; gap: 10px; }
+  .bloque { display: flex; flex-direction: column; gap: 10px; }
+  .bloque h2 { margin: 0; font-size: 15px; font-weight: 900; color: #fff; letter-spacing: .02em; }
+  .nota { margin: 0; font-size: 13px; line-height: 1.4; color: #efe6ff; }
+  .nota b { color: var(--oro); }
+  .mejor { margin: 0; font-size: 14px; font-weight: 800; color: #d9c9f2; }
+  .ayuda { margin: 0; font-size: 12px; line-height: 1.5; color: #c9b8e6; }
 
-  /* ---------- Marcador y mapa ---------- */
+  .cartas-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .cuadricula-p { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .carta, .carta-k, .carta-pista {
+    text-align: left; padding: 10px 12px; border-radius: 16px; background: #fff; color: var(--plum);
+    border: 2px solid var(--oro-2); box-shadow: 0 4px 0 var(--oro-2);
+    display: flex; flex-direction: column; gap: 4px; font-weight: 900; font-size: 14px; line-height: 1.2;
+    transition: transform .12s var(--ease), box-shadow .12s var(--ease);
+  }
+  .carta small, .carta-k small, .carta-pista small { font-size: 12px; font-weight: 700; color: var(--muted); line-height: 1.3; }
+  .carta.on, .carta-k.on, .carta-pista.on { background: #fff8d8; outline: 3px solid var(--oro); outline-offset: 2px; }
+  .carta:active, .carta-k:active, .carta-pista:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--oro-2); }
+  .carta-pista { font-size: 13px; padding: 8px 10px; }
+
+  .cuadricula { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .carta-p {
+    display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px; border-radius: 16px;
+    background: #fff; color: var(--plum); border: 2px solid #d9c3f0; font-size: 12px; font-weight: 900; line-height: 1.15; text-align: center;
+  }
+  .carta-p small { font-size: 10px; color: var(--muted); font-weight: 700; line-height: 1.2; }
+  .carta-p.on { border-color: var(--oro); background: #fff8d8; box-shadow: 0 0 0 3px var(--oro); }
+  .avatar {
+    width: 42px; height: 42px; border-radius: 50%; background: var(--c); border: 3px solid var(--b); color: #fff;
+    display: grid; place-items: center; font-family: Georgia, serif; font-size: 20px; text-shadow: 0 2px 0 rgba(0, 0, 0, .35);
+  }
+
+  .lista-k { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .barras { display: grid; grid-template-columns: auto 1fr; gap: 3px 6px; align-items: center; font-size: 11px; color: var(--muted); font-weight: 800; }
+  .barra { height: 7px; background: #e6dcf5; border-radius: 99px; overflow: hidden; }
+  .barra > span { display: block; height: 100%; background: linear-gradient(90deg, #f0b429, #ffd25a); border-radius: 99px; }
+
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip-b { height: 40px; padding: 0 16px; border-radius: 999px; background: rgba(255, 255, 255, .12); color: #fff; border: 2px solid rgba(255, 255, 255, .3); font-weight: 800; }
+  .chip-b.on { background: var(--oro); color: #3a2400; border-color: var(--oro-2); }
+
+  .fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, .14); font-weight: 800; font-size: 15px; }
+  .fila input[type="checkbox"] { width: 22px; height: 22px; }
+  .fila select { padding: 6px 12px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .12); color: #fff; }
+  .fila select option { color: var(--tinta); }
+
+  .menu-pie { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 2px; }
+  .gran { min-height: 52px; padding: 0 26px; border-radius: 999px; background: var(--oro); color: #3a2400; font-weight: 900; font-size: 18px; box-shadow: 0 6px 0 var(--oro-2); transition: transform .12s var(--ease), box-shadow .12s var(--ease); }
+  .gran:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--oro-2); }
+  .sec { height: 46px; padding: 0 20px; border-radius: 999px; background: #fff; color: var(--plum); font-weight: 900; font-size: 15px; box-shadow: 0 4px 0 #b9a6d6; }
+  .sec:active { transform: translateY(2px); box-shadow: 0 2px 0 #b9a6d6; }
+  .inicio-botones { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+
+  @media (orientation: portrait) {
+    .menu { width: 100%; background: radial-gradient(ellipse at 50% 30%, rgba(90, 58, 142, .45) 0%, rgba(31, 15, 51, .8) 62%, rgba(20, 8, 36, .92) 100%); }
+    .cuadricula { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ---------- Marcador (HUD) ---------- */
   .hud { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
-  .marcador { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 8px); left: 10px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
-  .puesto-grande { display: flex; align-items: baseline; gap: 3px; padding: 2px 14px 4px; border-radius: 16px; background: rgba(31, 15, 51, .8); border: 2px solid var(--oro); color: #fff; }
-  .puesto-grande b { font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 46px; line-height: 1.05; color: var(--oro); text-shadow: 0 3px 0 #6a3e0a; }
-  .puesto-grande small { font-size: 18px; font-weight: 800; color: #e9dcff; }
-  .chip { padding: 5px 12px; border-radius: 999px; background: rgba(31, 15, 51, .78); color: #fff; font-weight: 800; font-size: 14px; border: 2px solid rgba(255, 210, 90, .6); white-space: nowrap; }
-  .chip b { color: var(--oro); font-weight: 900; }
-  .derecha { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 8px); right: 10px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-  #mapa { width: 150px; height: 150px; border-radius: 16px; background: rgba(31, 15, 51, .72); border: 2px solid rgba(255, 210, 90, .6); }
-  .pausa-btn { pointer-events: auto; width: 44px; height: 44px; border-radius: 50%; background: rgba(31, 15, 51, .8); color: #fff; border: 2px solid rgba(255, 255, 255, .4); font-size: 16px; font-weight: 900; display: grid; place-items: center; }
-  .objeto-zona { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; }
-  .caja-item { width: 58px; height: 58px; border-radius: 16px; background: rgba(31, 15, 51, .8); border: 2px solid var(--oro); display: grid; place-items: center; font-size: 30px; line-height: 1; color: #fff; }
-  .caja-item.lleno { background: #fff8d8; box-shadow: 0 0 18px rgba(255, 210, 90, .85); }
-  .deriva { width: 150px; height: 10px; border-radius: 999px; background: rgba(31, 15, 51, .8); overflow: hidden; border: 1px solid rgba(255, 255, 255, .35); }
+  .h-item { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); left: calc(env(safe-area-inset-left, 0px) + 10px); }
+  .caja-item {
+    width: calc(var(--s) * 1.1); height: calc(var(--s) * 1.1); border-radius: 50%; background: rgba(31, 15, 51, .85);
+    border: 3px solid #fff; box-shadow: 0 3px 0 rgba(0, 0, 0, .35); display: grid; place-items: center;
+    font-size: calc(var(--s) * .5); line-height: 1; color: #fff;
+  }
+  .caja-item.lleno { background: #fff8d8; box-shadow: 0 0 18px rgba(255, 210, 90, .9), 0 3px 0 rgba(0, 0, 0, .35); }
+  .pausa-btn {
+    pointer-events: auto; position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); left: calc(env(safe-area-inset-left, 0px) + var(--s) * 1.1 + 20px);
+    width: 40px; height: 40px; border-radius: 50%; background: rgba(31, 15, 51, .85); color: #fff; border: 2px solid rgba(255, 255, 255, .45);
+    font-size: 14px; font-weight: 900; display: grid; place-items: center;
+  }
+  .h-tiempo { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
+  .chip {
+    padding: 4px 12px; border-radius: 999px; background: rgba(31, 15, 51, .8); color: #fff; font-weight: 800; font-size: 14px;
+    border: 2px solid rgba(255, 210, 90, .6); white-space: nowrap;
+  }
+  .chip b { color: var(--oro); font-weight: 900; font-variant-numeric: tabular-nums; }
+  .h-mapa { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); right: calc(env(safe-area-inset-right, 0px) + 10px); }
+  #mapa { display: block; width: clamp(96px, 22vh, 150px); height: auto; aspect-ratio: 1; border-radius: 14px; background: rgba(31, 15, 51, .6); border: 2px solid rgba(255, 210, 90, .6); }
+  .h-pos {
+    position: absolute; right: calc(env(safe-area-inset-right, 0px) + 12px); bottom: calc(var(--s) * 3 + 26px);
+    display: flex; flex-direction: column; align-items: flex-end; color: #fff; text-shadow: 0 3px 0 #2b1a3f, 0 0 12px rgba(0, 0, 0, .5);
+  }
+  .h-pos b { font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: clamp(42px, 13vh, 84px); line-height: .9; color: #fff; }
+  .h-pos small { font-size: 14px; font-weight: 800; color: #ffe68c; }
+  .h-monedas { position: absolute; left: calc(env(safe-area-inset-left, 0px) + 12px); bottom: calc(var(--s) * 3 + 26px); }
+  .h-deriva { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); transform: translateX(-50%); }
+  .deriva { width: clamp(90px, 20vw, 160px); height: 10px; border-radius: 999px; background: rgba(31, 15, 51, .8); overflow: hidden; border: 1px solid rgba(255, 255, 255, .35); }
   .deriva-barra { height: 100%; width: 0; background: #9a94a0; transition: width .08s linear; }
   .deriva-barra[data-tier="1"] { background: #55c8ff; }
   .deriva-barra[data-tier="2"] { background: #ff9a3a; }
   .deriva-barra[data-tier="3"] { background: #c06bff; }
 
   /* ---------- Cuenta atrás y avisos ---------- */
-  .cuenta { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; pointer-events: none; font-family: Georgia, "Times New Roman", serif; font-size: clamp(90px, 22vw, 180px); color: #fff; text-shadow: 0 6px 0 #6a3e0a, 0 0 30px rgba(255, 210, 90, .7); }
+  .cuenta { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; pointer-events: none; font-family: Georgia, "Times New Roman", serif; font-size: clamp(90px, 26vh, 180px); color: #fff; text-shadow: 0 6px 0 #6a3e0a, 0 0 30px rgba(255, 210, 90, .7); }
   .cuenta.anim { animation: crece .8s var(--ease) both; }
   @keyframes crece { 0% { opacity: 0; transform: scale(.6); } 25% { opacity: 1; transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
-  .aviso { position: absolute; top: 30%; left: 50%; z-index: 4; pointer-events: none; font-family: Georgia, "Times New Roman", serif; font-size: clamp(24px, 5vw, 42px); color: #fff; text-shadow: 0 4px 0 #6a3e0a, 0 0 18px rgba(255, 210, 90, .6); white-space: nowrap; }
+  .aviso { position: absolute; top: 30%; left: 50%; z-index: 4; pointer-events: none; font-family: Georgia, "Times New Roman", serif; font-size: clamp(22px, 6vh, 42px); color: #fff; text-shadow: 0 4px 0 #6a3e0a, 0 0 18px rgba(255, 210, 90, .6); white-space: nowrap; }
   .aviso.anim { animation: aparece 1.4s var(--ease) both; }
   @keyframes aparece { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.85); } 15% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1); } }
 
-  /* ---------- Controles táctiles ---------- */
-  .controles { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; justify-content: space-between; align-items: flex-end; padding: 10px 12px calc(env(safe-area-inset-bottom, 0px) + 12px); pointer-events: none; }
-  .grupo { display: flex; gap: 10px; align-items: flex-end; }
-  .btn-t { pointer-events: auto; width: 74px; height: 74px; border-radius: 50%; background: rgba(255, 255, 255, .92); color: var(--plum); border: 3px solid var(--oro-2); box-shadow: 0 5px 0 var(--oro-2), 0 8px 14px rgba(0, 0, 0, .25); font-weight: 900; font-size: 15px; display: grid; place-items: center; touch-action: none; }
-  .btn-t:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--oro-2), 0 4px 8px rgba(0, 0, 0, .25); background: #fff8d8; }
-  .btn-t.grande { width: 84px; height: 84px; font-size: 16px; }
-  .btn-t.mini { width: 62px; height: 62px; font-size: 13px; }
-  .btn-t.item { background: #fff; }
-  @media (max-width: 430px) {
-    .controles { padding-left: 8px; padding-right: 8px; }
-    .grupo { gap: 8px; }
-    .btn-t.grande { width: 70px; height: 70px; font-size: 14px; }
-    .btn-t.mini { width: 56px; height: 56px; font-size: 12px; }
-    #mapa { width: 118px; height: 118px; }
-    .deriva { width: 110px; }
-    .caja-item { width: 52px; height: 52px; }
+  /* ---------- Controles táctiles: cruceta a la izquierda; A, B, X, Y a la derecha (como en la referencia) ---------- */
+  .controles {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; display: flex; justify-content: space-between; align-items: flex-end;
+    padding: 0 calc(env(safe-area-inset-right, 0px) + 12px) calc(env(safe-area-inset-bottom, 0px) + 8px) calc(env(safe-area-inset-left, 0px) + 12px);
+    pointer-events: none;
   }
-  @media (max-height: 520px) { .btn-t { width: 60px; height: 60px; font-size: 13px; } .btn-t.grande { width: 68px; height: 68px; } }
-  /* En pantallas táctiles, el objeto y la barra de derrape suben para no tapar los botones */
-  @media (pointer: coarse) { .objeto-zona { bottom: calc(env(safe-area-inset-bottom, 0px) + 122px); } }
+  .cruz, .botones { display: grid; grid-template-columns: repeat(3, var(--s)); grid-template-rows: repeat(3, var(--s)); gap: 4px; }
+  .pad { background: rgba(31, 15, 51, .6); border-radius: 12px; }
+  .ctl {
+    pointer-events: auto; width: var(--s); height: var(--s); border-radius: 50%; background: rgba(255, 255, 255, .92); color: var(--plum);
+    border: 3px solid var(--oro-2); box-shadow: 0 4px 0 var(--oro-2), 0 6px 12px rgba(0, 0, 0, .25);
+    font-weight: 900; font-size: calc(var(--s) * .34); display: grid; place-items: center; touch-action: none;
+  }
+  .ctl:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--oro-2), 0 3px 6px rgba(0, 0, 0, .25); background: #fff8d8; }
+  .cruz .ctl { border-radius: 14px; font-size: calc(var(--s) * .42); }
+  .cruz-i { grid-column: 1; grid-row: 2; }
+  .cruz-d { grid-column: 3; grid-row: 2; }
+  .cruz .pad:nth-child(1) { grid-column: 2; grid-row: 1; }
+  .cruz .pad:nth-child(2) { grid-column: 2; grid-row: 3; }
+  .cruz .pad:nth-child(3) { grid-column: 2; grid-row: 2; border-radius: 6px; }
+  .bt-x { grid-column: 2; grid-row: 1; }
+  .bt-y { grid-column: 1; grid-row: 2; }
+  .bt-a { grid-column: 3; grid-row: 2; }
+  .bt-b { grid-column: 2; grid-row: 3; }
+  .controles.sin-a .bt-a { visibility: hidden; }
+  .bt-a { background: #d8ffd0; }
+  .bt-b { background: #ffd6d6; }
 
   /* ---------- Paneles: pausa, resultados y copa ---------- */
   .velo {
     position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 14px; padding: 20px; text-align: center; background: rgba(20, 8, 36, .86); color: #fff; overflow-y: auto;
+    gap: 14px; padding: 20px; text-align: center; background: rgba(20, 8, 36, .88); color: #fff; overflow-y: auto;
   }
-  .velo h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: clamp(30px, 6vw, 40px); color: var(--oro); }
+  .velo h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: clamp(28px, 7vh, 40px); color: var(--oro); }
   .tabla { width: min(92vw, 380px); border-collapse: collapse; background: #fff; color: var(--tinta); border-radius: 16px; overflow: hidden; }
-  .tabla td { padding: 8px 12px; font-weight: 700; font-size: 15px; border-bottom: 1px solid #efe2c0; text-align: left; }
+  .tabla td { padding: 7px 12px; font-weight: 700; font-size: 15px; border-bottom: 1px solid #efe2c0; text-align: left; }
   .tabla td:first-child { width: 48px; }
   .tabla td:last-child { text-align: right; }
   .tabla tr.yo td { background: #fff3c4; font-weight: 900; }
   .puntos-txt { margin: 0; font-size: 17px; font-weight: 800; color: #fff; }
   .puntos-txt b { color: var(--oro); }
   .fila-btn { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-  .sec { height: 48px; padding: 0 20px; border-radius: 999px; background: #fff; color: var(--plum); font-weight: 900; font-size: 16px; box-shadow: 0 4px 0 #b9a6d6; }
-  .sec:active { transform: translateY(2px); box-shadow: 0 2px 0 #b9a6d6; }
+
+  /* ---------- Aviso para girar el teléfono ---------- */
+  .girar {
+    position: absolute; inset: 0; z-index: 9; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; padding: 20px; text-align: center; background: rgba(20, 8, 36, .96); color: #fff;
+  }
+  .girar p { margin: 0; font-size: 18px; font-weight: 800; max-width: 24ch; line-height: 1.35; }
+  .girar-tel { font-size: 56px; animation: gira-tel 2.4s var(--ease) infinite; }
+  @keyframes gira-tel { 0%, 15% { transform: rotate(0deg); } 50%, 75% { transform: rotate(90deg); } 100% { transform: rotate(0deg); } }
 </style>
 </head>
 <body>
@@ -123,64 +200,55 @@
   <canvas id="lienzo" aria-label="Escena de la carrera"></canvas>
 
   <section class="menu" id="menu">
-    <h1>Carrera de la fe</h1>
-    <p>Corre por caminos de la fe con seis personajes. Recoge las cajas de gracia, usa tus armas espirituales y cruza la meta primero.</p>
-    <div class="modos" role="group" aria-label="Modo de juego">
-      <button type="button" class="modo on" data-modo="copa">Copa de 6 pistas</button>
-      <button type="button" class="modo" data-modo="suelta">Una pista</button>
-    </div>
-    <div class="elige" id="elige" hidden></div>
-    <div class="mejor" id="mejor"></div>
-    <button type="button" class="gran" id="arrancar">¡A correr!</button>
-    <div class="ajustes">
-      <label>Gráficos
-        <select id="calidad" aria-label="Calidad de los gráficos">
-          <option value="auto">Automático</option>
-          <option value="alta">Alta</option>
-          <option value="media">Media</option>
-          <option value="baja">Baja</option>
-        </select>
-      </label>
-      <label><input type="checkbox" id="sonido">Sonidos</label>
-      <label><input type="checkbox" id="musica">Música</label>
-    </div>
-    <p class="ayuda">Teclado: flechas o A y D para girar · ↓ o S para frenar · Shift o Z para derrapar · Espacio o E para usar el objeto · P para pausar. Tu kart acelera solo.</p>
+    <header class="menu-cab">
+      <h1>Carrera de la fe</h1>
+      <p class="sub" id="subtitulo"></p>
+    </header>
+    <div class="paso" id="paso"></div>
+    <footer class="menu-pie" id="pie">
+      <button type="button" class="sec" id="atras">Atrás</button>
+      <button type="button" class="gran" id="siguiente">Siguiente</button>
+    </footer>
   </section>
 
   <div class="hud" id="hud" hidden>
-    <div class="marcador">
-      <span class="puesto-grande"><b id="puesto">6</b><small id="puestoTotal">/6</small></span>
+    <div class="h-item"><div class="caja-item" id="cajaItem" aria-label="Objeto guardado">·</div></div>
+    <button type="button" class="pausa-btn" id="pausa" aria-label="Pausa">II</button>
+    <div class="h-tiempo">
       <span class="chip">Vuelta <b id="vuelta">1/3</b></span>
       <span class="chip">⏱ <b id="tiempo">0:00.00</b></span>
     </div>
-    <div class="derecha">
-      <canvas id="mapa" width="150" height="150" aria-label="Mapa de la pista"></canvas>
-      <button type="button" class="pausa-btn" id="pausa" aria-label="Pausa">II</button>
-    </div>
-    <div class="objeto-zona">
-      <div class="caja-item" id="cajaItem" aria-label="Objeto guardado">·</div>
-      <div class="deriva" aria-hidden="true"><div class="deriva-barra" id="derivaBarra"></div></div>
-    </div>
+    <div class="h-mapa"><canvas id="mapa" width="170" height="170" aria-label="Mapa de la pista"></canvas></div>
+    <div class="h-pos"><b id="puesto">6</b><small id="puestoTotal">de 6</small></div>
+    <div class="h-monedas"><span class="chip">🪙 <b id="monedas">0</b></span></div>
+    <div class="h-deriva" aria-hidden="true"><div class="deriva"><div class="deriva-barra" id="derivaBarra"></div></div></div>
   </div>
 
   <div class="cuenta" id="cuenta" hidden></div>
   <div class="aviso" id="aviso" hidden></div>
 
   <div class="controles" id="controles" hidden>
-    <div class="grupo">
-      <button type="button" class="btn-t grande" data-tecla="izq" aria-label="Girar a la izquierda">◀</button>
-      <button type="button" class="btn-t grande" data-tecla="der" aria-label="Girar a la derecha">▶</button>
+    <div class="cruz" aria-label="Cruceta para girar">
+      <span class="pad"></span><span class="pad"></span><span class="pad"></span>
+      <button type="button" class="ctl cruz-i" data-tecla="izq" aria-label="Girar a la izquierda">◀</button>
+      <button type="button" class="ctl cruz-d" data-tecla="der" aria-label="Girar a la derecha">▶</button>
     </div>
-    <div class="grupo">
-      <button type="button" class="btn-t mini" data-tecla="freno" aria-label="Frenar">Frenar</button>
-      <button type="button" class="btn-t mini" data-tecla="deriva" aria-label="Derrapar">Derrapar</button>
-      <button type="button" class="btn-t item" data-tecla="objeto" aria-label="Usar objeto">Usar</button>
+    <div class="botones" aria-label="Botones de acción">
+      <button type="button" class="ctl bt-x" data-tecla="objeto" aria-label="Usar objeto">X</button>
+      <button type="button" class="ctl bt-y" data-tecla="deriva" aria-label="Derrapar">Y</button>
+      <button type="button" class="ctl bt-a" data-tecla="acel" aria-label="Acelerar">A</button>
+      <button type="button" class="ctl bt-b" data-tecla="freno" aria-label="Frenar">B</button>
     </div>
   </div>
 
   <div class="velo" id="velo" hidden>
     <h2 id="veloTitulo"></h2>
     <div id="veloCuerpo"></div>
+  </div>
+
+  <div class="girar" id="girar" hidden>
+    <div class="girar-tel" aria-hidden="true">📱</div>
+    <p>Gira tu teléfono a horizontal para jugar</p>
   </div>
 </div>
 

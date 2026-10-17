@@ -33,7 +33,7 @@ export function cinta(P, mitadW, y, material, escalaU, i0 = 0, n = P.N) {
 }
 
 /* Cúpula de cielo con degradado (color del cielo arriba, color del horizonte abajo) */
-function cupula(arriba, horizonte) {
+export function cupula(arriba, horizonte) {
   const geo = new THREE.SphereGeometry(3800, 32, 16);
   const pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
   const c = new THREE.Color();

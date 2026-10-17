@@ -36,7 +36,9 @@ export class Objetos {
 
   /* Da un objeto según el puesto: los de atrás reciben armas más fuertes */
   dar(k, puesto) {
-    const tabla = TABLA_OBJETOS[Math.min(6, Math.max(1, puesto))];
+    /* Pedro (buen pescador) saca un puesto mejor: sus cajas traen armas más fuertes */
+    const pos = k.habil === 'cajas' ? Math.max(1, puesto - 1) : puesto;
+    const tabla = TABLA_OBJETOS[Math.min(6, Math.max(1, pos))];
     k.item = tabla[Math.floor(Math.random() * tabla.length)];
     k.tiempoItem = 0;
     eventos.push({ tipo: 'objeto', k, nombre: k.item });
@@ -46,7 +48,8 @@ export class Objetos {
   golpear(k, fuerza) {
     if (k.estrella > 0) return false;
     if (k.escudo > 0) { k.escudo = 0; eventos.push({ tipo: 'bloqueo', k }); return false; }
-    const t = fuerza === 'fuerte' ? 1.2 : fuerza === 'giro' ? 0.9 : 0.6;
+    /* El Padre Tomás (bendición) se recupera más rápido de cualquier golpe */
+    const t = (fuerza === 'fuerte' ? 1.2 : fuerza === 'giro' ? 0.9 : 0.6) * (k.habil === 'bendicion' ? 0.6 : 1);
     k.aturd = Math.max(k.aturd, t);
     k.vx *= 0.4; k.vy *= 0.4;
     eventos.push({ tipo: 'golpe', k, fuerte: fuerza === 'fuerte' });
@@ -66,7 +69,7 @@ export class Objetos {
         this.fx.destello(k.x, 12, k.y, '#ffb040', 16);
         break;
       case 'rosario':
-        k.escudo = 5;
+        k.escudo = k.habil === 'escudo' ? 8 : 5;   /* Ana (oración constante) lo mantiene más tiempo */
         break;
       case 'estrella':
         k.estrella = 6;
@@ -87,7 +90,8 @@ export class Objetos {
       }
       case 'campanilla': {
         this._onda(k);
-        for (const o of karts) if (o !== k && Math.hypot(o.x - k.x, o.y - k.y) < 280) this.golpear(o, 'suave');
+        const alcance = k.habil === 'campanas' ? 380 : 280;   /* Hermana Clara (campanas) llega más lejos */
+        for (const o of karts) if (o !== k && Math.hypot(o.x - k.x, o.y - k.y) < alcance) this.golpear(o, 'suave');
         break;
       }
       case 'paloma': {

@@ -1,5 +1,5 @@
-/* Carrera de la fe · física de los karts: aceleración, giro, derrape y mini-turbo, zonas de turbo, vueltas y choques */
-import { VMAX, ACEL, FRENO, FRICC, GIRO, AGARRE, AGARRE_DERIVA, VUELTAS, PERSONAJES } from './datos.js';
+/* Carrera de la fe · física de los karts: aceleración, giro suave, derrape y mini-turbo, zonas de turbo, vueltas, choques y solidez */
+import { VMAX, ACEL, FRENO, FRICC, GIRO, AGARRE, AGARRE_DERIVA, VUELTAS, PERSONAJES, KARTS } from './datos.js';
 import { lateral, indiceCercano, enDistancia, padEn } from './pista.js';
 
 const TOPE_ATRAS = -120;
@@ -8,28 +8,37 @@ export const eventos = [];
 let reloj = 0;
 export const tiempoCarrera = () => reloj;
 
-/* Crea los seis karts en la parrilla de salida, detrás de la línea de meta */
-export function crearParrilla(P, personajes = PERSONAJES) {
-  return personajes.map((p, i) => {
+/* Crea los karts en la parrilla, detrás de la línea de meta.
+   equipo[i] = { pi (personaje), ki (kart), humano }; dif = clase de los rivales */
+export function crearParrilla(P, equipo, dif) {
+  return equipo.map((e, i) => {
+    const p = PERSONAJES[e.pi], c = KARTS[e.ki];
     const d0 = -(70 + Math.floor(i / 2) * 80);
     const lado = (i % 2 === 0 ? -1 : 1) * P.mitad * 0.42;
     const idx = enDistancia(P, d0);
     const x = P.xs[idx] - P.ty[idx] * lado, y = P.ys[idx] + P.tx[idx] * lado;
     return {
-      i, nombre: p.nombre, color: p.color, borde: p.borde, humano: !!p.humano,
-      peso: p.peso, acel: p.acel, agarre: p.agarre,
+      i, pi: e.pi, ki: e.ki, humano: !!e.humano,
+      nombre: p.nombre, color: p.color, borde: p.borde, habil: p.habil, tipo: c.tipo, kartNombre: c.nombre,
+      vel: p.vel * c.vel,         /* velocidad máxima: personaje x kart */
+      acel: p.acel * c.acel,      /* aceleración */
+      peso: c.peso,               /* solidez: los karts pesados empujan a los ligeros */
+      manejo: c.giro,             /* qué tan cerrado gira */
+      derrape: c.derrape,         /* qué tan rápido sube el derrape */
+      agarre: p.agarre,
+      dif: e.humano ? null : dif,
       x, y, h: Math.atan2(P.ty[idx], P.tx[idx]), vx: 0, vy: 0,
       idx, dist: d0, vuelta: 1, listo: false, fin: null,
-      item: null, tiempoItem: 0, retardo: 1 + Math.random() * 2, carril: p.humano ? 0 : (Math.random() - 0.5) * 0.7,
-      escudo: 0, aturd: 0, lento: 0, turbo: 0, turboPad: 0, estrella: 0,
-      deriva: 0, tierDerivaActiva: 0, giroVis: 0, fuera: 0, ritmo: 1, medallas: 0, ultimoPad: null, velMax: 0,
+      item: null, tiempoItem: 0, retardo: 1 + Math.random() * 2, carril: e.humano ? 0 : (Math.random() - 0.5) * 0.7,
+      escudo: 0, aturd: 0, lento: 0, turbo: 0, turboPad: 0, estrella: 0, ralenti: 0,
+      deriva: 0, tierDerivaActiva: 0, giroVis: 0, gs: 0, fuera: 0, ritmo: 1, medallas: 0, ultimoPad: null, velMax: 0,
     };
   });
 }
 
 /* Un paso de física para un kart. ctl = { acel, freno, giro (-1..1), deriva } */
 export function avanzar(k, dt, ctl, P) {
-  for (const c of ['escudo', 'lento', 'turbo', 'turboPad', 'estrella']) if (k[c] > 0) k[c] = Math.max(0, k[c] - dt);
+  for (const c of ['escudo', 'lento', 'turbo', 'turboPad', 'estrella', 'ralenti']) if (k[c] > 0) k[c] = Math.max(0, k[c] - dt);
   if (k.aturd > 0) { k.aturd -= dt; ctl = { acel: false, freno: false, giro: 0, deriva: false }; }
 
   const fx = Math.cos(k.h), fy = Math.sin(k.h);
@@ -38,12 +47,13 @@ export function avanzar(k, dt, ctl, P) {
   const lat = lateral(P, k.idx, k.x, k.y);
   const enPista = Math.abs(lat) <= P.mitad + 4;
 
-  /* Velocidad máxima: los personajes cambian un poco, las zonas de turbo y los objetos la modifican */
-  let vmax = VMAX * (0.5 + 0.5 * k.acel) * (1 + k.medallas * 0.015);
+  /* Velocidad máxima: personaje y kart cambian el tope; las zonas de turbo, los objetos y la aura de paz lo modifican */
+  let vmax = VMAX * (0.5 + 0.5 * k.acel) * k.vel * (1 + k.medallas * 0.015);
   if (k.turbo > 0) vmax *= 1.3;
   if (k.turboPad > 0) vmax *= 1.2;
   if (k.estrella > 0) vmax *= 1.25;
   if (k.lento > 0) vmax *= 0.5;
+  if (k.ralenti > 0) vmax *= 0.86;
   if (!enPista) vmax *= 0.6;
   vmax *= k.ritmo;
   const tasaAcel = ACEL * k.acel * (k.turbo > 0 ? 1.5 : 1) * (k.turboPad > 0 ? 1.3 : 1);
@@ -53,15 +63,19 @@ export function avanzar(k, dt, ctl, P) {
   if (ctl.freno) vf = Math.max(TOPE_ATRAS, vf - FRENO * dt);
   if (!ctl.acel && !ctl.freno) vf -= Math.sign(vf) * Math.min(Math.abs(vf), FRICC * dt * 0.5);
 
+  /* Volante suave: el giro sube y baja poco a poco, así no da saltos */
+  k.gs = (k.gs || 0) + (ctl.giro - (k.gs || 0)) * Math.min(1, dt * 14);
+  const giro = k.gs;
+
   /* Giro y derrape. Al derrapar el kart gira más y se agarra menos; al soltar sale un empujón */
   const velo = Math.abs(vf);
   const mult = Math.max(0.35, Math.min(1, velo / 120));
   let grip = AGARRE * k.agarre;
   const derivando = ctl.deriva && velo > 150 && ctl.giro !== 0;
   if (derivando) {
-    k.deriva += dt; grip = AGARRE_DERIVA;
-    k.h += ctl.giro * GIRO * 1.35 * mult * dt;
-    k.giroVis = ctl.giro;
+    k.deriva += dt * k.derrape; grip = AGARRE_DERIVA;
+    k.h += giro * GIRO * 1.35 * k.manejo * mult * dt;
+    k.giroVis = giro;
     const tier = k.deriva > 2.6 ? 3 : k.deriva > 1.6 ? 2 : k.deriva > 0.8 ? 1 : 0;
     if (tier !== k.tierDerivaActiva) { k.tierDerivaActiva = tier; if (tier > 0) eventos.push({ tipo: 'nivelDeriva', k, tier }); }
   } else {
@@ -71,8 +85,8 @@ export function avanzar(k, dt, ctl, P) {
       eventos.push({ tipo: 'miniturbo', k, tier });
     }
     k.deriva = 0; k.tierDerivaActiva = 0;
-    k.h += ctl.giro * GIRO * mult * dt * (vf < 0 ? -1 : 1);
-    k.giroVis = ctl.giro;
+    k.h += giro * GIRO * k.manejo * mult * dt * (vf < 0 ? -1 : 1);
+    k.giroVis = giro;
   }
   const nfx = Math.cos(k.h), nfy = Math.sin(k.h);
   vl *= Math.max(0, 1 - grip * dt);
@@ -123,7 +137,7 @@ export function avanzar(k, dt, ctl, P) {
   k.velMax = Math.max(k.velMax || 0, Math.hypot(k.vx, k.vy));
 }
 
-/* Los karts no se atraviesan: si se tocan, se separan y pierden un poco de velocidad */
+/* Los karts no se atraviesan: si se tocan, se separan (el más ligero se mueve más) y pierden un poco de velocidad */
 export function chocarKarts(karts) {
   for (let a = 0; a < karts.length; a++) {
     for (let b = a + 1; b < karts.length; b++) {
@@ -131,10 +145,12 @@ export function chocarKarts(karts) {
       const dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy);
       const min = 30;
       if (d >= min || d < 0.01) continue;
-      const nx = dx / d, ny = dy / d, empuje = (min - d) / 2;
+      const nx = dx / d, ny = dy / d, empuje = min - d;
+      const total = A.peso + B.peso;
+      const parteA = B.peso / total, parteB = A.peso / total;
       const rel = (A.vx - B.vx) * nx + (A.vy - B.vy) * ny;
-      A.x -= nx * empuje; A.y -= ny * empuje;
-      B.x += nx * empuje; B.y += ny * empuje;
+      A.x -= nx * empuje * parteA; A.y -= ny * empuje * parteA;
+      B.x += nx * empuje * parteB; B.y += ny * empuje * parteB;
       A.vx *= 0.92; A.vy *= 0.92; B.vx *= 0.92; B.vy *= 0.92;
       if (Math.abs(rel) > 120) eventos.push({ tipo: 'choque', a: A, b: B, fuerza: Math.min(1, Math.abs(rel) / 400) });
     }

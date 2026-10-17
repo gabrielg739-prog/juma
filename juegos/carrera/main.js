@@ -1,6 +1,6 @@
-/* Carrera de la fe · punto de entrada: menús, flujo de la carrera (sobrevuelo, cuenta, carrera, llegada, podio), copa, puntos y bucle de juego */
+/* Carrera de la fe · punto de entrada: menú por pasos (modo, clase, personaje, kart, copa y pista), flujo de la carrera (sobrevuelo, cuenta, carrera, llegada, podio), copa, puntos, controles y bucle de juego */
 import * as THREE from '../lib/three.module.min.js';
-import { PISTAS, PERSONAJES, VUELTAS, VMAX, PUNTOS_POS, CLAVE, CLAVE_AJUSTES, OBJETOS } from './datos.js';
+import { PISTAS, PERSONAJES, KARTS, CUPAS, DIFICULTADES, VUELTAS, VMAX, PUNTOS_POS, CLAVE, CLAVE_AJUSTES, OBJETOS } from './datos.js';
 import { construirPista } from './pista.js';
 import { crearMundo, actualizarMundo } from './escena.js';
 import { crearKart, animarKart } from './karts.js';
@@ -10,6 +10,7 @@ import { Objetos } from './objetos.js';
 import { controlIA, decidirUso } from './ia.js';
 import { Camara, poseSeguir, mezcla } from './camara.js';
 import { Hud } from './hud.js';
+import { Vitrina } from './vitrina.js';
 import * as SON from './sonido.js';
 
 const $ = (id) => document.getElementById(id);
@@ -19,14 +20,24 @@ const TEXTOS_CUENTA = ['3', '2', '1', '¡YA!'];
 const COLOR_MT = { 1: '#55c8ff', 2: '#ff9a3a', 3: '#c06bff' };
 const ESTADO = { MENU: 'menu', INTRO: 'intro', CUENTA: 'cuenta', CORRE: 'corre', LLEGADA: 'llegada', PODIO: 'podio', RESULTADOS: 'resultados' };
 const EN_CARRERA = [ESTADO.INTRO, ESTADO.CUENTA, ESTADO.CORRE, ESTADO.LLEGADA];
+/* Pasos del menú (ajustes se abre desde el inicio) */
+const PASOS = ['inicio', 'modo', 'personaje', 'kart', 'pista'];
+const SUBTITULOS = {
+  inicio: 'Corre con personajes de la fe',
+  ajustes: 'Ajustes',
+  modo: 'Paso 1 de 4 · Modo y clase',
+  personaje: 'Paso 2 de 4 · Personaje',
+  kart: 'Paso 3 de 4 · Kart',
+  pista: 'Paso 4 de 4 · Copa y pista',
+};
 
-/* ---------- Ajustes y puntos guardados (mismo formato que la versión anterior) ---------- */
+/* ---------- Ajustes y puntos guardados (mismo formato que la versión anterior, con un ajuste nuevo) ---------- */
 function leerAjustes() {
   try {
     const a = JSON.parse(localStorage.getItem(CLAVE_AJUSTES) || 'null');
-    if (a && typeof a === 'object') return { sonido: a.sonido !== false, musica: a.musica !== false, calidad: a.calidad || 'auto' };
+    if (a && typeof a === 'object') return { sonido: a.sonido !== false, musica: a.musica !== false, calidad: a.calidad || 'auto', autoacel: a.autoacel === true };
   } catch (e) { /* sin almacenamiento */ }
-  return { sonido: true, musica: true, calidad: 'auto' };
+  return { sonido: true, musica: true, calidad: 'auto', autoacel: false };
 }
 function guardarAjustes() {
   try { localStorage.setItem(CLAVE_AJUSTES, JSON.stringify(ajustes)); } catch (e) { /* sin almacenamiento */ }
@@ -54,9 +65,13 @@ let datos = leerDatos();
 /* ---------- Render y cámara ---------- */
 const renderer = new THREE.WebGLRenderer({ canvas: $('lienzo'), antialias: true, powerPreference: 'high-performance' });
 renderer.setClearColor(0x1f0f33, 1);
+/* Tono de color de cine: más contraste y colores más vivos */
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
 const movil = matchMedia('(pointer: coarse)').matches;
 const camara = new Camara(innerWidth / innerHeight);
 const hud = new Hud();
+const vitrina = new Vitrina();
 let calidad = null;
 
 function ajustarTamano() {
@@ -100,26 +115,29 @@ function reiniciarPista(P) {
 }
 
 /* ---------- Estado de la partida ---------- */
-let estado = ESTADO.MENU, tEstado = 0, tTotal = 0, acum = 0, pausado = false;
-let modo = 'copa', pistaSel = 0, pistaActual = 0;
-let copa = { activa: false, total: [0, 0, 0, 0, 0, 0] };
+let estado = ESTADO.MENU, tEstado = 0, tTotal = 0, acum = 0, pausado = false, pausaGiro = false;
+const sel = { modo: 'copa', dif: 1, pi: 0, ki: 0, cup: 0, pista: 0 };
+let paso = 'inicio', vitrinaActiva = false;
+let rivales = [], equipo = [];
+let copa = { activa: false, cup: 0, pistas: [], idx: 0, total: PERSONAJES.map(() => 0) };
+let pistaActual = 0;
 let P = null, mundo = null, mundoKarts = null;
 let karts = [], motores = [], humano = null, ordenados = [];
 let vueltaAviso = 1, cuentaIdx = -1, cuentaLimpia = false, confetiIdx = -1, ultimoHud = 0;
 let ultimoT = performance.now();
-const tactil = { izq: false, der: false, freno: false, deriva: false };
+const tactil = { izq: false, der: false, acel: false, freno: false, deriva: false };
 const teclas = new Set();
+let gpObjetoPrev = false;
 
 function cambiar(nuevo) { estado = nuevo; tEstado = 0; }
 
 function limpiarKarts() {
-  if (mundoKarts) for (const m of motores) mundoKarts.escena.remove(m.g, m.sombra);
+  if (mundoKarts) for (const m of motores) { mundoKarts.escena.remove(m.g, m.sombra); if (m.paz) mundoKarts.escena.remove(m.paz); }
   motores = []; karts = []; humano = null; ordenados = []; mundoKarts = null;
 }
 
 /* Muestra una pista de fondo en el menú */
 function previsualizar(i) {
-  pistaSel = i;
   limpiarKarts();
   P = pistaP(i);
   mundo = mundoDe(i);
@@ -128,7 +146,7 @@ function previsualizar(i) {
 
 function crearCarrera() {
   limpiarKarts();
-  karts = crearParrilla(P, PERSONAJES);
+  karts = crearParrilla(P, equipo, DIFICULTADES[sel.dif]);
   motores = karts.map((k) => crearKart(k, mundo.escena, k.i));
   humano = karts.find((k) => k.humano);
   ordenados = ordenar(karts);
@@ -138,22 +156,33 @@ function crearCarrera() {
   mundo.podio.visible = false;
 }
 
-function empezarCopa() {
-  copa = { activa: true, total: [0, 0, 0, 0, 0, 0] };
-  empezarCarrera(0);
+/* Cinco rivales distintos al jugador, cada uno con un kart al azar */
+function elegirRivales() {
+  const otros = PERSONAJES.map((_, i) => i).filter((i) => i !== sel.pi);
+  for (let i = otros.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [otros[i], otros[j]] = [otros[j], otros[i]];
+  }
+  return otros.slice(0, 5).map((pi) => ({ pi, ki: Math.floor(Math.random() * KARTS.length) }));
+}
+
+function empezarCopa(cup) {
+  copa = { activa: true, cup, pistas: CUPAS[cup].pistas.slice(), idx: 0, total: PERSONAJES.map(() => 0) };
+  rivales = elegirRivales();
+  empezarCarrera(copa.pistas[0]);
 }
 
 function empezarCarrera(i) {
   pistaActual = i;
-  pistaSel = i;
   SON.activar();
+  equipo = [{ pi: sel.pi, ki: sel.ki, humano: true }, ...rivales];
   P = pistaP(i);
   reiniciarPista(P);
   mundo = mundoDe(i);
   crearCarrera();
   reiniciarReloj();
   eventos.length = 0;
-  acum = 0; vueltaAviso = 1; cuentaIdx = -1; cuentaLimpia = false; confetiIdx = -1; pausado = false;
+  acum = 0; vueltaAviso = 1; cuentaIdx = -1; cuentaLimpia = false; confetiIdx = -1; pausado = false; pausaGiro = false;
   $('menu').hidden = true;
   hud.ocultarVelo();
   hud.mostrar(true);
@@ -162,38 +191,154 @@ function empezarCarrera(i) {
   hud.item(null);
   hud.deriva(0, 0);
   hud.vuelta(1, VUELTAS);
+  hud.monedas(0);
   hud.puesto(humano.puesto, karts.length);
   hud.tiempo(0);
   cambiar(ESTADO.INTRO);
   SON.empezarMusica('carrera');
+  revisarOrientacion();
 }
 
 function volverMenu() {
   copa.activa = false;
-  pausado = false;
+  pausado = false; pausaGiro = false;
   limpiarKarts();
   cambiar(ESTADO.MENU);
   hud.mostrar(false);
   hud.tactil(false);
   hud.ocultarVelo();
   hud.cuenta('');
+  hud.limpiarAvisos();
   $('menu').hidden = false;
-  previsualizar(pistaSel);
+  paso = 'inicio';
   pintarMenu();
   if (ajustes.sonido && ajustes.musica) SON.empezarMusica('menu');
 }
 
-/* ---------- Pantallas del menú ---------- */
+/* ---------- Menú por pasos ---------- */
+const nivel = (m) => Math.max(1, Math.min(5, Math.round(3 + (m - 1) * 10)));
+const barrasKart = (c) => [['Velocidad', c.vel], ['Aceleración', c.acel], ['Solidez', c.peso], ['Manejo', c.giro]]
+  .map(([n, v]) => `<span>${n}</span><span class="barra"><span style="width:${nivel(v) * 20}%"></span></span>`).join('');
+
+function vistaInicio() {
+  return `<div class="inicio-botones">
+    <button type="button" class="gran" data-ir="modo">Jugar</button>
+    <button type="button" class="sec" data-ir="ajustes">Ajustes</button>
+    <p class="mejor">Puntos guardados: <b>${puntosTotales()}</b></p>
+    <p class="ayuda">Con botones: ◀ ▶ girar · A acelerar · B frenar · X usar objeto · Y derrapar. En el teclado: flechas o A y D para girar, ↑ acelerar, ↓ frenar, Shift o Z derrapar, Espacio o E usar objeto, P pausar.</p>
+  </div>`;
+}
+
+function vistaAjustes() {
+  const op = (v, t) => `<option value="${v}"${ajustes.calidad === v ? ' selected' : ''}>${t}</option>`;
+  return `<div class="bloque">
+    <label class="fila">Gráficos
+      <select data-ajuste="calidad" aria-label="Calidad de los gráficos">${op('auto', 'Automático')}${op('alta', 'Alta')}${op('media', 'Media')}${op('baja', 'Baja')}</select>
+    </label>
+    <label class="fila">Sonidos <input type="checkbox" data-ajuste="sonido" ${ajustes.sonido ? 'checked' : ''}></label>
+    <label class="fila">Música <input type="checkbox" data-ajuste="musica" ${ajustes.musica ? 'checked' : ''}></label>
+    <label class="fila">Acelerar solo <input type="checkbox" data-ajuste="autoacel" ${ajustes.autoacel ? 'checked' : ''}></label>
+    <p class="ayuda">Con «Acelerar solo» el kart avanza sin mantener el botón A ni la flecha ↑.</p>
+  </div>`;
+}
+
+function vistaModo() {
+  return `<div class="bloque">
+    <h2>¿Cómo quieres correr?</h2>
+    <div class="cartas-2">
+      <button type="button" class="carta${sel.modo === 'copa' ? ' on' : ''}" data-modo="copa">Copa<small>Tres pistas seguidas y una tabla de puntos</small></button>
+      <button type="button" class="carta${sel.modo === 'suelta' ? ' on' : ''}" data-modo="suelta">Una pista<small>Elige la pista y corre una vez</small></button>
+    </div>
+    <h2>Clase</h2>
+    <div class="chips">${DIFICULTADES.map((d, i) => `<button type="button" class="chip-b${sel.dif === i ? ' on' : ''}" data-dif="${i}">${d.nombre}</button>`).join('')}</div>
+    <p class="nota">${DIFICULTADES[sel.dif].texto}</p>
+    <p class="mejor">${sel.modo === 'copa'
+      ? `Puntos guardados: <b>${puntosTotales()}</b>`
+      : `Tu mejor en esta pista: <b>${datos.mejores[PISTAS[sel.pista].id] ?? '—'}</b> de ${PUNTOS_POS[0]}`}</p>
+  </div>`;
+}
+
+function vistaPersonaje() {
+  const p = PERSONAJES[sel.pi];
+  return `<div class="bloque">
+    <h2>Elige tu personaje</h2>
+    <div class="cuadricula">${PERSONAJES.map((q, i) => `<button type="button" class="carta-p${i === sel.pi ? ' on' : ''}" data-pi="${i}" style="--c:${q.color};--b:${q.borde}"><span class="avatar">${q.nombre[0]}</span>${q.nombre}<small>${q.habilNombre}</small></button>`).join('')}</div>
+    <p class="nota"><b>${p.nombre}: ${p.habilNombre}.</b> ${p.habilTexto}</p>
+  </div>`;
+}
+
+function vistaKart() {
+  return `<div class="bloque">
+    <h2>Elige tu kart</h2>
+    <div class="lista-k">${KARTS.map((c, i) => `<button type="button" class="carta-k${i === sel.ki ? ' on' : ''}" data-ki="${i}"><b>${c.nombre}</b><small>${c.desc}</small><span class="barras">${barrasKart(c)}</span></button>`).join('')}</div>
+    <p class="nota">Tu personaje conduce el kart que elijas. Su habilidad se queda con él.</p>
+  </div>`;
+}
+
+function vistaPista() {
+  if (sel.modo === 'copa') {
+    return `<div class="bloque">
+      <h2>Elige la copa</h2>
+      <div class="cartas-2">${CUPAS.map((c, i) => `<button type="button" class="carta${i === sel.cup ? ' on' : ''}" data-cup="${i}"><b>${c.nombre}</b><small>${c.desc}</small><small>${c.pistas.map((n) => PISTAS[n].nombre).join(' · ')}</small></button>`).join('')}</div>
+      <p class="nota">Al final se suman los puntos de cada rival y se ve quién gana la copa.</p>
+    </div>`;
+  }
+  return `<div class="bloque">
+    <h2>Elige la pista</h2>
+    <div class="cuadricula-p">${PISTAS.map((p, i) => `<button type="button" class="carta-pista${i === sel.pista ? ' on' : ''}" data-pista="${i}"><b>${p.nombre}</b><small>${p.desc}</small><small>Tu mejor: ${datos.mejores[p.id] ?? '—'}</small></button>`).join('')}</div>
+  </div>`;
+}
+
+const VISTAS = { inicio: vistaInicio, ajustes: vistaAjustes, modo: vistaModo, personaje: vistaPersonaje, kart: vistaKart, pista: vistaPista };
+
+/* Lo que se ve a la derecha: el kart girando (personaje y kart) o la pista (los demás pasos) */
+function actualizarFondo() {
+  vitrinaActiva = paso === 'personaje' || paso === 'kart';
+  if (vitrinaActiva) vitrina.mostrar(PERSONAJES[sel.pi], KARTS[sel.ki]);
+  else previsualizar(sel.pista);
+}
+
 function pintarMenu() {
-  $('elige').hidden = modo === 'copa';
-  $('elige').innerHTML = PISTAS.map((p, i) => `<button type="button" class="pista-btn${i === pistaSel ? ' on' : ''}" data-pista="${i}">${p.nombre}<small>${p.desc}</small><small>Tu mejor: ${datos.mejores[p.id] ?? '—'} de ${PUNTOS_POS[0]}</small></button>`).join('');
-  document.querySelectorAll('[data-modo]').forEach((b) => b.classList.toggle('on', b.dataset.modo === modo));
-  $('mejor').textContent = modo === 'copa'
-    ? `Copa de 6 pistas · ${puntosTotales()} puntos guardados`
-    : `Tu mejor en esta pista: ${datos.mejores[PISTAS[pistaSel].id] ?? '—'} de ${PUNTOS_POS[0]}`;
-  $('calidad').value = ajustes.calidad;
-  $('sonido').checked = ajustes.sonido;
-  $('musica').checked = ajustes.musica;
+  $('paso').innerHTML = VISTAS[paso]();
+  $('subtitulo').textContent = SUBTITULOS[paso] || SUBTITULOS.ajustes;
+  $('pie').hidden = paso === 'inicio';
+  $('siguiente').hidden = paso === 'ajustes';
+  $('siguiente').textContent = paso === 'pista' ? '¡A correr!' : 'Siguiente';
+  actualizarFondo();
+}
+
+function irA(p) { paso = p; pintarMenu(); }
+function siguiente() {
+  if (paso === 'pista') return arrancar();
+  irA(PASOS[PASOS.indexOf(paso) + 1]);
+}
+function atras() {
+  if (paso === 'ajustes') return irA('inicio');
+  irA(PASOS[Math.max(0, PASOS.indexOf(paso) - 1)]);
+}
+
+/* Al pulsar «¡A correr!»: pantalla completa y horizontal si el navegador lo permite */
+async function pantallaCompleta() {
+  if (!movil) return;
+  try {
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+    if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+  } catch (e) { /* el navegador no deja girar la pantalla: se muestra el aviso para girar */ }
+}
+
+function arrancar() {
+  SON.activar();
+  pantallaCompleta();
+  if (sel.modo === 'copa') empezarCopa(sel.cup);
+  else { rivales = elegirRivales(); empezarCarrera(sel.pista); }
+}
+
+/* Teléfono en vertical: el juego pide girarlo y se pausa mientras tanto */
+function revisarOrientacion() {
+  const pedir = movil && matchMedia('(orientation: portrait)').matches && EN_CARRERA.includes(estado);
+  $('girar').hidden = !pedir;
+  if (pedir && !pausado) { pausado = true; pausaGiro = true; }
+  else if (!pedir && pausaGiro) { pausado = false; pausaGiro = false; }
 }
 
 function mostrarResultados() {
@@ -201,19 +346,19 @@ function mostrarResultados() {
   const rank = ordenados;
   const pos = rank.indexOf(humano) + 1;
   const pts = PUNTOS_POS[pos - 1] || 0;
-  if (copa.activa) rank.forEach((k, r) => { copa.total[k.i] += PUNTOS_POS[r] || 0; });
+  if (copa.activa) rank.forEach((k, r) => { copa.total[k.pi] += PUNTOS_POS[r] || 0; });
   const id = PISTAS[pistaActual].id;
   if (pts > (datos.mejores[id] || 0)) datos.mejores[id] = pts;
   guardarDatos();
   reportarPuntos();
-  const filas = rank.map((k, r) => `<tr class="${k.humano ? 'yo' : ''}"><td>${r + 1}º</td><td>${k.nombre}</td><td>+${PUNTOS_POS[r] || 0}</td></tr>`).join('');
+  const filas = rank.map((k, r) => `<tr class="${k.humano ? 'yo' : ''}"><td>${r + 1}º</td><td>${k.humano ? `${k.nombre} (tú)` : k.nombre}</td><td>+${PUNTOS_POS[r] || 0}</td></tr>`).join('');
   let botones;
   if (copa.activa) {
-    botones = pistaActual < PISTAS.length - 1
-      ? `<button type="button" class="sec" data-accion="siguiente">Siguiente pista</button>`
-      : `<button type="button" class="sec" data-accion="copa">Ver la copa</button>`;
+    botones = copa.idx < copa.pistas.length - 1
+      ? '<button type="button" class="sec" data-accion="siguiente">Siguiente pista</button>'
+      : '<button type="button" class="sec" data-accion="copa">Ver la copa</button>';
   } else {
-    botones = `<button type="button" class="sec" data-accion="repetir">Repetir</button>`;
+    botones = '<button type="button" class="sec" data-accion="repetir">Repetir</button>';
   }
   const extra = copa.activa ? '' : ` · Tu mejor aquí: <b>${datos.mejores[id]}</b>`;
   hud.velo(`¡Puesto ${pos}º!`, `<table class="tabla">${filas}</table>
@@ -222,15 +367,16 @@ function mostrarResultados() {
 }
 
 function mostrarCopa() {
-  const lista = PERSONAJES.map((p, i) => ({ nombre: p.nombre, humano: !!p.humano, t: copa.total[i] })).sort((a, b) => b.t - a.t);
-  const filas = lista.map((x, r) => `<tr class="${x.humano ? 'yo' : ''}"><td>${r + 1}º</td><td>${x.nombre}</td><td>${x.t}</td></tr>`).join('');
+  const lista = equipo.map((e) => ({ nombre: PERSONAJES[e.pi].nombre, humano: !!e.humano, t: copa.total[e.pi] })).sort((a, b) => b.t - a.t);
+  const filas = lista.map((x, r) => `<tr class="${x.humano ? 'yo' : ''}"><td>${r + 1}º</td><td>${x.nombre}${x.humano ? ' (tú)' : ''}</td><td>${x.t}</td></tr>`).join('');
   hud.velo('Resultado de la copa', `<table class="tabla">${filas}</table>
-    <div class="fila-btn"><button type="button" class="sec" data-accion="nuevaCopa">Jugar otra copa</button><button type="button" class="sec" data-accion="menu">Volver al menú</button></div>`);
+    <div class="fila-btn"><button type="button" class="sec" data-accion="menu">Volver al menú</button></div>`);
 }
 
 function togglePausa(forzar) {
-  if (![ESTADO.INTRO, ESTADO.CUENTA, ESTADO.CORRE, ESTADO.LLEGADA].includes(estado)) return;
+  if (!EN_CARRERA.includes(estado)) return;
   pausado = forzar === undefined ? !pausado : forzar;
+  pausaGiro = false;
   if (pausado) {
     hud.velo('Pausa', `<div class="fila-btn"><button type="button" class="gran" data-accion="continuar">Seguir</button></div>
       <div class="fila-btn"><button type="button" class="sec" data-accion="reiniciar">Reiniciar carrera</button><button type="button" class="sec" data-accion="menu">Volver al menú</button></div>`);
@@ -241,27 +387,51 @@ function togglePausa(forzar) {
 
 function accion(a) {
   switch (a) {
-    case 'siguiente': empezarCarrera(pistaActual + 1); break;
+    case 'siguiente': copa.idx += 1; empezarCarrera(copa.pistas[copa.idx]); break;
     case 'copa': mostrarCopa(); break;
     case 'repetir': case 'reiniciar': empezarCarrera(pistaActual); break;
-    case 'nuevaCopa': empezarCopa(); break;
     case 'continuar': togglePausa(false); break;
     case 'menu': volverMenu(); break;
     default: break;
   }
 }
 
-/* ---------- Control del jugador ---------- */
-function controlHumano() {
-  const izq = teclas.has('arrowleft') || teclas.has('a') || tactil.izq;
-  const der = teclas.has('arrowright') || teclas.has('d') || tactil.der;
-  const freno = teclas.has('arrowdown') || teclas.has('s') || tactil.freno;
+/* ---------- Control del jugador: teclado, botones táctiles y mando ---------- */
+function leerGamepad() {
+  const vacio = { izq: false, der: false, acel: false, freno: false, deriva: false, objeto: false };
+  if (!navigator.getGamepads) return vacio;
+  let g = null;
+  for (const p of navigator.getGamepads()) if (p && p.connected) { g = p; break; }
+  if (!g) return vacio;
+  const b = (i) => !!(g.buttons[i] && g.buttons[i].pressed);
+  const v = (i) => (g.buttons[i] ? g.buttons[i].value : 0);
+  const eje = g.axes[0] || 0;
   return {
-    acel: !freno,
+    izq: eje < -0.35 || b(14), der: eje > 0.35 || b(15),
+    acel: b(0) || v(7) > 0.3, freno: b(1) || v(6) > 0.3,
+    deriva: b(3) || b(4) || b(5), objeto: b(2),
+  };
+}
+
+function controlHumano() {
+  const gp = leerGamepad();
+  const izq = teclas.has('arrowleft') || teclas.has('a') || tactil.izq || gp.izq;
+  const der = teclas.has('arrowright') || teclas.has('d') || tactil.der || gp.der;
+  const freno = teclas.has('arrowdown') || teclas.has('s') || tactil.freno || gp.freno;
+  const quiereAcelerar = teclas.has('arrowup') || teclas.has('w') || tactil.acel || gp.acel;
+  return {
+    acel: (ajustes.autoacel || quiereAcelerar) && !freno,
     freno,
     giro: (der ? 1 : 0) - (izq ? 1 : 0),   /* positivo = a la derecha en pantalla */
-    deriva: teclas.has('shift') || teclas.has('z') || tactil.deriva,
+    deriva: teclas.has('shift') || teclas.has('z') || tactil.deriva || gp.deriva,
   };
+}
+
+/* El botón X del mando usa el objeto una vez por pulsación */
+function revisarMandoObjeto() {
+  const objeto = leerGamepad().objeto;
+  if (objeto && !gpObjetoPrev) usarObjetoHumano();
+  gpObjetoPrev = objeto;
 }
 
 function usarObjetoHumano() {
@@ -288,6 +458,8 @@ function cuenta(dt) {
   }
   camara.seguir(humano, dt, 10);
   if (tEstado >= 2.7) {
+    /* Lucía (salida de luz) arranca con un empujón */
+    for (const k of karts) if (k.habil === 'salida') k.turbo = Math.max(k.turbo, 1.0);
     cambiar(ESTADO.CORRE);
     cuentaIdx = -1;
   }
@@ -320,6 +492,11 @@ function fisicaPaso(dt) {
   ordenados.forEach((k, i) => { k.puesto = i + 1; });
   const lider = Math.max(...karts.map((k) => k.dist));
   for (const k of karts) if (!k.humano) k.ritmo = 1 + Math.min(0.06, ((lider - k.dist) / 4000) * 0.06);
+  /* Rosa (aura de paz) frena un poco a los karts que van cerca de ella */
+  for (const a of karts) {
+    if (a.habil !== 'aura' || a.listo) continue;
+    for (const o of karts) if (o !== a && (o.x - a.x) ** 2 + (o.y - a.y) ** 2 < 240 * 240) o.ralenti = 0.2;
+  }
   const ctl = karts.map((k) => {
     if (k.listo) return QUIETO;
     return k.humano ? controlHumano() : controlIA(k, karts, P, dt);
@@ -392,7 +569,8 @@ function prepararPodio() {
   hud.mostrar(false);
   hud.tactil(false);
   hud.limpiarAvisos();
-  for (const m of motores) { m.g.visible = false; m.sombra.visible = false; }
+  $('girar').hidden = true;
+  for (const m of motores) { m.g.visible = false; m.sombra.visible = false; if (m.paz) m.paz.visible = false; }
 }
 
 function podio() {
@@ -415,12 +593,16 @@ function podio() {
 function actualizar(dt) {
   tEstado += dt;
   switch (estado) {
-    case ESTADO.MENU: camara.fijar(
-      { x: Math.cos(tTotal * 0.06) * 1150, y: 520, z: Math.sin(tTotal * 0.06) * 1150 },
-      { x: 0, y: 0, z: 0 }); break;
+    case ESTADO.MENU:
+      if (vitrinaActiva) camara.fijar({ x: Math.sin(tTotal * 0.25) * 40, y: 56, z: 180 }, { x: -34, y: 22, z: 0 });
+      else camara.fijar({ x: Math.cos(tTotal * 0.06) * 1150, y: 520, z: Math.sin(tTotal * 0.06) * 1150 }, { x: -260, y: 0, z: 0 });
+      break;
     case ESTADO.INTRO: intro(); break;
     case ESTADO.CUENTA: cuenta(dt); break;
-    case ESTADO.CORRE: case ESTADO.LLEGADA: correr(dt); break;
+    case ESTADO.CORRE: case ESTADO.LLEGADA:
+      revisarMandoObjeto();
+      correr(dt);
+      break;
     case ESTADO.PODIO: podio(); break;
     default: break;
   }
@@ -430,6 +612,7 @@ function actualizarHud() {
   if (!humano) return;
   hud.puesto(humano.puesto, karts.length);
   hud.vuelta(Math.min(VUELTAS, humano.vuelta), VUELTAS);
+  hud.monedas(humano.medallas);
   hud.tiempo(humano.listo ? humano.fin : tiempoCarrera());
   hud.item(humano.item);
   hud.deriva(humano.tierDerivaActiva, Math.min(1, humano.deriva / 2.6));
@@ -449,10 +632,29 @@ function dibujar(dt) {
   actualizarMundo(mundo, P, tTotal, enCarrera ? humano : null);
   mundo.fx.actualizar(dt);
   camara.actualizar(dt);
+  /* En la vitrina, el personaje va al centro de la zona libre a la derecha del panel (en vertical el panel ocupa todo) */
+  if (estado === ESTADO.MENU && vitrinaActiva) {
+    const panel = document.querySelector('.menu').getBoundingClientRect();
+    const f = panel.width >= innerWidth * 0.9 ? 0.5 : (panel.right + innerWidth) / (2 * innerWidth);
+    camara.encuadrar({ x: 0, y: 10, z: 0 }, f);
+  } else camara.encuadrar({ x: 0, y: 0, z: 0 }, null);
+  /* Nombres sobre los karts: se desvanecen con la distancia a la cámara y no aparecen sobre el jugador */
+  if (enCarrera) karts.forEach((k, i) => {
+    const m = motores[i];
+    if (!m) return;
+    const d = m.g.position.distanceTo(camara.cam.position);
+    m.nombre.visible = !k.humano;
+    m.nombre.material.opacity = Math.max(0, Math.min(1, 1 - (d - 240) / 160));
+  });
   if (enCarrera && !pausado) actualizarHud();
   const rapidez = humano ? Math.min(1, Math.hypot(humano.vx, humano.vy) / VMAX) : 0;
   SON.motor(rapidez, estado === ESTADO.CORRE && !pausado);
-  renderer.render(mundo.escena, camara.cam);
+  if (estado === ESTADO.MENU && vitrinaActiva) {
+    vitrina.actualizar(dt);
+    renderer.render(vitrina.escena, camara.cam);
+  } else {
+    renderer.render(mundo.escena, camara.cam);
+  }
 }
 
 function bucle(ahora) {
@@ -470,11 +672,39 @@ function bucle(ahora) {
 document.addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if (!b) return;
-  if (b.dataset.modo) { SON.activar(); modo = b.dataset.modo; pintarMenu(); }
-  else if (b.dataset.pista !== undefined) { SON.activar(); previsualizar(Number(b.dataset.pista)); pintarMenu(); }
-  else if (b.dataset.accion) accion(b.dataset.accion);
-  else if (b.id === 'arrancar') { SON.activar(); if (modo === 'copa') empezarCopa(); else empezarCarrera(pistaSel); }
-  else if (b.id === 'pausa') togglePausa();
+  SON.activar();
+  if (b.id === 'siguiente') return siguiente();
+  if (b.id === 'atras') return atras();
+  if (b.id === 'pausa') return togglePausa();
+  if (b.dataset.ir) return irA(b.dataset.ir);
+  if (b.dataset.modo) { sel.modo = b.dataset.modo; return pintarMenu(); }
+  if (b.dataset.dif !== undefined) { sel.dif = Number(b.dataset.dif); return pintarMenu(); }
+  if (b.dataset.pi !== undefined) { sel.pi = Number(b.dataset.pi); return pintarMenu(); }
+  if (b.dataset.ki !== undefined) { sel.ki = Number(b.dataset.ki); return pintarMenu(); }
+  if (b.dataset.cup !== undefined) { sel.cup = Number(b.dataset.cup); sel.pista = CUPAS[sel.cup].pistas[0]; return pintarMenu(); }
+  if (b.dataset.pista !== undefined) { sel.pista = Number(b.dataset.pista); return pintarMenu(); }
+  if (b.dataset.accion) return accion(b.dataset.accion);
+});
+
+/* Ajustes del menú (cambian al instante) */
+$('paso').addEventListener('change', (e) => {
+  const campo = e.target.dataset.ajuste;
+  if (!campo) return;
+  if (campo === 'calidad') {
+    ajustes.calidad = e.target.value; guardarAjustes();
+    mundos.clear(); fijarCalidad(); actualizarFondo();
+  } else if (campo === 'sonido') {
+    ajustes.sonido = e.target.checked; guardarAjustes();
+    SON.configurar(ajustes.sonido, ajustes.musica);
+    if (ajustes.sonido && ajustes.musica) SON.empezarMusica('menu');
+  } else if (campo === 'musica') {
+    ajustes.musica = e.target.checked; guardarAjustes();
+    SON.configurar(ajustes.sonido, ajustes.musica);
+    if (ajustes.musica && ajustes.sonido) SON.empezarMusica('menu'); else SON.pararMusica();
+  } else if (campo === 'autoacel') {
+    ajustes.autoacel = e.target.checked; guardarAjustes();
+    $('controles').classList.toggle('sin-a', ajustes.autoacel);
+  }
 });
 
 const TECLAS_JUEGO = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '];
@@ -482,7 +712,7 @@ addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   if (TECLAS_JUEGO.includes(k) && EN_CARRERA.includes(estado)) e.preventDefault();
   teclas.add(k);
-  if ((k === ' ' || k === 'e') && !e.repeat && EN_CARRERA.includes(estado)) {
+  if ((k === ' ' || k === 'e' || k === 'x') && !e.repeat && EN_CARRERA.includes(estado)) {
     if (k === ' ' && document.activeElement && document.activeElement.blur) document.activeElement.blur();
     usarObjetoHumano();
   }
@@ -502,38 +732,24 @@ for (const b of document.querySelectorAll('[data-tecla]')) {
   for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, () => { tactil[v] = false; });
 }
 
-$('calidad').addEventListener('change', (e) => {
-  ajustes.calidad = e.target.value; guardarAjustes();
-  mundos.clear();
-  fijarCalidad();
-  previsualizar(pistaSel);
-});
-$('sonido').addEventListener('change', (e) => {
-  ajustes.sonido = e.target.checked; guardarAjustes();
-  SON.configurar(ajustes.sonido, ajustes.musica);
-  if (ajustes.sonido && ajustes.musica && estado === ESTADO.MENU) SON.empezarMusica('menu');
-});
-$('musica').addEventListener('change', (e) => {
-  ajustes.musica = e.target.checked; guardarAjustes();
-  SON.configurar(ajustes.sonido, ajustes.musica);
-  if (ajustes.musica && ajustes.sonido) SON.empezarMusica(estado === ESTADO.MENU ? 'menu' : 'carrera');
-  else SON.pararMusica();
-});
-addEventListener('resize', ajustarTamano);
+addEventListener('resize', () => { ajustarTamano(); revisarOrientacion(); });
+addEventListener('orientationchange', revisarOrientacion);
 addEventListener('pointerdown', () => {
   if (estado === ESTADO.MENU && ajustes.sonido && ajustes.musica) SON.empezarMusica('menu');
 }, { once: true });
 
 /* Ganchos para pruebas automáticas */
 window.__carrera = {
-  get estado() { return estado; }, get karts() { return karts; }, get humano() { return humano; },
+  get estado() { return estado; }, get paso() { return paso; }, get sel() { return sel; },
+  get karts() { return karts; }, get humano() { return humano; }, get equipo() { return equipo; },
   get P() { return P; }, get copa() { return copa; }, get tCarrera() { return tiempoCarrera(); },
-  get pausado() { return pausado; }, get teclas() { return teclas; },
+  get pausado() { return pausado; }, get teclas() { return teclas; }, get ajustes() { return ajustes; },
   get camara() { return camara.cam; }, get motores() { return motores; }, get tEstadoJuego() { return tEstado; },
-  empezarCarrera, empezarCopa, accion, togglePausa, usarObjetoHumano, tactil,
+  get vitrinaActiva() { return vitrinaActiva; },
+  irA, arrancar, empezarCarrera, empezarCopa, accion, togglePausa, usarObjetoHumano, tactil,
 };
 
+$('controles').classList.toggle('sin-a', ajustes.autoacel);
 fijarCalidad();
-previsualizar(0);
 pintarMenu();
 requestAnimationFrame(bucle);
