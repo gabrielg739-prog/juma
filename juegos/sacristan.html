@@ -112,6 +112,52 @@
   .misal-lista div { display: flex; gap: 10px; align-items: center; background: #fff; border: 2px solid #ecdcb4; border-radius: 12px; padding: 6px 10px; font-size: 13px; line-height: 1.3; }
   .misal-lista div.bloq { opacity: .45; }
   .misal-lista svg { width: 36px; height: 36px; flex: 0 0 auto; }
+  /* Escena del presbiterio durante la Misa */
+  .presb { position: relative; height: min(30vh, 200px); border-radius: 20px; overflow: hidden; margin: 2px 0 4px; background: radial-gradient(ellipse at 50% 0%, #8a5a30, #3a200e 65%, #1a0c04); box-shadow: inset 0 0 50px rgba(0,0,0,.6), 0 8px 20px rgba(0,0,0,.4); }
+  .presb svg { width: 100%; height: 100%; display: block; }
+  .presb .brazo { transform-box: fill-box; transition: transform .7s cubic-bezier(.34,1.3,.5,1); }
+  .presb .bi { transform-origin: 90% 10%; } .presb .bd { transform-origin: 10% 10%; }
+  .presb #cura { transition: transform 1s cubic-bezier(.23,1,.32,1); }
+  .presb #hostia { opacity: 0; transition: opacity .4s, transform .7s cubic-bezier(.34,1.3,.5,1); transform-box: fill-box; }
+  .presb .rayos { opacity: 0; transition: opacity .6s; transform-origin: 150px 60px; animation: gira 12s linear infinite; }
+  .presb.consagra .rayos { opacity: 1; }
+  @keyframes gira { to { transform: rotate(360deg); } }
+  .presb .llama { transform-box: fill-box; transform-origin: 50% 100%; animation: llama .18s ease-in-out infinite alternate; }
+  .presb .llama:nth-of-type(2n) { animation-duration: .23s; }
+  @keyframes llama { to { transform: scale(.85, 1.12) skewX(4deg); } }
+  .presb .vela-tocar { cursor: pointer; }
+  .presb .apagada .llama { display: none; }
+  .presb .humo { opacity: 0; } .presb.incienso .humo { opacity: 1; }
+  .presb .humo path { animation: humo 3s ease-in-out infinite; }
+  @keyframes humo { 0% { transform: translateY(0); opacity: .8; } 100% { transform: translateY(-40px); opacity: 0; } }
+  .presb .aviso-vela { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); background: #ff6a3a; color: #fff; font-weight: 900; font-size: 13px; padding: 5px 12px; border-radius: 999px; animation: late .5s var(--resorte) infinite alternate; box-shadow: 0 4px 12px rgba(0,0,0,.4); white-space: nowrap; }
+  .presb .puertas { opacity: 0; transition: opacity 1s; } .presb.envio .puertas { opacity: 1; }
+  .barra-mom { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; justify-content: center; margin-top: 6px; }
+  .ayuda { white-space: nowrap; }
+  .barra-mom .anillo { width: 44px; height: 44px; margin: 0; }
+  .ayuda { height: 40px; padding: 0 14px; border-radius: 999px; background: linear-gradient(180deg, #fff6c8, #e8b830); color: #4a2600; font-weight: 900; font-size: 13px; box-shadow: 0 3px 0 #8a5a08; }
+  .ayuda:disabled { opacity: .35; }
+  .angel { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: radial-gradient(circle, #fff, #9ad0ff 60%, rgba(154,208,255,0)); animation: late 1s ease-in-out infinite alternate; font-size: 16px; }
+  .momento { padding: 2px 4px; }
+  .momento h2 { font-size: 25px; margin: 3px 0; }
+  .momento .que { font-size: 14.5px; padding: 8px 12px; }
+  .momento .pide { margin-top: 0; }
+  .hoy { min-height: 72px; flex-shrink: 0; position: relative; overflow: hidden; border: 2px solid var(--oro) !important; background: linear-gradient(120deg, rgba(90,50,10,.95), rgba(40,20,6,.95)) !important; }
+  .hoy::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgba(255,230,160,.25) 45%, transparent 60%); background-size: 300% 100%; animation: brilla-hoy 3.5s ease-in-out infinite; pointer-events: none; }
+  @keyframes brilla-hoy { 0% { background-position: 120% 0; } 60%, 100% { background-position: -40% 0; } }
+  .hoy .etiqueta { position: absolute; top: 6px; right: 8px; background: #e1304a; color: #fff; font-size: 10.5px; font-weight: 900; padding: 2px 8px; border-radius: 999px; }
+  .rango { display: flex; align-items: center; gap: 10px; background: rgba(40,22,10,.82); border: 2px solid rgba(255,255,255,.14); border-radius: 18px; padding: 10px 12px; margin-top: 12px; }
+  .rango .med { width: 46px; height: 46px; flex: 0 0 auto; }
+  .rango b { color: var(--oro); font-size: 16px; display: block; }
+  .rango small { font-size: 12px; opacity: .8; }
+  .rango .barra { height: 8px; border-radius: 4px; background: rgba(0,0,0,.45); overflow: hidden; margin: 4px 0 2px; }
+  .rango .barra i { display: block; height: 100%; background: linear-gradient(90deg, #ffd25a, #fff3b0); }
+  .ordenar { display: grid; gap: 8px; margin-top: 8px; }
+  .ordenar button { min-height: 50px; border-radius: 14px; padding: 6px 12px; text-align: left; font-weight: 900; font-size: 15px; background: linear-gradient(180deg, rgba(255,246,224,.97), rgba(236,214,170,.97)); color: var(--tinta); box-shadow: 0 4px 0 rgba(0,0,0,.35); display: flex; align-items: center; gap: 10px; animation: entra .35s var(--resorte) both; animation-delay: var(--d); }
+  .ordenar button .num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.12); flex: 0 0 auto; }
+  .ordenar button.hecho { background: linear-gradient(180deg, #c8f5a8, #6ac94a); }
+  .ordenar button.hecho .num { background: #2e7d20; color: #fff; }
+  .ordenar button.mal { animation: sacude .4s; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .motas { display: none; } }
 </style>
 </head>
@@ -122,16 +168,17 @@
   <header class="top">
     <button class="redondo" id="btn-cerrar" type="button" aria-label="Salir"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <button class="redondo" id="btn-atras" type="button" aria-label="Volver" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
-    <div class="vidas" id="vidas" hidden></div>
+    <div class="vidas" id="vidas" hidden></div><span id="angel" hidden class="angel" title="Ángel de la guarda: te salva de un error">👼</span>
     <div class="espacio"></div>
     <div class="pill" id="p-puntos" hidden>0</div>
     <button class="redondo" id="btn-sonido" type="button" aria-label="Sonido"></button>
-    <div class="pill oro" title="Puntos misioneros">★ <span id="t-estrellas">0</span></div>
+    <div class="pill oro" id="p-estrellas" title="Puntos misioneros">★ <span id="t-estrellas">0</span></div>
   </header>
 
   <section class="vista" id="v-menu">
     <div class="titulo"><span class="a">Sacristán</span><span class="b">Sirve en la Misa · sal a la misión</span></div>
     <p style="text-align:center;font-size:14px;line-height:1.45;margin:8px 6px 0;opacity:.9">Prepara el altar, ayuda al sacerdote en cada momento de la Misa y, al final, sal a la misión. Cada Misa es más rápida y difícil.</p>
+    <div class="rango" id="rango"></div>
     <div class="lista-misas" id="lista-misas"></div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:6px"><button class="btn-sec" id="btn-misal" type="button">Mi misal: lo aprendido</button></div>
   </section>
@@ -145,6 +192,7 @@
 
   <section class="vista" id="v-misa" hidden>
     <div class="partes" id="partes"></div>
+    <div class="presb" id="presb"></div>
     <div class="momento" id="momento"></div>
     <div id="opciones"></div>
   </section>
@@ -260,6 +308,49 @@ function momentosDe(M) {
   m(3, 'Envío', '«Pueden ir en paz.» La Misa no termina: ¡empieza la misión! Llevamos a Jesús a los demás.', 'mision');
   return L;
 }
+/* Calendario litúrgico (cálculo de la Pascua) para la «Misa de hoy» */
+function pascuaDe(a) {
+  const b = a % 19, c = Math.floor(a / 100), d = a % 100, e = Math.floor(c / 4), f = c % 4, g = Math.floor((c + 8) / 25), h = Math.floor((c - g + 1) / 3);
+  const i = (19 * b + c - e - h + 15) % 30, k = Math.floor(d / 4), l = d % 4, m = (32 + 2 * f + 2 * k - i - l) % 7, n = Math.floor((b + 11 * i + 22 * m) / 451);
+  const mes = Math.floor((i + m - 7 * n + 114) / 31), dia = ((i + m - 7 * n + 114) % 31) + 1;
+  return new Date(a, mes - 1, dia);
+}
+const DIA = 86400000;
+function tiempoLiturgico(fecha) {
+  const f = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()), a = f.getFullYear();
+  const pas = pascuaDe(a), dif = Math.round((f - pas) / DIA);
+  const nav = new Date(a, 11, 25), adv = new Date(nav - ((nav.getDay() || 7) + 21) * DIA);
+  // Domund: penúltimo domingo de octubre
+  const ult = new Date(a, 9, 31); const ultDom = new Date(ult - ult.getDay() * DIA); const domund = new Date(ultDom - 7 * DIA);
+  const diasDomund = Math.round((domund - f) / DIA);
+  let t;
+  if (f >= adv && f < nav) t = { n: 'Adviento', color: 'morado', base: 1 };
+  else if (f >= nav || (f.getMonth() === 0 && f.getDate() <= 12)) t = { n: 'Navidad', color: 'blanco', base: 2 };
+  else if (dif >= -46 && dif < -3) t = { n: 'Cuaresma', color: 'morado', base: 3 };
+  else if (dif === 49) t = { n: 'Pentecostés', color: 'rojo', base: 5 };
+  else if (dif >= -3 && dif < 49) t = { n: 'Tiempo de Pascua', color: 'blanco', base: 4 };
+  else t = { n: 'Tiempo ordinario', color: 'verde', base: 0 };
+  if (diasDomund >= 0 && diasDomund <= 6) t.domund = diasDomund;
+  return t;
+}
+const HOY = new Date(), TL = tiempoLiturgico(HOY), CLAVE_HOY = HOY.toISOString().slice(0, 10);
+// Preguntas extra que aparecen al azar durante la Misa
+const PREGUNTAS = [
+  ['¿Qué significa «Eucaristía»?', ['Acción de gracias', 'Reunión del domingo', 'Pan bendito'], 1],
+  ['¿Qué significa «Amén»?', ['Así es, lo creo', 'Hasta luego', 'Ten piedad'], 2],
+  ['¿Cuántas lecturas hay en la Misa del domingo?', ['Dos lecturas, el salmo y el Evangelio', 'Solo el Evangelio', 'Cinco lecturas'], 1],
+  ['¿Dónde se guarda a Jesús en la Eucaristía después de la Misa?', ['En el Sagrario', 'En la credencia', 'En la sacristía'], 2],
+  ['¿Qué indica la lámpara roja encendida junto al Sagrario?', ['Que Jesús está presente', 'Que la iglesia está abierta', 'Que hay confesiones'], 2],
+  ['¿Quién puede consagrar el pan y el vino?', ['Solo el sacerdote', 'Cualquier acólito', 'El coro'], 3],
+  ['¿Cuánto tiempo de ayuno se guarda antes de comulgar?', ['Una hora', 'Todo el día', 'No hace falta'], 1],
+  ['¿Qué hacemos al pasar frente al Sagrario?', ['Una genuflexión', 'Aplaudir', 'Nada'], 0],
+  ['La Misa es memorial de…', ['La muerte y resurrección de Jesús', 'El nacimiento de María', 'La creación del mundo'], 2],
+  ['¿Qué significa «misa»?', ['Viene de «missio»: envío', 'Fiesta', 'Comida'], 3],
+  ['¿Qué parte de la Misa es la más importante?', ['La consagración', 'La colecta', 'Los avisos'], 0]
+];
+// Rangos del servidor del altar
+const RANGOS = [{ n: 'Monaguillo', p: 0 }, { n: 'Acólito', p: 2500 }, { n: 'Turiferario', p: 7000 }, { n: 'Sacristán', p: 15000 }, { n: 'Maestro de ceremonias', p: 30000 }];
+const rangoDe = (t) => { let i = 0; RANGOS.forEach((r, k) => { if (t >= r.p) i = k; }); return i; };
 const SECCIONES = ['Ritos iniciales', 'Liturgia de la Palabra', 'Liturgia eucarística', 'Ritos de conclusión'];
 // Retos de la misión al salir de Misa
 const MISIONES = [
@@ -291,21 +382,33 @@ const SND = {
   incienso() { JS.E.soplo(1, 0.15, 400, 1600); for (let i = 0; i < 4; i++) JS.E.clic(0.5, { ret: i * 0.15 }); },
   fin() { JS.organo([261.63, 329.63, 392, 523.25], 2.8, 0.2); JS.coro([523.25, 659.25, 783.99, 1046.5], 2.8, 0.13, { at: 0.5 }); [1046.5, 1318.5, 1568].forEach((f, i) => JS.campana(f, 2, 0.06, { ret: 0.4 + i * 0.25, eco: 0.8 })); },
   pierde() { JS.organo([196, 233.08, 293.66], 2.2, 0.16); },
-  tic() { JS.E.tictac(true); }
+  tic() { JS.E.tictac(true); },
+  // Cantos de la Misa con melodía (coro y órgano)
+  canto(n) {
+    const MEL = { Gloria: [67, 69, 71, 72, 74, 72, 71, 72], Santo: [72, 72, 72, 74, 76, 74, 72], Aleluya: [67, 71, 74, 72, 71, 69, 67], Salmo: [64, 65, 67, 67, 65, 64], 'Procesión de entrada': [60, 64, 67, 72, 71, 67] };
+    const mel = MEL[n] || [67, 71, 74, 72];
+    mel.forEach((m, i) => JS.coro([JS.m2f(m)], 0.55, 0.12, { ret: i * 0.26, at: 0.06 }));
+    JS.organo([JS.m2f(mel[0] - 12), JS.m2f(mel[0] - 5)], mel.length * 0.26 + 0.4, 0.08);
+  },
+  vela() { JS.E.soplo(0.3, 0.12, 2000, 600); JS.campana(1318.5, 0.6, 0.05); }
 };
 function pintarSonido() { $('btn-sonido').innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="#fff"/>' + (S.sonido ? '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>') + '</svg>'; }
 $('btn-sonido').onclick = () => { S.sonido = !S.sonido; guardar(); pintarSonido(); };
 pintarSonido();
 
 /* ---------- Estado ---------- */
-let M = null, nM = 0, puntos = 0, vidas = 3, racha = 0, enMisa = false, timer = null, aprendidos = new Set();
-function vista(v) { ['menu', 'altar', 'misa'].forEach((x) => { $('v-' + x).hidden = x !== v; }); $('btn-atras').hidden = v === 'menu'; $('vidas').hidden = v === 'menu'; $('p-puntos').hidden = v === 'menu'; }
+let M = null, nM = 0, puntos = 0, vidas = 3, racha = 0, enMisa = false, timer = null, aprendidos = new Set(), angel = false, ayudas = 1, esHoy = false;
+function vista(v) { ['menu', 'altar', 'misa'].forEach((x) => { $('v-' + x).hidden = x !== v; }); $('btn-atras').hidden = v === 'menu'; $('vidas').hidden = v === 'menu'; $('p-puntos').hidden = v === 'menu'; $('p-estrellas').hidden = v !== 'menu'; }
 function pintarVidas() { $('vidas').innerHTML = [0, 1, 2].map((i) => `<svg viewBox="0 0 18 24" class="${i < vidas ? '' : 'apagada'}"><path d="M9 1c4 5 4 8 0 11-4-3-4-6 0-11z" fill="#ffb030"/><rect x="5" y="12" width="8" height="11" rx="1.5" fill="#fff8e0"/></svg>`).join(''); }
+function mostrarFlota(t) { const d = document.createElement('div'); d.className = 'flota'; d.textContent = t; d.style.left = '50%'; d.style.top = '40%'; document.body.appendChild(d); setTimeout(() => d.remove(), 1050); }
+function revisarAngel() { if (!angel && racha > 0 && racha % 6 === 0) { angel = true; $('angel').hidden = false; JS.coro([1046.5, 1318.5, 1568], 1.2, 0.1, { at: 0.1 }); mostrarFlota('¡Ángel de la guarda!'); } }
 function sumar(n, el) {
+  revisarAngel();
   puntos += n; $('p-puntos').textContent = puntos.toLocaleString('es');
   if (el) { const r = el.getBoundingClientRect(), d = document.createElement('div'); d.className = 'flota'; d.textContent = '+' + n + (racha > 1 ? ' · racha ' + racha : ''); d.style.left = (r.left + r.width / 2) + 'px'; d.style.top = (r.top + r.height / 2) + 'px'; document.body.appendChild(d); setTimeout(() => d.remove(), 1050); }
 }
 function fallar() {
+  if (angel) { angel = false; $('angel').hidden = true; racha = 0; SND.mal(); JS.coro([783.99, 987.77], 1, 0.1, { at: 0.05 }); mostrarFlota('¡Tu ángel te protegió!'); return false; }
   vidas--; racha = 0; pintarVidas(); SND.mal();
   if (vidas <= 0) { setTimeout(perder, 600); return true; }
   return false;
@@ -314,12 +417,20 @@ function fallar() {
 /* ---------- Menú ---------- */
 function pintarMenu() {
   vista('menu'); enMisa = false; JS.pararMusica();
-  $('lista-misas').innerHTML = MISAS.map((m, i) => {
+  const ri = rangoDe(S.total || 0), sig = RANGOS[ri + 1];
+  $('rango').innerHTML = `<svg class="med" viewBox="0 0 46 46"><circle cx="23" cy="23" r="20" fill="#c0262f" stroke="#ffd25a" stroke-width="2.5"/><path d="M14 40c0-10 4-16 9-16s9 6 9 16z" fill="#fff"/><circle cx="23" cy="17" r="6" fill="#f0c8a0"/><path d="M23 26v12M19 30h8" stroke="#c9a040" stroke-width="2"/></svg><div style="flex:1"><small>Tu rango</small><b>${RANGOS[ri].n}</b><div class="barra"><i style="width:${sig ? Math.min(100, ((S.total || 0) - RANGOS[ri].p) / (sig.p - RANGOS[ri].p) * 100).toFixed(1) : 100}%"></i></div><small>${sig ? 'Faltan ' + (sig.p - (S.total || 0)).toLocaleString('es') + ' puntos para ' + sig.n : '¡El rango más alto!'} · Ayudas por Misa: ${1 + Math.min(2, ri)}</small></div>`;
+  const yaHoy = S.hoy === CLAVE_HOY;
+  const fechaTxt = HOY.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' });
+  const hoyHtml = `<button type="button" class="misa hoy" data-hoy="1" style="--d:0ms"><span class="etiqueta">${yaHoy ? 'HECHA' : 'PUNTOS ×2'}</span><span class="color" style="background:${COLORES[TL.color][0]}">⛪</span><span><b>Misa de hoy</b><small>${fechaTxt} · ${TL.n} · color ${COLORES[TL.color][1].toLowerCase()}${TL.domund != null ? (TL.domund === 0 ? ' · ¡Hoy es el Domund, día de las misiones!' : ' · El Domund es en ' + TL.domund + (TL.domund === 1 ? ' día' : ' días')) : ''}</small></span></button>`;
+  $('lista-misas').innerHTML = hoyHtml + MISAS.map((m, i) => {
     const est = S.misas[i] || 0, bloq = i > S.max;
     return `<button type="button" class="misa" data-m="${i}" ${bloq ? 'disabled' : ''} style="--d:${i * 50}ms"><span class="color" style="background:${COLORES[m.color][0]}">${bloq ? '🔒' : ''}</span><span><b>${i + 1}. ${m.n}</b><small>${m.s} · color ${COLORES[m.color][1].toLowerCase()}</small></span><span class="est">${est ? '★'.repeat(est) : ''}</span></button>`;
   }).join('');
 }
-$('lista-misas').addEventListener('click', (e) => { const b = e.target.closest('[data-m]'); if (!b || b.disabled) return; JS.ctx(); SND.toque(); empezar(Number(b.dataset.m)); });
+$('lista-misas').addEventListener('click', (e) => {
+  if (e.target.closest('[data-hoy]')) { JS.ctx(); SND.toque(); empezar(Math.min(TL.base, Math.max(S.max, 0)), true); return; }
+  const b = e.target.closest('[data-m]'); if (!b || b.disabled) return; JS.ctx(); SND.toque(); empezar(Number(b.dataset.m));
+});
 $('btn-atras').onclick = () => { if (confirm('¿Salir de esta Misa?')) { clearInterval(timer); pintarMenu(); } };
 $('btn-cerrar').onclick = () => { try { window.parent.postMessage({ tipo: 'juma-cerrar' }, location.origin); } catch (e) { /* nada */ } };
 $('btn-misal').onclick = () => {
@@ -330,8 +441,10 @@ $('btn-misal').onclick = () => {
 };
 
 /* ---------- Fase 1: preparar el altar ---------- */
-function empezar(i) {
-  nM = i; M = MISAS[i]; puntos = 0; vidas = 3; racha = 0; aprendidos = new Set();
+function empezar(i, hoy) {
+  nM = i; esHoy = !!hoy; M = MISAS[i];
+  if (esHoy) M = Object.assign({}, MISAS[TL.base], { n: 'Misa de hoy', s: TL.n, color: TL.color, tm: Math.max(4.5, MISAS[TL.base].tm - 0.5) });
+  puntos = 0; vidas = 3; racha = 0; aprendidos = new Set(); angel = false; $('angel').hidden = true; ayudas = 1 + Math.min(2, rangoDe(S.total || 0));
   pintarVidas(); $('p-puntos').textContent = '0';
   enMisa = true; if (JS.ctx()) JS.musica('calma');
   faseColor();
@@ -443,24 +556,108 @@ function aprender(k) { aprendidos.add(k); if (!S.aprendido.includes(k)) S.aprend
 function aviso(t) { $('a-sub').textContent = t; }
 
 /* ---------- Fase 2: servir durante la Misa ---------- */
-let momentos = [], iMom = 0, tIni = 0, tLim = 0, respondido = false;
+let momentos = [], iMom = 0, tIni = 0, tLim = 0, respondido = false, imprevistos = new Set();
 const ACCIONES = ['rezar', 'cantar', 'silencio', 'paz', 'campanilla', 'vinajeras', 'jarra', 'copon', 'misal', 'purificador', 'incensario', 'cruzalta', 'mision', 'baculo'];
+// Dibuja el presbiterio: retablo, Sagrario, altar con velas, ambón, el sacerdote y el acólito
+function escenaMisa() {
+  const casulla = COLORES[M.color][0], sotana = ['#c0262f', '#c0262f', '#1a1a2a', '#6a2aa0', '#1a1a2a'][rangoDe(S.total || 0)];
+  const vela = (x, id) => `<g id="${id}" class="vela-tocar"><rect x="${x - 3}" y="88" width="6" height="22" rx="1" fill="#fffbea"/><rect x="${x - 5}" y="108" width="10" height="4" rx="1" fill="#c9a040"/><path class="llama" d="M${x} 74c4 5 4 9 0 13-4-4-4-8 0-13z" fill="url(#llamaG)"/><circle class="llama" cx="${x}" cy="82" r="9" fill="rgba(255,220,120,.25)"/></g>`;
+  $('presb').className = 'presb' + (M.solemne ? ' incienso' : '');
+  $('presb').innerHTML = `<svg viewBox="0 0 300 150" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <radialGradient id="llamaG" cx=".5" cy=".75" r=".6"><stop offset="0" stop-color="#fff"/><stop offset=".45" stop-color="#ffd060"/><stop offset="1" stop-color="#ff6a1a"/></radialGradient>
+      <linearGradient id="madG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5030"/><stop offset="1" stop-color="#3a1a08"/></linearGradient>
+      <linearGradient id="vitralG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a8ae0"/><stop offset=".5" stop-color="#e04a6a"/><stop offset="1" stop-color="#f0c040"/></linearGradient>
+      <radialGradient id="rayosG" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff8d0" stop-opacity=".95"/><stop offset="1" stop-color="#fff0b0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="haz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2c0" stop-opacity=".35"/><stop offset="1" stop-color="#fff2c0" stop-opacity="0"/></linearGradient>
+    </defs>
+    <path d="M60 0h180v70H60z" fill="#4a2a14"/>
+    <path d="M110 4h80v58c0 0-40-14-80 0z" fill="url(#vitralG)" opacity=".85"/><path d="M150 4v58M110 30h80" stroke="#2a1408" stroke-width="2.5"/>
+    <path d="M110 62L60 150h180L190 62z" fill="url(#haz)"/>
+    <g class="puertas"><rect x="0" y="0" width="300" height="150" fill="url(#rayosG)"/></g>
+    <rect x="136" y="44" width="28" height="24" rx="3" fill="#d9b24a" stroke="#7a5010" stroke-width="1.5"/><path d="M150 48v16M144 55h12" stroke="#fff3c4" stroke-width="2"/>
+    <circle cx="176" cy="52" r="3" fill="#ff3020"><animate attributeName="opacity" values="1;.6;1" dur="1.6s" repeatCount="indefinite"/></circle>
+    <path d="M0 118h300v32H0z" fill="#5a3a24"/><path d="M0 118h300" stroke="#c9a040" stroke-width="1.5"/>
+    <rect x="22" y="80" width="34" height="42" rx="2" fill="url(#madG)"/><rect x="18" y="76" width="42" height="6" fill="#6a3a1a"/>
+    <g class="rayos"><circle cx="150" cy="60" r="70" fill="url(#rayosG)"/>${Array.from({ length: 12 }, (_, i) => `<path d="M150 60L${150 + Math.cos(i / 12 * 6.28) * 90} ${60 + Math.sin(i / 12 * 6.28) * 90}" stroke="#fff3c4" stroke-width="3" opacity=".5"/>`).join('')}</g>
+    <g id="cura">
+      <path d="M150 64c-17 0-26 14-28 54h56c-2-40-11-54-28-54z" fill="#f4f0e6"/>
+      <path d="M150 66c-14 0-22 14-24 52h48c-2-38-10-52-24-52z" fill="${casulla}"/>
+      <path d="M150 68v50M138 86h24" stroke="#d9b24a" stroke-width="3"/>
+      <g class="brazo bi" id="bi"><path d="M128 74c-6 6-10 18-10 26l6 2c2-8 6-16 8-20z" fill="${casulla}"/><circle cx="121" cy="102" r="3.5" fill="#ecc09a"/></g>
+      <g class="brazo bd" id="bd"><path d="M172 74c6 6 10 18 10 26l-6 2c-2-8-6-16-8-20z" fill="${casulla}"/><circle cx="179" cy="102" r="3.5" fill="#ecc09a"/></g>
+      <circle cx="150" cy="54" r="9" fill="#ecc09a"/><path d="M141 52c0-8 4-12 9-12s9 4 9 12c-2-4-5-6-9-6s-7 2-9 6z" fill="#4a2e1a"/>
+      <g id="hostia"><circle cx="150" cy="36" r="7" fill="#fffbea" stroke="#e8d8a0"/><path d="M150 32v8M146 36h8" stroke="#d9b24a" stroke-width="1.2"/></g>
+    </g>
+    <rect x="88" y="96" width="124" height="28" rx="2" fill="url(#madG)"/><rect x="84" y="92" width="132" height="7" rx="1" fill="#fffaf0"/><path d="M95 99h110v10H95z" fill="#fffaf0" opacity=".85"/><path d="M150 100v8M146 104h8" stroke="#c0262f" stroke-width="1.6"/>
+    ${vela(98, 'v1')}${vela(202, 'v2')}
+    <g class="humo"><path d="M240 112c-4-8 4-12 0-20s4-12 0-20" stroke="rgba(230,230,240,.7)" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M246 110c-4-8 4-12 0-20" stroke="rgba(230,230,240,.5)" stroke-width="2.4" fill="none" stroke-linecap="round" style="animation-delay:1.2s"/></g>
+    <g id="acolito" transform="translate(240 0)">
+      <path d="M0 84c-9 0-13 10-14 34h28c-1-24-5-34-14-34z" fill="${sotana}"/><path d="M0 86c-7 0-10 8-11 22h22c-1-14-4-22-11-22z" fill="#fff"/>
+      <circle cx="0" cy="77" r="6" fill="#e2b08a"/><path d="M-6 75c0-6 3-8 6-8s6 2 6 8c-2-3-4-4-6-4s-4 1-6 4z" fill="#2a1a10"/>
+      <g id="lleva" transform="translate(-14 94) scale(.32)"></g>
+    </g>
+  </svg>`;
+}
+// Postura del sacerdote según el momento de la Misa
+function poseCura(m) {
+  const bi = document.getElementById('bi'), bd = document.getElementById('bd'), cura = document.getElementById('cura'), ho = document.getElementById('hostia'), pr = $('presb');
+  if (!bi) return;
+  let i = 0, d = 0, x = 0, h = false;
+  const n = m.n;
+  if (/Procesión/.test(n)) x = -120;
+  else if (/Saludo|Gloria|colecta|Padre|Envío|Santo/.test(n)) { i = 60; d = -60; }
+  else if (/Bendición/.test(n)) { d = -130; }
+  else if (/Evangelio|Homilía|lectura|Salmo|Aleluya|Antes del/.test(n)) x = -112;
+  else if (/Consagración/.test(n)) { i = 150; d = -150; h = true; }
+  else if (/Ofertorio|Comunión/.test(n)) { i = 40; d = -40; h = /Comunión/.test(n); }
+  else if (/paz/.test(n)) { i = 80; d = -80; }
+  cura.style.transform = `translateX(${x}px)`;
+  bi.style.transform = `rotate(${i}deg)`; bd.style.transform = `rotate(${d}deg)`;
+  ho.style.opacity = h ? 1 : 0;
+  pr.classList.toggle('consagra', !!m.consagra);
+  pr.classList.toggle('envio', /Envío/.test(n));
+}
+// Lo que el acólito lleva en las manos
+function acolitoLleva(accion) { const g = document.getElementById('lleva'); if (g) g.innerHTML = accion && ICONO[accion] ? DEF + ICONO[accion] : ''; }
+// Imprevisto: se apaga una vela y hay que tocarla para encenderla
+let velaT = 0;
+function imprevistoVela() {
+  const id = rnd() < 0.5 ? 'v1' : 'v2', v = document.getElementById(id); if (!v) return;
+  v.classList.add('apagada'); velaT = performance.now();
+  $('presb').insertAdjacentHTML('beforeend', '<div class="aviso-vela" id="aviso-vela">¡Se apagó una vela! Tócala</div>');
+  JS.E.soplo(0.4, 0.1, 1800, 400);
+  setTimeout(() => { if (v.classList.contains('apagada')) { v.classList.remove('apagada'); const a = $('aviso-vela'); if (a) a.remove(); } }, 3000);
+}
+$('presb').addEventListener('pointerdown', (e) => {
+  const v = e.target.closest('.vela-tocar'); if (!v || !v.classList.contains('apagada')) return;
+  v.classList.remove('apagada'); const a = $('aviso-vela'); if (a) a.remove();
+  const rap = Math.max(0, 1 - (performance.now() - velaT) / 3000);
+  SND.vela(); racha++; sumar(Math.round(40 + rap * 60), v);
+});
 function faseMisa() {
   if (vidas <= 0) return;
   vista('misa');
+  escenaMisa();
   momentos = momentosDe(M); iMom = 0;
+  // Preguntas extra al azar (más en las Misas difíciles)
+  const extra = barajar(PREGUNTAS).slice(0, 1 + Math.min(3, Math.floor(nM / 2)));
+  for (const q of extra) { const pos = 2 + Math.floor(rnd() * (momentos.length - 4)); momentos.splice(pos, 0, { sec: momentos[pos].sec, n: 'Pregunta del sacristán', que: q[0], pregunta: q[1], bien: 0, extra: true }); }
+  imprevistos = new Set(barajar(momentos.map((_, k) => k).filter((k) => k > 1)).slice(0, nM >= 2 ? 2 : 1));
   $('partes').innerHTML = SECCIONES.map((s, i) => `<i title="${s}"><b id="sec${i}"></b></i>`).join('');
   siguienteMomento();
 }
 function siguienteMomento() {
   if (vidas <= 0) return;
-  if (iMom >= momentos.length) { faseMision(); return; }
+  if (iMom >= momentos.length) { faseOrdenar(); return; }
   const m = momentos[iMom];
   respondido = false;
   // Progreso por secciones
   for (let s = 0; s < 4; s++) { const tot = momentos.filter((x) => x.sec === s).length, hechos = momentos.slice(0, iMom).filter((x) => x.sec === s).length; $('sec' + s).style.transform = 'scaleX(' + (hechos / tot).toFixed(2) + ')'; }
   tLim = (m.pregunta ? M.tm + 3 : M.tm);
-  $('momento').innerHTML = `<div class="seccion">${SECCIONES[m.sec]}</div><h2>${esc(m.n)}</h2><div class="que">${esc(m.que)}</div><div class="pide">${m.pregunta ? 'Elige la respuesta correcta' : '¿Qué haces ahora?'}</div><svg class="anillo" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="6"/><circle id="anillo" cx="32" cy="32" r="27" fill="none" stroke="#ffd25a" stroke-width="6" stroke-linecap="round" stroke-dasharray="169.6" transform="rotate(-90 32 32)"/></svg>`;
+  $('momento').innerHTML = `<div class="seccion">${SECCIONES[m.sec]}</div><h2>${esc(m.n)}</h2><div class="que">${esc(m.que)}</div><div class="barra-mom"><svg class="anillo" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="6"/><circle id="anillo" cx="32" cy="32" r="27" fill="none" stroke="#ffd25a" stroke-width="6" stroke-linecap="round" stroke-dasharray="169.6" transform="rotate(-90 32 32)"/></svg><div class="pide">${m.pregunta ? 'Elige la respuesta' : '¿Qué haces ahora?'}</div><button type="button" class="ayuda" id="b-ayuda" ${ayudas > 0 ? '' : 'disabled'}>Ayuda del padre (${ayudas})</button></div>`;
+  poseCura(m); acolitoLleva(null);
+  if (imprevistos.has(iMom)) setTimeout(imprevistoVela, 700);
   if (m.pregunta) {
     const orden = barajar(m.pregunta.map((t, i) => i));
     $('opciones').innerHTML = '<div class="resp">' + orden.map((i, k) => `<button type="button" data-r="${i}" style="--d:${k * 60}ms">${esc(m.pregunta[i])}</button>`).join('') + '</div>';
@@ -478,6 +675,15 @@ function siguienteMomento() {
     if (k <= 0 && !respondido) { respondido = true; clearInterval(timer); $('momento').querySelector('.pide').textContent = '¡Tarde! ' + (m.pregunta ? 'Era: ' + m.pregunta[m.bien] : 'Tocaba: ' + NOMBRE[m.accion]); if (!fallar()) setTimeout(() => { iMom++; siguienteMomento(); }, 1600); }
   }, 60);
 }
+// Ayuda del padre: quita dos opciones equivocadas
+$('momento').addEventListener('click', (e) => {
+  if (!e.target.closest('#b-ayuda') || ayudas <= 0 || respondido) return;
+  const m = momentos[iMom]; ayudas--;
+  const malas = [...document.querySelectorAll(m.pregunta ? '[data-r]' : '[data-a]')].filter((x) => (m.pregunta ? Number(x.dataset.r) !== m.bien : x.dataset.a !== m.accion));
+  barajar(malas).slice(0, 2).forEach((x) => { x.style.visibility = 'hidden'; });
+  e.target.closest('#b-ayuda').disabled = true; e.target.closest('#b-ayuda').textContent = 'Ayuda del padre (' + ayudas + ')';
+  tIni += 1500; SND.paz();
+});
 $('opciones').addEventListener('click', (e) => {
   const b = e.target.closest('[data-a],[data-r]'); if (!b || respondido) return;
   const m = momentos[iMom];
@@ -490,9 +696,10 @@ $('opciones').addEventListener('click', (e) => {
     b.classList.add('bien');
     if (m.accion) aprender(m.accion);
     // Cada momento suena como en la Misa
-    if (m.accion === 'campanilla') SND.campanilla(); else if (m.accion === 'cantar') SND.coro(); else if (m.accion === 'rezar') SND.organo(); else if (m.accion === 'paz') SND.paz(); else if (m.accion === 'incensario') SND.incienso(); else SND.bien(racha);
+    acolitoLleva(m.accion);
+    if (m.accion === 'campanilla') SND.campanilla(); else if (m.accion === 'cantar') SND.canto(m.n); else if (m.accion === 'rezar') SND.organo(); else if (m.accion === 'paz') SND.paz(); else if (m.accion === 'incensario') SND.incienso(); else SND.bien(racha);
     if (m.consagra) { const d = document.createElement('div'); d.className = 'consagra'; document.body.appendChild(d); setTimeout(() => d.remove(), 2500); $('momento').querySelector('.pide').textContent = '«Esto es mi Cuerpo… Esta es mi Sangre.» Adoramos a Jesús en silencio.'; }
-    setTimeout(() => { iMom++; siguienteMomento(); }, m.consagra ? 2600 : 1100);
+    setTimeout(() => { iMom++; siguienteMomento(); }, m.consagra ? 2800 : m.accion === 'cantar' ? 1700 : 1100);
   } else {
     b.classList.add('mal');
     $('momento').querySelector('.pide').textContent = m.pregunta ? 'No. ' + m.pregunta[m.bien] + '.' : 'No. Ahora tocaba: ' + NOMBRE[m.accion] + '.';
@@ -503,8 +710,25 @@ $('opciones').addEventListener('click', (e) => {
 
 /* ---------- Fase 3: la misión ---------- */
 let misiones = [], iMis = 0;
-function faseMision() {
+function faseOrdenar() {
   clearInterval(timer);
+  const cand = momentosDe(M).filter((x) => !x.pregunta);
+  const elegidos = barajar(cand.map((_, k) => k)).slice(0, nM >= 3 ? 6 : 5).sort((a, b) => a - b).map((k) => cand[k].n);
+  let sig = 0;
+  $('presb').classList.remove('consagra', 'envio');
+  $('momento').innerHTML = `<div class="seccion">Ronda final</div><h2>Ordena la Misa</h2><div class="que">Toca los momentos en el orden en que suceden en la Misa. ¡Rápido!</div><div class="barra-mom"><svg class="anillo" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="6"/><circle id="anillo" cx="32" cy="32" r="27" fill="none" stroke="#ffd25a" stroke-width="6" stroke-linecap="round" stroke-dasharray="169.6" transform="rotate(-90 32 32)"/></svg></div>`;
+  $('opciones').innerHTML = '<div class="ordenar">' + barajar(elegidos).map((n, k) => `<button type="button" data-ord="${esc(n)}" style="--d:${k * 50}ms"><span class="num">?</span>${esc(n)}</button>`).join('') + '</div>';
+  const lim = 6 + elegidos.length * 2.6, ini = performance.now();
+  const fin = (ok) => { clearInterval(timer); $('opciones').querySelectorAll('button').forEach((x) => { x.disabled = true; }); if (ok) { SND.coro(); sumar(150, $('momento')); } setTimeout(faseMision, 1400); };
+  timer = setInterval(() => { const k = Math.max(0, 1 - (performance.now() - ini) / 1000 / lim); const a = $('anillo'); if (a) a.style.strokeDashoffset = (169.6 * (1 - k)).toFixed(1); if (k <= 0) { mostrarFlota('¡Se acabó el tiempo!'); fin(false); } }, 80);
+  $('opciones').onclick = (e) => {
+    const b = e.target.closest('[data-ord]'); if (!b || b.classList.contains('hecho') || b.disabled) return;
+    if (b.dataset.ord === elegidos[sig]) { b.classList.add('hecho'); b.querySelector('.num').textContent = ++sig; racha++; SND.bien(racha); sumar(30, b); if (sig >= elegidos.length) fin(true); }
+    else { b.classList.remove('mal'); void b.offsetWidth; b.classList.add('mal'); racha = 0; puntos = Math.max(0, puntos - 15); $('p-puntos').textContent = puntos.toLocaleString('es'); SND.mal(); }
+  };
+}
+function faseMision() {
+  clearInterval(timer); $('opciones').onclick = null;
   $('partes').innerHTML = SECCIONES.map(() => '<i><b style="transform:scaleX(1)"></b></i>').join('');
   misiones = barajar(MISIONES).slice(0, nM >= 4 ? 3 : 2); iMis = 0;
   siguienteMision();
@@ -512,7 +736,8 @@ function faseMision() {
 function siguienteMision() {
   if (iMis >= misiones.length) { terminar(); return; }
   const m = misiones[iMis];
-  $('momento').innerHTML = `<div class="seccion">La misión empieza al salir de Misa</div><h2>Vive la misión</h2><div class="que">${esc(m.s)}</div><div class="pide">¿Qué haces como misionero?</div>`;
+  poseCura({ n: 'Envío' });
+  $('momento').innerHTML = `<div class="seccion">${TL.domund != null ? 'Domund · Domingo Mundial de las Misiones' : 'La misión empieza al salir de Misa'}</div><h2>Vive la misión</h2><div class="que">${esc(m.s)}</div><div class="pide">¿Qué haces como misionero?</div>`;
   const orden = barajar([0, 1, 2]);
   $('opciones').innerHTML = '<div class="resp">' + orden.map((i, k) => `<button type="button" data-mis="${i}" style="--d:${k * 60}ms">${esc(m.o[i])}</button>`).join('') + '</div>';
 }
@@ -531,15 +756,17 @@ function terminar() {
   clearInterval(timer); enMisa = false; JS.pararMusica();
   const max = 900 + MISAS[nM].obj.length * 40 + momentosDe(M).length * 110;
   const est = vidas === 3 && puntos > max * 0.75 ? 3 : puntos > max * 0.5 ? 2 : 1;
+  if (esHoy && S.hoy !== CLAVE_HOY) { puntos *= 2; S.hoy = CLAVE_HOY; }
+  const rAntes = rangoDe(S.total || 0); S.total = (S.total || 0) + puntos; const rAhora = rangoDe(S.total);
   const ganadas = Math.round(puntos / 40) + est * 5;
-  S.estrellas += ganadas; S.misas[nM] = Math.max(S.misas[nM] || 0, est); S.max = Math.max(S.max, Math.min(MISAS.length - 1, nM + 1)); S.mejor = Math.max(S.mejor, puntos);
+  S.estrellas += ganadas; if (!esHoy) { S.misas[nM] = Math.max(S.misas[nM] || 0, est); S.max = Math.max(S.max, Math.min(MISAS.length - 1, nM + 1)); } S.mejor = Math.max(S.mejor, puntos);
   guardar(); SND.fin();
   const lista = [...aprendidos].slice(0, 6).map((k) => `<div><b>${NOMBRE[k]}:</b> ${esc(SIGNIFICA[k] || '')}</div>`).join('');
   abrirHoja(`<h3>¡Misa servida!</h3><p class="estrellas">${[0, 1, 2].map((k) => `<span style="animation-delay:${0.2 + k * 0.18}s;${k < est ? '' : 'opacity:.25'}">★</span>`).join('')}</p>
-    <p>${M.n} · <b>${puntos.toLocaleString('es')}</b> puntos · <b>+${ganadas} ★</b></p>
+    <p>${M.n} · <b>${puntos.toLocaleString('es')}</b> puntos${esHoy ? ' (×2 por la Misa de hoy)' : ''} · <b>+${ganadas} ★</b></p>${rAhora > rAntes ? `<p style="font-weight:900;font-size:18px;color:#8a3a10">¡Subiste a ${RANGOS[rAhora].n}!</p>` : ''}
     <div class="cita">«Debemos ser misioneros en la cabeza, en la boca y en el corazón.»<small>San José Allamano</small></div>
     ${lista ? '<p style="font-weight:800;margin-bottom:0">Hoy aprendiste:</p><div class="aprendido">' + lista + '</div>' : ''}
-    ${nM < MISAS.length - 1 ? `<button class="boton" type="button" data-sig>Siguiente: ${MISAS[nM + 1].n}</button>` : '<p><b>¡Serviste en todas las Misas! Eres un gran misionero.</b></p>'}
+    ${!esHoy && nM < MISAS.length - 1 ? `<button class="boton" type="button" data-sig>Siguiente: ${MISAS[nM + 1].n}</button>` : '<p><b>¡Serviste en todas las Misas! Eres un gran misionero.</b></p>'}
     <button class="btn-sec" type="button" data-menu style="margin-top:10px;width:100%;color:#4a2600;border-color:#d8c090">Volver a las Misas</button>`);
 }
 function perder() {
@@ -559,7 +786,7 @@ $('fondo-hoja').addEventListener('click', (e) => {
 $('motas').innerHTML = Array.from({ length: 12 }, () => `<i style="left:${(rnd() * 100).toFixed(1)}%;--t:${(4 + rnd() * 9).toFixed(0)}px;--d:${(9 + rnd() * 10).toFixed(1)}s;--r:-${(rnd() * 18).toFixed(1)}s;--x:${(rnd() * 80 - 40).toFixed(0)}px"></i>`).join('');
 guardar();
 pintarMenu();
-window.__sac = { empezar, get S() { return S; }, faseMisa, terminar };
+window.__sac = { get m() { return momentos[iMom]; }, empezar, get S() { return S; }, faseMisa, terminar };
 </script>
 </body>
 </html>
