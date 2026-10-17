@@ -206,22 +206,94 @@ pintarSonido();
    Gráficos de las cuentas (dibujadas una vez por tamaño)
    ===================================================================== */
 const COLORES = [
-  { n: 'Cruz', base: '#ffcf3a', osc: '#a86a00', luz: '#fff6c0' },
-  { n: 'Corazón', base: '#ff5c8a', osc: '#9a1240', luz: '#ffd0de' },
-  { n: 'Estrella', base: '#3fa9ff', osc: '#0f4f9a', luz: '#d4ecff' },
-  { n: 'Llama', base: '#ff8f2e', osc: '#a8420a', luz: '#ffe0b8' },
-  { n: 'Cuenta', base: '#46cf62', osc: '#14702a', luz: '#d0ffd8' },
-  { n: 'Corona', base: '#b06cff', osc: '#4f1a9a', luz: '#ead6ff' }
+  { n: 'Cruz', base: '#ffc928', osc: '#a35f00', luz: '#fff4b8' },
+  { n: 'Sagrado Corazón', base: '#ff3d5e', osc: '#8e0a26', luz: '#ffc8d2' },
+  { n: 'Virgen María', base: '#3a9bff', osc: '#0b4596', luz: '#d2ebff' },
+  { n: 'Manos que oran', base: '#ff8a2a', osc: '#a03c05', luz: '#ffe0bf' },
+  { n: 'Biblia', base: '#3fc75c', osc: '#0f6a26', luz: '#cdfdd6' },
+  { n: 'Cáliz', base: '#a35cff', osc: '#4a168f', luz: '#e6d2ff' }
 ];
+const COLORES_FRASE = [
+  'La cruz es victoria', 'Sagrado Corazón, en ti confío', 'Dios te salve, María', 'Oren sin cesar', 'Tu Palabra es luz', 'Este es mi Cuerpo'
+];
+/* Silueta de cada pieza: formas distintas para distinguirlas también sin color */
 function formaColor(g, k, s) {
   const c = s / 2;
   g.beginPath();
-  if (k === 0) { const r = s * 0.36; g.moveTo(c, c - r * 1.1); g.lineTo(c + r, c); g.lineTo(c, c + r * 1.1); g.lineTo(c - r, c); g.closePath(); }
-  else if (k === 1) { const y = c + s * 0.32; g.moveTo(c, y); g.bezierCurveTo(c - s * 0.5, c, c - s * 0.32, c - s * 0.4, c, c - s * 0.16); g.bezierCurveTo(c + s * 0.32, c - s * 0.4, c + s * 0.5, c, c, y); }
-  else if (k === 2) { for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? s * 0.19 : s * 0.42; g.lineTo(c + Math.cos(a) * r, c + 0.03 * s + Math.sin(a) * r); } g.closePath(); }
-  else if (k === 3) { g.moveTo(c, c - s * 0.42); g.bezierCurveTo(c + s * 0.38, c - s * 0.05, c + s * 0.36, c + s * 0.38, c, c + s * 0.38); g.bezierCurveTo(c - s * 0.36, c + s * 0.38, c - s * 0.38, c - s * 0.05, c, c - s * 0.42); }
-  else if (k === 4) { g.arc(c, c, s * 0.36, 0, Math.PI * 2); }
-  else { const y0 = c - s * 0.26, y1 = c + s * 0.3; g.moveTo(c - s * 0.38, y1); g.lineTo(c - s * 0.4, y0); g.lineTo(c - s * 0.2, c - s * 0.05); g.lineTo(c, y0 - s * 0.08); g.lineTo(c + s * 0.2, c - s * 0.05); g.lineTo(c + s * 0.4, y0); g.lineTo(c + s * 0.38, y1); g.closePath(); }
+  if (k === 0) { const r = s * 0.37, q = s * 0.12; g.roundRect ? g.roundRect(c - r, c - r, r * 2, r * 2, q) : g.rect(c - r, c - r, r * 2, r * 2); }
+  else if (k === 1) { const y = c + s * 0.36; g.moveTo(c, y); g.bezierCurveTo(c - s * 0.52, c + s * 0.02, c - s * 0.36, c - s * 0.42, c, c - s * 0.18); g.bezierCurveTo(c + s * 0.36, c - s * 0.42, c + s * 0.52, c + s * 0.02, c, y); }
+  else if (k === 2) { g.ellipse(c, c, s * 0.32, s * 0.41, 0, 0, Math.PI * 2); }
+  else if (k === 3) { g.arc(c, c, s * 0.39, 0, Math.PI * 2); }
+  else if (k === 4) { const w = s * 0.33, h = s * 0.4, q = s * 0.06; g.roundRect ? g.roundRect(c - w, c - h, w * 2, h * 2, q) : g.rect(c - w, c - h, w * 2, h * 2); }
+  else { for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; g.lineTo(c + Math.cos(a) * s * 0.41, c + Math.sin(a) * s * 0.41); } g.closePath(); }
+}
+/* Iconos de fe en relieve blanco dentro de cada pieza */
+function iconoGema(g, k, s) {
+  const c = s / 2, u = s / 100;
+  g.save();
+  g.fillStyle = 'rgba(255,255,255,.95)'; g.strokeStyle = 'rgba(255,255,255,.95)';
+  g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = u * 3; g.shadowOffsetY = u * 1.5;
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  if (k === 0) {
+    // Cruz latina con rayos
+    g.fillRect(c - u * 6, c - u * 27, u * 12, u * 54); g.fillRect(c - u * 19, c - u * 15, u * 38, u * 11);
+    g.shadowBlur = 0; g.globalAlpha = 0.5; g.lineWidth = u * 2.5;
+    for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 + Math.PI / 8; g.beginPath(); g.moveTo(c + Math.cos(a) * u * 22, c - u * 9 + Math.sin(a) * u * 22); g.lineTo(c + Math.cos(a) * u * 30, c - u * 9 + Math.sin(a) * u * 30); g.stroke(); }
+  } else if (k === 1) {
+    // Sagrado Corazón: corazón con llama, cruz y corona de espinas
+    g.beginPath(); g.moveTo(c, c + u * 22); g.bezierCurveTo(c - u * 30, c + u * 2, c - u * 20, c - u * 22, c, c - u * 8); g.bezierCurveTo(c + u * 20, c - u * 22, c + u * 30, c + u * 2, c, c + u * 22); g.fill();
+    g.shadowBlur = 0; g.strokeStyle = '#a3102c'; g.lineWidth = u * 3;
+    g.beginPath(); g.moveTo(c - u * 18, c - u * 2); g.quadraticCurveTo(c, c + u * 6, c + u * 18, c - u * 2); g.stroke();
+    for (let i = -2; i <= 2; i++) { g.beginPath(); g.moveTo(c + i * u * 7, c + u * (1 + Math.abs(i) * -1.2)); g.lineTo(c + i * u * 7 + u * 2, c + u * (-4 + Math.abs(i) * -1.2)); g.stroke(); }
+    g.fillStyle = '#fff3a0'; g.beginPath(); g.moveTo(c, c - u * 34); g.quadraticCurveTo(c + u * 9, c - u * 22, c + u * 4, c - u * 13); g.lineTo(c - u * 4, c - u * 13); g.quadraticCurveTo(c - u * 9, c - u * 22, c, c - u * 34); g.fill();
+    g.fillStyle = '#fff'; g.fillRect(c - u * 1.8, c - u * 30, u * 3.6, u * 14); g.fillRect(c - u * 5, c - u * 26, u * 10, u * 3.2);
+  } else if (k === 2) {
+    // La Virgen: cabeza con velo, manto y aureola de estrellas
+    g.beginPath(); g.moveTo(c, c - u * 24); g.bezierCurveTo(c + u * 13, c - u * 24, c + u * 14, c - u * 10, c + u * 13, c - u * 4);
+    g.bezierCurveTo(c + u * 22, c + u * 10, c + u * 24, c + u * 26, c + u * 20, c + u * 32); g.lineTo(c - u * 20, c + u * 32);
+    g.bezierCurveTo(c - u * 24, c + u * 26, c - u * 22, c + u * 10, c - u * 13, c - u * 4); g.bezierCurveTo(c - u * 14, c - u * 10, c - u * 13, c - u * 24, c, c - u * 24); g.fill();
+    g.shadowBlur = 0; g.fillStyle = '#ffe2c8'; g.beginPath(); g.ellipse(c, c - u * 11, u * 7, u * 9, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#1d5fb8'; g.beginPath(); g.moveTo(c - u * 6, c + u * 6); g.lineTo(c, c + u * 22); g.lineTo(c + u * 6, c + u * 6); g.closePath(); g.fill();
+    g.fillStyle = '#ffe2c8'; g.beginPath(); g.moveTo(c, c + u * 2); g.lineTo(c - u * 4, c + u * 12); g.lineTo(c + u * 4, c + u * 12); g.closePath(); g.fill();
+    g.fillStyle = '#fff3a0';
+    for (let i = 0; i < 7; i++) { const a = Math.PI + 0.25 + i * (Math.PI - 0.5) / 6, x = c + Math.cos(a) * u * 22, y = c - u * 12 + Math.sin(a) * u * 22; g.beginPath(); for (let j = 0; j < 10; j++) { const b = -Math.PI / 2 + j * Math.PI / 5, r = j % 2 ? u * 1.4 : u * 3.4; g.lineTo(x + Math.cos(b) * r, y + Math.sin(b) * r); } g.fill(); }
+  } else if (k === 3) {
+    // Manos juntas en oración
+    const mano = (l) => {
+      g.beginPath(); g.moveTo(c, c - u * 28);
+      g.bezierCurveTo(c + l * u * 6, c - u * 27, c + l * u * 9, c - u * 18, c + l * u * 10, c - u * 6);
+      g.lineTo(c + l * u * 15, c + u * 4); g.bezierCurveTo(c + l * u * 17, c + u * 8, c + l * u * 14, c + u * 14, c + l * u * 10, c + u * 14);
+      g.lineTo(c + l * u * 9, c + u * 26); g.lineTo(c, c + u * 26); g.closePath(); g.fill();
+    };
+    mano(-1); mano(1);
+    g.shadowBlur = 0; g.strokeStyle = 'rgba(160,70,10,.55)'; g.lineWidth = u * 1.8;
+    g.beginPath(); g.moveTo(c, c - u * 27); g.lineTo(c, c + u * 25); g.stroke();
+    for (const l of [-1, 1]) { g.beginPath(); g.moveTo(c + l * u * 4, c - u * 20); g.lineTo(c + l * u * 6, c - u * 4); g.stroke(); }
+    g.fillStyle = '#fff'; g.fillRect(c - u * 12, c + u * 24, u * 24, u * 6);
+    g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = u * 2.5;
+    for (const a of [-2.4, -1.57, -0.74]) { g.beginPath(); g.moveTo(c + Math.cos(a) * u * 32, c - u * 2 + Math.sin(a) * u * 32); g.lineTo(c + Math.cos(a) * u * 38, c - u * 2 + Math.sin(a) * u * 38); g.stroke(); }
+  } else if (k === 4) {
+    // Biblia abierta con cruz
+    g.beginPath(); g.moveTo(c, c - u * 14); g.quadraticCurveTo(c - u * 12, c - u * 22, c - u * 26, c - u * 18); g.lineTo(c - u * 26, c + u * 18); g.quadraticCurveTo(c - u * 12, c + u * 14, c, c + u * 22);
+    g.quadraticCurveTo(c + u * 12, c + u * 14, c + u * 26, c + u * 18); g.lineTo(c + u * 26, c - u * 18); g.quadraticCurveTo(c + u * 12, c - u * 22, c, c - u * 14); g.fill();
+    g.shadowBlur = 0; g.strokeStyle = 'rgba(15,106,38,.55)'; g.lineWidth = u * 1.6;
+    g.beginPath(); g.moveTo(c, c - u * 14); g.lineTo(c, c + u * 22); g.stroke();
+    for (let i = 0; i < 4; i++) { const y = c - u * 6 + i * u * 6; g.beginPath(); g.moveTo(c - u * 21, y - u * 2); g.quadraticCurveTo(c - u * 12, y - u * 4, c - u * 5, y); g.stroke(); }
+    g.fillStyle = '#c0262f'; g.fillRect(c + u * 13, c - u * 12, u * 3.5, u * 18); g.fillRect(c + u * 8.5, c - u * 7, u * 12.5, u * 3.5);
+    g.fillStyle = '#c0262f'; g.fillRect(c - u * 1.5, c + u * 20, u * 3, u * 12);
+  } else {
+    // Cáliz con la Hostia
+    g.beginPath(); g.moveTo(c - u * 18, c - u * 8); g.quadraticCurveTo(c - u * 17, c + u * 10, c - u * 3, c + u * 12); g.lineTo(c - u * 3, c + u * 20);
+    g.lineTo(c - u * 14, c + u * 26); g.lineTo(c + u * 14, c + u * 26); g.lineTo(c + u * 3, c + u * 20); g.lineTo(c + u * 3, c + u * 12);
+    g.quadraticCurveTo(c + u * 17, c + u * 10, c + u * 18, c - u * 8); g.closePath(); g.fill();
+    g.fillRect(c - u * 6, c + u * 14, u * 12, u * 3);
+    g.fillStyle = '#fff6d0'; g.beginPath(); g.arc(c, c - u * 20, u * 12, 0, Math.PI * 2); g.fill();
+    g.shadowBlur = 0; g.strokeStyle = 'rgba(160,110,0,.7)'; g.lineWidth = u * 1.8;
+    g.beginPath(); g.moveTo(c, c - u * 27); g.lineTo(c, c - u * 13); g.moveTo(c - u * 6, c - u * 22); g.lineTo(c + u * 6, c - u * 22); g.stroke();
+    g.strokeStyle = 'rgba(255,240,170,.7)'; g.lineWidth = u * 2.2;
+    for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5; g.beginPath(); g.moveTo(c + Math.cos(a) * u * 15, c - u * 20 + Math.sin(a) * u * 15); g.lineTo(c + Math.cos(a) * u * 19, c - u * 20 + Math.sin(a) * u * 19); g.stroke(); }
+  }
+  g.restore();
 }
 function lienzo(s, fn) { const c = document.createElement('canvas'); c.width = c.height = Math.max(8, Math.round(s)); fn(c.getContext('2d'), c.width); return c; }
 function dibujarGema(k, s) {
@@ -231,16 +303,15 @@ function dibujarGema(k, s) {
     formaColor(g, k, s2); g.fillStyle = C.osc; g.fill(); g.restore();
     const gr = g.createRadialGradient(s2 * 0.36, s2 * 0.3, s2 * 0.04, s2 * 0.5, s2 * 0.55, s2 * 0.55);
     gr.addColorStop(0, C.luz); gr.addColorStop(0.35, C.base); gr.addColorStop(1, C.osc);
-    g.save(); g.translate(s2 * 0.5, s2 * 0.5); g.scale(0.9, 0.9); g.translate(-s2 * 0.5, -s2 * 0.5); formaColor(g, k, s2); g.fillStyle = gr; g.fill();
-    g.lineWidth = s2 * 0.035; g.strokeStyle = 'rgba(255,255,255,.55)'; g.stroke(); g.restore();
+    g.save(); g.translate(s2 * 0.5, s2 * 0.5); g.scale(0.92, 0.92); g.translate(-s2 * 0.5, -s2 * 0.5); formaColor(g, k, s2); g.fillStyle = gr; g.fill();
+    g.lineWidth = s2 * 0.03; g.strokeStyle = 'rgba(255,255,255,.6)'; g.stroke(); g.restore();
+    // Icono de fe, un poco más pequeño que la pieza
+    g.save(); g.translate(s2 * 0.5, s2 * 0.52); g.scale(0.78, 0.78); g.translate(-s2 * 0.5, -s2 * 0.5); iconoGema(g, k, s2); g.restore();
+    // Brillo de caramelo encima
     g.save(); formaColor(g, k, s2); g.clip();
-    g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(s2 * 0.38, s2 * 0.3, s2 * 0.13, s2 * 0.07, -0.6, 0, Math.PI * 2); g.fill();
-    g.fillStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.ellipse(s2 * 0.5, s2 * 0.72, s2 * 0.2, s2 * 0.06, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.42)'; g.beginPath(); g.ellipse(s2 * 0.36, s2 * 0.24, s2 * 0.15, s2 * 0.06, -0.5, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.14)'; g.beginPath(); g.ellipse(s2 * 0.5, s2 * 0.8, s2 * 0.22, s2 * 0.05, 0, 0, Math.PI * 2); g.fill();
     g.restore();
-    g.fillStyle = 'rgba(255,255,255,.88)';
-    const c = s2 / 2, u = s2 * 0.045;
-    if (k === 0) { g.fillRect(c - u, c - u * 4, u * 2, u * 8); g.fillRect(c - u * 3, c - u * 2, u * 6, u * 2); }
-    else if (k === 4) { g.fillRect(c - u * 0.8, c - u * 3, u * 1.6, u * 6); g.fillRect(c - u * 2.4, c - u * 1.4, u * 4.8, u * 1.6); }
   });
 }
 function dibujarRoca(s, hp) {
@@ -501,7 +572,7 @@ async function limpiar(set, crear) {
   golpeadas.forEach((kk) => golpearRoca(Math.floor(kk / C), kk % C));
   if (crear) for (const cr of crear) {
     const p = pz[cr.p[0]][cr.p[1]];
-    if (p && p.tipo === 'n') { p.esp = cr.esp; p.color = cr.esp === 'paloma' ? p.color : cr.color; p.quita = 0; p.s = 1.35; ganados += 40; SND.especial(); }
+    if (p && p.tipo === 'n') { p.esp = cr.esp; p.color = cr.esp === 'paloma' ? p.color : cr.color; p.quita = 0; p.s = 1.35; ganados += 40; SND.especial(); fraseEspecial(cr.esp, cr.p); }
   }
   const total = ganados * combo;
   puntos += total;
@@ -843,6 +914,20 @@ function pintarHud() {
   for (const k of [2]) { const b = document.createElement('b'); b.style.left = (umbral(k) / max * 100) + '%'; meta.appendChild(b); }
 }
 function ayuda(t) { $('ayuda').textContent = t || ''; }
+/* Cada pieza especial recuerda una verdad de la fe */
+const FRASES_ESP = {
+  h: ['Rayo de luz', '«Yo soy la luz del mundo» (Jn 8,12)'],
+  v: ['Rayo de luz', '«Tu Palabra es lámpara para mis pasos» (Sal 119,105)'],
+  bomba: ['Bendición', '«Den, y se les dará» (Lc 6,38)'],
+  paloma: ['Paloma del Espíritu Santo', '«Recibirán la fuerza del Espíritu Santo» (Hch 1,8)']
+};
+let ultimaFrase = 0;
+function fraseEspecial(esp, p) {
+  const f = FRASES_ESP[esp]; if (!f) return;
+  if (p) textos.push({ x: p[1] + 0.5, y: p[0] + 0.2, txt: '¡' + f[0] + '!', vida: 1.3, color: '#fff3a0' });
+  const ahora = performance.now();
+  if (ahora - ultimaFrase > 2500) { ultimaFrase = ahora; ayuda(f[1]); }
+}
 
 /* ---------- Fin de nivel ---------- */
 function finNivel(gano) {
