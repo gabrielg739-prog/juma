@@ -1,7 +1,7 @@
 {
- "version": "61212c696e7a",
+ "version": "902c9f9ec9b5",
  "recursos": "juma-recursos-v1",
- "tamano": 52253298,
+ "tamano": 52254422,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -741,12 +741,12 @@
   {
    "ruta": "index.html",
    "tamano": 148398,
-   "hash": "1983c6792e61"
+   "hash": "1683f438079a"
   },
   {
    "ruta": "js/app.js",
-   "tamano": 492175,
-   "hash": "bb341dff34a8"
+   "tamano": 493299,
+   "hash": "eb59c61bd98b"
   },
   {
    "ruta": "js/fe.js",

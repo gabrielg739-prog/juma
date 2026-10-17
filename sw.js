@@ -1,7 +1,7 @@
 /* Service worker: funciona sin conexión + avisos en segundo plano.
    Es el ÚNICO service worker de la página: la app registra solo este archivo y los avisos (FCM)
    usan este mismo registro, así no llegan avisos repetidos. */
-const CACHE = 'juma-v113';
+const CACHE = 'juma-v114';
 /* Recursos que se descargan para usar sin internet (fotos, juegos, videos, libros, Firebase).
    Se conservan al actualizar la app para no volver a descargar todo. La lista la genera
    tools/generar-precache.mjs y la descarga js/offline.js. */

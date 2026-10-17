@@ -3486,7 +3486,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=113" allow="fullscreen"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=114" allow="fullscreen"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
   document.body.appendChild(r);
   /* Botón Atrás del teléfono: cierra el juego en vez de salir de la app */
   try { history.pushState({ jumaJuego: 1 }, ''); } catch (e) {}
@@ -5147,7 +5147,22 @@ async function initFirebase() {
         registrarTokenPush(false);
       }
     }).catch(() => {});
-  } catch (e) { console.warn('Firebase no disponible', e); }
+  } catch (e) {
+    console.warn('Firebase no disponible', e);
+    usarSesionGuardada();
+    /* Al volver internet se intenta de nuevo */
+    window.addEventListener('online', () => { if (!fb && !reintentandoFb) { reintentandoFb = true; initFirebase().finally(() => { reintentandoFb = false; }); } }, { once: true });
+  }
+}
+let reintentandoFb = false;
+/* Sin internet y sin los módulos de Firebase: se usa la cuenta que ya estaba abierta en este teléfono */
+function usarSesionGuardada() {
+  if (fb || currentUser) return;
+  let g = null;
+  try { g = JSON.parse(localStorage.getItem('juma-ultimo-usuario') || 'null'); } catch (e) {}
+  if (!g || !g.uid || localStorage.getItem('juma-is-logged-out')) return;
+  sesionLocal = true;
+  handleUser(Object.assign({ providerData: [] }, g), true);
 }
 
 /* ===================== autenticación: solo Firebase Auth da acceso ===================== */
@@ -5157,10 +5172,11 @@ async function authInit() {
     const email = localStorage.getItem('juma-email') || prompt('Escribe el correo al que llegó el enlace de acceso');
     try { await signInWithEmailLink(fb.auth, email, location.href); localStorage.removeItem('juma-email'); history.replaceState(null, '', location.pathname); } catch (e) {}
   }
-  onAuthStateChanged(fb.auth, (u) => { handleUser(u || null); });
+  onAuthStateChanged(fb.auth, (u) => { const f = sesionLocal; sesionLocal = false; handleUser(u || null, f); });
 }
 
 /* Prepara todo para el usuario (o para el invitado). Se llama una sola vez por cambio de sesión. */
+let sesionLocal = false;
 let handleSeq = 0;
 let handlePromise = null;
 let handledUid = undefined;
@@ -5188,12 +5204,14 @@ function handleUser(u, force = false) {
       return;
     }
     try { localStorage.removeItem('juma-is-logged-out'); } catch (e) {}
+    try { localStorage.setItem('juma-ultimo-usuario', JSON.stringify({ uid: u.uid, email: u.email || '', displayName: u.displayName || '', photoURL: u.photoURL || '', emailVerified: !!u.emailVerified })); } catch (e) {}
     myProfile = leerPerfilLocal(u.uid); // solo para mostrar nombre y foto mientras carga
     updateAuthUI();
     await Promise.all([loadPrivRole(u), cargarLecturas()]);
     if (seq !== handleSeq) return;
     await loadUserProfile(u);
     if (seq !== handleSeq) return;
+    if (!fb || !fb.db) { updateAuthUI(); return; } /* sesión guardada sin Firebase (sin internet) */
     if (!privRole) { await cargarRolAntiguo(u); if (seq !== handleSeq) return; }
     updateAuthUI();
     vigilarRol(u);
