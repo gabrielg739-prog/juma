@@ -151,6 +151,8 @@
     .aviso { animation: none; }
     .panel { animation: none; }
   }
+  .x-salir { position: absolute; z-index: 30; top: calc(env(safe-area-inset-top, 0px) + 12px); left: calc(env(safe-area-inset-left, 0px) + 12px); width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: rgba(10, 6, 20, .6); border: 2px solid rgba(255, 255, 255, .22); pointer-events: auto; cursor: pointer; padding: 0; }
+  .x-salir:active { transform: scale(.92); }
 </style>
 </head>
 <body>
@@ -181,6 +183,7 @@
 </div>
 
 <div id="menu" class="capa menu" hidden>
+  <button class="x-salir" type="button" aria-label="Salir del juego"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   <header class="cabecera">
     <h1 class="titulo"><span class="t1">Huyendo</span><span class="t2">del</span><span class="t3">pecado</span></h1>
     <p class="lema">Corre con el misionero, esquiva el pecado y recoge la gracia.</p>
@@ -2564,6 +2567,8 @@ const carga = $('carga');
 carga.classList.add('fuera');
 setTimeout(() => { carga.hidden = true; }, 400);
 window.__huir = { paso, iniciar, mover, saltar, rodar, usarEscudo, revivir, mostrarMenu, get estado() { return estado; }, get dist() { return dist; }, get run() { return run; }, get obstaculos() { return obstaculos; }, get monedas() { return monedas; }, get items() { return items; }, get escena() { return escena; }, get tuneles() { return tuneles; }, acecho: () => { acechoT = 0; tRun = Math.max(tRun, 9); }, chocar: () => { tipoFin = 'choque'; terminarPorChoque(); }, get T() { return SOMBRA; }, get JJ() { return J; }, get jugador() { return { px, py, carril, enSuelo, invulT, escudoT, persD }; }, set invul(v) { invulT = v; }, scene, S };
+
+document.querySelectorAll('.x-salir').forEach(b => b.addEventListener('click', () => { try { window.parent.postMessage({ tipo: 'juma-cerrar' }, location.origin); } catch (e) { /* fuera de la app */ } }));
 </script>
 </body>
 </html>
