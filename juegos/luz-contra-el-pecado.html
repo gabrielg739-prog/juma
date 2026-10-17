@@ -165,11 +165,11 @@
 </div>
 <div class="pantalla" id="fin" hidden><div class="tarjeta" id="fin-tarjeta"></div></div>
 
-<script>
-'use strict';
+<script type="module">
+import * as THREE from './lib/three.module.min.js';
 /* =====================================================================
-   Luz contra el pecado · motor de rayos con suelos y techos texturizados,
-   luz de antorchas y vitrales, puertas, cuatro armas y seis pecados.
+   Luz contra el pecado · motor 3D con muros en relieve, luces que se
+   mueven, física de proyectiles y partículas, cuatro armas y seis pecados.
    ===================================================================== */
 const $ = (id) => document.getElementById(id);
 const rnd = Math.random;
@@ -330,7 +330,7 @@ function bloques(g, base, filas, cols, mortero, varia) {
 }
 /* Muros */
 const TX = {};
-const texMuro = (fn) => capturar(64, 64, fn);
+const texMuro = (fn) => capturar(128, 128, (g, gl) => { g.scale(2, 2); gl.scale(2, 2); fn(g, gl, 64, 64); });
 TX.piedra = texMuro((g) => { bloques(g, '#6e6052', 4, 2, '#2e2620', 0.35); motas(g, 320, ['rgba(0,0,0,.18)', 'rgba(255,255,255,.06)'], 64, 64); grietas(g, 2, 'rgba(0,0,0,.35)'); });
 TX.cruz = texMuro((g, gl) => {
   bloques(g, '#6e6052', 4, 2, '#2e2620', 0.25); motas(g, 200, ['rgba(0,0,0,.16)'], 64, 64);
@@ -756,27 +756,38 @@ const PICKUP = {
 };
 
 /* =====================================================================
-   Estado
+   Estado y motor 3D
    ===================================================================== */
 const cv = $('c');
-const ctx = cv.getContext('2d');
-const rc = document.createElement('canvas');
-const rctx = rc.getContext('2d');
 const mini = $('mini').getContext('2d');
-let W = 0, H = 0, RW = 320, RH = 200, img = null, out = null, zbuf = null, wTop = null, wBot = null;
-let PLANO = 0.66, presupuesto = 120000;
+const tactil = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+const ALTO = 1.25;          // altura de los muros
+const OJO = 0.6;            // altura de los ojos
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: !tactil, powerPreference: 'high-performance' });
+} catch (e) {
+  document.body.insertAdjacentHTML('beforeend', '<div class="pantalla"><div class="tarjeta"><h2>Sin 3D</h2><p>Tu dispositivo no puede mostrar este juego en 3D.</p></div></div>');
+  throw e;
+}
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.25;
+renderer.autoClear = false;
+let prActual = Math.min(window.devicePixelRatio || 1, tactil ? 1.25 : 1.6);
+renderer.setPixelRatio(prActual);
+const escena3 = new THREE.Scene();
+const camara = new THREE.PerspectiveCamera(70, 1, 0.03, 60);
+camara.rotation.order = 'YXZ';
+const escenaArma = new THREE.Scene();
+const camArma = new THREE.PerspectiveCamera(55, 1, 0.01, 10);
+let W = 0, H = 0;
 function ajustar() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-  W = cv.width = Math.round(innerWidth * dpr);
-  H = cv.height = Math.round(innerHeight * dpr);
-  const asp = innerWidth / innerHeight;
-  PLANO = asp < 1 ? 0.56 : 0.72;
-  RW = Math.round(clamp(Math.sqrt(presupuesto * asp), 160, 720));
-  RH = Math.round(clamp(presupuesto / RW, 120, 900));
-  rc.width = RW; rc.height = RH;
-  img = rctx.createImageData(RW, RH);
-  out = new Uint32Array(img.data.buffer);
-  zbuf = new Float32Array(RW); wTop = new Int32Array(RW); wBot = new Int32Array(RW);
+  W = innerWidth; H = innerHeight;
+  renderer.setSize(W, H, false);
+  camara.aspect = camArma.aspect = W / H;
+  camara.fov = W / H < 1 ? 80 : 68; camArma.fov = W / H < 1 ? 64 : 52;
+  camara.updateProjectionMatrix(); camArma.updateProjectionMatrix();
 }
 addEventListener('resize', ajustar);
 ajustar();
@@ -784,11 +795,11 @@ ajustar();
 let estado = 'menu';
 let nivel = 0, cfgNivel = NIVELES[0], TEMA = TEMAS.capilla, DIF = DIFICULTADES[S.dificultad];
 let T = 0, mapa = null, suelos = null, techos = null, visto = null, puertas = new Map(), flujo = null, flujoT = 0;
-let LMR = 4, LMW = 0, LMN = 0, LMr = null, LMg = null, LMb = null;
 let J = null, enemigos = [], proyectiles = [], pickups = [], decor = [], particulas = [], salas = [];
 let salida = null, llave = false, jefe = null, sinPecados = 0, totalPecados = 0;
 let tiempoJuego = 0, hurtT = 0, curaT = 0, avisoCerradaT = 0, poder = 0;
 let stats = null, dificultadElegida = S.dificultad, nivelElegido = 0;
+let LUCES = [];
 const teclas = {};
 let joy = { activo: false, id: -1, ox: 0, oy: 0, dx: 0, dy: 0 };
 let mirada = { id: -1, x: 0, y: 0, t: 0, movido: 0 };
@@ -995,27 +1006,7 @@ function distancias(ox, oy, conPuertaOro) {
   }
   return d;
 }
-function calcularLuz(luces) {
-  LMW = T * LMR; LMN = LMW * LMW;
-  LMr = new Float32Array(LMN); LMg = new Float32Array(LMN); LMb = new Float32Array(LMN);
-  const [ar, ag, ab] = TEMA.amb;
-  for (let sy = 0; sy < LMW; sy++) for (let sx = 0; sx < LMW; sx++) {
-    const x = (sx + 0.5) / LMR, y = (sy + 0.5) / LMR;
-    const i = sy * LMW + sx;
-    const c = mapa[(y | 0) * T + (x | 0)];
-    let r = ar, g = ag, b = ab;
-    if (c === 0 || c >= M.PUERTA) {
-      for (const L of luces) {
-        const dx = x - L.x, dy = y - L.y, d = Math.hypot(dx, dy);
-        if (d > L.rad) continue;
-        if (d > 0.3) { const h = rayo(L.x, L.y, dx / d, dy / d, false); if (h.dist < d - 0.12) continue; }
-        const k = (1 - d / L.rad); const f = k * k * L.int;
-        r += L.r * f; g += L.g * f; b += L.b * f;
-      }
-    }
-    LMr[i] = Math.min(r, 1.8); LMg[i] = Math.min(g, 1.8); LMb[i] = Math.min(b, 1.8);
-  }
-}
+function calcularLuz(luces) { LUCES = luces; }
 
 /* =====================================================================
    Rayos con puertas
@@ -1090,7 +1081,7 @@ function nuevoJugador(x, y, n) {
     x, y, a: 0, vida: 100, escudo: 0, paso: 0, cool: 0, retro: 0, destello: 0, cambio: 0, armaSig: null,
     arma: armas[armas.length - 1], armas,
     mun: { agua: Math.round(40 * DIF.ayudas), cuentas: armas.includes('rosario') ? 80 : 0, luz: armas.includes('cruz') ? 10 : 0, incienso: armas.includes('incensario') ? 6 : 0 },
-    lento: 0, haz: 0, hazX: 0, hazY: 0
+    lento: 0, haz: 0, hazX: 0, hazY: 0, hazZ: 0.5, pitch: 0, vx: 0, vy: 0, kick: 0, roll: 0, sacudida: 0
   };
 }
 function armaDef(id) { return ARMAS.find((a) => a.id === id); }
@@ -1107,41 +1098,47 @@ function ruidoDisparo() { for (const e of enemigos) if (e.estado === 'dormido' &
 function disparar() {
   if (estado !== 'jugando' || J.cool > 0 || J.cambio > 0) return;
   const def = armaDef(J.arma);
-  const dx = Math.cos(J.a), dy = Math.sin(J.a);
+  const cp = Math.cos(J.pitch), sp = Math.sin(J.pitch);
+  const z0 = OJO - 0.12;
   stats.disparos++;
+  const bala = (a, pz, vel, extra) => proyectiles.push(Object.assign({ x: J.x + Math.cos(a) * 0.3, y: J.y + Math.sin(a) * 0.3, z: z0, vx: Math.cos(a) * cp * vel, vy: Math.sin(a) * cp * vel, vz: pz * vel, mio: true }, extra));
   if (J.arma === 'hisopo') {
     const con = J.mun.agua > 0;
     if (con) J.mun.agua--;
-    const n = con ? 5 : 1;
+    const n = con ? 6 : 2;
     for (let k = 0; k < n; k++) {
-      const a = J.a + (n > 1 ? (k / (n - 1) - 0.5) * 0.16 : 0) + (rnd() - 0.5) * 0.03;
-      proyectiles.push({ x: J.x + dx * 0.3, y: J.y + dy * 0.3, z: 0.42, vx: Math.cos(a) * 15, vy: Math.sin(a) * 15, vida: con ? 0.5 : 0.25, dano: 1, mio: true, spr: SPR.gota, tam: 0.14, luz: [0.3, 0.55, 1.0, 1.6] });
+      const a = J.a + (rnd() - 0.5) * 0.17;
+      bala(a, sp + 0.05 + (rnd() - 0.5) * 0.08, 12 + rnd() * 3, { g: 5, vida: con ? 0.8 : 0.35, dano: 1, spr: SPR.gota, tam: 0.09, luz: [0.3, 0.55, 1.0, 1.6] });
     }
-    J.cool = con ? def.cad : 0.7; SND.hisopo();
+    rociar(14, 0xcfe8ff);
+    J.cool = con ? def.cad : 0.7; J.kick += 0.02; SND.hisopo();
   } else if (J.arma === 'rosario') {
     if (J.mun.cuentas <= 0) return sinMunicion();
     J.mun.cuentas--;
-    const a = J.a + (rnd() - 0.5) * 0.05;
-    proyectiles.push({ x: J.x + dx * 0.3, y: J.y + dy * 0.3, z: 0.44, vx: Math.cos(a) * 19, vy: Math.sin(a) * 19, vida: 1.1, dano: 0.75, mio: true, spr: SPR.cuenta, tam: 0.11, luz: [1.0, 0.75, 0.3, 1.6] });
-    J.cool = def.cad; SND.rosario();
+    bala(J.a + (rnd() - 0.5) * 0.04, sp + (rnd() - 0.5) * 0.03, 20, { g: 0, vida: 1.1, dano: 0.75, spr: SPR.cuenta, tam: 0.08, luz: [1.0, 0.75, 0.3, 1.6] });
+    J.cool = def.cad; J.kick += 0.008; SND.rosario();
   } else if (J.arma === 'cruz') {
     if (J.mun.luz <= 0) return sinMunicion();
     J.mun.luz--;
-    let d = 0, x = J.x, y = J.y; const golpeados = new Set();
-    while (d < 16) {
-      d += 0.08; x = J.x + dx * d; y = J.y + dy * d;
-      if (solidoCelda(x, y)) break;
-      for (const e of enemigos) if (!e.muerto && !golpeados.has(e) && Math.hypot(e.x - x, e.y - y) < TIPOS[e.tipo].radio + 0.1) { golpeados.add(e); herir(e, 5); }
-      if (((d * 12) | 0) % 3 === 0) particulas.push({ x, y, z: 0.45, vx: (rnd() - 0.5) * 0.4, vy: (rnd() - 0.5) * 0.4, vz: 0.2, vida: 0.35, max: 0.35, spr: SPR.p.blanca, tam: 0.09 });
+    const dx = Math.cos(J.a) * cp, dy = Math.sin(J.a) * cp;
+    let d = 0, x = J.x, y = J.y, z = OJO; const golpeados = new Set();
+    while (d < 18) {
+      d += 0.06; x = J.x + dx * d; y = J.y + dy * d; z = OJO + sp * d;
+      if (solidoCelda(x, y) || z < 0 || z > ALTO) break;
+      for (const e of enemigos) {
+        if (e.muerto || golpeados.has(e)) continue;
+        const c = TIPOS[e.tipo], ez = c.flota || 0;
+        if (Math.hypot(e.x - x, e.y - y) < c.radio + 0.08 && z > ez - 0.05 && z < ez + c.alto + 0.05) { golpeados.add(e); herir(e, 5); e.kx = (e.kx || 0) + dx * 2.2; e.ky = (e.ky || 0) + dy * 2.2; }
+      }
     }
-    J.haz = 0.22; J.hazX = x; J.hazY = y;
-    explotar(x, y, 'oro', 14, 0.45);
-    J.cool = def.cad; SND.cruz();
+    J.haz = 0.22; J.hazX = x; J.hazY = y; J.hazZ = z;
+    for (let k = 0; k < 18; k++) particulas.push({ x, y, z, vx: (rnd() - 0.5) * 3, vy: (rnd() - 0.5) * 3, vz: rnd() * 2.5, g: 7, vida: 0.4 + rnd() * 0.4, max: 0.8, spr: elegir([SPR.p.oro, SPR.p.blanca]), tam: 0.05 + rnd() * 0.04 });
+    J.cool = def.cad; J.kick += 0.06; J.sacudida = Math.max(J.sacudida, 0.15); SND.cruz();
   } else if (J.arma === 'incensario') {
     if (J.mun.incienso <= 0) return sinMunicion();
     J.mun.incienso--;
-    proyectiles.push({ x: J.x + dx * 0.4, y: J.y + dy * 0.4, z: 0.45, vx: dx * 8.5, vy: dy * 8.5, vida: 1.8, dano: 7, mio: true, explota: 2.4, spr: SPR.humo, tam: 0.3, luz: [1.0, 0.7, 0.35, 2.2] });
-    J.cool = def.cad; SND.incensario();
+    bala(J.a, sp + 0.28, 7.2, { g: 9, rebota: true, vida: 1.7, dano: 7, explota: 2.4, spr: SPR.humo, tam: 0.2, luz: [1.0, 0.7, 0.35, 2.2] });
+    J.cool = def.cad; J.kick += 0.05; SND.incensario();
   }
   J.retro = 1; J.destello = 0.08;
   ruidoDisparo();
@@ -1157,7 +1154,8 @@ function superPoder() {
   if (estado !== 'jugando' || poder < 3) return;
   poder = 0;
   const R = 5;
-  for (let k = 0; k < 60; k++) { const a = (k / 60) * Math.PI * 2; particulas.push({ x: J.x, y: J.y, z: 0.5, vx: Math.cos(a) * 6, vy: Math.sin(a) * 6, vz: 0.3, vida: 0.9, max: 0.9, spr: SPR.p.oro, tam: 0.16 }); }
+  for (let k = 0; k < 60; k++) { const a = (k / 60) * Math.PI * 2; particulas.push({ x: J.x, y: J.y, z: 0.4, vx: Math.cos(a) * 6, vy: Math.sin(a) * 6, vz: 1, g: 0, vida: 0.9, max: 0.9, spr: SPR.p.oro, tam: 0.13 }); }
+  J.sacudida = 0.4;
   proyectiles = proyectiles.filter((b) => b.mio || Math.hypot(b.x - J.x, b.y - J.y) >= R);
   for (const e of enemigos) {
     if (e.muerto || Math.hypot(e.x - J.x, e.y - J.y) > R || !visible(J.x, J.y, e.x, e.y)) continue;
@@ -1177,7 +1175,8 @@ function danoJugador(d, ox, oy) {
   J.vida = Math.max(0, J.vida - d);
   stats.danoRecibido += d;
   hurtT = 0.4; SND.dano();
-  if (ox !== undefined) { const dx = J.x - ox, dy = J.y - oy, l = Math.hypot(dx, dy) || 1; mover(J, dx / l * 0.15, dy / l * 0.15, 0.22); }
+  if (ox !== undefined) { const dx = J.x - ox, dy = J.y - oy, l = Math.hypot(dx, dy) || 1; J.vx += dx / l * 3; J.vy += dy / l * 3; }
+  J.sacudida = Math.max(J.sacudida, 0.35); J.kick -= 0.04;
   if (J.vida <= 0) perder();
   actualizarHud();
 }
@@ -1193,6 +1192,14 @@ function herir(e, d, sinPuntos) {
 }
 let aciertoT = 0;
 function marcarAcierto() { aciertoT = 0.12; }
+let ultimaVirtud = -10;
+const VIRTUDES = {
+  pereza: 'La diligencia vence a la pereza',
+  soberbia: 'La humildad vence a la soberbia',
+  envidia: 'La caridad vence a la envidia',
+  ira: 'La mansedumbre vence a la ira',
+  avaricia: 'La generosidad vence a la avaricia'
+};
 function matarEnemigo(e, sinPoder) {
   e.muerto = true; e.muerteT = 0; e.estado = 'muerto';
   if (!sinPoder) poder = Math.min(3, poder + 1);
@@ -1202,8 +1209,10 @@ function matarEnemigo(e, sinPoder) {
   explotar(e.x, e.y, 'azul', e.tipo === 'tentador' ? 40 : 12, 0.6);
   SND.muerte(e.x, e.y);
   sinPecados--;
+  // Cada pecado vencido recuerda la virtud que lo derrota
+  if (e.tipo !== 'tentador' && sinPecados > 0 && tiempoJuego - ultimaVirtud > 3) { ultimaVirtud = tiempoJuego; aviso(VIRTUDES[e.tipo]); }
   if (rnd() < 0.3 * DIF.ayudas && e.tipo !== 'tentador') pickups.push({ tipo: elegir(['hostia', 'agua', J.armas.includes('rosario') ? 'cuentas' : 'agua']), x: e.x, y: e.y, ya: false });
-  if (e.tipo === 'tentador') { aviso('¡El Tentador fue vencido!'); for (const o of enemigos) if (!o.muerto) matarEnemigo(o, true); $('jefe').hidden = true; }
+  if (e.tipo === 'tentador') { aviso('¡Cristo vence! El Tentador fue derrotado'); for (const o of enemigos) if (!o.muerto) matarEnemigo(o, true); $('jefe').hidden = true; }
   else if (sinPecados <= 0) aviso('¡Todos los pecados vencidos! Ve al Sagrario');
   else if (sinPecados <= Math.ceil(totalPecados * 0.2)) for (const o of enemigos) if (!o.muerto) despertar(o);
   actualizarHud();
@@ -1212,7 +1221,7 @@ function explotar(x, y, color, n, altura) {
   const spr = SPR.p[color] || SPR.p.blanca;
   for (let k = 0; k < n; k++) {
     const a = rnd() * Math.PI * 2, v = 0.6 + rnd() * 2;
-    particulas.push({ x, y, z: altura || 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vz: (rnd() - 0.2) * 1.8, vida: 0.5 + rnd() * 0.5, max: 1, spr, tam: 0.07 + rnd() * 0.06 });
+    particulas.push({ x, y, z: altura || 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vz: rnd() * 3, g: 6, vida: 0.6 + rnd() * 0.6, max: 1.2, spr, tam: 0.05 + rnd() * 0.05 });
   }
   if (particulas.length > 600) particulas.splice(0, particulas.length - 600);
 }
@@ -1228,7 +1237,9 @@ function aviso(txt) {
    ===================================================================== */
 function lanzarProyectil(e, ang, vel, spr, dano, extra) {
   const dx = Math.cos(ang), dy = Math.sin(ang);
-  const p = Object.assign({ x: e.x + dx * 0.4, y: e.y + dy * 0.4, z: e.tipo === 'tentador' ? 0.7 : 0.5, vx: dx * vel, vy: dy * vel, vida: 4, dano, mio: false, spr, tam: 0.2, luz: [1, 0.3, 0.6, 2] }, extra || {});
+  const c = TIPOS[e.tipo], z0 = e.tipo === 'tentador' ? 1.0 : (c.flota || 0) + c.alto * 0.6;
+  const d = Math.max(0.6, Math.hypot(J.x - e.x, J.y - e.y));
+  const p = Object.assign({ x: e.x + dx * 0.4, y: e.y + dy * 0.4, z: z0, vz: (OJO - 0.1 - z0) * vel / d, vx: dx * vel, vy: dy * vel, vida: 4, dano, mio: false, spr, tam: 0.14, luz: [1, 0.3, 0.6, 2] }, extra || {});
   proyectiles.push(p);
 }
 function ejecutarAtaque(e, cfg, d, ang) {
@@ -1264,6 +1275,7 @@ function actualizarEnemigos(dt) {
     e.flash = Math.max(0, e.flash - dt);
     if (e.muerto) { e.muerteT += dt; continue; }
     const cfg = TIPOS[e.tipo];
+    if (e.kx || e.ky) { const pesado = e.tipo === 'tentador' ? 0.15 : 1; mover(e, e.kx * dt * pesado, e.ky * dt * pesado, cfg.radio * 0.7); const fr = Math.exp(-dt * 7); e.kx *= fr; e.ky *= fr; if (Math.abs(e.kx) + Math.abs(e.ky) < 0.03) { e.kx = 0; e.ky = 0; } }
     const vel = cfg.vel * DIF.vel;
     const dx = J.x - e.x, dy = J.y - e.y, d = Math.hypot(dx, dy), ang = Math.atan2(dy, dx);
     e.fase += dt * (1 + vel);
@@ -1364,12 +1376,19 @@ function actualizar(dt) {
   if (joy.activo) { avance += -joy.dy; lado += joy.dx; }
   const m = Math.hypot(avance, lado); if (m > 1) { avance /= m; lado /= m; }
   J.a += giro * 2.6 * dt;
-  const vel = 3.3 * dt * (J.lento > 0 ? 0.55 : 1) * (teclas.ShiftLeft ? 1.35 : 1);
+  const velMax = 3.4 * (J.lento > 0 ? 0.55 : 1) * (teclas.ShiftLeft ? 1.3 : 1);
   J.lento = Math.max(0, J.lento - dt);
   const ca = Math.cos(J.a), sa = Math.sin(J.a);
-  const mx = (ca * avance - sa * lado) * vel, my = (sa * avance + ca * lado) * vel;
-  mover(J, mx, my, 0.22);
-  if (Math.hypot(mx, my) > 0.001) J.paso += dt * 9.5;
+  const tvx = (ca * avance - sa * lado) * velMax, tvy = (sa * avance + ca * lado) * velMax;
+  const ka = 1 - Math.exp(-(avance || lado ? 11 : 9) * dt);
+  J.vx += (tvx - J.vx) * ka; J.vy += (tvy - J.vy) * ka;
+  const ax = J.x, ay = J.y;
+  mover(J, J.vx * dt, J.vy * dt, 0.22);
+  if (Math.abs(J.x - ax) < Math.abs(J.vx * dt) * 0.5) J.vx *= 0.3;
+  if (Math.abs(J.y - ay) < Math.abs(J.vy * dt) * 0.5) J.vy *= 0.3;
+  J.paso += dt * Math.hypot(J.vx, J.vy) * 2.9;
+  J.roll += (-lado * 0.03 - J.roll) * Math.min(1, dt * 6);
+  J.kick *= Math.exp(-dt * 8); J.sacudida = Math.max(0, J.sacudida - dt * 1.6);
   J.cool = Math.max(0, J.cool - dt);
   J.retro = Math.max(0, J.retro - dt * 5);
   J.destello = Math.max(0, J.destello - dt);
@@ -1383,25 +1402,35 @@ function actualizar(dt) {
   for (let i = proyectiles.length - 1; i >= 0; i--) {
     const b = proyectiles[i];
     if (b.guia) { const a = Math.atan2(J.y - b.y, J.x - b.x), v = Math.hypot(b.vx, b.vy), ac0 = Math.atan2(b.vy, b.vx); let da = a - ac0; while (da > Math.PI) da -= 6.283; while (da < -Math.PI) da += 6.283; const na = ac0 + clamp(da, -b.guia * dt, b.guia * dt); b.vx = Math.cos(na) * v; b.vy = Math.sin(na) * v; }
-    b.x += b.vx * dt; b.y += b.vy * dt; b.vida -= dt;
-    let quitar = b.vida <= 0, chocoMuro = solidoCelda(b.x, b.y);
-    if (!chocoMuro) for (const d of decor) if (d.solido && Math.hypot(d.x - b.x, d.y - b.y) < d.solido) { chocoMuro = true; break; }
+    b.x += b.vx * dt; b.y += b.vy * dt; b.z += (b.vz || 0) * dt; b.vz = (b.vz || 0) - (b.g || 0) * dt; b.vida -= dt;
+    let quitar = b.vida <= 0, chocoMuro = solidoCelda(b.x, b.y) || b.z <= 0.02 || b.z >= ALTO - 0.02;
+    if (!chocoMuro) for (const d of decor) if (d.solido && Math.hypot(d.x - b.x, d.y - b.y) < d.solido && b.z < 0.8) { chocoMuro = true; break; }
+    if (chocoMuro && b.rebota && !quitar) {
+      // El incensario rebota en el suelo y en los muros antes de estallar
+      if (b.z <= 0.02) { b.z = 0.02; b.vz = Math.abs(b.vz) * 0.45; b.vx *= 0.72; b.vy *= 0.72; }
+      if (b.z >= ALTO - 0.02) { b.z = ALTO - 0.02; b.vz = -Math.abs(b.vz) * 0.4; }
+      if (solidoCelda(b.x, b.y)) { b.x -= b.vx * dt; b.y -= b.vy * dt; if (solidoCelda(b.x + b.vx * dt, b.y)) b.vx = -b.vx * 0.55; if (solidoCelda(b.x, b.y + b.vy * dt)) b.vy = -b.vy * 0.55; }
+      if (Math.abs(b.vz) > 0.8) SND.impacto();
+      chocoMuro = false;
+    }
     if (chocoMuro) quitar = true;
     if (!quitar) {
       if (b.mio) {
         for (const e of enemigos) {
           if (e.muerto || Math.hypot(e.x - b.x, e.y - b.y) > TIPOS[e.tipo].radio) continue;
-          if (!b.explota) { herir(e, b.dano); explotar(b.x, b.y, b.spr === SPR.gota ? 'azul' : 'oro', 6, 0.5); SND.impacto(); }
+          const ez = TIPOS[e.tipo].flota || 0; if (b.z < ez - 0.05 || b.z > ez + TIPOS[e.tipo].alto + 0.05) continue;
+          if (!b.explota) { herir(e, b.dano); e.kx = (e.kx || 0) + b.vx * 0.05; e.ky = (e.ky || 0) + b.vy * 0.05; explotar(b.x, b.y, b.spr === SPR.gota ? 'azul' : 'oro', 6, b.z); SND.impacto(); }
           quitar = true; break;
         }
-      } else if (Math.hypot(J.x - b.x, J.y - b.y) < 0.32) { danoJugador(b.dano, b.x, b.y); explotar(b.x, b.y, 'sombra', 14, 0.5); quitar = true; }
+      } else if (Math.hypot(J.x - b.x, J.y - b.y) < 0.32 && b.z < 0.95) { danoJugador(b.dano, b.x, b.y); explotar(b.x, b.y, 'sombra', 14, b.z); quitar = true; }
     }
     if (quitar) {
       if (b.explota) {
-        explotar(b.x, b.y, 'oro', 40, 0.5); explotar(b.x, b.y, 'blanca', 20, 0.5); SND.explosion();
+        explotar(b.x, b.y, 'oro', 40, b.z + 0.1); explotar(b.x, b.y, 'blanca', 20, b.z + 0.1); SND.explosion();
+        if (Math.hypot(J.x - b.x, J.y - b.y) < 4) J.sacudida = Math.max(J.sacudida, 0.6 - Math.hypot(J.x - b.x, J.y - b.y) * 0.12);
         destellos.push({ x: b.x, y: b.y, t: 0.35, max: 0.35, r: 1, g: 0.75, b: 0.4, rad: 4.5, int: 3 });
-        for (const e of enemigos) { if (e.muerto) continue; const dd = Math.hypot(e.x - b.x, e.y - b.y); if (dd < b.explota && visible(b.x, b.y, e.x, e.y)) herir(e, b.dano * (1 - dd / b.explota * 0.6)); }
-      } else if (chocoMuro) explotar(b.x - b.vx * dt, b.y - b.vy * dt, b.mio ? (b.spr === SPR.gota ? 'azul' : 'oro') : 'sombra', 5, 0.5);
+        for (const e of enemigos) { if (e.muerto) continue; const dd = Math.hypot(e.x - b.x, e.y - b.y); if (dd < b.explota && visible(b.x, b.y, e.x, e.y)) { herir(e, b.dano * (1 - dd / b.explota * 0.6)); const l = dd || 1; e.kx = (e.kx || 0) + (e.x - b.x) / l * 5; e.ky = (e.ky || 0) + (e.y - b.y) / l * 5; } }
+      } else if (chocoMuro) explotar(b.x - b.vx * dt, b.y - b.vy * dt, b.mio ? (b.spr === SPR.gota ? 'azul' : 'oro') : 'sombra', 5, clamp(b.z, 0.05, ALTO - 0.05));
       proyectiles.splice(i, 1);
     }
   }
@@ -1413,8 +1442,11 @@ function actualizar(dt) {
   // Partículas
   for (let i = particulas.length - 1; i >= 0; i--) {
     const p = particulas[i];
-    p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.vz -= 2.2 * dt; p.vida -= dt;
-    if (p.vida <= 0 || p.z < 0) particulas.splice(i, 1);
+    p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.vz -= (p.g === undefined ? 6 : p.g) * dt; p.vida -= dt;
+    if (p.z < 0.01 && p.vz < 0) { p.z = 0.01; p.vz = -p.vz * 0.35; p.vx *= 0.6; p.vy *= 0.6; }
+    if (p.z > ALTO) { p.z = ALTO; p.vz = -Math.abs(p.vz) * 0.3; }
+    if (solidoCelda(p.x, p.y)) { p.x -= p.vx * dt; p.y -= p.vy * dt; p.vx *= -0.4; p.vy *= -0.4; }
+    if (p.vida <= 0) particulas.splice(i, 1);
   }
   for (let i = destellos.length - 1; i >= 0; i--) { destellos[i].t -= dt; if (destellos[i].t <= 0) destellos.splice(i, 1); }
   // Victoria
@@ -1443,263 +1475,463 @@ function recoger(tipo) {
 }
 
 /* =====================================================================
-   Dibujo: suelo, techo, muros y figuras en un búfer de píxeles
+   Dibujo en 3D: muros con relieve, luces que se mueven y figuras
    ===================================================================== */
-const dyn = [];
-function lucesDinamicas() {
-  dyn.length = 0;
-  for (const b of proyectiles) if (b.luz && dyn.length < 10) { const r = b.luz[3]; dyn.push({ x: b.x, y: b.y, r2: r * r, cr: b.luz[0] * 0.9, cg: b.luz[1] * 0.9, cb: b.luz[2] * 0.9 }); }
-  for (const f of destellos) { const k = f.t / f.max; dyn.push({ x: f.x, y: f.y, r2: f.rad * f.rad, cr: f.r * f.int * k, cg: f.g * f.int * k, cb: f.b * f.int * k }); }
-  if (J.destello > 0) { const k = J.destello / 0.08; dyn.push({ x: J.x + Math.cos(J.a) * 0.5, y: J.y + Math.sin(J.a) * 0.5, r2: 16, cr: 1.2 * k, cg: 1.0 * k, cb: 0.7 * k }); }
-  if (J.haz > 0) dyn.push({ x: J.hazX, y: J.hazY, r2: 9, cr: 1.5, cg: 1.4, cb: 1.0 });
-  if (sinPecados <= 0) dyn.push({ x: salida.x, y: salida.y, r2: 25, cr: 1.1, cg: 0.9, cb: 0.45 });
-  for (const e of enemigos) if (!e.muerto && (e.tipo === 'ira' || e.tipo === 'tentador') && dyn.length < 14) dyn.push({ x: e.x, y: e.y, r2: e.tipo === 'ira' ? 4 : 12, cr: 0.6, cg: 0.25, cb: 0.05 });
+const cacheTex = new Map();
+function texDe(canvas, color) {
+  let t = cacheTex.get(canvas);
+  if (t) return t;
+  t = new THREE.CanvasTexture(canvas);
+  t.colorSpace = color === false ? THREE.NoColorSpace : THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  cacheTex.set(canvas, t);
+  return t;
 }
-let LR = 0, LG = 0, LB = 0;
-function luzPunto(x, y, dist) {
-  let i = ((y * LMR) | 0) * LMW + ((x * LMR) | 0); if (i < 0 || i >= LMN) i = 0;
-  const lant = 0.85 / (1 + dist * dist * 0.07);
-  LR = LMr[i] + lant; LG = LMg[i] + lant * 0.85; LB = LMb[i] + lant * 0.65;
-  for (let k = 0; k < dyn.length; k++) { const L = dyn[k]; const dx = x - L.x, dy = y - L.y, d2 = dx * dx + dy * dy; if (d2 < L.r2) { const q = 1 - d2 / L.r2; const q2 = q * q; LR += L.cr * q2; LG += L.cg * q2; LB += L.cb * q2; } }
-  if (LR > 2.2) LR = 2.2; if (LG > 2.2) LG = 2.2; if (LB > 2.2) LB = 2.2;
+/* Mapa de relieve calculado a partir del brillo de la textura: las juntas oscuras quedan hundidas */
+const cacheNormal = new Map();
+function normalDe(canvas, fuerza) {
+  const clave = canvas;
+  let t = cacheNormal.get(clave);
+  if (t) return t;
+  const w = canvas.width, h = canvas.height;
+  const src = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+  const alt = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) alt[i] = (src[i * 4] * 0.3 + src[i * 4 + 1] * 0.59 + src[i * 4 + 2] * 0.11) / 255;
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); const im = g.createImageData(w, h); const d = im.data;
+  const A = (x, y) => alt[((y + h) % h) * w + ((x + w) % w)];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const dx = (A(x + 1, y) - A(x - 1, y)) * fuerza, dy = (A(x, y + 1) - A(x, y - 1)) * fuerza;
+    const l = Math.hypot(dx, dy, 1), i = (y * w + x) * 4;
+    d[i] = (-dx / l * 0.5 + 0.5) * 255; d[i + 1] = (dy / l * 0.5 + 0.5) * 255; d[i + 2] = (1 / l * 0.5 + 0.5) * 255; d[i + 3] = 255;
+  }
+  g.putImageData(im, 0, 0);
+  t = texDe(c, false);
+  cacheNormal.set(clave, t);
+  return t;
 }
-function renderizar() {
-  const dirX = Math.cos(J.a), dirY = Math.sin(J.a);
-  const plX = -dirY * PLANO, plY = dirX * PLANO;
-  const F = (RW / 2) / PLANO;
-  const hor = (RH >> 1) + Math.round(Math.sin(J.paso) * F * 0.012);
-  const dens = TEMA.dens, nR = TEMA.niebla[0], nG = TEMA.niebla[1], nB = TEMA.niebla[2];
-  const fogPix = (0xff000000 | (nB << 16) | (nG << 8) | nR) >>> 0;
-  lucesDinamicas();
-  const antF = (Math.floor(tiempoJuego * 8) % 2);
-  // Muros
-  for (let x = 0; x < RW; x++) {
-    const cam = 2 * x / RW - 1;
-    const rdx = dirX + plX * cam, rdy = dirY + plY * cam;
-    const h = rayo(J.x, J.y, rdx, rdy, true);
-    const d = h.dist < 0.02 ? 0.02 : h.dist;
-    zbuf[x] = d;
-    const lh = F / d, top = hor - lh / 2;
-    let ds = Math.ceil(top); if (ds < 0) ds = 0;
-    let de = Math.floor(hor + lh / 2); if (de > RH - 1) de = RH - 1;
-    wTop[x] = ds; wBot[x] = de;
-    if (de < ds) continue;
-    const tex = h.tex === M.antorcha ? TX.antorcha[antF] : (TEXMURO[h.tex] || TX.piedra);
-    let tx = (h.wx * 64) | 0; if (tx > 63) tx = 63; if (h.flip) tx = 63 - tx;
-    luzPunto(J.x + rdx * d * 0.985 - rdx * 0.02, J.y + rdy * d * 0.985 - rdy * 0.02, d);
-    const lado = h.lado ? 0.8 : 1;
-    const f = Math.exp(-d * dens), nf = 1 - f;
-    const mr = LR * lado * f, mg = LG * lado * f, mb = LB * lado * f;
-    const fr = nR * nf, fg = nG * nf, fb = nB * nf;
-    const step = 64 / lh; let tp = (ds - top) * step;
-    const tpx = tex.px, gw = tex.glow;
-    let o = ds * RW + x;
-    for (let y = ds; y <= de; y++, o += RW) {
-      const ti = ((tp | 0) & 63) * 64 + tx; tp += step;
-      const c = tpx[ti];
-      let r = (c & 255) * mr + fr, g = ((c >> 8) & 255) * mg + fg, b = ((c >> 16) & 255) * mb + fb;
-      if (gw !== null) { const q = gw[ti]; if (q) { r += (q & 255) * f; g += ((q >> 8) & 255) * f; b += ((q >> 16) & 255) * f; } }
-      out[o] = (0xff000000 | ((b > 255 ? 255 : b) << 16) | ((g > 255 ? 255 : g) << 8) | (r > 255 ? 255 : r)) >>> 0;
-    }
-  }
-  // Suelo y techo
-  const rdx0 = dirX - plX, rdy0 = dirY - plY, rdx1 = dirX + plX, rdy1 = dirY + plY;
-  const posZ = 0.5 * F;
-  for (let y = 0; y < RH; y++) {
-    const piso = y > hor;
-    const p = piso ? y - hor : hor - y;
-    if (p === 0) continue;
-    const rd = posZ / p;
-    const f = Math.exp(-rd * dens), nf = 1 - f;
-    let o = y * RW;
-    if (f < 0.03) { for (let x = 0; x < RW; x++, o++) if (piso ? y > wBot[x] : y < wTop[x]) out[o] = fogPix; continue; }
-    const lant = 0.85 / (1 + rd * rd * 0.07);
-    const lr0 = lant, lg0 = lant * 0.85, lb0 = lant * 0.65;
-    const fr = nR * nf, fg = nG * nf, fb = nB * nf;
-    const sx = rd * (rdx1 - rdx0) / RW, sy = rd * (rdy1 - rdy0) / RW;
-    let fx = J.x + rd * rdx0, fy = J.y + rd * rdy0;
-    const texs = piso ? TEXPISO : TEXTECHO, tipos = piso ? suelos : techos;
-    const oscuro = piso ? 1 : 0.7;
-    for (let x = 0; x < RW; x++, o++, fx += sx, fy += sy) {
-      if (piso ? y <= wBot[x] : y >= wTop[x]) continue;
-      const cx = fx | 0, cy = fy | 0;
-      if (cx < 0 || cy < 0 || cx >= T || cy >= T) { out[o] = fogPix; continue; }
-      const tex = texs[tipos[cy * T + cx]];
-      const ti = (((fy - cy) * 64) & 63) * 64 + (((fx - cx) * 64) & 63);
-      let li = ((fy * LMR) | 0) * LMW + ((fx * LMR) | 0); if (li >= LMN) li = 0;
-      let lr = LMr[li] + lr0, lg = LMg[li] + lg0, lb = LMb[li] + lb0;
-      for (let k = 0; k < dyn.length; k++) { const L = dyn[k]; const dx = fx - L.x, dy = fy - L.y, d2 = dx * dx + dy * dy; if (d2 < L.r2) { const q = 1 - d2 / L.r2, q2 = q * q; lr += L.cr * q2; lg += L.cg * q2; lb += L.cb * q2; } }
-      const k = f * oscuro;
-      const c = tex.px[ti];
-      let r = (c & 255) * lr * k + fr, g = ((c >> 8) & 255) * lg * k + fg, b = ((c >> 16) & 255) * lb * k + fb;
-      const gw = tex.glow; if (gw !== null) { const q = gw[ti]; if (q) { r += (q & 255) * f; g += ((q >> 8) & 255) * f; b += ((q >> 16) & 255) * f; } }
-      out[o] = (0xff000000 | ((b > 255 ? 255 : b) << 16) | ((g > 255 ? 255 : g) << 8) | (r > 255 ? 255 : r)) >>> 0;
-    }
-  }
-  // Figuras
-  const lista = recogerSprites();
-  const inv = 1 / (plX * dirY - dirX * plY);
-  for (const s of lista) { const dx = s.x - J.x, dy = s.y - J.y; s.tY = inv * (-plY * dx + plX * dy); s.tX = inv * (dirY * dx - dirX * dy); }
-  lista.sort((a, b) => b.tY - a.tY);
-  for (const s of lista) {
-    const tY = s.tY; if (tY < 0.12) continue;
-    const fr0 = s.fr;
-    const scrX = (RW / 2) * (1 + s.tX / tY);
-    const hS = s.alto * F / tY, wS = hS * fr0.w / fr0.h;
-    if (hS < 0.6) continue;
-    const yb = hor + (0.5 - s.z) * F / tY, yt = yb - hS, xs = scrX - wS / 2;
-    const x0 = Math.max(0, xs | 0), x1 = Math.min(RW, Math.ceil(xs + wS));
-    const y0 = Math.max(0, yt | 0), y1 = Math.min(RH, Math.ceil(yb));
-    if (x1 <= x0 || y1 <= y0) continue;
-    const f = Math.exp(-tY * dens), nf = 1 - f;
-    const stx = fr0.w / wS, sty = fr0.h / hS;
-    const px = fr0.px, gw = fr0.glow, fw = fr0.w;
-    if (s.add) {
-      const k = f * (s.alfa === undefined ? 1 : s.alfa) / 255;
-      for (let x = x0; x < x1; x++) {
-        if (zbuf[x] <= tY) continue;
-        const tx = ((x - xs) * stx) | 0; if (tx < 0 || tx >= fw) continue;
-        for (let y = y0; y < y1; y++) {
-          const ty = ((y - yt) * sty) | 0;
-          const c = px[ty * fw + tx], a = (c >>> 24) * k;
-          if (a < 0.02) continue;
-          const o = y * RW + x, dst = out[o];
-          let r = (dst & 255) + (c & 255) * a, g = ((dst >> 8) & 255) + ((c >> 8) & 255) * a, b = ((dst >> 16) & 255) + ((c >> 16) & 255) * a;
-          out[o] = (0xff000000 | ((b > 255 ? 255 : b) << 16) | ((g > 255 ? 255 : g) << 8) | (r > 255 ? 255 : r)) >>> 0;
-        }
-      }
-      continue;
-    }
-    luzPunto(s.x, s.y, tY);
-    const mr = LR * f, mg = LG * f, mb = LB * f, fr = nR * nf, fg = nG * nf, fb = nB * nf;
-    const flash = s.flash ? 0.65 : 0;
-    for (let x = x0; x < x1; x++) {
-      if (zbuf[x] <= tY) continue;
-      const tx = ((x - xs) * stx) | 0; if (tx < 0 || tx >= fw) continue;
-      for (let y = y0; y < y1; y++) {
-        const ti = (((y - yt) * sty) | 0) * fw + tx;
-        const c = px[ti];
-        if ((c >>> 24) < 110) continue;
-        let r = (c & 255) * mr + fr, g = ((c >> 8) & 255) * mg + fg, b = ((c >> 16) & 255) * mb + fb;
-        if (gw !== null) { const q = gw[ti]; if (q) { r += (q & 255) * f * 1.2; g += ((q >> 8) & 255) * f * 1.2; b += ((q >> 16) & 255) * f * 1.2; } }
-        if (flash) { r += (255 - r) * flash; g += (255 - g) * flash; b += (255 - b) * flash; }
-        const o = y * RW + x;
-        out[o] = (0xff000000 | ((b > 255 ? 255 : b) << 16) | ((g > 255 ? 255 : g) << 8) | (r > 255 ? 255 : r)) >>> 0;
-      }
-    }
-  }
-  rctx.putImageData(img, 0, 0);
-  ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(rc, 0, 0, W, H);
+function lienzoDe(px, w, h) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(px.buffer.slice(0)), w, h), 0, 0);
+  return c;
 }
-function recogerSprites() {
-  const l = [];
-  const t = tiempoJuego;
-  for (const e of enemigos) {
-    const S0 = SPRITE_ENEMIGO[e.tipo], cfg = TIPOS[e.tipo];
-    const flota = cfg.flota ? cfg.flota + Math.sin(t * 2 + e.fase) * 0.05 : 0;
-    if (e.muerto) {
-      const k = Math.floor(e.muerteT / 0.11);
-      if (k < S0.muerte.length) l.push({ x: e.x, y: e.y, z: flota, alto: cfg.alto, fr: S0.muerte[k] });
-      continue;
-    }
-    let fr;
-    if (e.estado === 'preparando' || e.estado === 'embestida') fr = S0.ataque[Math.floor(t * 8) % 2];
-    else if (e.estado === 'dormido') fr = S0.paso[Math.floor(t * 3 + e.fase) % 4];
-    else fr = S0.paso[Math.floor(e.fase * 2.2) % 4];
-    l.push({ x: e.x, y: e.y, z: flota, alto: cfg.alto, fr, flash: e.flash > 0 || (e.estado === 'preparando' && Math.floor(t * 16) % 2 === 0 && e.tipo !== 'pereza') });
-  }
-  for (const p of pickups) { if (p.ya) continue; const d = PICKUP[p.tipo]; l.push({ x: p.x, y: p.y, z: d.z + Math.sin(t * 3 + p.x * 3) * 0.03, alto: d.alto, fr: d.spr }); }
-  for (const d of decor) l.push({ x: d.x, y: d.y, z: 0, alto: d.tipo === 'candelabro' ? 1.05 : d.tipo === 'banco' ? 0.42 : 0.4, fr: SPR[d.tipo] });
-  l.push({ x: salida.x, y: salida.y, z: 0, alto: 0.95, fr: sinPecados <= 0 ? SPR.sagrario : SPR.sagrarioCerrado });
-  for (const b of proyectiles) l.push({ x: b.x, y: b.y, z: b.z - b.tam / 2, alto: b.tam, fr: b.spr, add: true });
-  for (const p of particulas) l.push({ x: p.x, y: p.y, z: p.z, alto: p.tam * (0.4 + 0.6 * p.vida / p.max), fr: p.spr, add: true, alfa: Math.min(1, p.vida * 2.5) });
-  return l;
+const NEGRO = (() => { const c = document.createElement('canvas'); c.width = c.height = 4; const g = c.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, 4, 4); return c; })();
+function texFr(fr) { if (!fr.lienzo) fr.lienzo = lienzoDe(fr.px, fr.w, fr.h); return texDe(fr.lienzo); }
+function glowFr(fr) {
+  if (!fr.glow) return texDe(NEGRO);
+  if (!fr.lienzoGlow) fr.lienzoGlow = lienzoDe(fr.glow, fr.w, fr.h);
+  return texDe(fr.lienzoGlow);
+}
+/* Reflejos para los metales del arma (oro, plata) */
+const ENV = (() => {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+  const g = c.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 0, 128); gr.addColorStop(0, '#3a2a30'); gr.addColorStop(0.45, '#8a6040'); gr.addColorStop(0.55, '#2a1a18'); gr.addColorStop(1, '#100808');
+  g.fillStyle = gr; g.fillRect(0, 0, 256, 128);
+  for (let i = 0; i < 7; i++) { const x = i * 37 + 10; const rg = g.createRadialGradient(x, 50, 1, x, 50, 18); rg.addColorStop(0, 'rgba(255,230,170,1)'); rg.addColorStop(1, 'rgba(255,200,120,0)'); g.fillStyle = rg; g.fillRect(x - 18, 32, 36, 36); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.mapping = THREE.EquirectangularReflectionMapping;
+  const pm = new THREE.PMREMGenerator(renderer);
+  const env = pm.fromEquirectangular(t).texture;
+  pm.dispose();
+  return env;
+})();
+escenaArma.environment = ENV;
+escena3.environment = ENV;
+escena3.environmentIntensity = 0.1;
+const cacheMat = new Map();
+function matTex(fr, o) {
+  o = o || {};
+  const clave = fr.lienzo || fr;
+  const k2 = JSON.stringify(o);
+  if (!cacheMat.has(clave)) cacheMat.set(clave, new Map());
+  const m0 = cacheMat.get(clave);
+  if (m0.has(k2)) return m0.get(k2);
+  const m = new THREE.MeshStandardMaterial({
+    map: texFr(fr), normalMap: normalDe(fr.lienzo, o.relieve || 2.5), roughness: o.rugoso !== undefined ? o.rugoso : 0.86, metalness: o.metal || 0,
+    emissiveMap: glowFr(fr), emissive: fr.glow ? 0xffffff : 0x000000, emissiveIntensity: o.brillo || 1.5
+  });
+  m0.set(k2, m);
+  return m;
 }
 
-/* ---------- El arma en primer plano ---------- */
-function mano(g, x, y, s, rot) {
-  g.save(); g.translate(x, y); g.rotate(rot || 0);
-  g.fillStyle = lineal(g, -30 * s, 0, 30 * s, 0, [[0, '#120c18'], [0.5, '#2e2438'], [1, '#120c18']]); g.fillRect(-28 * s, 10 * s, 56 * s, 140 * s);
-  g.fillStyle = '#f4f0e6'; g.fillRect(-28 * s, 8 * s, 56 * s, 9 * s);
-  g.fillStyle = radial(g, -8 * s, -8 * s, 4 * s, 0, 0, 34 * s, [[0, '#f6cfa8'], [0.7, '#d8a07a'], [1, '#9a6a4a']]);
-  g.beginPath(); g.ellipse(0, -4 * s, 26 * s, 22 * s, 0, 0, Math.PI * 2); g.fill();
-  g.strokeStyle = 'rgba(120,70,50,.5)'; g.lineWidth = 2 * s;
-  for (let k = -1; k <= 2; k++) { g.beginPath(); g.moveTo(k * 10 * s - 6 * s, -20 * s); g.lineTo(k * 10 * s - 4 * s, 4 * s); g.stroke(); }
-  g.restore();
+/* ---------- Luces ---------- */
+const hemi = new THREE.HemisphereLight(0xffffff, 0x302018, 0.5);
+escena3.add(hemi);
+const linterna = new THREE.PointLight(0xffd8a8, 2.4, 7.5, 1.6);
+escena3.add(linterna);
+const NPOOL = tactil ? 4 : 7;
+const pool = Array.from({ length: NPOOL }, () => { const l = new THREE.PointLight(0xffa050, 0, 7, 1.7); escena3.add(l); return l; });
+const luzDisparo = new THREE.PointLight(0xffe0a0, 0, 7, 1.8); escena3.add(luzDisparo);
+const luzProy = new THREE.PointLight(0x9ab8ff, 0, 4.5, 1.8); escena3.add(luzProy);
+const matBrilloLlama = new THREE.SpriteMaterial({ map: texDe(SPR.p.oro.lienzo), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, color: 0xffb060 });
+
+/* ---------- Construcción del nivel ---------- */
+let grupoNivel = null, mallasPuerta = new Map(), mallaSagrario = null, llamas = [], vigaHaz = null;
+const geoBillCache = new Map();
+function geoBill(w, h) {
+  const k = w.toFixed(3) + 'x' + h.toFixed(3);
+  let g = geoBillCache.get(k);
+  if (!g) { g = new THREE.PlaneGeometry(w, h); g.translate(0, h / 2, 0); geoBillCache.set(k, g); }
+  return g;
 }
-function dibujarArma() {
-  const s = Math.min(W, H * 1.2) / 760;
-  const barra = 74 * (W / innerWidth);
-  const baseY = H - barra + 20 * s;
-  const bob = Math.sin(J.paso) * 10 * s, bobY = Math.abs(Math.cos(J.paso)) * 8 * s;
-  const cambio = J.cambio > 0 ? (J.cambio > 0.16 ? (0.32 - J.cambio) / 0.16 : J.cambio / 0.16) : 0;
-  const bajar = cambio * 260 * s + J.retro * 40 * s;
-  const cx = W / 2 + bob, cy = baseY + bobY + bajar;
-  const t = tiempoJuego;
-  ctx.save();
-  if (J.arma === 'hisopo') {
-    const x = cx + 150 * s, y = cy;
-    ctx.save(); ctx.translate(x, y); ctx.rotate(-0.45 - J.retro * 0.25);
-    ctx.fillStyle = lineal(ctx, -12 * s, 0, 12 * s, 0, [[0, '#3a200c'], [0.5, '#b07a40'], [1, '#3a200c']]); ctx.fillRect(-11 * s, -250 * s, 22 * s, 270 * s);
-    ctx.fillStyle = '#c9a24a'; ctx.fillRect(-13 * s, -258 * s, 26 * s, 12 * s);
-    ctx.fillStyle = radial(ctx, -14 * s, -305 * s, 4 * s, 0, -292 * s, 54 * s, [[0, '#ffffff'], [0.45, '#d6d1c4'], [1, '#6d675a']]);
-    ctx.beginPath(); ctx.ellipse(0, -292 * s, 48 * s, 40 * s, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#c98f12'; ctx.lineWidth = 4 * s; ctx.stroke();
-    ctx.fillStyle = 'rgba(40,30,20,.55)';
-    for (let i = -3; i <= 3; i++) for (let j = -3; j <= 3; j++) { const ox = i * 12 * s, oy = j * 10 * s; if (Math.hypot(ox, oy) < 36 * s) { ctx.beginPath(); ctx.arc(ox, -292 * s + oy, 2.2 * s, 0, Math.PI * 2); ctx.fill(); } }
-    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.ellipse(-16 * s, -308 * s, 12 * s, 6 * s, -0.5, 0, Math.PI * 2); ctx.fill();
-    if (J.destello > 0 || J.retro > 0.5) {
-      const k = Math.max(J.destello / 0.08, J.retro);
-      for (let i = 0; i < 26; i++) { const a = -Math.PI / 2 + (rnd() - 0.5) * 1.1, r = (60 + rnd() * 160) * s * k; ctx.fillStyle = `rgba(${200 + ri(55)},${230 + ri(25)},255,${0.8 * k})`; ctx.beginPath(); ctx.arc(Math.cos(a) * r, -330 * s + Math.sin(a) * r, (2 + rnd() * 4) * s, 0, Math.PI * 2); ctx.fill(); }
-    }
-    ctx.restore();
-    mano(ctx, x + 20 * s, y + 30 * s, s * 1.1, -0.45);
-  } else if (J.arma === 'rosario') {
-    const x = cx + 110 * s, y = cy;
-    const sw = Math.sin(t * 3) * 0.08 + J.retro * 0.15;
-    const brillo = J.destello > 0 ? 1 : 0.35 + 0.15 * Math.sin(t * 6);
-    for (let i = 0; i < 26; i++) {
-      const u = i / 25, ax = x - 40 * s - Math.sin(u * Math.PI) * 120 * s + Math.sin(t * 2 + u * 3) * 6 * s, ay = y - 170 * s + u * 210 * s * (1 + sw);
-      ctx.fillStyle = radial(ctx, ax - 2 * s, ay - 2 * s, 1, ax, ay, 9 * s, [[0, '#fff6c8'], [0.5, `rgba(240,190,70,${0.8 + brillo * 0.2})`], [1, '#7a4a08']]);
-      ctx.beginPath(); ctx.arc(ax, ay, 7.5 * s, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.save(); ctx.translate(x - 30 * s, y - 230 * s + J.retro * 30 * s); ctx.rotate(-0.15);
-    ctx.fillStyle = lineal(ctx, -10 * s, 0, 10 * s, 0, [[0, '#8a5a08'], [0.5, '#ffe8a0'], [1, '#8a5a08']]);
-    ctx.fillRect(-9 * s, -70 * s, 18 * s, 120 * s); ctx.fillRect(-38 * s, -40 * s, 76 * s, 16 * s);
-    if (J.destello > 0) { ctx.fillStyle = radial(ctx, 0, -80 * s, 2, 0, -80 * s, 90 * s, [[0, 'rgba(255,255,230,.95)'], [0.4, 'rgba(255,210,90,.6)'], [1, 'rgba(255,210,90,0)']]); ctx.beginPath(); ctx.arc(0, -80 * s, 90 * s, 0, Math.PI * 2); ctx.fill(); }
-    ctx.restore();
-    mano(ctx, x - 20 * s, y - 40 * s + J.retro * 30 * s, s * 1.15, -0.2);
-  } else if (J.arma === 'cruz') {
-    const y = cy + 10 * s;
-    ctx.fillStyle = lineal(ctx, cx - 16 * s, 0, cx + 16 * s, 0, [[0, '#8a5a08'], [0.5, '#fff0a8'], [1, '#8a5a08']]);
-    ctx.fillRect(cx - 15 * s, y - 330 * s, 30 * s, 360 * s); ctx.fillRect(cx - 95 * s, y - 270 * s, 190 * s, 28 * s);
-    ctx.fillStyle = '#fff8d8'; ctx.beginPath(); ctx.arc(cx, y - 256 * s, 16 * s, 0, Math.PI * 2); ctx.fill();
-    const k = J.haz > 0 ? J.haz / 0.22 : 0.25 + 0.1 * Math.sin(t * 4);
-    ctx.fillStyle = radial(ctx, cx, y - 256 * s, 2, cx, y - 256 * s, 160 * s * (0.5 + k), [[0, `rgba(255,255,240,${0.9 * k})`], [0.4, `rgba(255,220,120,${0.5 * k})`], [1, 'rgba(255,200,80,0)']]);
-    ctx.beginPath(); ctx.arc(cx, y - 256 * s, 160 * s * (0.5 + k), 0, Math.PI * 2); ctx.fill();
-    if (J.haz > 0) {
-      ctx.strokeStyle = `rgba(255,250,220,${k})`; ctx.lineWidth = 26 * s * k; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(cx, y - 256 * s); ctx.lineTo(W / 2, H / 2); ctx.stroke();
-      ctx.strokeStyle = `rgba(255,220,120,${0.6 * k})`; ctx.lineWidth = 60 * s * k; ctx.stroke();
-    }
-    mano(ctx, cx - 120 * s, y - 40 * s, s, 0.5); mano(ctx, cx + 120 * s, y - 40 * s, s, -0.5);
-  } else if (J.arma === 'incensario') {
-    const sw = Math.sin(t * 2.2) * 0.18 - J.retro * 0.7;
-    const px0 = cx + 120 * s, py0 = cy - 330 * s;
-    ctx.save(); ctx.translate(px0, py0); ctx.rotate(sw);
-    ctx.strokeStyle = '#c9a24a'; ctx.lineWidth = 3 * s;
-    for (const dx of [-36, 0, 36]) { ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(dx * s, 190 * s); ctx.stroke(); }
-    ctx.fillStyle = lineal(ctx, -60 * s, 0, 60 * s, 0, [[0, '#7a5208'], [0.5, '#ffe8a0'], [1, '#7a5208']]);
-    ctx.beginPath(); ctx.moveTo(-50 * s, 190 * s); ctx.quadraticCurveTo(0, 150 * s, 50 * s, 190 * s); ctx.lineTo(44 * s, 210 * s); ctx.lineTo(-44 * s, 210 * s); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(0, 240 * s, 56 * s, 38 * s, 0, 0, Math.PI * 2); ctx.fill();
-    for (let i = 0; i < 9; i++) { const a = Math.PI * 1.1 + i * 0.12 * Math.PI; ctx.fillStyle = `rgba(255,${130 + ri(80)},40,${0.7 + 0.3 * Math.sin(t * 9 + i)})`; ctx.beginPath(); ctx.arc(Math.cos(a) * 40 * s, 240 * s + Math.sin(a) * 22 * s, 4 * s, 0, Math.PI * 2); ctx.fill(); }
-    ctx.restore();
-    for (let i = 0; i < 6; i++) { const u = ((t * 0.5 + i / 6) % 1); ctx.fillStyle = `rgba(230,225,235,${0.28 * (1 - u)})`; ctx.beginPath(); ctx.arc(px0 + Math.sin(sw) * 230 * s + Math.sin(t + i) * 20 * s, py0 + 200 * s - u * 260 * s, (20 + u * 50) * s, 0, Math.PI * 2); ctx.fill(); }
-    mano(ctx, px0 + 10 * s, py0 + 20 * s, s * 0.9, 0.2);
+function crearBill(fr, alto, propio) {
+  const w = alto * fr.w / fr.h;
+  const mat = new THREE.MeshStandardMaterial({ map: texFr(fr), alphaTest: 0.45, emissiveMap: glowFr(fr), emissive: 0xffffff, emissiveIntensity: 1.6, roughness: 0.92, side: THREE.DoubleSide });
+  const m = new THREE.Mesh(geoBill(w, alto), mat);
+  m.rotation.order = 'YXZ';
+  if (propio) m.userData.matPropio = true;
+  return m;
+}
+function construir3D() {
+  if (grupoNivel) {
+    escena3.remove(grupoNivel);
+    grupoNivel.traverse((o) => { if (o.userData.propia && o.geometry) o.geometry.dispose(); if (o.userData.matPropio && o.material) o.material.dispose(); });
   }
-  ctx.restore();
+  grupoNivel = new THREE.Group(); escena3.add(grupoNivel);
+  llamas = [];
+  const lotes = new Map();
+  const lote = (clave, mat) => { if (!lotes.has(clave)) lotes.set(clave, { mat, pos: [], nor: [], uv: [] }); return lotes.get(clave); };
+  const quad = (L, a, b, c, d, n, uv) => {
+    const e1 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], e2 = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+    const cr = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+    if (cr[0] * n[0] + cr[1] * n[1] + cr[2] * n[2] < 0) { const t = b; b = d; d = t; uv = [uv[0], uv[3], uv[2], uv[1]]; }
+    for (const [p, t] of [[a, uv[0]], [b, uv[1]], [c, uv[2]], [a, uv[0]], [c, uv[2]], [d, uv[3]]]) { L.pos.push(p[0], p[1], p[2]); L.nor.push(n[0], n[1], n[2]); L.uv.push(t[0], t[1]); }
+  };
+  const UV = [[0, 0], [1, 0], [1, 1], [0, 1]];
+  for (let y = 0; y < T; y++) for (let x = 0; x < T; x++) {
+    const i = y * T + x, c = mapa[i];
+    if (c !== 0 && c < M.PUERTA) continue;
+    const esPuerta = c >= M.PUERTA;
+    quad(lote('p' + suelos[i], matTex(TEXPISO[suelos[i]], { relieve: 2.2, rugoso: suelos[i] === 3 ? 0.4 : 0.85 })), [x, 0, y], [x + 1, 0, y], [x + 1, 0, y + 1], [x, 0, y + 1], [0, 1, 0], UV);
+    quad(lote('t' + techos[i], matTex(TEXTECHO[techos[i]], { relieve: 2.2 })), [x, ALTO, y], [x + 1, ALTO, y], [x + 1, ALTO, y + 1], [x, ALTO, y + 1], [0, -1, 0], UV);
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy;
+      const nc = nx < 0 || ny < 0 || nx >= T || ny >= T ? TEMA.muro : mapa[ny * T + nx];
+      if (nc === 0 || nc >= M.PUERTA) continue;
+      const tid = esPuerta ? M.marco : nc;
+      const tex = tid === M.antorcha ? TX.antorcha[0] : TEXMURO[tid];
+      let p0, p1;
+      if (dx === 1) { p0 = [x + 1, y]; p1 = [x + 1, y + 1]; } else if (dx === -1) { p0 = [x, y]; p1 = [x, y + 1]; }
+      else if (dy === 1) { p0 = [x, y + 1]; p1 = [x + 1, y + 1]; } else { p0 = [x, y]; p1 = [x + 1, y]; }
+      const n = [-dx, 0, -dy];
+      const r = [n[2], -n[0]];
+      if ((p1[0] - p0[0]) * r[0] + (p1[1] - p0[1]) * r[1] < 0) { const t = p0; p0 = p1; p1 = t; }
+      quad(lote('m' + tid, matTex(tex, { relieve: 3.2, brillo: tid === M.vitral ? 2.4 : tid === M.infierno ? 2.2 : tid === M.cruz ? 0.35 : 1.8 })), [p0[0], 0, p0[1]], [p1[0], 0, p1[1]], [p1[0], ALTO, p1[1]], [p0[0], ALTO, p0[1]], n, UV);
+      if (tid === M.antorcha) {
+        const sp = new THREE.Sprite(matBrilloLlama);
+        sp.position.set(x + 0.5 + dx * 0.5 - dx * 0.1, ALTO * 0.78, y + 0.5 + dy * 0.5 - dy * 0.1);
+        sp.scale.setScalar(0.45); grupoNivel.add(sp); llamas.push(sp);
+      }
+    }
+  }
+  for (const L of lotes.values()) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(L.pos, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(L.nor, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(L.uv, 2));
+    const m = new THREE.Mesh(g, L.mat); m.userData.propia = true; grupoNivel.add(m);
+  }
+  // Puertas
+  mallasPuerta = new Map();
+  for (const p of puertas.values()) {
+    const mat = matTex(p.oro ? TEXMURO[M.PUERTA_ORO] : TEXMURO[M.PUERTA], { relieve: 3, metal: p.oro ? 0.75 : 0, rugoso: p.oro ? 0.32 : 0.75 });
+    const geo = p.orient === 'v' ? new THREE.BoxGeometry(0.09, ALTO, 1) : new THREE.BoxGeometry(1, ALTO, 0.09);
+    const m = new THREE.Mesh(geo, mat); m.userData.propia = true;
+    m.position.set(p.x + 0.5, ALTO / 2, p.y + 0.5);
+    grupoNivel.add(m); mallasPuerta.set(p.i, m);
+  }
+  // Objetos, decoración y sagrario
+  for (const p of pickups) p.malla = null;
+  for (const d of decor) {
+    const alto = d.tipo === 'candelabro' ? 1.05 : d.tipo === 'banco' ? 0.42 : 0.4;
+    d.malla = crearBill(SPR[d.tipo], alto, true); d.malla.position.set(d.x, 0, d.y); grupoNivel.add(d.malla);
+    if (d.tipo === 'candelabro') { const sp = new THREE.Sprite(matBrilloLlama); sp.position.set(d.x, 0.98, d.y); sp.scale.setScalar(0.5); grupoNivel.add(sp); llamas.push(sp); }
+  }
+  mallaSagrario = crearBill(SPR.sagrarioCerrado, 0.95, true); mallaSagrario.position.set(salida.x, 0, salida.y); grupoNivel.add(mallaSagrario);
+  for (const e of enemigos) e.malla = null;
+  // Niebla y luz del lugar
+  const [nr, ng, nb] = TEMA.niebla;
+  const colNiebla = new THREE.Color(nr / 255, ng / 255, nb / 255);
+  escena3.fog = new THREE.FogExp2(colNiebla, 0.13);
+  escena3.background = colNiebla;
+  hemi.color.setRGB(TEMA.amb[0] * 5, TEMA.amb[1] * 5, TEMA.amb[2] * 5);
+  hemi.groundColor.setRGB(TEMA.amb[0] * 1.5, TEMA.amb[1] * 1.2, TEMA.amb[2]);
+  vigaHaz = null;
+  poolAsignar = 0;
 }
+
+/* ---------- Partículas y proyectiles (sprites que brillan) ---------- */
+const matsSpr = new Map();
+function matSpr(spr) {
+  let m = matsSpr.get(spr);
+  if (!m) { m = new THREE.SpriteMaterial({ map: texDe(spr.lienzo), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }); matsSpr.set(spr, m); }
+  return m;
+}
+const POOL_SPR = [];
+for (let i = 0; i < 320; i++) { const s = new THREE.Sprite(matSpr(SPR.p.oro)); s.visible = false; escena3.add(s); POOL_SPR.push(s); }
+const geoHaz = new THREE.CylinderGeometry(0.018, 0.018, 1, 8, 1, true); geoHaz.rotateX(Math.PI / 2); geoHaz.translate(0, 0, 0.5);
+const haz = new THREE.Mesh(geoHaz, new THREE.MeshBasicMaterial({ color: 0xfff2c0, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+haz.visible = false; escena3.add(haz);
+const hazAura = new THREE.Mesh(geoHaz, new THREE.MeshBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }));
+hazAura.scale.set(4, 4, 1); haz.add(hazAura);
+
+/* ---------- Sincronizar el mundo 3D con el juego ---------- */
+let poolAsignar = 0, vistoT = 0;
+function frameEnemigo(e) {
+  const S0 = SPRITE_ENEMIGO[e.tipo], t = tiempoJuego;
+  if (e.muerto) return S0.muerte[Math.min(S0.muerte.length - 1, Math.floor(e.muerteT / 0.11))];
+  if (e.estado === 'preparando' || e.estado === 'embestida') return S0.ataque[Math.floor(t * 8) % 2];
+  if (e.estado === 'dormido') return S0.paso[Math.floor(t * 3 + e.fase) % 4];
+  return S0.paso[Math.floor(e.fase * 2.2) % 4];
+}
+function mirarCamara(m) { m.rotation.y = Math.atan2(camara.position.x - m.position.x, camara.position.z - m.position.z); }
+function actualizar3D(dt) {
+  // Cámara: inercia, balanceo al caminar, retroceso del arma y sacudidas
+  const rapidez = Math.min(1, Math.hypot(J.vx || 0, J.vy || 0) / 3.4);
+  const bob = estado === 'jugando' ? Math.sin(J.paso * 2) * 0.022 * rapidez : 0;
+  const sac = J.sacudida || 0;
+  camara.position.set(J.x + (rnd() - 0.5) * sac * 0.08, OJO + bob + (rnd() - 0.5) * sac * 0.06, J.y + (rnd() - 0.5) * sac * 0.08);
+  camara.rotation.set((J.pitch || 0) + (J.kick || 0), Math.atan2(-Math.cos(J.a), -Math.sin(J.a)), (J.roll || 0) + Math.sin(J.paso) * 0.008 * rapidez);
+  linterna.position.copy(camara.position);
+  linterna.intensity = 2.4 + Math.sin(tiempoJuego * 13) * 0.08;
+  // Luces cercanas (antorchas, candelabros, vitrales) con parpadeo
+  poolAsignar -= dt;
+  if (poolAsignar <= 0) {
+    poolAsignar = 0.25;
+    const ord = LUCES.map((L) => ({ L, d: (L.x - J.x) ** 2 + (L.y - J.y) ** 2 })).sort((a, b) => a.d - b.d);
+    pool.forEach((l, i) => { const o = ord[i]; l.userData.L = o ? o.L : null; });
+  }
+  pool.forEach((l, i) => {
+    const L = l.userData.L;
+    if (!L) { l.intensity = 0; return; }
+    const parpadeo = L.b < 0.6 ? 0.85 + Math.sin(tiempoJuego * 11 + i * 3) * 0.08 + Math.sin(tiempoJuego * 23 + i) * 0.06 : 1;
+    l.position.set(L.x, ALTO * 0.75, L.y);
+    l.color.setRGB(L.r, L.g, L.b);
+    l.intensity = L.int * 3.2 * parpadeo;
+    l.distance = L.rad * 1.3;
+  });
+  for (const s of llamas) s.scale.setScalar(0.4 + Math.sin(tiempoJuego * 17 + s.position.x * 7) * 0.05);
+  // Destellos de disparo y explosiones
+  let fl = 0;
+  if (J.destello > 0) { fl = J.destello / 0.08 * 2.5; luzDisparo.position.set(J.x + Math.cos(J.a) * 0.4, OJO, J.y + Math.sin(J.a) * 0.4); luzDisparo.color.setHex(0xffe0a0); }
+  for (const f of destellos) { const k = f.t / f.max * f.int * 3; if (k > fl) { fl = k; luzDisparo.position.set(f.x, 0.6, f.y); luzDisparo.color.setRGB(f.r, f.g, f.b); } }
+  if (J.haz > 0) { fl = Math.max(fl, 3); luzDisparo.position.set(J.hazX, J.hazZ || 0.5, J.hazY); }
+  luzDisparo.intensity = fl;
+  let cerca = null, dc = 36;
+  for (const b of proyectiles) { if (!b.luz) continue; const d = (b.x - J.x) ** 2 + (b.y - J.y) ** 2; if (d < dc) { dc = d; cerca = b; } }
+  if (cerca) { luzProy.position.set(cerca.x, cerca.z, cerca.y); luzProy.color.setRGB(cerca.luz[0], cerca.luz[1], cerca.luz[2]); luzProy.intensity = 1.6; } else luzProy.intensity = 0;
+  // Puertas que se deslizan
+  for (const [i, m] of mallasPuerta) {
+    const p = puertas.get(i), k = p.abierta;
+    if (p.orient === 'v') m.position.z = p.y + 0.5 + k * 0.96; else m.position.x = p.x + 0.5 + k * 0.96;
+  }
+  // Pecados
+  for (const e of enemigos) {
+    const cfg = TIPOS[e.tipo];
+    if (!e.malla) { e.malla = crearBill(SPRITE_ENEMIGO[e.tipo].paso[0], cfg.alto, true); grupoNivel.add(e.malla); }
+    const m = e.malla;
+    if (e.muerto && e.muerteT > 0.8) { m.visible = false; continue; }
+    m.visible = true;
+    const fr = frameEnemigo(e);
+    const mt = m.material;
+    const tx = texFr(fr); if (mt.map !== tx) { mt.map = tx; mt.emissiveMap = glowFr(fr); }
+    const flota = cfg.flota ? cfg.flota + Math.sin(tiempoJuego * 2 + e.fase) * 0.05 : 0;
+    m.position.set(e.x, flota, e.y);
+    mirarCamara(m);
+    m.rotation.x = e.muerto ? -Math.min(1, e.muerteT / 0.5) * 0.9 : (e.estado === 'dolor' ? -0.12 : 0);
+    const brillo = e.flash > 0 ? 3.2 : 1;
+    mt.color.setScalar(brillo);
+  }
+  // Objetos
+  for (const p of pickups) {
+    if (!p.malla) { const d = PICKUP[p.tipo]; p.malla = crearBill(d.spr, d.alto, true); p.malla.userData.z = d.z; grupoNivel.add(p.malla); }
+    p.malla.visible = !p.ya;
+    if (!p.ya) { p.malla.position.set(p.x, p.malla.userData.z + 0.05 + Math.sin(tiempoJuego * 3 + p.x * 3) * 0.04, p.y); mirarCamara(p.malla); }
+  }
+  for (const d of decor) mirarCamara(d.malla);
+  const abierto = sinPecados <= 0;
+  const txS = texFr(abierto ? SPR.sagrario : SPR.sagrarioCerrado);
+  if (mallaSagrario.material.map !== txS) { mallaSagrario.material.map = txS; mallaSagrario.material.emissiveMap = glowFr(abierto ? SPR.sagrario : SPR.sagrarioCerrado); }
+  mirarCamara(mallaSagrario);
+  // Proyectiles y chispas
+  let k = 0;
+  for (const b of proyectiles) {
+    if (k >= POOL_SPR.length) break;
+    const s = POOL_SPR[k++]; s.visible = true; s.material = matSpr(b.spr);
+    s.position.set(b.x, b.z, b.y); s.scale.setScalar(b.tam * 2.2);
+  }
+  for (const p of particulas) {
+    if (k >= POOL_SPR.length) break;
+    const s = POOL_SPR[k++]; s.visible = true; s.material = matSpr(p.spr);
+    s.position.set(p.x, p.z, p.y); s.scale.setScalar(p.tam * 1.8 * (0.35 + 0.65 * Math.max(0, p.vida / p.max)));
+  }
+  for (; k < POOL_SPR.length; k++) { if (!POOL_SPR[k].visible) break; POOL_SPR[k].visible = false; }
+  // Rayo de la cruz
+  if (J.haz > 0) {
+    haz.visible = true;
+    const ox = J.x + Math.cos(J.a) * 0.25, oy = J.y + Math.sin(J.a) * 0.25, oz = OJO - 0.14;
+    haz.position.set(ox, oz, oy);
+    haz.lookAt(J.hazX, J.hazZ || 0.5, J.hazY);
+    haz.scale.set(1, 1, Math.hypot(J.hazX - ox, (J.hazZ || 0.5) - oz, J.hazY - oy));
+    haz.material.opacity = J.haz / 0.22; hazAura.material.opacity = 0.45 * J.haz / 0.22;
+  } else haz.visible = false;
+  // Lo que se ve queda en el mapa
+  vistoT -= dt;
+  if (vistoT <= 0 && estado === 'jugando') {
+    vistoT = 0.15;
+    for (let i = -10; i <= 10; i++) { const a = J.a + i * 0.06; rayo(J.x, J.y, Math.cos(a), Math.sin(a), true); }
+  }
+}
+
+/* =====================================================================
+   Armas en 3D, en primer plano
+   ===================================================================== */
+escenaArma.add(new THREE.HemisphereLight(0xfff0e0, 0x302020, 0.9));
+const luzArma = new THREE.PointLight(0xffd8a8, 1.6, 3, 1.5); luzArma.position.set(0.25, 0.25, 0.2); escenaArma.add(luzArma);
+const luzArmaDisparo = new THREE.PointLight(0xffe8b0, 0, 2, 1.5); luzArmaDisparo.position.set(0.1, 0, -0.5); escenaArma.add(luzArmaDisparo);
+const MA = {
+  piel: new THREE.MeshStandardMaterial({ color: 0xe2a986, roughness: 0.65 }),
+  manga: new THREE.MeshStandardMaterial({ color: 0x1d1824, roughness: 0.92 }),
+  puno: new THREE.MeshStandardMaterial({ color: 0xf2efe8, roughness: 0.8 }),
+  oro: new THREE.MeshStandardMaterial({ color: 0xffd27a, metalness: 1, roughness: 0.22, envMapIntensity: 3.2 }),
+  plata: new THREE.MeshStandardMaterial({ color: 0xf0f0f0, metalness: 1, roughness: 0.18, envMapIntensity: 3.2 }),
+  madera: new THREE.MeshStandardMaterial({ color: 0x6b3f22, roughness: 0.6 }),
+  brasa: new THREE.MeshStandardMaterial({ color: 0x331100, emissive: 0xff6a10, emissiveIntensity: 2.2 }),
+  luz: new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff0b0, emissiveIntensity: 2.5 })
+};
+/* Texturas reales para el arma: veta de madera, tela de la sotana, metal martillado y piel */
+(function texturasArma() {
+  const lz = (w, h, fn) => { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); return c; };
+  const madera = lz(64, 256, (g, w, h) => {
+    g.fillStyle = '#7a4826'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 46; i++) { g.strokeStyle = `rgba(${40 + ri(40)},${20 + ri(18)},8,${0.25 + rnd() * 0.4})`; g.lineWidth = 0.6 + rnd() * 2; g.beginPath(); const x = rnd() * w; g.moveTo(x, 0); g.bezierCurveTo(x + rnd() * 12 - 6, h * 0.3, x + rnd() * 12 - 6, h * 0.7, x + rnd() * 6 - 3, h); g.stroke(); }
+    for (let i = 0; i < 3; i++) { const y = rnd() * h; g.strokeStyle = 'rgba(40,20,8,.6)'; g.lineWidth = 1.5; g.beginPath(); g.ellipse(rnd() * w, y, 4, 9, 0, 0, Math.PI * 2); g.stroke(); }
+  });
+  MA.madera.map = texDe(madera); MA.madera.normalMap = normalDe(madera, 2.5); MA.madera.color.set(0xffffff); MA.madera.roughness = 0.55; MA.madera.needsUpdate = true;
+  const tela = lz(64, 64, (g, w, h) => {
+    g.fillStyle = '#26202e'; g.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 2) { g.fillStyle = y % 4 ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.25)'; g.fillRect(0, y, w, 1); }
+    for (let x = 0; x < w; x += 2) { g.fillStyle = x % 4 ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.2)'; g.fillRect(x, 0, 1, h); }
+  });
+  const tt = texDe(tela); tt.repeat.set(3, 3);
+  MA.manga.map = tt; MA.manga.normalMap = normalDe(tela, 3); MA.manga.color.set(0xffffff); MA.manga.needsUpdate = true;
+  const martillado = lz(128, 128, (g, w, h) => {
+    g.fillStyle = '#888'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 160; i++) { const x = rnd() * w, y = rnd() * h, r = 3 + rnd() * 7; const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(60,60,60,.6)'); gr.addColorStop(1, 'rgba(140,140,140,0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
+  });
+  for (const m of [MA.oro, MA.plata]) { m.normalMap = normalDe(martillado, 1.6); m.normalScale.set(0.5, 0.5); m.roughnessMap = texDe(martillado, false); m.needsUpdate = true; }
+  const piel = lz(64, 64, (g, w, h) => { g.fillStyle = '#999'; g.fillRect(0, 0, w, h); for (let i = 0; i < 500; i++) { g.fillStyle = `rgba(${ri(2) ? 255 : 0},${ri(2) ? 255 : 0},${ri(2) ? 255 : 0},.06)`; g.fillRect(rnd() * w, rnd() * h, 1, 1); } });
+  MA.piel.normalMap = normalDe(piel, 1.2); MA.piel.normalScale.set(0.3, 0.3); MA.piel.needsUpdate = true;
+})();
+function mano3D(izq, corta) {
+  const g = new THREE.Group();
+  const lm = corta ? 0.1 : 0.36;
+  const manga = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.062, lm, 14), MA.manga); manga.rotation.x = Math.PI / 2; manga.position.z = 0.02 + lm / 2; g.add(manga);
+  const puno = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.03, 14), MA.puno); puno.rotation.x = Math.PI / 2; puno.position.z = 0.03; g.add(puno);
+  const palma = new THREE.Mesh(new THREE.SphereGeometry(0.045, 18, 14), MA.piel); palma.scale.set(1, 0.8, 1.25); palma.position.z = -0.02; g.add(palma);
+  for (let i = 0; i < 4; i++) { const d = new THREE.Mesh(new THREE.CapsuleGeometry(0.011, 0.03, 4, 8), MA.piel); d.position.set((i - 1.5) * 0.019, -0.012, -0.06); d.rotation.x = 1.25; g.add(d); }
+  const pulgar = new THREE.Mesh(new THREE.CapsuleGeometry(0.012, 0.03, 4, 8), MA.piel); pulgar.position.set(izq ? 0.04 : -0.04, 0.012, -0.035); pulgar.rotation.set(0.8, 0, izq ? -0.9 : 0.9); g.add(pulgar);
+  return g;
+}
+const ARMA3D = {};
+(function crearArmas() {
+  // Hisopo: mango de madera y cabeza de plata con agujeros
+  let g = new THREE.Group();
+  const cabezal = new THREE.Group(); g.add(cabezal);
+  const mango = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.015, 0.3, 12), MA.madera); mango.position.y = 0.11; cabezal.add(mango);
+  const anillo = new THREE.Mesh(new THREE.TorusGeometry(0.017, 0.006, 8, 18), MA.oro); anillo.rotation.x = Math.PI / 2; anillo.position.y = 0.26; cabezal.add(anillo);
+  const bola = new THREE.Mesh(new THREE.SphereGeometry(0.048, 24, 18), MA.plata); bola.position.y = 0.3; cabezal.add(bola);
+  for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; const h = new THREE.Mesh(new THREE.SphereGeometry(0.006, 6, 6), MA.manga); h.position.set(Math.cos(a) * 0.04, 0.32 + (i % 2) * 0.012, Math.sin(a) * 0.04 - 0.004); cabezal.add(h); }
+  cabezal.rotation.x = -1.15;
+  g.add(mano3D(false));
+  g.scale.setScalar(0.85); g.userData.base = new THREE.Vector3(0.19, -0.16, -0.38); g.userData.rot = new THREE.Euler(0.55, -0.25, 0.15);
+  ARMA3D.hisopo = g;
+  // Rosario: crucifijo en la mano y cuentas colgando
+  g = new THREE.Group();
+  const cruc = new THREE.Group(); cruc.position.set(0, 0.035, -0.07); g.add(cruc);
+  const cv1 = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.085, 0.01), MA.oro); cruc.add(cv1);
+  const ch1 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.014, 0.01), MA.oro); ch1.position.y = 0.018; cruc.add(ch1);
+  const cuentas = new THREE.InstancedMesh(new THREE.SphereGeometry(0.0085, 10, 8), MA.oro, 36);
+  g.add(cuentas); g.userData.cuentas = cuentas;
+  g.add(mano3D(false));
+  g.userData.base = new THREE.Vector3(0.13, -0.05, -0.34); g.userData.rot = new THREE.Euler(0.55, -0.2, 0);
+  ARMA3D.rosario = g;
+  // Cruz de luz sostenida con las dos manos
+  g = new THREE.Group();
+  const cv2 = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.36, 0.026), MA.oro); cv2.position.y = 0.06; g.add(cv2);
+  const ch2 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.034, 0.026), MA.oro); ch2.position.y = 0.14; g.add(ch2);
+  const nucleo = new THREE.Mesh(new THREE.SphereGeometry(0.024, 16, 12), MA.luz); nucleo.position.set(0, 0.14, -0.018); g.add(nucleo); g.userData.nucleo = nucleo;
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: texDe(SPR.p.oro.lienzo), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); halo.position.set(0, 0.14, -0.03); halo.scale.setScalar(0.12); g.add(halo); g.userData.halo = halo;
+  const mi = mano3D(true); mi.position.set(-0.03, -0.06, 0.03); mi.rotation.set(0.3, 0.5, 0.2); g.add(mi);
+  const md = mano3D(false); md.position.set(0.03, -0.08, 0.03); md.rotation.set(0.3, -0.5, -0.2); g.add(md);
+  g.scale.setScalar(0.72); g.userData.base = new THREE.Vector3(0.06, -0.2, -0.5); g.userData.rot = new THREE.Euler(0.15, -0.12, 0);
+  ARMA3D.cruz = g;
+  // Incensario de oro colgando de cadenas, con brasas
+  g = new THREE.Group();
+  const pendulo = new THREE.Group(); g.add(pendulo); g.userData.pendulo = pendulo;
+  for (const a of [0, 2.1, 4.2]) { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.0022, 0.0022, 0.24, 4), MA.oro); c.position.set(Math.cos(a) * 0.022, -0.12, Math.sin(a) * 0.022); c.rotation.set(Math.sin(a) * 0.09, 0, -Math.cos(a) * 0.09); pendulo.add(c); }
+  const perfil = [[0.001, -0.05], [0.03, -0.045], [0.05, -0.02], [0.055, 0.01], [0.045, 0.03], [0.02, 0.05], [0.005, 0.07]].map(([r, h]) => new THREE.Vector2(r, h));
+  const cuerpo = new THREE.Mesh(new THREE.LatheGeometry(perfil, 24), MA.oro); cuerpo.position.y = -0.27; pendulo.add(cuerpo);
+  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; const b = new THREE.Mesh(new THREE.SphereGeometry(0.0075, 8, 6), MA.brasa); b.position.set(Math.cos(a) * 0.05, -0.29, Math.sin(a) * 0.05); pendulo.add(b); }
+  const mano = mano3D(false, true); mano.rotation.set(-0.4, 0, 0); mano.position.set(0, 0.035, 0.03); g.add(mano);
+  g.userData.base = new THREE.Vector3(0.18, 0.1, -0.5); g.userData.rot = new THREE.Euler(0, -0.1, 0);
+  ARMA3D.incensario = g;
+  for (const k in ARMA3D) { ARMA3D[k].visible = false; escenaArma.add(ARMA3D[k]); }
+})();
+/* Gotas y humo junto al arma */
+const gotasArma = [];
+for (let i = 0; i < 40; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: texDe(SPR.gota.lienzo), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); s.visible = false; escenaArma.add(s); gotasArma.push({ s, v: new THREE.Vector3(), vida: 0 }); }
+let gotaIdx = 0;
+function rociar(n, color) {
+  for (let i = 0; i < n; i++) {
+    const q = gotasArma[gotaIdx]; gotaIdx = (gotaIdx + 1) % gotasArma.length;
+    q.s.position.set(0.1 + (rnd() - 0.5) * 0.02, -0.04, -0.5);
+    q.v.set((rnd() - 0.5) * 0.5, 0.1 + rnd() * 0.5, -1.5 - rnd() * 1.5);
+    q.vida = 0.3 + rnd() * 0.2; q.s.visible = true; q.s.scale.setScalar(0.02 + rnd() * 0.02);
+    q.s.material.color.set(color || 0xffffff);
+  }
+}
+let swayX = 0, swayY = 0, ultimoA = 0, ultimoP = 0;
+function animarArma(dt) {
+  const actual = J.arma;
+  for (const k in ARMA3D) ARMA3D[k].visible = k === actual && estado === 'jugando';
+  const g = ARMA3D[actual]; if (!g) return;
+  const rapidez = Math.min(1, Math.hypot(J.vx || 0, J.vy || 0) / 3.4);
+  let da = J.a - ultimoA; if (da > Math.PI) da -= Math.PI * 2; if (da < -Math.PI) da += Math.PI * 2;
+  const dp = (J.pitch || 0) - ultimoP; ultimoA = J.a; ultimoP = J.pitch || 0;
+  swayX += (clamp(-da * 1.2, -0.05, 0.05) - swayX) * Math.min(1, dt * 8);
+  swayY += (clamp(-dp * 1.2, -0.04, 0.04) - swayY) * Math.min(1, dt * 8);
+  const bobX = Math.sin(J.paso) * 0.012 * rapidez, bobY = Math.abs(Math.cos(J.paso)) * 0.012 * rapidez;
+  const cambio = J.cambio > 0 ? (J.cambio > 0.16 ? (0.32 - J.cambio) / 0.16 : J.cambio / 0.16) : 0;
+  const b = g.userData.base, r = g.userData.rot;
+  const respira = Math.sin(tiempoJuego * 1.8) * 0.003;
+  g.position.set(b.x + bobX + swayX, b.y - bobY + swayY - cambio * 0.32 + respira, b.z + J.retro * 0.06);
+  g.rotation.set(r.x + J.retro * 0.35, r.y + swayX * 2, r.z + bobX * 3);
+  luzArmaDisparo.intensity = J.destello > 0 ? 4 : (J.haz > 0 ? 3 : 0);
+  if (actual === 'rosario') {
+    const m = g.userData.cuentas, d = new THREE.Object3D();
+    const sw = Math.sin(tiempoJuego * 3) * 0.02 + J.retro * 0.03;
+    for (let i = 0; i < 36; i++) {
+      const u = i / 35, a = u * Math.PI * 2;
+      d.position.set(Math.sin(a) * 0.035 + sw * Math.sin(u * Math.PI), -0.03 - (1 - Math.cos(a)) * 0.07, -0.05 + Math.cos(a) * 0.012 + sw * 0.5);
+      d.updateMatrix(); m.setMatrixAt(i, d.matrix);
+    }
+    m.instanceMatrix.needsUpdate = true;
+  } else if (actual === 'cruz') {
+    const k = J.haz > 0 ? J.haz / 0.22 : 0;
+    g.userData.nucleo.material.emissiveIntensity = 2 + k * 8;
+    g.userData.halo.scale.setScalar(0.1 + k * 0.5 + Math.sin(tiempoJuego * 5) * 0.01);
+  } else if (actual === 'incensario') {
+    g.userData.pendulo.rotation.x = Math.sin(tiempoJuego * 2.4) * 0.35 - J.retro * 1.1;
+    g.userData.pendulo.rotation.z = Math.cos(tiempoJuego * 2.4) * 0.12;
+  }
+  for (const q of gotasArma) {
+    if (q.vida <= 0) { q.s.visible = false; continue; }
+    q.vida -= dt; q.v.y -= 3 * dt; q.s.position.addScaledVector(q.v, dt);
+  }
+}
+
 function dibujarMini() {
   const s = 224, cs = s / T;
   mini.clearRect(0, 0, s, s);
@@ -1751,9 +1983,12 @@ function bucle(t) {
   if (!J) return;
   if (estado === 'jugando') actualizar(dt);
   else if (estado === 'menu') { J.a += dt * 0.15; tiempoJuego += dt; }
-  renderizar();
+  actualizar3D(dt);
+  animarArma(dt);
+  renderer.clear();
+  renderer.render(escena3, camara);
+  if (estado === 'jugando') { renderer.clearDepth(); renderer.render(escenaArma, camArma); }
   if (estado === 'jugando') {
-    dibujarArma();
     frameN++; if (frameN % 4 === 0) dibujarMini();
     $('dano').style.opacity = (hurtT / 0.4 * 0.9).toFixed(3);
     $('curar').style.opacity = (curaT / 0.6).toFixed(3);
@@ -1763,8 +1998,8 @@ function bucle(t) {
     tiempos += dtReal; nTiempos++;
     if (nTiempos >= 90) {
       const prom = tiempos / nTiempos;
-      if (prom > 0.026 && presupuesto > 45000) { presupuesto = Math.round(presupuesto * 0.82); ajustar(); }
-      else if (prom < 0.0135 && presupuesto < 170000) { presupuesto = Math.round(presupuesto * 1.1); ajustar(); }
+      if (prom > 0.026 && prActual > 0.6) { prActual = Math.max(0.6, prActual - 0.15); renderer.setPixelRatio(prActual); ajustar(); }
+      else if (prom < 0.013 && prActual < Math.min(window.devicePixelRatio || 1, tactil ? 1.25 : 1.6)) { prActual += 0.1; renderer.setPixelRatio(prActual); ajustar(); }
       tiempos = 0; nTiempos = 0;
     }
   }
@@ -1782,6 +2017,7 @@ function prepararNivel(n, conservar) {
   proyectiles = []; particulas = []; destellos = []; llave = !!cfgNivel.jefe; poder = 0; flujo = null;
   stats = { tiempo: 0, disparos: 0, aciertos: 0, danoRecibido: 0, puntos: 0 };
   $('jefe').hidden = !jefe;
+  construir3D();
 }
 function mostrarIntro(n) {
   const c = NIVELES[n];
@@ -1926,7 +2162,7 @@ cv.addEventListener('pointerdown', (e) => {
   try { cv.setPointerCapture(e.pointerId); } catch (x) { /* nada */ }
 });
 cv.addEventListener('pointermove', (e) => {
-  if (e.pointerType === 'mouse') { if (document.pointerLockElement === cv && estado === 'jugando') J.a += e.movementX * 0.0026; return; }
+  if (e.pointerType === 'mouse') { if (document.pointerLockElement === cv && estado === 'jugando') { J.a += e.movementX * 0.0026; J.pitch = clamp(J.pitch - e.movementY * 0.0024, -0.75, 0.75); } return; }
   if (joy.activo && e.pointerId === joy.id) {
     let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy;
     const d = Math.hypot(dx, dy), max = 50;
@@ -1935,9 +2171,9 @@ cv.addEventListener('pointermove', (e) => {
     $('joy-k').style.transform = `translate(${dx}px,${dy}px)`;
   }
   if (mirada.id === e.pointerId) {
-    const dx = e.clientX - mirada.x;
-    mirada.x = e.clientX; mirada.movido += Math.abs(dx);
-    if (estado === 'jugando') J.a += dx * 0.0062;
+    const dx = e.clientX - mirada.x, dy = e.clientY - mirada.y;
+    mirada.x = e.clientX; mirada.y = e.clientY; mirada.movido += Math.abs(dx) + Math.abs(dy);
+    if (estado === 'jugando') { J.a += dx * 0.0062; J.pitch = clamp(J.pitch - dy * 0.005, -0.75, 0.75); }
   }
 });
 function soltar(e) {
@@ -1971,6 +2207,7 @@ estado = 'menu';
 pintarMenu();
 pintarBestiario();
 requestAnimationFrame(bucle);
+window.__luz = { get J() { return J; }, get enemigos() { return enemigos; }, cambiarArma, disparar, empezar, jugar, get estado() { return estado; } };
 </script>
 </body>
 </html>
