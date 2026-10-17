@@ -1,7 +1,7 @@
 {
- "version": "ca9980c33b35",
+ "version": "d9c4444ffbdd",
  "recursos": "juma-recursos-v1",
- "tamano": 52117242,
+ "tamano": 52129113,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -741,12 +741,12 @@
   {
    "ruta": "index.html",
    "tamano": 147070,
-   "hash": "fe9dcac89219"
+   "hash": "43af1c86ae33"
   },
   {
    "ruta": "js/app.js",
-   "tamano": 489045,
-   "hash": "d8e16f44c9c0"
+   "tamano": 489611,
+   "hash": "22cd7a1f512c"
   },
   {
    "ruta": "js/fe.js",
@@ -767,6 +767,11 @@
    "ruta": "js/qrcode.min.js",
    "tamano": 20768,
    "hash": "2737b9ebcabf"
+  },
+  {
+   "ruta": "juegos/angel-que-vuela.html",
+   "tamano": 11305,
+   "hash": "e60c1991d565"
   },
   {
    "ruta": "juegos/bloques-de-fe.html",
