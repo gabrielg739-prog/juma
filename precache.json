@@ -1,7 +1,7 @@
 {
- "version": "d9c4444ffbdd",
+ "version": "bcca223c586e",
  "recursos": "juma-recursos-v1",
- "tamano": 52129113,
+ "tamano": 52244733,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -741,12 +741,12 @@
   {
    "ruta": "index.html",
    "tamano": 147070,
-   "hash": "43af1c86ae33"
+   "hash": "d03c6c44d00f"
   },
   {
    "ruta": "js/app.js",
-   "tamano": 489611,
-   "hash": "22cd7a1f512c"
+   "tamano": 489781,
+   "hash": "d0cec821013a"
   },
   {
    "ruta": "js/fe.js",
@@ -770,8 +770,8 @@
   },
   {
    "ruta": "juegos/angel-que-vuela.html",
-   "tamano": 11305,
-   "hash": "e60c1991d565"
+   "tamano": 14443,
+   "hash": "7b46776bdd7c"
   },
   {
    "ruta": "juegos/bloques-de-fe.html",
@@ -954,6 +954,11 @@
    "hash": "d4e49044c94e"
   },
   {
+   "ruta": "juegos/portadas/angel.jpg",
+   "tamano": 22491,
+   "hash": "50615af38fd0"
+  },
+  {
    "ruta": "juegos/portadas/bloques.jpg",
    "tamano": 38954,
    "hash": "a5c367c6ccee"
@@ -962,6 +967,11 @@
    "ruta": "juegos/portadas/camino.jpg",
    "tamano": 23815,
    "hash": "287cb0ead62e"
+  },
+  {
+   "ruta": "juegos/portadas/carrera.jpg",
+   "tamano": 57687,
+   "hash": "7becaa741cc7"
   },
   {
    "ruta": "juegos/portadas/cuentas.jpg",
@@ -987,6 +997,11 @@
    "ruta": "juegos/portadas/palabras.jpg",
    "tamano": 53480,
    "hash": "0961652f0183"
+  },
+  {
+   "ruta": "juegos/portadas/rueda.jpg",
+   "tamano": 32134,
+   "hash": "106dc615b7f1"
   },
   {
    "ruta": "juegos/portadas/sacristan.jpg",
