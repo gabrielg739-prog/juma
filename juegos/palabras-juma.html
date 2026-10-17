@@ -3,168 +3,228 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0A235C">
+<meta name="theme-color" content="#071A4D">
 <title>Palabras JUMA</title>
 <style>
   :root {
-    --azul: #0A235C; --azul-2: #1E4FD8; --azul-3: #DCE7FF;
-    --oro: #F5C518; --oro-2: #B88A00; --crema: #FFFBF0; --papel: #FFF8E7;
-    --ink: #0F1B3D; --muted: #5B6785; --linea: rgba(10,35,92,.14);
-    --ok: #15803D; --mal: #B91C1C;
+    --navy: #071A4D; --navy-2: #0E2A73; --royal: #2B5BE0; --royal-2: #1E43B0;
+    --gold: #F7C948; --gold-2: #C98F12; --cream: #FFF6DE; --paper: #FBF3DC;
+    --ink: #13204A; --muted: #6B7699; --ok: #22C55E; --bad: #EF4444; --line: rgba(255,255,255,.14);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; margin: 0; }
+  html, body { margin: 0; height: 100%; }
   body {
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    color: var(--ink);
+    font-family: "Trebuchet MS", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #fff; min-height: 100%; overflow-x: hidden;
     background:
-      radial-gradient(1200px 500px at 50% -180px, rgba(30,79,216,.55), transparent 70%),
-      linear-gradient(180deg, #0A235C 0%, #071845 100%);
-    min-height: 100%;
-    overflow-x: hidden;
+      radial-gradient(900px 520px at 50% -160px, rgba(247,201,72,.28), transparent 65%),
+      radial-gradient(700px 500px at 110% 110%, rgba(43,91,224,.45), transparent 60%),
+      linear-gradient(180deg, #0C2A6E 0%, #071A4D 55%, #050F30 100%);
   }
-  button { font: inherit; cursor: pointer; border: 0; }
-  button:focus-visible { outline: 3px solid var(--oro); outline-offset: 2px; }
-  .app { max-width: 520px; margin: 0 auto; padding: 12px 14px 26px; min-height: 100vh; display: flex; flex-direction: column; gap: 14px; color: #fff; }
+  button { font: inherit; cursor: pointer; border: 0; color: inherit; }
+  button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .app { max-width: 480px; margin: 0 auto; min-height: 100vh; padding: 12px 14px 22px; display: flex; flex-direction: column; gap: 12px; }
+  svg { display: block; }
 
-  /* Cabecera */
+  /* Barra superior */
   .top { display: flex; align-items: center; gap: 8px; }
-  .icono-btn { width: 42px; height: 42px; border-radius: 14px; background: rgba(255,255,255,.1); color: #fff; display: grid; place-items: center; font-size: 18px; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.16); }
-  .titulo { flex: 1; min-width: 0; }
-  .titulo small { display: block; opacity: .75; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
-  .titulo b { display: block; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pill { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 6px 11px; font-weight: 800; font-size: 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
-  .pill .ico { color: var(--oro); }
-  .corazones { letter-spacing: 1px; color: #FF6B8A; }
-  .corazones .vacio { color: rgba(255,255,255,.3); }
+  .redondo { width: 44px; height: 44px; border-radius: 50%; background: rgba(7,26,77,.75); border: 2px solid rgba(255,255,255,.22); display: grid; place-items: center; flex: 0 0 auto; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .redondo:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.25); }
+  .pill { height: 40px; padding: 0 14px 0 6px; border-radius: 999px; background: rgba(7,26,77,.8); border: 2px solid rgba(255,255,255,.2); display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 16px; white-space: nowrap; }
+  .pill .ic { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(145deg, var(--gold), var(--gold-2)); color: #3A2600; font-size: 15px; }
+  .pill.vidas .ic { background: linear-gradient(145deg, #FF8FA3, #E11D48); color: #fff; }
+  .espacio { flex: 1; }
+  .pill small { font-size: 11px; opacity: .8; font-weight: 700; }
 
-  /* Tarjetas y botones */
-  .tarjeta { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 20px; padding: 14px; }
-  .btn { background: var(--oro); color: #1B1400; border-radius: 14px; padding: 12px 16px; font-weight: 800; font-size: 15px; box-shadow: 0 3px 0 var(--oro-2); }
-  .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--oro-2); }
-  .btn.sec { background: rgba(255,255,255,.1); color: #fff; box-shadow: none; border: 1px solid rgba(255,255,255,.2); }
-  .btn.blanco { background: #fff; color: var(--azul); box-shadow: 0 3px 0 #C9D4EE; }
-  .btn:disabled { opacity: .45; cursor: default; }
-  .btn-fila { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-  h1 { font-size: 26px; line-height: 1.15; margin: 4px 0 0; letter-spacing: -.01em; }
-  .sub { margin: 4px 0 0; opacity: .85; font-size: 14.5px; line-height: 1.45; }
-
-  /* Mapa de niveles */
-  .cap-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-  .cap-cab h2 { margin: 0; font-size: 17px; color: var(--oro); }
-  .cap-cab span { font-size: 12.5px; opacity: .8; white-space: nowrap; }
-  .grid-niveles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px; }
-  .nv { aspect-ratio: 1; border-radius: 14px; background: #fff; color: var(--azul); font-weight: 900; font-size: 16px; box-shadow: 0 3px 0 #C9D4EE; }
-  .nv.hecho { background: var(--ok); color: #fff; box-shadow: 0 3px 0 #0E5A2A; }
-  .nv.actual { background: var(--oro); color: #1B1400; box-shadow: 0 3px 0 var(--oro-2), 0 0 0 4px rgba(245,197,24,.35); }
-  .nv:disabled { background: rgba(255,255,255,.1); color: rgba(255,255,255,.4); box-shadow: none; }
-  .mosaico { width: 100%; max-width: 200px; aspect-ratio: 4/5; margin: 12px auto 0; border-radius: 12px; overflow: hidden; display: grid; grid-template-columns: repeat(4,1fr); grid-template-rows: repeat(5,1fr); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); }
-  .pieza { background-repeat: no-repeat; background-size: 400% 500%; background-color: rgba(10,35,92,.9); }
-  .pieza.off { background-image: none !important; background-color: rgba(10,35,92,.9); }
-  .pieza.off::after { content: ""; display: block; width: 100%; height: 100%; background: repeating-linear-gradient(45deg, rgba(255,255,255,.04) 0 6px, transparent 6px 12px); }
-  .santo { text-align: center; font-size: 14px; margin-top: 8px; opacity: .9; }
-  .aviso { font-size: 14px; line-height: 1.45; }
+  /* Título y mapa */
+  .titulo { text-align: center; margin: 6px 0 0; font-family: Georgia, "Times New Roman", serif; font-weight: 700; letter-spacing: .02em; line-height: 1; }
+  .titulo .a { display: block; font-size: 30px; color: #fff; text-shadow: 0 3px 0 rgba(0,0,0,.35); }
+  .titulo .b { display: block; font-size: 22px; color: var(--gold); letter-spacing: .25em; margin-top: 6px; }
+  .insignia { width: 168px; height: 168px; margin: 14px auto 4px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #2D5AD6, #0B2468 70%); border: 6px solid var(--gold); box-shadow: 0 0 0 6px rgba(247,201,72,.2), 0 14px 30px rgba(0,0,0,.4); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .insignia b { font-family: Georgia, serif; font-size: 58px; line-height: 1; }
+  .insignia small { font-size: 13px; letter-spacing: .3em; color: var(--gold); font-weight: 800; }
+  .tarjeta { background: rgba(7,26,77,.72); border: 2px solid rgba(255,255,255,.14); border-radius: 22px; padding: 14px; box-shadow: 0 10px 24px rgba(0,0,0,.25); }
+  .cap-linea { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .cap-linea b { font-size: 17px; }
+  .cap-linea small { font-size: 12.5px; color: var(--gold); font-weight: 800; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+  .barra { position: relative; height: 22px; border-radius: 999px; background: #0A1B4A; border: 2px solid rgba(255,255,255,.18); margin-top: 10px; }
+  .barra > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: linear-gradient(180deg, #7BE495, #22B455); min-width: 0; transition: width .5s ease; }
+  .barra > span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12.5px; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+  .barra .regalo { position: absolute; right: -14px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(145deg, #B26BFF, #6C2BD9); display: grid; place-items: center; box-shadow: 0 4px 0 #3F1A8A; }
+  .cuadro-fila { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+  .miniatura { width: 62px; height: 78px; border-radius: 10px; background-size: cover; background-position: center; flex: 0 0 auto; border: 2px solid var(--gold); box-shadow: 0 4px 10px rgba(0,0,0,.35); }
+  .miniatura.bloq { filter: grayscale(1) brightness(.45); }
+  .cuadro-fila .texto { flex: 1; min-width: 0; }
+  .cuadro-fila small { font-size: 12.5px; opacity: .85; font-weight: 700; }
+  .cuadro-fila .barra { margin-top: 6px; height: 16px; }
+  .cuadro-fila .barra > span { font-size: 11px; }
+  .btn-grande { width: 100%; height: 66px; border-radius: 22px; font-size: 22px; font-weight: 900; letter-spacing: .05em; background: linear-gradient(180deg, #6EE797, #1FB254); box-shadow: 0 6px 0 #0E7A36, 0 12px 22px rgba(0,0,0,.3); color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
+  .btn-grande:active { transform: translateY(4px); box-shadow: 0 2px 0 #0E7A36; }
+  .btn-grande:disabled { background: #3A4A6E; box-shadow: 0 6px 0 #222D47; color: #9AA6C7; }
+  .botones2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn2 { height: 50px; border-radius: 16px; background: rgba(255,255,255,.1); border: 2px solid rgba(255,255,255,.2); font-weight: 800; font-size: 15px; }
+  .btn2:active { transform: translateY(2px); }
+  .aviso { text-align: center; font-size: 14px; opacity: .92; min-height: 0; }
+  .aviso:empty { display: none; }
 
   /* Juego */
-  .papel { background: var(--papel); color: var(--ink); border-radius: 22px; padding: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.25), inset 0 0 0 1px rgba(184,138,0,.25); }
-  .tablero-wrap { display: flex; justify-content: center; min-height: 120px; }
+  .barra-juego { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .chip-nivel { height: 40px; padding: 0 16px; border-radius: 999px; background: rgba(7,26,77,.8); border: 2px solid rgba(255,255,255,.2); display: inline-flex; align-items: center; font-weight: 900; font-size: 16px; letter-spacing: .03em; }
+  .chip-tiempo { height: 40px; padding: 0 14px; border-radius: 999px; background: rgba(7,26,77,.8); border: 2px solid rgba(255,255,255,.2); display: inline-flex; align-items: center; gap: 6px; font-weight: 900; font-variant-numeric: tabular-nums; font-size: 16px; }
+  .chip-tiempo.poco { color: #FFB4B4; border-color: #EF4444; animation: latido 1s infinite; }
+  @keyframes latido { 50% { transform: scale(1.05); } }
+  .tablero-tarjeta { background: rgba(255,246,222,.08); border: 2px solid rgba(255,255,255,.12); border-radius: 24px; padding: 14px 8px; display: flex; justify-content: center; min-height: 150px; }
   .tablero { position: relative; }
-  .celda { position: absolute; border-radius: 7px; background: #fff; border: 1.5px solid #D5DBEA; display: grid; place-items: center; font-weight: 900; color: var(--azul); user-select: none; transition: background .2s, transform .2s; }
-  .celda.resuelta { background: var(--azul-2); border-color: var(--azul-2); color: #fff; }
-  .celda.pista { background: var(--oro); border-color: var(--oro-2); color: #1B1400; }
-  .celda.activa { box-shadow: 0 0 0 3px var(--oro); z-index: 2; }
-  .celda .n { position: absolute; top: 2px; left: 4px; font-size: 9px; font-weight: 800; color: var(--muted); }
-  .celda.resuelta .n { color: rgba(255,255,255,.8); }
-  .celda.nuevo { animation: aparece .45s cubic-bezier(.2,1.4,.4,1); }
-  @keyframes aparece { 0% { transform: scale(.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-  .pista-box { border-radius: 14px; background: #fff; border: 1px solid var(--linea); padding: 10px 12px; font-size: 14.5px; line-height: 1.4; min-height: 64px; }
-  .pista-box small { display: block; font-weight: 800; color: var(--azul-2); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; }
-  .msg { min-height: 22px; text-align: center; font-weight: 800; font-size: 15px; }
-  .msg.ok { color: var(--ok); }
-  .msg.mal { color: var(--mal); }
-  .pill-palabra { min-height: 46px; display: flex; align-items: center; justify-content: center; }
-  .pill-palabra span { background: #fff; color: var(--azul); border-radius: 14px; padding: 8px 18px; font-size: 22px; font-weight: 900; letter-spacing: 3px; box-shadow: 0 3px 0 #C9D4EE; text-transform: uppercase; min-width: 70px; text-align: center; }
-  .pill-palabra span.vacia { background: rgba(255,255,255,.12); color: rgba(255,255,255,.55); box-shadow: none; font-size: 14px; letter-spacing: 0; font-weight: 700; }
-  .pill-palabra span.error { background: #FEE2E2; color: var(--mal); }
-  .rueda { position: relative; width: 280px; height: 280px; margin: 0 auto; touch-action: none; user-select: none; -webkit-user-select: none; }
-  .rueda-fondo { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.14), rgba(255,255,255,.04) 70%); border: 1px solid rgba(255,255,255,.14); }
-  .letra { position: absolute; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; background: #fff; color: var(--azul); font-weight: 900; font-size: 24px; display: grid; place-items: center; box-shadow: 0 4px 0 #C9D4EE; transition: transform .12s, background .12s; }
-  .letra.sel { background: var(--oro); color: #1B1400; box-shadow: 0 4px 0 var(--oro-2); transform: scale(1.1); }
-  .rueda-centro { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); }
-  .rueda-centro button { background: rgba(255,255,255,.12); color: #fff; border-radius: 999px; padding: 9px 14px; font-weight: 800; font-size: 13px; border: 1px solid rgba(255,255,255,.2); }
-  .acciones { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-  .acciones .btn { padding: 11px 6px; font-size: 13.5px; }
-  .sacudir { animation: sacudir .38s; }
-  @keyframes sacudir { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  .ficha { position: absolute; border-radius: 10px; background: linear-gradient(180deg, #3B6EF0, #1D3FB0); box-shadow: inset 0 -3px 0 rgba(0,0,0,.25), 0 3px 6px rgba(0,0,0,.35); display: grid; place-items: center; color: #fff; font-weight: 900; user-select: none; transition: transform .2s, background .3s; }
+  .ficha.vacia { background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 2px rgba(255,255,255,.18); }
+  .ficha.hecha { background: linear-gradient(180deg, #FFE27A, #E8A910); color: #3A2400; box-shadow: inset 0 -3px 0 rgba(0,0,0,.18), 0 3px 6px rgba(0,0,0,.3); }
+  .ficha.pista { background: linear-gradient(180deg, #8FD6FF, #3D8BE0); }
+  .ficha.activa { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .ficha .n { position: absolute; top: 3px; left: 5px; font-size: 9px; font-weight: 800; opacity: .75; }
+  .ficha.nueva { animation: pop .45s cubic-bezier(.2,1.5,.4,1); }
+  @keyframes pop { 0% { transform: scale(.3); } 100% { transform: scale(1); } }
+  .pista-linea { min-height: 46px; background: rgba(255,246,222,.96); color: var(--ink); border-radius: 16px; padding: 9px 14px; font-size: 14.5px; line-height: 1.35; box-shadow: 0 4px 0 rgba(0,0,0,.2); }
+  .pista-linea small { display: block; color: var(--royal-2); font-weight: 900; font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+  .msg { min-height: 20px; text-align: center; font-weight: 800; font-size: 15px; }
+  .msg.ok { color: #7BE495; }
+  .msg.mal { color: #FFB4B4; }
+  .formada { min-height: 48px; display: flex; align-items: center; justify-content: center; }
+  .formada span { background: #fff; color: var(--navy); padding: 9px 20px; border-radius: 16px; font-size: 22px; font-weight: 900; letter-spacing: .14em; box-shadow: 0 4px 0 rgba(0,0,0,.2); min-width: 80px; text-align: center; text-transform: uppercase; }
+  .formada span.vacio { background: rgba(255,255,255,.12); color: rgba(255,255,255,.7); box-shadow: none; font-size: 14px; letter-spacing: 0; font-weight: 700; text-transform: none; }
+  .formada span.sacude { animation: sacude .38s; background: #FFE1E1; color: #B91C1C; }
+  @keyframes sacude { 25% { transform: translateX(-7px); } 75% { transform: translateX(7px); } }
+  .rueda { position: relative; width: 300px; height: 300px; margin: 0 auto; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .rueda-disco { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 50% 35%, rgba(255,255,255,.2), rgba(255,255,255,.06) 62%, rgba(0,0,0,.12)); border: 3px solid rgba(255,255,255,.18); box-shadow: inset 0 0 40px rgba(0,0,0,.25); }
+  #lineas { position: absolute; left: 0; top: 0; width: 300px; height: 300px; pointer-events: none; }
+  .letra { position: absolute; width: 62px; height: 62px; margin: -31px 0 0 -31px; border-radius: 50%; background: linear-gradient(180deg, #3B6EF0, #1D3FB0); color: #fff; font-weight: 900; font-size: 26px; display: grid; place-items: center; box-shadow: inset 0 -4px 0 rgba(0,0,0,.28), 0 4px 8px rgba(0,0,0,.35); border: 2px solid rgba(255,255,255,.35); transition: transform .12s, background .12s; }
+  .letra.sel { background: linear-gradient(180deg, #FFE27A, #E8A910); color: #3A2400; transform: scale(1.12); border-color: #fff; }
+  .mezclar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 66px; height: 66px; border-radius: 50%; background: rgba(7,26,77,.9); border: 2px solid rgba(255,255,255,.3); display: grid; place-items: center; box-shadow: 0 4px 0 rgba(0,0,0,.3); }
+  .mezclar:active { transform: translate(-50%, -48%); }
+  .inferior { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .pista-btn { height: 52px; padding: 0 16px 0 10px; border-radius: 999px; background: linear-gradient(180deg, #FFE27A, #E8A910); color: #3A2400; font-weight: 900; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 5px 0 #A36E06; font-size: 15px; }
+  .pista-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #A36E06; }
+  .pista-btn small { font-size: 13px; background: rgba(58,36,0,.15); border-radius: 999px; padding: 3px 8px; }
 
   /* Ventanas */
-  .ov { position: fixed; inset: 0; background: rgba(4,12,35,.72); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 20; }
-  .ov.on { display: flex; }
-  .caja { background: #fff; color: var(--ink); border-radius: 22px; padding: 20px; width: 100%; max-width: 380px; max-height: 88vh; overflow: auto; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
-  .caja h3 { margin: 0 0 6px; color: var(--azul); font-size: 21px; }
-  .caja p { margin: 6px 0; font-size: 15px; line-height: 1.45; }
-  .verso { font-style: italic; background: var(--crema); border: 1px solid rgba(184,138,0,.3); border-radius: 14px; padding: 12px; margin: 12px 0; font-size: 15px; line-height: 1.45; }
-  .verso small { display: block; font-style: normal; font-weight: 800; color: var(--muted); margin-top: 6px; font-size: 12.5px; }
-  .cuadro { width: 100%; aspect-ratio: 4/5; max-width: 240px; margin: 10px auto; border-radius: 14px; background: linear-gradient(135deg,#1E4FD8,#F5C518) center/cover no-repeat; box-shadow: 0 6px 16px rgba(0,0,0,.2); }
-  .lista-dic { text-align: left; display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
-  .entrada { border: 1px solid var(--linea); border-radius: 14px; padding: 10px 12px; }
-  .entrada b { color: var(--azul); font-size: 16px; letter-spacing: 1px; }
-  .entrada p { margin: 4px 0 0; font-size: 14px; line-height: 1.4; }
-  .entrada i { display: block; color: var(--muted); font-size: 13px; margin-top: 4px; }
-  .entrada.bloq { background: #F3F5FA; color: var(--muted); }
-  .cerrar { background: var(--azul); color: #fff; border-radius: 14px; padding: 11px 18px; font-weight: 800; margin-top: 12px; width: 100%; }
+  .fondo { position: fixed; inset: 0; background: rgba(2,8,28,.72); display: none; align-items: flex-end; justify-content: center; padding: 14px; z-index: 30; }
+  .fondo.on { display: flex; }
+  .hoja { width: 100%; max-width: 440px; max-height: 90vh; overflow: auto; background: linear-gradient(180deg, #FFF8E4, #FBEFCB); color: var(--ink); border-radius: 26px; padding: 22px 18px 18px; box-shadow: 0 -10px 40px rgba(0,0,0,.4); text-align: center; animation: sube .35s cubic-bezier(.2,1.1,.4,1); }
+  @keyframes sube { from { transform: translateY(40px); opacity: 0; } }
+  .hoja h3 { font-family: Georgia, serif; margin: 0 0 4px; font-size: 26px; color: var(--navy); }
+  .hoja p { margin: 6px 0; font-size: 15px; line-height: 1.45; }
+  .hoja .sub { color: var(--muted); font-size: 14px; }
+  .boton { width: 100%; height: 56px; border-radius: 18px; background: linear-gradient(180deg, #6EE797, #1FB254); color: #fff; font-weight: 900; font-size: 18px; letter-spacing: .04em; box-shadow: 0 5px 0 #0E7A36; margin-top: 14px; }
+  .boton.sec { background: #fff; color: var(--navy); box-shadow: 0 5px 0 #CBD3EA; border: 2px solid #CBD3EA; }
+  .boton:active { transform: translateY(3px); }
+  .estrellas { font-size: 30px; letter-spacing: 6px; color: var(--gold-2); margin: 4px 0; }
+  .versiculo { font-style: italic; background: #fff; border: 2px dashed #E4C56A; border-radius: 16px; padding: 12px; margin: 12px 0; font-size: 15px; line-height: 1.45; }
+  .versiculo small { display: block; font-style: normal; font-weight: 800; color: var(--muted); margin-top: 6px; font-size: 12.5px; }
+  .premio { width: 170px; height: 218px; margin: 10px auto; border-radius: 16px; background-size: cover; background-position: center; border: 4px solid var(--gold); box-shadow: 0 10px 26px rgba(0,0,0,.35), 0 0 30px rgba(247,201,72,.45); }
+  .lista-relicario { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; text-align: left; }
+  .carta { background: #fff; border-radius: 16px; padding: 10px 12px; border: 2px solid #EADFBF; }
+  .carta b { color: var(--royal-2); font-size: 16px; letter-spacing: .06em; }
+  .carta p { margin: 4px 0 0; font-size: 14px; }
+  .carta i { display: block; font-style: normal; color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .carta.bloq { background: rgba(255,255,255,.5); border-style: dashed; color: var(--muted); }
+  .capitulo-lista { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; text-align: left; }
+  .capitulo-lista .cap { background: #fff; border-radius: 16px; padding: 10px; border: 2px solid #EADFBF; }
+  .capitulo-lista .cap b { font-size: 15px; color: var(--navy); }
+  .capitulo-lista .cap small { color: var(--muted); font-size: 12.5px; }
+  .niveles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 8px; }
+  .niveles button { height: 40px; border-radius: 12px; background: var(--royal); color: #fff; font-weight: 900; box-shadow: 0 3px 0 var(--royal-2); }
+  .niveles button.hecho { background: #22B455; box-shadow: 0 3px 0 #0E7A36; }
+  .niveles button:disabled { background: #D9DEEE; color: #9AA3BF; box-shadow: none; }
+  .niveles button.actual { background: var(--gold); color: #3A2400; box-shadow: 0 3px 0 var(--gold-2); }
+  .como p { text-align: left; }
+  .como b { color: var(--royal-2); }
+  .cerrar-x { position: absolute; }
 
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
 <div class="app">
-
   <header class="top">
-    <button class="icono-btn" id="btn-atras" type="button" aria-label="Volver al mapa">←</button>
-    <div class="titulo"><small id="t-cap">Palabras JUMA</small><b id="t-nivel">Niveles</b></div>
-    <div class="pill" title="Puntos misioneros"><span class="ico">★</span><span id="t-pts">0</span></div>
-    <div class="pill corazones" id="t-vidas" title="Vidas" aria-label="Vidas">♥♥♥♥♥</div>
+    <button class="redondo" id="btn-inicio" type="button" aria-label="Inicio" style="display:none">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+    </button>
+    <div class="pill" id="p-pts" title="Puntos misioneros"><span class="ic">★</span><span id="t-pts">0</span></div>
+    <div class="espacio"></div>
+    <div class="pill vidas" id="p-vidas" title="Vidas"><span class="ic">♥</span><span id="t-vidas">5</span></div>
+    <button class="redondo" id="btn-ayuda" type="button" aria-label="Cómo jugar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.4v.5"/><circle cx="12" cy="17" r=".6" fill="#fff"/></svg>
+    </button>
   </header>
 
   <!-- MAPA -->
-  <section id="vista-mapa" style="display:flex;flex-direction:column;gap:14px">
-    <div>
-      <h1>Palabras JUMA</h1>
-      <p class="sub">Forma palabras con las letras de la rueda y completa el crucigrama. Cada nivel cuesta una vida. Al terminar cada capítulo armas un cuadro.</p>
+  <section id="vista-mapa" style="display:flex;flex-direction:column;gap:12px">
+    <h1 class="titulo"><span class="a">Palabras</span><span class="b">JUMA</span></h1>
+    <div class="insignia"><b id="m-nivel">1</b><small>NIVEL</small></div>
+    <div class="tarjeta">
+      <div class="cap-linea"><b id="m-cap"></b><small id="m-dif"></small></div>
+      <div class="barra"><i id="m-barra"></i><span id="m-barra-t"></span>
+        <div class="regalo" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="2" fill="#FFE27A"/><rect x="2.5" y="6.5" width="19" height="4" rx="1.5" fill="#FFF6DE"/><rect x="10.8" y="6.5" width="2.4" height="13.5" fill="#E8A910"/><path d="M12 6.5C9 2.5 5.5 4 7 6.5M12 6.5c3-4 6.5-2.5 5 0" stroke="#FFE27A" stroke-width="2" fill="none"/></svg></div>
+      </div>
+      <div class="cuadro-fila">
+        <div class="miniatura" id="m-mini"></div>
+        <div class="texto"><small>Cuadro del capítulo</small>
+          <div class="barra"><i id="m-barra2"></i><span id="m-barra2-t"></span></div>
+        </div>
+      </div>
     </div>
-    <div class="tarjeta aviso" id="aviso-vidas" style="display:none"></div>
-    <div id="capitulos" style="display:flex;flex-direction:column;gap:14px"></div>
-    <div class="btn-fila"><button class="btn sec" id="btn-dic-mapa" type="button">Venezolario Católico</button></div>
+    <button class="btn-grande" id="btn-jugar" type="button">NIVEL <span id="m-nivel2">1</span></button>
+    <div class="botones2">
+      <button class="btn2" id="btn-capitulos" type="button">Capítulos</button>
+      <button class="btn2" id="btn-relicario" type="button">Relicario</button>
+    </div>
+    <div class="aviso" id="m-aviso"></div>
   </section>
 
   <!-- JUEGO -->
-  <section id="vista-juego" style="display:none;flex-direction:column;gap:14px">
-    <div class="papel">
-      <div class="tablero-wrap"><div class="tablero" id="tablero"></div></div>
+  <section id="vista-juego" style="display:none;flex-direction:column;gap:12px">
+    <div class="barra-juego">
+      <button class="redondo" id="btn-salir" type="button" aria-label="Volver al mapa">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <span class="chip-nivel" id="g-nivel">Nivel 1</span>
+      <span class="chip-tiempo" id="g-tiempo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg><span id="g-tiempo-t">1:30</span></span>
     </div>
-    <div class="pista-box" id="pista-box"></div>
+    <div class="tablero-tarjeta"><div class="tablero" id="tablero"></div></div>
+    <div class="pista-linea" id="pista"></div>
     <div class="msg" id="msg"></div>
-    <div class="pill-palabra" id="pill"></div>
-    <div class="rueda" id="rueda"><div class="rueda-fondo"></div><div class="rueda-centro"><button type="button" id="btn-mezclar">↻ Mezclar</button></div></div>
-    <div class="acciones">
-      <button class="btn sec" id="btn-pista" type="button">Pista de letra<br><small>−15 ★</small></button>
-      <button class="btn sec" id="btn-borrar" type="button">Borrar</button>
-      <button class="btn sec" id="btn-dic" type="button">Venezolario</button>
+    <div class="formada" id="formada"></div>
+    <div class="rueda" id="rueda">
+      <div class="rueda-disco"></div>
+      <svg id="lineas" viewBox="0 0 300 300"><polyline id="trazo" fill="none" stroke="#FFE27A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" points=""/></svg>
+      <button class="mezclar" id="btn-mezclar" type="button" aria-label="Mezclar letras">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFE27A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+      </button>
+    </div>
+    <div class="inferior">
+      <button class="pista-btn" id="btn-pista" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3A2400" stroke-width="2.4" stroke-linecap="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>
+        Pista <small>★15</small>
+      </button>
+      <button class="pista-btn" id="btn-borrar" type="button" style="background:#fff;color:var(--navy);box-shadow:0 5px 0 #CBD3EA">Borrar</button>
     </div>
   </section>
 </div>
 
-<div class="ov" id="ov"><div class="caja" id="caja"></div></div>
+<div class="fondo" id="fondo"><div class="hoja" id="hoja"></div></div>
 
 <script>
 const NIVELES = [{"n":1,"base":"ONCE","rows":3,"cols":4,"palabras":[{"w":"ONCE","r":1,"c":0,"dir":"H","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."},{"w":"NOE","r":0,"c":0,"dir":"V","pista":"Hombre que se salvó del diluvio","nota":"Noé construyó un arca por orden de Dios."},{"w":"ECO","r":0,"c":2,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."}]},{"n":2,"base":"CIRIO","rows":3,"cols":6,"palabras":[{"w":"CIRIO","r":0,"c":1,"dir":"H","pista":"Vela grande de cera","nota":"El cirio pascual simboliza a Cristo resucitado."},{"w":"RIO","r":0,"c":3,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"RICO","r":2,"c":0,"dir":"H","pista":"Que tiene muchos bienes","nota":"Es más fácil pasar un camello por el ojo de una aguja (Marcos 10, 25)."}]},{"n":3,"base":"CORTE","rows":3,"cols":5,"palabras":[{"w":"CORTE","r":0,"c":0,"dir":"H","pista":"Acción de cortar","nota":"El Reino de Dios se hace presente en la justicia y la paz."},{"w":"ECO","r":0,"c":4,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"RETO","r":2,"c":1,"dir":"H","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."}]},{"n":4,"base":"DAVID","rows":3,"cols":5,"palabras":[{"w":"DAVID","r":0,"c":0,"dir":"H","pista":"Rey y salmista de Israel","nota":"David cantó y tocó el arpa para Dios."},{"w":"DIA","r":0,"c":4,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."},{"w":"VIDA","r":2,"c":1,"dir":"H","pista":"Lo que nos hace existir y crecer","nota":"Yo soy el camino, la verdad y la vida (Juan 14, 6)."}]},{"n":5,"base":"LEJOS","rows":4,"cols":5,"palabras":[{"w":"LEJOS","r":2,"c":0,"dir":"H","pista":"A gran distancia","nota":"El hijo pródigo estaba lejos, pero su padre lo esperaba."},{"w":"SOL","r":0,"c":0,"dir":"V","pista":"Astro que da luz y calor al día","nota":"Cristo es el sol que nace de lo alto (Lucas 1, 78)."},{"w":"JOSE","r":0,"c":4,"dir":"V","pista":"Esposo de María y padre adoptivo de Jesús","nota":"José fue un hombre justo que obedeció a Dios."}]},{"n":6,"base":"NADIE","rows":3,"cols":5,"palabras":[{"w":"NADIE","r":2,"c":0,"dir":"H","pista":"Ninguna persona","nota":"Nadie viene al Padre sino por mí (Juan 14, 6)."},{"w":"DIA","r":0,"c":1,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."},{"w":"IDEA","r":0,"c":0,"dir":"H","pista":"Pensamiento que surge en la mente","nota":"Una buena idea puede cambiar una comunidad."}]},{"n":7,"base":"RADIO","rows":3,"cols":5,"palabras":[{"w":"RADIO","r":2,"c":0,"dir":"H","pista":"Medio para escuchar noticias","nota":"La radio también lleva la Buena Noticia a los hogares."},{"w":"DIA","r":0,"c":1,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."},{"w":"RIO","r":0,"c":4,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."}]},{"n":8,"base":"RECTO","rows":3,"cols":7,"palabras":[{"w":"RECTO","r":0,"c":2,"dir":"H","pista":"Derecho, sin torcerse","nota":"Haz rectos tus caminos ante el Señor."},{"w":"ECO","r":0,"c":3,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"RETO","r":2,"c":0,"dir":"H","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."}]},{"n":9,"base":"REINO","rows":3,"cols":5,"palabras":[{"w":"REINO","r":0,"c":0,"dir":"H","pista":"Territorio gobernado por un rey","nota":"Venga a nosotros tu Reino."},{"w":"RIO","r":0,"c":0,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"NOE","r":0,"c":3,"dir":"V","pista":"Hombre que se salvó del diluvio","nota":"Noé construyó un arca por orden de Dios."}]},{"n":10,"base":"COLOR","rows":4,"cols":5,"palabras":[{"w":"COLOR","r":1,"c":0,"dir":"H","pista":"Lo que vemos según la luz","nota":"Los colores del logo de JUMA representan los continentes."},{"w":"ORO","r":1,"c":3,"dir":"V","pista":"Metal precioso amarillo","nota":"Los magos llevaron oro, incienso y mirra (Mateo 2, 11)."},{"w":"LOCO","r":3,"c":0,"dir":"H","pista":"Que pierde la razón","nota":"Dios no nos pide ser locos, sino sabios en el amor."},{"w":"CORO","r":0,"c":3,"dir":"V","pista":"Grupo de personas que cantan juntas","nota":"El coro juvenil anima la misa."}]},{"n":11,"base":"MARCA","rows":4,"cols":5,"palabras":[{"w":"MARCA","r":3,"c":0,"dir":"H","pista":"Señal que distingue algo","nota":"El bautismo marca a quien pertenece a Cristo."},{"w":"RAMA","r":0,"c":1,"dir":"V","pista":"Parte de un árbol que sale del tronco","nota":"Yo soy la vid, vosotros los sarmientos (Juan 15, 5)."},{"w":"MAR","r":1,"c":0,"dir":"H","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"ARMA","r":0,"c":4,"dir":"V","pista":"Instrumento para atacar o defender","nota":"La oración es el arma del cristiano."}]},{"n":12,"base":"MARIA","rows":4,"cols":5,"palabras":[{"w":"MARIA","r":0,"c":0,"dir":"H","pista":"Madre de Jesús","nota":"Primera discípula: respondió hágase en mí según tu palabra."},{"w":"ARMA","r":0,"c":4,"dir":"V","pista":"Instrumento para atacar o defender","nota":"La oración es el arma del cristiano."},{"w":"RAMA","r":3,"c":1,"dir":"H","pista":"Parte de un árbol que sale del tronco","nota":"Yo soy la vid, vosotros los sarmientos (Juan 15, 5)."},{"w":"MAR","r":0,"c":0,"dir":"V","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."}]},{"n":13,"base":"NECIO","rows":4,"cols":5,"palabras":[{"w":"NECIO","r":0,"c":0,"dir":"H","pista":"Persona sin juicio","nota":"El necio dice en su corazón: no hay Dios (Salmo 14, 1)."},{"w":"ECO","r":0,"c":1,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"NOE","r":2,"c":0,"dir":"H","pista":"Hombre que se salvó del diluvio","nota":"Noé construyó un arca por orden de Dios."},{"w":"ONCE","r":0,"c":4,"dir":"V","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."}]},{"n":14,"base":"NOCHE","rows":4,"cols":5,"palabras":[{"w":"NOCHE","r":2,"c":0,"dir":"H","pista":"Tiempo sin sol","nota":"Pedro dijo: Señor, en tu nombre echaré la red (Lucas 5, 5)."},{"w":"ONCE","r":0,"c":2,"dir":"V","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."},{"w":"ECO","r":0,"c":0,"dir":"H","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"NOE","r":0,"c":4,"dir":"V","pista":"Hombre que se salvó del diluvio","nota":"Noé construyó un arca por orden de Dios."}]},{"n":15,"base":"PALMA","rows":4,"cols":5,"palabras":[{"w":"PALMA","r":1,"c":0,"dir":"H","pista":"Árbol de hojas grandes","nota":"Domingo de Ramos: la gente agitó palmas al recibir a Jesús."},{"w":"ALMA","r":0,"c":2,"dir":"V","pista":"Parte espiritual de la persona","nota":"Dios creó al hombre con un alma inmortal."},{"w":"LAMA","r":3,"c":1,"dir":"H","pista":"Barro o fango","nota":"Dios levanta al pobre del lodo."},{"w":"MALA","r":0,"c":4,"dir":"V","pista":"Que no es buena","nota":"Líbranos del mal."}]},{"n":16,"base":"SALMO","rows":4,"cols":5,"palabras":[{"w":"SALMO","r":1,"c":0,"dir":"H","pista":"Canto o poema de la Biblia","nota":"Los salmos son la oración del pueblo de Israel."},{"w":"MALO","r":0,"c":1,"dir":"V","pista":"Que no es bueno","nota":"Líbranos del mal."},{"w":"LOMA","r":0,"c":4,"dir":"V","pista":"Pequeña elevación del terreno","nota":"Monte alto y tranquilo para orar."},{"w":"SOL","r":3,"c":0,"dir":"H","pista":"Astro que da luz y calor al día","nota":"Cristo es el sol que nace de lo alto (Lucas 1, 78)."}]},{"n":17,"base":"TOMAR","rows":4,"cols":7,"palabras":[{"w":"TOMAR","r":1,"c":2,"dir":"H","pista":"Coger algo con las manos","nota":"Tomad y comed (Mateo 26, 26)."},{"w":"ROTA","r":0,"c":3,"dir":"V","pista":"Partida en pedazos","nota":"Rota por dentro, pero no vencida."},{"w":"MAR","r":0,"c":5,"dir":"V","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"ROMA","r":3,"c":0,"dir":"H","pista":"Ciudad sede del Papa","nota":"Ahí vive el sucesor de Pedro."},{"w":"AMOR","r":0,"c":0,"dir":"V","pista":"Sentimiento de cariño que se entrega","nota":"Dios es amor (1 Juan 4, 8)."}]},{"n":18,"base":"AGUILA","rows":4,"cols":7,"palabras":[{"w":"AGUILA","r":0,"c":0,"dir":"H","pista":"Ave de gran vuelo","nota":"Los que esperan en el Señor levantarán alas como águilas."},{"w":"AGUA","r":0,"c":5,"dir":"V","pista":"Líquido transparente que bebemos","nota":"En el bautismo se usa agua como signo de vida nueva."},{"w":"IGUAL","r":3,"c":2,"dir":"H","pista":"Del mismo valor","nota":"Todos somos iguales ante Dios."}]},{"n":19,"base":"ANDRES","rows":4,"cols":6,"palabras":[{"w":"ANDRES","r":1,"c":0,"dir":"H","pista":"Apóstol, hermano de Pedro","nota":"Andrés llevó a su hermano hasta Jesús."},{"w":"SEDA","r":0,"c":4,"dir":"V","pista":"Tela fina y suave","nota":"Vestidos de seda son signo de lujo, pero no de amor."},{"w":"SENDA","r":3,"c":0,"dir":"H","pista":"Camino angosto para caminar","nota":"Jesús nos enseña el camino de la vida."}]},{"n":20,"base":"CRISTO","rows":4,"cols":6,"palabras":[{"w":"CRISTO","r":1,"c":0,"dir":"H","pista":"Hijo de Dios hecho hombre, el Mesías","nota":"Jesús es el Cristo, el Ungido de Dios."},{"w":"RICO","r":0,"c":2,"dir":"V","pista":"Que tiene muchos bienes","nota":"Es más fácil pasar un camello por el ojo de una aguja (Marcos 10, 25)."},{"w":"RIO","r":3,"c":0,"dir":"H","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."}]},{"n":21,"base":"LAICOS","rows":5,"cols":6,"palabras":[{"w":"LAICOS","r":0,"c":0,"dir":"H","pista":"Cristianos que viven la fe en el mundo","nota":"Los laicos transforman el mundo desde su vocación."},{"w":"SOL","r":0,"c":5,"dir":"V","pista":"Astro que da luz y calor al día","nota":"Cristo es el sol que nace de lo alto (Lucas 1, 78)."},{"w":"LAICO","r":0,"c":0,"dir":"V","pista":"Miembro del pueblo de Dios que no es sacerdote","nota":"El laico vive el Evangelio en el mundo."}]},{"n":22,"base":"MARTIR","rows":3,"cols":7,"palabras":[{"w":"MARTIR","r":2,"c":0,"dir":"H","pista":"Quien da la vida por la fe","nota":"Los mártires son semilla de nuevos cristianos."},{"w":"MAR","r":0,"c":2,"dir":"V","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"MIRAR","r":0,"c":2,"dir":"H","pista":"Ver con atención","nota":"Mirar con los ojos de Cristo."}]},{"n":23,"base":"MUSICA","rows":4,"cols":6,"palabras":[{"w":"MUSICA","r":0,"c":0,"dir":"H","pista":"Arte de combinar sonidos","nota":"La música ayuda a orar y a celebrar la fe."},{"w":"MIS","r":0,"c":0,"dir":"V","pista":"Pronombre de posesión","nota":"Mis ovejas escuchan mi voz (Juan 10, 27)."},{"w":"MISA","r":0,"c":0,"dir":"V","pista":"Celebración de la Eucaristía","nota":"Al final, el sacerdote dice: Id, la misa ha terminado. Es un envío."}]},{"n":24,"base":"OCULTO","rows":4,"cols":6,"palabras":[{"w":"OCULTO","r":3,"c":0,"dir":"H","pista":"Escondido","nota":"Nada hay oculto que no llegue a conocerse (Mateo 10, 26)."},{"w":"LOCO","r":0,"c":5,"dir":"V","pista":"Que pierde la razón","nota":"Dios no nos pide ser locos, sino sabios en el amor."},{"w":"CULTO","r":1,"c":1,"dir":"H","pista":"Adoración a Dios","nota":"El culto verdadero se hace con espíritu y verdad (Juan 4, 24)."}]},{"n":25,"base":"OSCURO","rows":4,"cols":6,"palabras":[{"w":"OSCURO","r":3,"c":0,"dir":"H","pista":"Sin luz","nota":"La luz brilla en la oscuridad (Juan 1, 5)."},{"w":"ORO","r":1,"c":0,"dir":"V","pista":"Metal precioso amarillo","nota":"Los magos llevaron oro, incienso y mirra (Mateo 2, 11)."},{"w":"CORO","r":0,"c":0,"dir":"V","pista":"Grupo de personas que cantan juntas","nota":"El coro juvenil anima la misa."}]},{"n":26,"base":"PASTOR","rows":4,"cols":6,"palabras":[{"w":"PASTOR","r":1,"c":0,"dir":"H","pista":"Quien cuida un rebaño","nota":"El buen pastor da la vida por las ovejas (Juan 10, 11)."},{"w":"ROTA","r":0,"c":4,"dir":"V","pista":"Partida en pedazos","nota":"Rota por dentro, pero no vencida."},{"w":"TROPA","r":3,"c":0,"dir":"H","pista":"Grupo de personas","nota":"La tropa de jóvenes salió a misionar."}]},{"n":27,"base":"PATENA","rows":3,"cols":6,"palabras":[{"w":"PATENA","r":0,"c":0,"dir":"H","pista":"Plato donde se coloca el pan de la misa","nota":"La patena sostiene la hostia durante la consagración."},{"w":"PAN","r":0,"c":0,"dir":"V","pista":"Alimento hecho de harina","nota":"Danos hoy nuestro pan de cada día."},{"w":"ANA","r":0,"c":5,"dir":"V","pista":"Madre de María","nota":"Santa Ana es la abuela de Jesús según la tradición."}]},{"n":28,"base":"PERDON","rows":3,"cols":9,"palabras":[{"w":"PERDON","r":0,"c":0,"dir":"H","pista":"Olvidar la ofensa y volver a empezar","nota":"Perdonar setenta veces siete (Mateo 18, 22)."},{"w":"NOE","r":0,"c":5,"dir":"V","pista":"Hombre que se salvó del diluvio","nota":"Noé construyó un arca por orden de Dios."},{"w":"PEDRO","r":2,"c":4,"dir":"H","pista":"Primer papa, pescador de Galilea","nota":"Jesús lo llamó la roca sobre la que edificará su Iglesia."}]},{"n":29,"base":"PLANTA","rows":3,"cols":6,"palabras":[{"w":"PLANTA","r":0,"c":0,"dir":"H","pista":"Ser vegetal","nota":"Dios hace crecer la planta de la fe."},{"w":"PAN","r":0,"c":0,"dir":"V","pista":"Alimento hecho de harina","nota":"Danos hoy nuestro pan de cada día."},{"w":"ANA","r":0,"c":2,"dir":"V","pista":"Madre de María","nota":"Santa Ana es la abuela de Jesús según la tradición."}]},{"n":30,"base":"SIERVO","rows":5,"cols":6,"palabras":[{"w":"SIERVO","r":4,"c":0,"dir":"H","pista":"Quien sirve a otro","nota":"Jesús vino a servir, y nos pide servir como Él."},{"w":"RIO","r":2,"c":5,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"SERIO","r":0,"c":5,"dir":"V","pista":"Grave o formal","nota":"La misión es un compromiso serio."}]},{"n":31,"base":"SIMPLE","rows":4,"cols":6,"palabras":[{"w":"SIMPLE","r":2,"c":0,"dir":"H","pista":"Sencillo","nota":"Sean simples como palomas y astutos como serpientes (Mateo 10, 16)."},{"w":"MIS","r":0,"c":0,"dir":"V","pista":"Pronombre de posesión","nota":"Mis ovejas escuchan mi voz (Juan 10, 27)."},{"w":"PIEL","r":0,"c":5,"dir":"V","pista":"Cubierta del cuerpo","nota":"Dios hizo al hombre con piel y con alma."}]},{"n":32,"base":"VIENTO","rows":3,"cols":6,"palabras":[{"w":"VIENTO","r":2,"c":0,"dir":"H","pista":"Aire en movimiento","nota":"El viento sopla donde quiere (Juan 3, 8)."},{"w":"NOE","r":0,"c":2,"dir":"V","pista":"Hombre que se salvó del diluvio","nota":"Noé construyó un arca por orden de Dios."},{"w":"ENVIO","r":0,"c":1,"dir":"H","pista":"Acción de enviar a alguien","nota":"Toda misión comienza con un envío."}]},{"n":33,"base":"GLORIA","rows":4,"cols":6,"palabras":[{"w":"GLORIA","r":2,"c":0,"dir":"H","pista":"Honor y alabanza a Dios","nota":"Gloria a Dios en el cielo, y paz a los hombres."},{"w":"RIO","r":0,"c":2,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"LARGO","r":0,"c":0,"dir":"H","pista":"De mucha longitud","nota":"El camino de la fe es largo, pero Dios camina con nosotros."},{"w":"LAGO","r":0,"c":0,"dir":"V","pista":"Gran masa de agua dulce","nota":"Jesús calmó la tormenta en el lago (Marcos 4, 39)."}]},{"n":34,"base":"PRECIO","rows":4,"cols":6,"palabras":[{"w":"PRECIO","r":1,"c":0,"dir":"H","pista":"Valor en dinero de algo","nota":"Fuisteis comprados a precio (1 Corintios 6, 20)."},{"w":"RICO","r":0,"c":4,"dir":"V","pista":"Que tiene muchos bienes","nota":"Es más fácil pasar un camello por el ojo de una aguja (Marcos 10, 25)."},{"w":"ECO","r":1,"c":2,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"RIO","r":3,"c":0,"dir":"H","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."}]},{"n":35,"base":"RAPIDO","rows":3,"cols":7,"palabras":[{"w":"RAPIDO","r":2,"c":1,"dir":"H","pista":"Veloz","nota":"María fue deprisa a visitar a su prima Isabel (Lucas 1, 39)."},{"w":"RIO","r":0,"c":6,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"DIA","r":0,"c":2,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."},{"w":"RADIO","r":0,"c":0,"dir":"H","pista":"Medio para escuchar noticias","nota":"La radio también lleva la Buena Noticia a los hogares."}]},{"n":36,"base":"RETIRO","rows":4,"cols":7,"palabras":[{"w":"RETIRO","r":0,"c":1,"dir":"H","pista":"Tiempo de silencio y oración","nota":"Lugar para escuchar a Dios con calma."},{"w":"RIO","r":0,"c":5,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"RETO","r":0,"c":1,"dir":"V","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."},{"w":"TORRE","r":3,"c":0,"dir":"H","pista":"Edificio alto y estrecho","nota":"Una torre sin cimientos se cae."}]},{"n":37,"base":"SEMANA","rows":4,"cols":6,"palabras":[{"w":"SEMANA","r":0,"c":0,"dir":"H","pista":"Siete días","nota":"Dios creó el mundo en seis días."},{"w":"MASA","r":0,"c":2,"dir":"V","pista":"Mezcla de harina y agua","nota":"Un poco de levadura fermenta toda la masa (Mateo 13, 33)."},{"w":"MESA","r":2,"c":0,"dir":"H","pista":"Mueble donde se come","nota":"La Eucaristía es la mesa del Señor."},{"w":"ANA","r":0,"c":5,"dir":"V","pista":"Madre de María","nota":"Santa Ana es la abuela de Jesús según la tradición."}]},{"n":38,"base":"CONTAR","rows":5,"cols":7,"palabras":[{"w":"CONTAR","r":4,"c":0,"dir":"H","pista":"Narrar o decir números","nota":"Contar las maravillas de Dios es parte de la misión."},{"w":"CANTO","r":0,"c":1,"dir":"V","pista":"Música cantada","nota":"Cantar en la liturgia une las voces de la comunidad."},{"w":"ROTA","r":1,"c":4,"dir":"V","pista":"Partida en pedazos","nota":"Rota por dentro, pero no vencida."},{"w":"ARCO","r":1,"c":3,"dir":"H","pista":"Figura curva de un puente","nota":"Arco iris: señal de la alianza de Dios (Génesis 9, 13)."},{"w":"ROCA","r":0,"c":6,"dir":"V","pista":"Piedra grande y firme","nota":"Quien escucha la palabra construye sobre roca."}]},{"n":39,"base":"CORONA","rows":4,"cols":6,"palabras":[{"w":"CORONA","r":3,"c":0,"dir":"H","pista":"Aro que se pone en la cabeza","nota":"La corona de espinas fue la burla al Rey."},{"w":"ARCO","r":0,"c":1,"dir":"V","pista":"Figura curva de un puente","nota":"Arco iris: señal de la alianza de Dios (Génesis 9, 13)."},{"w":"CORO","r":0,"c":3,"dir":"V","pista":"Grupo de personas que cantan juntas","nota":"El coro juvenil anima la misa."},{"w":"ROCA","r":0,"c":5,"dir":"V","pista":"Piedra grande y firme","nota":"Quien escucha la palabra construye sobre roca."},{"w":"ORO","r":1,"c":3,"dir":"H","pista":"Metal precioso amarillo","nota":"Los magos llevaron oro, incienso y mirra (Mateo 2, 11)."}]},{"n":40,"base":"CUARTO","rows":4,"cols":6,"palabras":[{"w":"CUARTO","r":1,"c":0,"dir":"H","pista":"Habitación de una casa","nota":"Ora en tu cuarto, a solas con el Padre (Mateo 6, 6)."},{"w":"ARCO","r":0,"c":3,"dir":"V","pista":"Figura curva de un puente","nota":"Arco iris: señal de la alianza de Dios (Génesis 9, 13)."},{"w":"ROCA","r":0,"c":5,"dir":"V","pista":"Piedra grande y firme","nota":"Quien escucha la palabra construye sobre roca."},{"w":"ROTA","r":3,"c":2,"dir":"H","pista":"Partida en pedazos","nota":"Rota por dentro, pero no vencida."},{"w":"RUT","r":0,"c":1,"dir":"V","pista":"Mujer fiel a su suegra Noemí","nota":"Rut fue fiel y su historia termina en bendición."}]},{"n":41,"base":"LECTOR","rows":5,"cols":7,"palabras":[{"w":"LECTOR","r":4,"c":1,"dir":"H","pista":"Quien proclama la Palabra en la liturgia","nota":"El lector lleva la Palabra de Dios a la asamblea."},{"w":"CORTE","r":0,"c":2,"dir":"V","pista":"Acción de cortar","nota":"El Reino de Dios se hace presente en la justicia y la paz."},{"w":"RECTO","r":0,"c":5,"dir":"V","pista":"Derecho, sin torcerse","nota":"Haz rectos tus caminos ante el Señor."},{"w":"ECO","r":1,"c":0,"dir":"H","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"RETO","r":0,"c":0,"dir":"V","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."}]},{"n":42,"base":"MARCHA","rows":4,"cols":6,"palabras":[{"w":"MARCHA","r":0,"c":0,"dir":"H","pista":"Movimiento de avanzar","nota":"La Iglesia está en marcha hacia el Reino."},{"w":"ARMA","r":0,"c":5,"dir":"V","pista":"Instrumento para atacar o defender","nota":"La oración es el arma del cristiano."},{"w":"RAMA","r":0,"c":2,"dir":"V","pista":"Parte de un árbol que sale del tronco","nota":"Yo soy la vid, vosotros los sarmientos (Juan 15, 5)."},{"w":"MAR","r":3,"c":1,"dir":"H","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"MARCA","r":3,"c":1,"dir":"H","pista":"Señal que distingue algo","nota":"El bautismo marca a quien pertenece a Cristo."}]},{"n":43,"base":"PIEDRA","rows":5,"cols":7,"palabras":[{"w":"PIEDRA","r":4,"c":0,"dir":"H","pista":"Roca dura","nota":"Tú eres Pedro, y sobre esta piedra edificaré mi Iglesia (Mateo 16, 18)."},{"w":"PADRE","r":0,"c":2,"dir":"V","pista":"Primera persona de la Trinidad","nota":"Padre nuestro que estás en el cielo."},{"w":"PEDIR","r":0,"c":2,"dir":"H","pista":"Solicitar algo","nota":"Pedid y se os dará (Mateo 7, 7)."},{"w":"IDEA","r":2,"c":1,"dir":"H","pista":"Pensamiento que surge en la mente","nota":"Una buena idea puede cambiar una comunidad."},{"w":"DIA","r":0,"c":4,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."}]},{"n":44,"base":"SALMOS","rows":4,"cols":8,"palabras":[{"w":"SALMOS","r":1,"c":0,"dir":"H","pista":"Cantos de la Biblia","nota":"Los salmos son oración para todos los tiempos."},{"w":"LOMA","r":0,"c":4,"dir":"V","pista":"Pequeña elevación del terreno","nota":"Monte alto y tranquilo para orar."},{"w":"SOL","r":1,"c":0,"dir":"V","pista":"Astro que da luz y calor al día","nota":"Cristo es el sol que nace de lo alto (Lucas 1, 78)."},{"w":"SALMO","r":3,"c":3,"dir":"H","pista":"Canto o poema de la Biblia","nota":"Los salmos son la oración del pueblo de Israel."},{"w":"MALO","r":0,"c":7,"dir":"V","pista":"Que no es bueno","nota":"Líbranos del mal."}]},{"n":45,"base":"TIERNO","rows":5,"cols":6,"palabras":[{"w":"TIERNO","r":2,"c":0,"dir":"H","pista":"Delicado, cariñoso","nota":"Dios es tierno y compasivo (Salmo 103, 8)."},{"w":"RETO","r":0,"c":0,"dir":"V","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."},{"w":"NOE","r":1,"c":5,"dir":"V","pista":"Hombre que se salvó del diluvio","nota":"Noé construyó un arca por orden de Dios."},{"w":"RIO","r":2,"c":3,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"REINO","r":0,"c":0,"dir":"H","pista":"Territorio gobernado por un rey","nota":"Venga a nosotros tu Reino."}]},{"n":46,"base":"MARCOS","rows":4,"cols":9,"palabras":[{"w":"MARCOS","r":1,"c":3,"dir":"H","pista":"Evangelista y compañero de Pedro","nota":"Marcos escribió el evangelio más breve."},{"w":"AMOR","r":0,"c":3,"dir":"V","pista":"Sentimiento de cariño que se entrega","nota":"Dios es amor (1 Juan 4, 8)."},{"w":"ARCO","r":0,"c":5,"dir":"V","pista":"Figura curva de un puente","nota":"Arco iris: señal de la alianza de Dios (Génesis 9, 13)."},{"w":"ROCA","r":0,"c":0,"dir":"H","pista":"Piedra grande y firme","nota":"Quien escucha la palabra construye sobre roca."},{"w":"MAR","r":3,"c":1,"dir":"H","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"ROMA","r":0,"c":7,"dir":"V","pista":"Ciudad sede del Papa","nota":"Ahí vive el sucesor de Pedro."}]},{"n":47,"base":"MIRADA","rows":5,"cols":6,"palabras":[{"w":"MIRADA","r":2,"c":0,"dir":"H","pista":"Acción de mirar","nota":"Jesús miró a Pedro con amor (Lucas 22, 61)."},{"w":"DIA","r":2,"c":4,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."},{"w":"MARIA","r":0,"c":2,"dir":"V","pista":"Madre de Jesús","nota":"Primera discípula: respondió hágase en mí según tu palabra."},{"w":"ARMA","r":0,"c":0,"dir":"V","pista":"Instrumento para atacar o defender","nota":"La oración es el arma del cristiano."},{"w":"RAMA","r":4,"c":1,"dir":"H","pista":"Parte de un árbol que sale del tronco","nota":"Yo soy la vid, vosotros los sarmientos (Juan 15, 5)."},{"w":"MAR","r":0,"c":2,"dir":"H","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."}]},{"n":48,"base":"MORADA","rows":4,"cols":8,"palabras":[{"w":"MORADA","r":0,"c":0,"dir":"H","pista":"Lugar donde se habita","nota":"En la casa de mi Padre hay muchas moradas (Juan 14, 2)."},{"w":"AMOR","r":0,"c":5,"dir":"V","pista":"Sentimiento de cariño que se entrega","nota":"Dios es amor (1 Juan 4, 8)."},{"w":"MAR","r":1,"c":5,"dir":"H","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"ARMA","r":0,"c":7,"dir":"V","pista":"Instrumento para atacar o defender","nota":"La oración es el arma del cristiano."},{"w":"ROMA","r":0,"c":2,"dir":"V","pista":"Ciudad sede del Papa","nota":"Ahí vive el sucesor de Pedro."},{"w":"RAMA","r":2,"c":0,"dir":"H","pista":"Parte de un árbol que sale del tronco","nota":"Yo soy la vid, vosotros los sarmientos (Juan 15, 5)."}]},{"n":49,"base":"CIERTO","rows":5,"cols":8,"palabras":[{"w":"CIERTO","r":1,"c":0,"dir":"H","pista":"Verdadero, seguro","nota":"Es cierto que Dios nunca abandona a sus hijos."},{"w":"RICO","r":1,"c":3,"dir":"V","pista":"Que tiene muchos bienes","nota":"Es más fácil pasar un camello por el ojo de una aguja (Marcos 10, 25)."},{"w":"CORTE","r":0,"c":5,"dir":"V","pista":"Acción de cortar","nota":"El Reino de Dios se hace presente en la justicia y la paz."},{"w":"ECO","r":4,"c":5,"dir":"H","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"RECTO","r":0,"c":7,"dir":"V","pista":"Derecho, sin torcerse","nota":"Haz rectos tus caminos ante el Señor."},{"w":"RETO","r":4,"c":0,"dir":"H","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."},{"w":"RIO","r":0,"c":1,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."}]},{"n":50,"base":"ANGELUS","rows":4,"cols":8,"palabras":[{"w":"ANGELUS","r":0,"c":0,"dir":"H","pista":"Oración del ángel que recuerda la Encarnación","nota":"Se reza al mediodía y al atardecer."},{"w":"LUNA","r":0,"c":4,"dir":"V","pista":"Satélite de la Tierra","nota":"La luna brilla con la luz del sol."},{"w":"ANGEL","r":2,"c":3,"dir":"H","pista":"Mensajero de Dios","nota":"El ángel Gabriel anunció a María el plan de Dios."}]},{"n":51,"base":"CASULLA","rows":4,"cols":7,"palabras":[{"w":"CASULLA","r":2,"c":0,"dir":"H","pista":"Vestidura principal del sacerdote en la misa","nota":"La casulla es el ornamento que usa el sacerdote al celebrar."},{"w":"CASA","r":0,"c":2,"dir":"V","pista":"Lugar donde vive una familia","nota":"La familia es la primera iglesia doméstica."},{"w":"LUCAS","r":0,"c":0,"dir":"H","pista":"Evangelista y médico","nota":"Lucas escribió el evangelio de la misericordia."}]},{"n":52,"base":"DIACONO","rows":5,"cols":7,"palabras":[{"w":"DIACONO","r":2,"c":0,"dir":"H","pista":"Ministro ordenado para servir en la caridad","nota":"Los diáconos ayudan en el altar y en las obras de caridad."},{"w":"DIA","r":0,"c":2,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."},{"w":"ICONO","r":0,"c":4,"dir":"V","pista":"Imagen sagrada de tradición oriental","nota":"Los iconos se veneran con respeto y oración."}]},{"n":53,"base":"HOMILIA","rows":4,"cols":7,"palabras":[{"w":"HOMILIA","r":1,"c":0,"dir":"H","pista":"Explicación de la Palabra en la misa","nota":"El sacerdote o diácono explica la Palabra para la vida diaria."},{"w":"LOMA","r":0,"c":1,"dir":"V","pista":"Pequeña elevación del terreno","nota":"Monte alto y tranquilo para orar."},{"w":"MALO","r":0,"c":6,"dir":"V","pista":"Que no es bueno","nota":"Líbranos del mal."}]},{"n":54,"base":"LETANIA","rows":3,"cols":7,"palabras":[{"w":"LETANIA","r":0,"c":0,"dir":"H","pista":"Oración de súplicas repetidas","nota":"Las letanías de los santos piden la intercesión de la Iglesia."},{"w":"ANA","r":0,"c":6,"dir":"V","pista":"Madre de María","nota":"Santa Ana es la abuela de Jesús según la tradición."},{"w":"LINEA","r":2,"c":2,"dir":"H","pista":"Trazo recto o fila","nota":"Seguir la línea del Evangelio nos lleva a Cristo."}]},{"n":55,"base":"NAZARET","rows":3,"cols":7,"palabras":[{"w":"NAZARET","r":2,"c":0,"dir":"H","pista":"Pueblo donde creció Jesús","nota":"Jesús creció en Nazaret."},{"w":"ANA","r":0,"c":1,"dir":"V","pista":"Madre de María","nota":"Santa Ana es la abuela de Jesús según la tradición."},{"w":"ARENA","r":0,"c":1,"dir":"H","pista":"Polvo fino de las playas","nota":"Quien construye sobre arena, pierde su casa (Mateo 7, 26)."}]},{"n":56,"base":"NOVICIO","rows":5,"cols":7,"palabras":[{"w":"NOVICIO","r":4,"c":0,"dir":"H","pista":"Persona que vive el tiempo de prueba en una vida religiosa","nota":"El noviciado es un tiempo de formación y oración."},{"w":"ICONO","r":0,"c":1,"dir":"V","pista":"Imagen sagrada de tradición oriental","nota":"Los iconos se veneran con respeto y oración."},{"w":"NOVIO","r":0,"c":6,"dir":"V","pista":"Persona que se prepara para el matrimonio","nota":"El novio llega a la boda con sus amigos (Mateo 25)."}]},{"n":57,"base":"OFRENDA","rows":4,"cols":7,"palabras":[{"w":"OFRENDA","r":1,"c":0,"dir":"H","pista":"Don que se entrega a Dios","nota":"La ofrenda de la comunidad se presenta en la misa."},{"w":"NOE","r":0,"c":0,"dir":"V","pista":"Hombre que se salvó del diluvio","nota":"Noé construyó un arca por orden de Dios."},{"w":"FARO","r":0,"c":6,"dir":"V","pista":"Torre con luz para guiar barcos","nota":"Tu palabra es lámpara a mis pies (Salmo 119, 105)."}]},{"n":58,"base":"SONRISA","rows":3,"cols":7,"palabras":[{"w":"SONRISA","r":2,"c":0,"dir":"H","pista":"Gesto de alegría en la cara","nota":"Una sonrisa puede abrir el corazón de alguien."},{"w":"RIO","r":0,"c":1,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"RISA","r":0,"c":1,"dir":"H","pista":"Expresión de alegría","nota":"El que sirve con alegría ilumina a los demás."}]},{"n":59,"base":"URGENTE","rows":3,"cols":7,"palabras":[{"w":"URGENTE","r":2,"c":0,"dir":"H","pista":"Que necesita atención inmediata","nota":"La misión no espera; es urgente."},{"w":"RUT","r":0,"c":5,"dir":"V","pista":"Mujer fiel a su suegra Noemí","nota":"Rut fue fiel y su historia termina en bendición."},{"w":"ENTRE","r":0,"c":2,"dir":"H","pista":"En medio de dos cosas","nota":"Donde dos o tres están reunidos en mi nombre, allí estoy yo (Mateo 18, 20)."}]},{"n":60,"base":"ABRAHAM","rows":4,"cols":7,"palabras":[{"w":"ABRAHAM","r":3,"c":0,"dir":"H","pista":"Padre de la fe","nota":"Abraham salió de su tierra confiando en Dios."},{"w":"MAR","r":1,"c":2,"dir":"V","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"RAMA","r":0,"c":0,"dir":"V","pista":"Parte de un árbol que sale del tronco","nota":"Yo soy la vid, vosotros los sarmientos (Juan 15, 5)."},{"w":"ARMA","r":1,"c":0,"dir":"H","pista":"Instrumento para atacar o defender","nota":"La oración es el arma del cristiano."}]},{"n":61,"base":"APOSTOL","rows":5,"cols":7,"palabras":[{"w":"APOSTOL","r":1,"c":0,"dir":"H","pista":"Enviado de Jesús","nota":"Los doce apóstoles fueron enviados a todos los pueblos."},{"w":"PLATO","r":0,"c":6,"dir":"V","pista":"Recipiente para comida","nota":"Se comparte el plato en la mesa de la familia."},{"w":"SOL","r":0,"c":2,"dir":"V","pista":"Astro que da luz y calor al día","nota":"Cristo es el sol que nace de lo alto (Lucas 1, 78)."},{"w":"SOPLO","r":4,"c":2,"dir":"H","pista":"Aire que sale de la boca","nota":"El Espíritu sopla donde quiere (Juan 3, 8)."}]},{"n":62,"base":"FAMILIA","rows":4,"cols":7,"palabras":[{"w":"FAMILIA","r":3,"c":0,"dir":"H","pista":"Grupo de personas unidas por lazos","nota":"La familia es la primera escuela de fe."},{"w":"LAMA","r":0,"c":1,"dir":"V","pista":"Barro o fango","nota":"Dios levanta al pobre del lodo."},{"w":"ALMA","r":0,"c":0,"dir":"H","pista":"Parte espiritual de la persona","nota":"Dios creó al hombre con un alma inmortal."},{"w":"MALA","r":0,"c":6,"dir":"V","pista":"Que no es buena","nota":"Líbranos del mal."}]},{"n":63,"base":"MEDALLA","rows":4,"cols":7,"palabras":[{"w":"MEDALLA","r":3,"c":0,"dir":"H","pista":"Objeto religioso con imagen sagrada","nota":"La medalla milagrosa recuerda la presencia de la Virgen."},{"w":"ALMA","r":0,"c":6,"dir":"V","pista":"Parte espiritual de la persona","nota":"Dios creó al hombre con un alma inmortal."},{"w":"LAMA","r":0,"c":3,"dir":"V","pista":"Barro o fango","nota":"Dios levanta al pobre del lodo."},{"w":"MALA","r":1,"c":0,"dir":"H","pista":"Que no es buena","nota":"Líbranos del mal."}]},{"n":64,"base":"PALABRA","rows":4,"cols":8,"palabras":[{"w":"PALABRA","r":1,"c":0,"dir":"H","pista":"Unidad del lenguaje","nota":"La Palabra se hizo carne (Juan 1, 14)."},{"w":"PARA","r":0,"c":6,"dir":"V","pista":"Con la finalidad de","nota":"Ve y anuncia el Reino de Dios."},{"w":"ALBA","r":0,"c":2,"dir":"V","pista":"Vestidura blanca para la liturgia","nota":"El alba recuerda la pureza del bautismo."},{"w":"ALABAR","r":3,"c":2,"dir":"H","pista":"Dar gloria y honor a Dios","nota":"Alabad al Señor porque es bueno."}]},{"n":65,"base":"CONSEJO","rows":3,"cols":9,"palabras":[{"w":"CONSEJO","r":2,"c":2,"dir":"H","pista":"Opinión que se da a otro","nota":"Consejo de Dios: escuchad a vuestros hermanos."},{"w":"NOE","r":0,"c":6,"dir":"V","pista":"Hombre que se salvó del diluvio","nota":"Noé construyó un arca por orden de Dios."},{"w":"ECO","r":0,"c":3,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"ONCE","r":0,"c":5,"dir":"H","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."},{"w":"JOSE","r":0,"c":0,"dir":"H","pista":"Esposo de María y padre adoptivo de Jesús","nota":"José fue un hombre justo que obedeció a Dios."}]},{"n":66,"base":"CORDERO","rows":4,"cols":7,"palabras":[{"w":"CORDERO","r":1,"c":0,"dir":"H","pista":"Cría de la oveja","nota":"Cordero de Dios, que quitas el pecado del mundo (Juan 1, 29)."},{"w":"ORO","r":1,"c":6,"dir":"V","pista":"Metal precioso amarillo","nota":"Los magos llevaron oro, incienso y mirra (Mateo 2, 11)."},{"w":"ECO","r":1,"c":4,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"CORO","r":0,"c":6,"dir":"V","pista":"Grupo de personas que cantan juntas","nota":"El coro juvenil anima la misa."},{"w":"CREDO","r":3,"c":0,"dir":"H","pista":"Profesión de la fe","nota":"En el Credo proclamamos lo que creemos."}]},{"n":67,"base":"ROSARIO","rows":4,"cols":7,"palabras":[{"w":"ROSARIO","r":0,"c":0,"dir":"H","pista":"Oración mariana con cuentas","nota":"Muchas familias venezolanas rezan el rosario en mayo."},{"w":"RIO","r":0,"c":0,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"ORO","r":0,"c":6,"dir":"V","pista":"Metal precioso amarillo","nota":"Los magos llevaron oro, incienso y mirra (Mateo 2, 11)."},{"w":"RISA","r":0,"c":4,"dir":"V","pista":"Expresión de alegría","nota":"El que sirve con alegría ilumina a los demás."},{"w":"ORAR","r":3,"c":2,"dir":"H","pista":"Hablar con Dios","nota":"Rezar con calma, cada día, también cuando cuesta."}]},{"n":68,"base":"SEMBRAR","rows":5,"cols":7,"palabras":[{"w":"SEMBRAR","r":4,"c":0,"dir":"H","pista":"Poner semillas en la tierra","nota":"El que siembra con generosidad cosecha con generosidad (2 Corintios 9, 6)."},{"w":"MAR","r":2,"c":4,"dir":"V","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"REMAR","r":0,"c":4,"dir":"V","pista":"Impulsar una barca con remos","nota":"Los apóstoles remaban contra el viento (Marcos 6, 48)."},{"w":"SABER","r":0,"c":6,"dir":"V","pista":"Tener conocimiento","nota":"Conoceréis la verdad y la verdad os hará libres."},{"w":"MESA","r":1,"c":3,"dir":"H","pista":"Mueble donde se come","nota":"La Eucaristía es la mesa del Señor."}]},{"n":69,"base":"SEMILLA","rows":5,"cols":7,"palabras":[{"w":"SEMILLA","r":2,"c":0,"dir":"H","pista":"Grano que se siembra para crecer","nota":"La Palabra es semilla que da fruto (Mateo 13)."},{"w":"ELIAS","r":0,"c":3,"dir":"V","pista":"Profeta que subió al cielo en un carro de fuego","nota":"Elías escuchó a Dios en el susurro de una brisa suave."},{"w":"MESA","r":0,"c":0,"dir":"V","pista":"Mueble donde se come","nota":"La Eucaristía es la mesa del Señor."},{"w":"MIS","r":4,"c":1,"dir":"H","pista":"Pronombre de posesión","nota":"Mis ovejas escuchan mi voz (Juan 10, 27)."},{"w":"MISA","r":4,"c":1,"dir":"H","pista":"Celebración de la Eucaristía","nota":"Al final, el sacerdote dice: Id, la misa ha terminado. Es un envío."}]},{"n":70,"base":"SOLEDAD","rows":4,"cols":8,"palabras":[{"w":"SOLEDAD","r":3,"c":0,"dir":"H","pista":"Estado de estar solo","nota":"Jesús nunca deja solos a los que lo buscan."},{"w":"DEDO","r":0,"c":1,"dir":"V","pista":"Parte de la mano","nota":"El dedo de Dios está aquí (Lucas 11, 20)."},{"w":"EDAD","r":0,"c":0,"dir":"H","pista":"Tiempo que se ha vivido","nota":"Jesús creció en edad, sabiduría y gracia (Lucas 2, 52)."},{"w":"SEDA","r":0,"c":5,"dir":"V","pista":"Tela fina y suave","nota":"Vestidos de seda son signo de lujo, pero no de amor."},{"w":"SOL","r":0,"c":5,"dir":"H","pista":"Astro que da luz y calor al día","nota":"Cristo es el sol que nace de lo alto (Lucas 1, 78)."}]},{"n":71,"base":"CORAZON","rows":5,"cols":7,"palabras":[{"w":"CORAZON","r":2,"c":0,"dir":"H","pista":"Centro del amor de la persona","nota":"Misioneros en el corazón: amar lo que se anuncia."},{"w":"ARCO","r":1,"c":2,"dir":"V","pista":"Figura curva de un puente","nota":"Arco iris: señal de la alianza de Dios (Génesis 9, 13)."},{"w":"ORO","r":4,"c":2,"dir":"H","pista":"Metal precioso amarillo","nota":"Los magos llevaron oro, incienso y mirra (Mateo 2, 11)."},{"w":"ROCA","r":0,"c":0,"dir":"V","pista":"Piedra grande y firme","nota":"Quien escucha la palabra construye sobre roca."},{"w":"CORO","r":4,"c":1,"dir":"H","pista":"Grupo de personas que cantan juntas","nota":"El coro juvenil anima la misa."},{"w":"CORONA","r":4,"c":1,"dir":"H","pista":"Aro que se pone en la cabeza","nota":"La corona de espinas fue la burla al Rey."}]},{"n":72,"base":"MEDITAR","rows":6,"cols":7,"palabras":[{"w":"MEDITAR","r":2,"c":0,"dir":"H","pista":"Reflexionar profundamente sobre la Palabra","nota":"Bienaventurado el que medita la ley del Señor."},{"w":"DIA","r":0,"c":5,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."},{"w":"IDEA","r":2,"c":3,"dir":"V","pista":"Pensamiento que surge en la mente","nota":"Una buena idea puede cambiar una comunidad."},{"w":"TARDE","r":0,"c":2,"dir":"H","pista":"Parte del día después del mediodía","nota":"Quédate con nosotros, que anochece (Lucas 24, 29)."},{"w":"MAR","r":2,"c":0,"dir":"V","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"MADRE","r":5,"c":2,"dir":"H","pista":"Mujer que da a luz a un hijo","nota":"María es la madre de la Iglesia."}]},{"n":73,"base":"PADRINO","rows":6,"cols":7,"palabras":[{"w":"PADRINO","r":4,"c":0,"dir":"H","pista":"Persona que acompaña al bautizado","nota":"Los padrinos acompañan en la fe al nuevo cristiano."},{"w":"RAPIDO","r":0,"c":2,"dir":"V","pista":"Veloz","nota":"María fue deprisa a visitar a su prima Isabel (Lucas 1, 39)."},{"w":"RIO","r":0,"c":2,"dir":"H","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"RADIO","r":0,"c":6,"dir":"V","pista":"Medio para escuchar noticias","nota":"La radio también lleva la Buena Noticia a los hogares."},{"w":"PAN","r":2,"c":2,"dir":"H","pista":"Alimento hecho de harina","nota":"Danos hoy nuestro pan de cada día."},{"w":"DIA","r":1,"c":0,"dir":"H","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."}]},{"n":74,"base":"PROFETA","rows":6,"cols":7,"palabras":[{"w":"PROFETA","r":2,"c":0,"dir":"H","pista":"Quien habla en nombre de Dios","nota":"Los profetas anunciaron la venida del Mesías."},{"w":"PARTE","r":1,"c":6,"dir":"V","pista":"Porción de un todo","nota":"Cada miembro tiene su parte en el cuerpo de Cristo (1 Corintios 12)."},{"w":"TROPA","r":0,"c":2,"dir":"V","pista":"Grupo de personas","nota":"La tropa de jóvenes salió a misionar."},{"w":"FARO","r":4,"c":1,"dir":"H","pista":"Torre con luz para guiar barcos","nota":"Tu palabra es lámpara a mis pies (Salmo 119, 105)."},{"w":"ROTA","r":0,"c":0,"dir":"H","pista":"Partida en pedazos","nota":"Rota por dentro, pero no vencida."},{"w":"RETO","r":1,"c":4,"dir":"V","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."}]},{"n":75,"base":"SECRETO","rows":6,"cols":7,"palabras":[{"w":"SECRETO","r":2,"c":0,"dir":"H","pista":"Algo oculto","nota":"Tu Padre que ve en lo secreto te recompensará (Mateo 6, 6)."},{"w":"RECTO","r":1,"c":4,"dir":"V","pista":"Derecho, sin torcerse","nota":"Haz rectos tus caminos ante el Señor."},{"w":"RETO","r":5,"c":1,"dir":"H","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."},{"w":"RESTO","r":0,"c":0,"dir":"V","pista":"Lo que queda","nota":"El resto se cumplirá en el tiempo de Dios."},{"w":"CORTE","r":1,"c":6,"dir":"V","pista":"Acción de cortar","nota":"El Reino de Dios se hace presente en la justicia y la paz."},{"w":"ECO","r":1,"c":2,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."}]},{"n":76,"base":"CARISMA","rows":5,"cols":10,"palabras":[{"w":"CARISMA","r":2,"c":3,"dir":"H","pista":"Don del Espíritu para servir a la Iglesia","nota":"El carisma es el regalo con el que Dios nos hace útiles a los demás."},{"w":"MISA","r":1,"c":6,"dir":"V","pista":"Celebración de la Eucaristía","nota":"Al final, el sacerdote dice: Id, la misa ha terminado. Es un envío."},{"w":"MASA","r":1,"c":9,"dir":"V","pista":"Mezcla de harina y agua","nota":"Un poco de levadura fermenta toda la masa (Mateo 13, 33)."},{"w":"CASA","r":1,"c":4,"dir":"V","pista":"Lugar donde vive una familia","nota":"La familia es la primera iglesia doméstica."},{"w":"ARMA","r":4,"c":6,"dir":"H","pista":"Instrumento para atacar o defender","nota":"La oración es el arma del cristiano."},{"w":"MARIA","r":4,"c":0,"dir":"H","pista":"Madre de Jesús","nota":"Primera discípula: respondió hágase en mí según tu palabra."},{"w":"MARCA","r":0,"c":1,"dir":"V","pista":"Señal que distingue algo","nota":"El bautismo marca a quien pertenece a Cristo."}]},{"n":77,"base":"ENVIADO","rows":7,"cols":7,"palabras":[{"w":"ENVIADO","r":1,"c":0,"dir":"H","pista":"Persona que ha sido mandada a una misión","nota":"Todos somos enviados por Cristo."},{"w":"ENVIO","r":1,"c":0,"dir":"V","pista":"Acción de enviar a alguien","nota":"Toda misión comienza con un envío."},{"w":"IDEA","r":1,"c":3,"dir":"V","pista":"Pensamiento que surge en la mente","nota":"Una buena idea puede cambiar una comunidad."},{"w":"NADIE","r":4,"c":2,"dir":"H","pista":"Ninguna persona","nota":"Nadie viene al Padre sino por mí (Juan 14, 6)."},{"w":"NOE","r":0,"c":6,"dir":"V","pista":"Hombre que se salvó del diluvio","nota":"Noé construyó un arca por orden de Dios."},{"w":"DIA","r":4,"c":4,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."},{"w":"VIDA","r":6,"c":1,"dir":"H","pista":"Lo que nos hace existir y crecer","nota":"Yo soy el camino, la verdad y la vida (Juan 14, 6)."}]},{"n":78,"base":"HERMANO","rows":6,"cols":7,"palabras":[{"w":"HERMANO","r":3,"c":0,"dir":"H","pista":"Hijo de los mismos padres; cristiano","nota":"Somos hermanos porque tenemos un mismo Padre."},{"w":"MANO","r":0,"c":6,"dir":"V","pista":"Extremidad para tomar y servir","nota":"Trabajar con las manos al servicio de otros."},{"w":"ROMA","r":0,"c":4,"dir":"V","pista":"Ciudad sede del Papa","nota":"Ahí vive el sucesor de Pedro."},{"w":"HORA","r":1,"c":3,"dir":"H","pista":"Sesenta minutos","nota":"Velad y orad en todo tiempo (Lucas 21, 36)."},{"w":"MAR","r":3,"c":3,"dir":"V","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"AMOR","r":5,"c":0,"dir":"H","pista":"Sentimiento de cariño que se entrega","nota":"Dios es amor (1 Juan 4, 8)."},{"w":"NOE","r":1,"c":1,"dir":"V","pista":"Hombre que se salvó del diluvio","nota":"Noé construyó un arca por orden de Dios."}]},{"n":79,"base":"MADRINA","rows":6,"cols":7,"palabras":[{"w":"MADRINA","r":1,"c":0,"dir":"H","pista":"Mujer que acompaña al bautizado en la fe","nota":"La madrina ayuda a crecer en la vida cristiana."},{"w":"MIRADA","r":0,"c":4,"dir":"V","pista":"Acción de mirar","nota":"Jesús miró a Pedro con amor (Lucas 22, 61)."},{"w":"MARIA","r":0,"c":6,"dir":"V","pista":"Madre de Jesús","nota":"Primera discípula: respondió hágase en mí según tu palabra."},{"w":"DIA","r":4,"c":4,"dir":"H","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."},{"w":"RAMA","r":0,"c":1,"dir":"V","pista":"Parte de un árbol que sale del tronco","nota":"Yo soy la vid, vosotros los sarmientos (Juan 15, 5)."},{"w":"ARMA","r":3,"c":1,"dir":"H","pista":"Instrumento para atacar o defender","nota":"La oración es el arma del cristiano."},{"w":"ANA","r":5,"c":2,"dir":"H","pista":"Madre de María","nota":"Santa Ana es la abuela de Jesús según la tradición."}]},{"n":80,"base":"MILAGRO","rows":6,"cols":8,"palabras":[{"w":"MILAGRO","r":4,"c":1,"dir":"H","pista":"Hecho que supera la naturaleza","nota":"Jesús realizó milagros para mostrar el amor del Padre."},{"w":"MAGO","r":2,"c":5,"dir":"V","pista":"Sabio que venía de Oriente","nota":"Los magos siguieron la estrella hasta Belén."},{"w":"GLORIA","r":0,"c":2,"dir":"V","pista":"Honor y alabanza a Dios","nota":"Gloria a Dios en el cielo, y paz a los hombres."},{"w":"LAGO","r":0,"c":0,"dir":"H","pista":"Gran masa de agua dulce","nota":"Jesús calmó la tormenta en el lago (Marcos 4, 39)."},{"w":"LOMA","r":0,"c":0,"dir":"V","pista":"Pequeña elevación del terreno","nota":"Monte alto y tranquilo para orar."},{"w":"LARGO","r":0,"c":7,"dir":"V","pista":"De mucha longitud","nota":"El camino de la fe es largo, pero Dios camina con nosotros."},{"w":"AMOR","r":2,"c":4,"dir":"H","pista":"Sentimiento de cariño que se entrega","nota":"Dios es amor (1 Juan 4, 8)."}]},{"n":81,"base":"ORACION","rows":6,"cols":8,"palabras":[{"w":"ORACION","r":5,"c":1,"dir":"H","pista":"Diálogo con Dios","nota":"Orar es hablar con Dios y también dejar que Él nos hable."},{"w":"CORONA","r":0,"c":3,"dir":"V","pista":"Aro que se pone en la cabeza","nota":"La corona de espinas fue la burla al Rey."},{"w":"ICONO","r":1,"c":1,"dir":"V","pista":"Imagen sagrada de tradición oriental","nota":"Los iconos se veneran con respeto y oración."},{"w":"ARCO","r":2,"c":6,"dir":"V","pista":"Figura curva de un puente","nota":"Arco iris: señal de la alianza de Dios (Génesis 9, 13)."},{"w":"CORO","r":3,"c":0,"dir":"H","pista":"Grupo de personas que cantan juntas","nota":"El coro juvenil anima la misa."},{"w":"RICO","r":1,"c":0,"dir":"H","pista":"Que tiene muchos bienes","nota":"Es más fácil pasar un camello por el ojo de una aguja (Marcos 10, 25)."},{"w":"ROCA","r":2,"c":3,"dir":"H","pista":"Piedra grande y firme","nota":"Quien escucha la palabra construye sobre roca."}]},{"n":82,"base":"SINCERO","rows":7,"cols":7,"palabras":[{"w":"SINCERO","r":0,"c":0,"dir":"H","pista":"Que dice la verdad","nota":"Un corazón sincero se abre a Dios."},{"w":"SERIO","r":0,"c":0,"dir":"V","pista":"Grave o formal","nota":"La misión es un compromiso serio."},{"w":"ONCE","r":0,"c":6,"dir":"V","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."},{"w":"REINO","r":2,"c":0,"dir":"H","pista":"Territorio gobernado por un rey","nota":"Venga a nosotros tu Reino."},{"w":"NECIO","r":2,"c":3,"dir":"V","pista":"Persona sin juicio","nota":"El necio dice en su corazón: no hay Dios (Salmo 14, 1)."},{"w":"ECO","r":0,"c":4,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"RICO","r":5,"c":2,"dir":"H","pista":"Que tiene muchos bienes","nota":"Es más fácil pasar un camello por el ojo de una aguja (Marcos 10, 25)."}]},{"n":83,"base":"BASILICA","rows":4,"cols":8,"palabras":[{"w":"BASILICA","r":0,"c":0,"dir":"H","pista":"Iglesia de gran importancia","nota":"La basílica de San Pedro es visitada por muchos peregrinos."},{"w":"ALBA","r":0,"c":7,"dir":"V","pista":"Vestidura blanca para la liturgia","nota":"El alba recuerda la pureza del bautismo."},{"w":"CASA","r":3,"c":4,"dir":"H","pista":"Lugar donde vive una familia","nota":"La familia es la primera iglesia doméstica."}]},{"n":84,"base":"COMUNION","rows":5,"cols":8,"palabras":[{"w":"COMUNION","r":4,"c":0,"dir":"H","pista":"Unión con Dios y con los hermanos","nota":"La comunión une a la Iglesia en un solo cuerpo."},{"w":"ICONO","r":0,"c":6,"dir":"V","pista":"Imagen sagrada de tradición oriental","nota":"Los iconos se veneran con respeto y oración."},{"w":"UNCION","r":2,"c":2,"dir":"H","pista":"Aceite santo que consagra o sana","nota":"Los enfermos reciben la unción en el sacramento de los enfermos."}]},{"n":85,"base":"CONCILIO","rows":4,"cols":8,"palabras":[{"w":"CONCILIO","r":3,"c":0,"dir":"H","pista":"Asamblea de obispos de la Iglesia","nota":"El Concilio Vaticano II renovó la vida de la Iglesia."},{"w":"LOCO","r":0,"c":7,"dir":"V","pista":"Que pierde la razón","nota":"Dios no nos pide ser locos, sino sabios en el amor."},{"w":"ICONO","r":1,"c":3,"dir":"H","pista":"Imagen sagrada de tradición oriental","nota":"Los iconos se veneran con respeto y oración."}]},{"n":86,"base":"DIOCESIS","rows":3,"cols":8,"palabras":[{"w":"DIOCESIS","r":0,"c":0,"dir":"H","pista":"Territorio que cuida un obispo","nota":"La diócesis reúne a varias parroquias."},{"w":"ECO","r":0,"c":4,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"DIOS","r":2,"c":2,"dir":"H","pista":"Creador y Padre de todo","nota":"Dios nos ama antes de que lo busquemos."}]},{"n":87,"base":"EPIFANIA","rows":3,"cols":8,"palabras":[{"w":"EPIFANIA","r":0,"c":0,"dir":"H","pista":"Manifestación de Jesús a los pueblos","nota":"Los Reyes Magos representan a todas las naciones."},{"w":"ANA","r":0,"c":4,"dir":"V","pista":"Madre de María","nota":"Santa Ana es la abuela de Jesús según la tradición."},{"w":"PAN","r":0,"c":1,"dir":"V","pista":"Alimento hecho de harina","nota":"Danos hoy nuestro pan de cada día."}]},{"n":88,"base":"GRATITUD","rows":3,"cols":8,"palabras":[{"w":"GRATITUD","r":1,"c":0,"dir":"H","pista":"Agradecimiento","nota":"Dad gracias en todo (1 Tesalonicenses 5, 18)."},{"w":"RUT","r":0,"c":6,"dir":"V","pista":"Mujer fiel a su suegra Noemí","nota":"Rut fue fiel y su historia termina en bendición."},{"w":"DIA","r":0,"c":4,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."}]},{"n":89,"base":"VATICANO","rows":3,"cols":8,"palabras":[{"w":"VATICANO","r":2,"c":0,"dir":"H","pista":"Ciudad sede del papa en Roma","nota":"Allí se encuentra la basílica de San Pedro."},{"w":"ANA","r":0,"c":1,"dir":"V","pista":"Madre de María","nota":"Santa Ana es la abuela de Jesús según la tradición."},{"w":"CANTO","r":0,"c":0,"dir":"H","pista":"Música cantada","nota":"Cantar en la liturgia une las voces de la comunidad."}]},{"n":90,"base":"VOCACION","rows":5,"cols":8,"palabras":[{"w":"VOCACION","r":3,"c":0,"dir":"H","pista":"Llamado de Dios a una vida concreta","nota":"Todos tenemos una vocación; la misionera es una de ellas."},{"w":"NOVIO","r":0,"c":5,"dir":"V","pista":"Persona que se prepara para el matrimonio","nota":"El novio llega a la boda con sus amigos (Mateo 25)."},{"w":"ICONO","r":0,"c":2,"dir":"H","pista":"Imagen sagrada de tradición oriental","nota":"Los iconos se veneran con respeto y oración."}]},{"n":91,"base":"BAUTISMO","rows":4,"cols":8,"palabras":[{"w":"BAUTISMO","r":1,"c":0,"dir":"H","pista":"Primer sacramento de la vida cristiana","nota":"Con el bautismo entramos en la familia de Dios."},{"w":"MIS","r":0,"c":4,"dir":"V","pista":"Pronombre de posesión","nota":"Mis ovejas escuchan mi voz (Juan 10, 27)."},{"w":"MISA","r":0,"c":4,"dir":"V","pista":"Celebración de la Eucaristía","nota":"Al final, el sacerdote dice: Id, la misa ha terminado. Es un envío."},{"w":"TOMAS","r":3,"c":1,"dir":"H","pista":"Apóstol que dudó y luego creyó","nota":"Señor mío y Dios mío (Juan 20, 28)."}]},{"n":92,"base":"CATEDRAL","rows":5,"cols":8,"palabras":[{"w":"CATEDRAL","r":3,"c":0,"dir":"H","pista":"Iglesia sede del obispo","nota":"La catedral es la iglesia madre de una diócesis."},{"w":"ALTAR","r":0,"c":6,"dir":"V","pista":"Mesa donde se celebra la Misa","nota":"En el altar la comunidad recibe el Cuerpo de Cristo."},{"w":"LETRA","r":0,"c":2,"dir":"H","pista":"Signo que forma las palabras","nota":"La letra mata, pero el Espíritu da vida (2 Corintios 3, 6)."},{"w":"TARDE","r":0,"c":4,"dir":"V","pista":"Parte del día después del mediodía","nota":"Quédate con nosotros, que anochece (Lucas 24, 29)."}]},{"n":93,"base":"CONVENTO","rows":3,"cols":8,"palabras":[{"w":"CONVENTO","r":0,"c":0,"dir":"H","pista":"Casa donde viven religiosas o religiosos","nota":"En el convento se vive en oración y servicio."},{"w":"NOE","r":0,"c":2,"dir":"V","pista":"Hombre que se salvó del diluvio","nota":"Noé construyó un arca por orden de Dios."},{"w":"ECO","r":0,"c":4,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"ONCE","r":2,"c":4,"dir":"H","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."}]},{"n":94,"base":"ESTRELLA","rows":5,"cols":8,"palabras":[{"w":"ESTRELLA","r":3,"c":0,"dir":"H","pista":"Astro luminoso del cielo nocturno","nota":"Los Magos siguieron una estrella hasta Jesús (Mateo 2)."},{"w":"LETRA","r":0,"c":3,"dir":"V","pista":"Signo que forma las palabras","nota":"La letra mata, pero el Espíritu da vida (2 Corintios 3, 6)."},{"w":"ESTAR","r":0,"c":7,"dir":"V","pista":"Permanecer en un lugar","nota":"Yo estaré con ustedes todos los días (Mateo 28, 20)."},{"w":"TALLER","r":0,"c":0,"dir":"H","pista":"Lugar de trabajo manual","nota":"Jesús trabajó en el taller de José en Nazaret."}]},{"n":95,"base":"PREGUNTA","rows":3,"cols":12,"palabras":[{"w":"PREGUNTA","r":1,"c":0,"dir":"H","pista":"Frase para pedir una respuesta","nota":"Jesús hacía preguntas para hacer pensar."},{"w":"RUT","r":0,"c":4,"dir":"V","pista":"Mujer fiel a su suegra Noemí","nota":"Rut fue fiel y su historia termina en bendición."},{"w":"PAN","r":0,"c":7,"dir":"V","pista":"Alimento hecho de harina","nota":"Danos hoy nuestro pan de cada día."},{"w":"PARTE","r":0,"c":7,"dir":"H","pista":"Porción de un todo","nota":"Cada miembro tiene su parte en el cuerpo de Cristo (1 Corintios 12)."}]},{"n":96,"base":"SAGRARIO","rows":4,"cols":8,"palabras":[{"w":"SAGRARIO","r":0,"c":0,"dir":"H","pista":"Lugar donde se guarda la Eucaristía","nota":"En el sagrario Jesús permanece con nosotros."},{"w":"ORAR","r":0,"c":7,"dir":"V","pista":"Hablar con Dios","nota":"Rezar con calma, cada día, también cuando cuesta."},{"w":"RISA","r":0,"c":5,"dir":"V","pista":"Expresión de alegría","nota":"El que sirve con alegría ilumina a los demás."},{"w":"RIO","r":0,"c":3,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."}]},{"n":97,"base":"SANTIDAD","rows":3,"cols":8,"palabras":[{"w":"SANTIDAD","r":2,"c":0,"dir":"H","pista":"Vida plena de amor a Dios","nota":"Todos estamos llamados a la santidad."},{"w":"ANA","r":0,"c":1,"dir":"V","pista":"Madre de María","nota":"Santa Ana es la abuela de Jesús según la tradición."},{"w":"DIA","r":0,"c":6,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."},{"w":"SANTA","r":0,"c":0,"dir":"H","pista":"Consagrada a Dios","nota":"Santa María, madre de Dios."}]},{"n":98,"base":"SUPLICAR","rows":5,"cols":8,"palabras":[{"w":"SUPLICAR","r":3,"c":0,"dir":"H","pista":"Pedir con humildad","nota":"Suplicad y se os dará."},{"w":"LUCAS","r":0,"c":6,"dir":"V","pista":"Evangelista y médico","nota":"Lucas escribió el evangelio de la misericordia."},{"w":"RISA","r":1,"c":0,"dir":"V","pista":"Expresión de alegría","nota":"El que sirve con alegría ilumina a los demás."},{"w":"PRISA","r":0,"c":0,"dir":"V","pista":"Velocidad excesiva","nota":"Con calma y paciencia, Dios nos guía."}]},{"n":99,"base":"VALIENTE","rows":5,"cols":8,"palabras":[{"w":"VALIENTE","r":1,"c":0,"dir":"H","pista":"Con valor para enfrentar peligros","nota":"Sed valientes, yo he vencido al mundo (Juan 16, 33)."},{"w":"VELA","r":1,"c":0,"dir":"V","pista":"Cilindro de cera que da luz","nota":"Cristo es la luz; la vela encendida es su signo."},{"w":"VENTA","r":0,"c":7,"dir":"V","pista":"Acción de vender","nota":"Jesús echó a los vendedores del templo (Juan 2, 16)."},{"w":"LINEA","r":0,"c":3,"dir":"V","pista":"Trazo recto o fila","nota":"Seguir la línea del Evangelio nos lleva a Cristo."}]},{"n":100,"base":"INCIENSO","rows":4,"cols":8,"palabras":[{"w":"INCIENSO","r":0,"c":0,"dir":"H","pista":"Resina que se quema en el culto","nota":"Los magos ofrecieron incienso al Niño Dios."},{"w":"NOE","r":0,"c":1,"dir":"V","pista":"Hombre que se salvó del diluvio","nota":"Noé construyó un arca por orden de Dios."},{"w":"ECO","r":0,"c":4,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"NECIO","r":2,"c":0,"dir":"H","pista":"Persona sin juicio","nota":"El necio dice en su corazón: no hay Dios (Salmo 14, 1)."},{"w":"ONCE","r":0,"c":7,"dir":"V","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."}]}];
 const CAPS = [
-  { nombre: 'La Madre de la Consolata', tema: 'Carisma y María', dif: 'Fácil', fin: 20, santo: 'Virgen de la Consolata', cuadro: 'cuadros/cap1-consolata.jpg' },
-  { nombre: 'José Allamano', tema: 'Carisma y formación', dif: 'Normal', fin: 40, santo: 'Beato José Allamano', cuadro: 'cuadros/cap2-allamano.jpg' },
-  { nombre: 'Jesús Buen Pastor', tema: 'Vocación y servicio', dif: 'Medio', fin: 60, santo: 'Jesús Buen Pastor', cuadro: 'cuadros/cap3-buen-pastor.jpg' },
-  { nombre: 'Sagrado Corazón', tema: 'Sacramentos y liturgia', dif: 'Difícil', fin: 80, santo: 'Sagrado Corazón de Jesús', cuadro: 'cuadros/cap4-sagrado-corazon.jpg' },
-  { nombre: 'Pentecostés', tema: 'Envío y misión', dif: 'Experto', fin: 100, santo: 'Pentecostés', cuadro: 'cuadros/cap5-pentecostes.jpg' }
+  { nombre: 'Virgen de la Consolata', tema: 'Carisma y María', dif: 'Fácil', fin: 20, cuadro: 'cuadros/cap1-consolata.jpg',
+    desc: 'Venerada en el santuario de la Consolata, en Turín. Los Misioneros de la Consolata llevan su nombre y la reconocen como Madre y guía.' },
+  { nombre: 'Beato José Allamano', tema: 'Carisma y formación', dif: 'Normal', fin: 40, cuadro: 'cuadros/cap2-allamano.jpg',
+    desc: 'Fundador de los Misioneros de la Consolata. Su lema: ser misioneros en la cabeza, en la boca y en el corazón.' },
+  { nombre: 'Irene Stefani', tema: 'Vocación y servicio', dif: 'Medio', fin: 60, cuadro: 'cuadros/cap3-irene-stefani.jpg',
+    desc: 'Misionera de la Consolata que sirvió en Kenia, cerca de los enfermos y de los más pobres.' },
+  { nombre: 'San José Cafasso', tema: 'Sacramentos y liturgia', dif: 'Difícil', fin: 80, cuadro: 'cuadros/cap4-cafasso.jpg',
+    desc: 'Sacerdote de Turín, maestro y guía espiritual de José Allamano. Predicó y atendió con amor a los sacerdotes y a los pobres.' },
+  { nombre: 'Leonella Sgorbati', tema: 'Envío y misión', dif: 'Experto', fin: 100, cuadro: 'cuadros/cap5-leonella.jpg',
+    desc: 'Misionera de la Consolata que entregó su vida en Somalia en 2006, por amor al pueblo al que servía.' }
 ];
 const VERSOS = [
   { t: 'Id, pues, y haced discípulos a todas las naciones.', r: 'Mateo 28, 19' },
@@ -176,17 +236,17 @@ const VERSOS = [
   { t: 'Venid a mí todos los que estáis cansados y agobiados, y yo os haré descansar.', r: 'Mateo 11, 28' },
   { t: 'Como el Padre me ha enviado, así también yo os envío.', r: 'Juan 20, 21' },
   { t: 'Amaos unos a otros como yo os he amado.', r: 'Juan 13, 34' },
-  { t: 'Deben ser misioneros en la cabeza, en la boca y en el corazón.', r: 'San José Allamano, citado en el manual de JUMA' }
+  { t: 'Deben ser misioneros en la cabeza, en la boca y en el corazón.', r: 'José Allamano (lema citado en el manual de JUMA)' }
 ];
-const ELOGIOS = ['¡Bendito sea Dios!', '¡Muy bien, sigue así!', '¡Amén, así mismo es!', '¡Qué buen acierto!', '¡Dios te cuide!', '¡Fiel como siempre!'];
 const MAX_VIDAS = 5;
 const MIN_VIDA = 20;
 const INTERVALO = MIN_VIDA * 60 * 1000;
-const CLAVE = 'juma-palabras-v2';
-const PT = { palabra: 10, base: 30, nivel: 50, cuadro: 200, pista: 15 };
+const CLAVE = 'juma-palabras-v3';
+const PT = { palabra: 10, base: 30, nivel: 50, pista: 15 };
+const PENA_MS = 5000;
 const TOTAL_PALABRAS = (() => { const s = new Set(); NIVELES.forEach((n) => n.palabras.forEach((p) => s.add(p.w))); return s.size; })();
 
-// ---------- Estado guardado en este dispositivo ----------
+// ---------- Guardado (este dispositivo) ----------
 let S;
 function cargar() {
   let d = null;
@@ -210,112 +270,144 @@ function regenerarVidas() {
 }
 function faltaVida() { return Math.max(0, S.ultimaVida + INTERVALO - Date.now()); }
 function mmss(ms) { const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
-// Los puntos se envían a la página de JUMA para guardarlos en el perfil público
 function avisarPadre() {
   try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', total: S.puntos }, location.origin); } catch (e) {}
 }
 function capDe(n) { return CAPS.findIndex((c) => n <= c.fin); }
 function inicioCap(ci) { return ci === 0 ? 1 : CAPS[ci - 1].fin + 1; }
 function barajar(a) { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; }
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function tiempoBase(nv) { return 45000 + 9000 * nv.palabras.length + 3000 * nv.base.length; }
 
 // ---------- Mapa ----------
+function nivelActual() { return Math.min(S.completados + 1, NIVELES.length); }
 function pintarMapa() {
   regenerarVidas();
-  const hoy = S.completados + 1;
-  let h = '';
-  CAPS.forEach((c, ci) => {
-    const ini = inicioCap(ci), total = c.fin - ini + 1;
-    const hechos = Math.max(0, Math.min(total, S.completados - ini + 1));
-    h += '<div class="tarjeta"><div class="cap-cab"><h2>Capítulo ' + (ci + 1) + ': ' + c.nombre + '</h2><span>' + hechos + '/' + total + '</span></div>';
-    h += '<p class="sub" style="margin-top:4px;font-size:13px">' + c.tema + ' · Dificultad: <b>' + c.dif + '</b></p>';
-    h += '<div class="grid-niveles">';
-    for (let n = ini; n <= c.fin; n++) {
-      let cls = 'nv', dis = '';
-      if (n <= S.completados) cls += ' hecho';
-      else if (n === hoy) cls += ' actual';
-      else dis = ' disabled';
-      h += '<button class="' + cls + '" data-nivel="' + n + '" type="button"' + dis + '>' + n + '</button>';
-    }
-    h += '</div>';
-    h += '<div class="mosaico">' + piezas(ci, hechos, total) + '</div>';
-    h += '<div class="santo">' + c.santo + (hechos >= total ? ' · cuadro armado' : ' · ' + hechos + ' de ' + total + ' piezas') + '</div>';
-    h += '</div>';
-  });
-  document.getElementById('capitulos').innerHTML = h;
-  // Si una imagen del cuadro no existe, se queda el color de respaldo
-  CAPS.forEach((c) => { const im = new Image(); im.src = c.cuadro; });
-  pintarCabecera();
-}
-function piezas(ci, hechos, total) {
-  const c = CAPS[ci];
-  const piezasN = 20;
-  let h = '';
-  for (let k = 0; k < piezasN; k++) {
-    const col = k % 4, fila = Math.floor(k / 4);
-    const x = (col * 100 / 3).toFixed(2), y = (fila * 100 / 4).toFixed(2);
-    const on = k < Math.round(hechos / total * piezasN);
-    h += '<div class="pieza' + (on ? '' : ' off') + '" style="background-image:url(' + c.cuadro + ');background-position:' + x + '% ' + y + '%"></div>';
-  }
-  return h;
-}
-function pintarCabecera() {
+  const n = nivelActual();
+  const ci = capDe(n), cap = CAPS[ci], ini = inicioCap(ci), total = cap.fin - ini + 1;
+  const hechos = Math.max(0, Math.min(total, S.completados - ini + 1));
+  const bloqueadoCap = S.completados >= cap.fin;
+  document.getElementById('m-nivel').textContent = n;
+  document.getElementById('m-nivel2').textContent = n;
+  document.getElementById('m-cap').textContent = 'Cap. ' + (ci + 1) + ' · ' + cap.nombre;
+  document.getElementById('m-dif').textContent = cap.dif;
+  const pct = Math.round(hechos / total * 100);
+  document.getElementById('m-barra').style.width = pct + '%';
+  document.getElementById('m-barra-t').textContent = hechos + ' / ' + total;
+  const pieza = Math.round(hechos / total * 20);
+  document.getElementById('m-barra2').style.width = Math.round(pieza / 20 * 100) + '%';
+  document.getElementById('m-barra2-t').textContent = pieza + ' / 20 piezas';
+  const mini = document.getElementById('m-mini');
+  mini.style.backgroundImage = 'url(' + cap.cuadro + ')';
+  mini.classList.toggle('bloq', !bloqueadoCap);
   document.getElementById('t-pts').textContent = S.puntos.toLocaleString('es-VE');
-  let v = '';
-  for (let i = 0; i < MAX_VIDAS; i++) v += i < S.vidas ? '♥' : '<span class="vacio">♥</span>';
-  document.getElementById('t-vidas').innerHTML = v;
-  const av = document.getElementById('aviso-vidas');
-  if (S.vidas < MAX_VIDAS) {
-    av.style.display = 'block';
-    av.innerHTML = 'Te quedan <b>' + S.vidas + '</b> de ' + MAX_VIDAS + ' vidas. Se recupera una cada ' + MIN_VIDA + ' minutos. Próxima en <b id="cuenta">' + mmss(faltaVida()) + '</b>.';
+  pintarVidas();
+  const btn = document.getElementById('btn-jugar');
+  const av = document.getElementById('m-aviso');
+  if (S.vidas <= 0) {
+    btn.disabled = true;
+    av.textContent = 'Sin vidas. Se recupera una en ' + mmss(faltaVida()) + '.';
   } else {
-    av.style.display = 'none';
-    av.innerHTML = '';
+    btn.disabled = false;
+    av.textContent = S.vidas < MAX_VIDAS ? 'Vidas: ' + S.vidas + ' de ' + MAX_VIDAS + '. Próxima en ' + mmss(faltaVida()) + '.' : '';
   }
+}
+function pintarVidas() {
+  document.getElementById('t-vidas').textContent = S.vidas + '/' + MAX_VIDAS;
+}
+
+// ---------- Ventanas ----------
+function abrirHoja(html) {
+  document.getElementById('hoja').innerHTML = html;
+  document.getElementById('fondo').classList.add('on');
+}
+function cerrarHoja() { document.getElementById('fondo').classList.remove('on'); }
+function verCapitulos() {
+  let h = '<h3>Capítulos</h3><p class="sub">Puedes repetir los niveles ya completados.</p><div class="capitulo-lista">';
+  CAPS.forEach((c, ci) => {
+    const ini = inicioCap(ci);
+    h += '<div class="cap"><b>Capítulo ' + (ci + 1) + ': ' + esc(c.nombre) + '</b><br><small>' + c.dif + ' · ' + c.tema + '</small><div class="niveles">';
+    for (let n = ini; n <= c.fin; n++) {
+      const cls = n <= S.completados ? 'hecho' : (n === nivelActual() ? 'actual' : '');
+      h += '<button type="button" class="' + cls + '" data-nivel="' + n + '"' + (n > nivelActual() ? ' disabled' : '') + '>' + n + '</button>';
+    }
+    h += '</div></div>';
+  });
+  h += '</div><button class="boton sec" type="button" data-cerrar>Cerrar</button>';
+  abrirHoja(h);
+}
+function verRelicario() {
+  const porPalabra = new Map();
+  NIVELES.forEach((n) => n.palabras.forEach((p) => { if (!porPalabra.has(p.w)) porPalabra.set(p.w, p); }));
+  const sabidas = S.vocab.length;
+  let lista = '';
+  S.vocab.slice().reverse().forEach((w) => {
+    const p = porPalabra.get(w); if (!p) return;
+    lista += '<div class="carta"><b>' + esc(p.w) + '</b><p>' + esc(p.pista) + '</p><i>' + esc(p.nota) + '</i></div>';
+  });
+  const bloq = Math.max(0, Math.min(6, TOTAL_PALABRAS - sabidas));
+  for (let i = 0; i < bloq; i++) lista += '<div class="carta bloq"><b>· · · · ·</b><p>Palabra por descubrir</p></div>';
+  abrirHoja('<h3>Relicario</h3><p class="sub">Palabras descubiertas: <b>' + sabidas + '</b> de ' + TOTAL_PALABRAS + '</p><div class="lista-relicario">' + (lista || '<p class="sub">Aún no tienes palabras. ¡Empieza tu primer nivel!</p>') + '</div><button class="boton sec" type="button" data-cerrar>Cerrar</button>');
+}
+function verAyuda() {
+  abrirHoja('<h3>Cómo jugar</h3><div class="como">' +
+    '<p>• Une las letras de la rueda arrastrando el dedo para formar palabras.</p>' +
+    '<p>• Las palabras se cruzan en el tablero. Cada palabra encontrada se llena con sus letras.</p>' +
+    '<p>• Tienes un <b>tiempo</b> para cada nivel. Si se acaba, pierdes una <b>vida</b>.</p>' +
+    '<p>• Cada palabra incorrecta te quita <b>5 segundos</b>.</p>' +
+    '<p>• Las vidas se recuperan solas: una cada ' + MIN_VIDA + ' minutos.</p>' +
+    '<p>• Ganas <b>★ puntos misioneros</b> que se suman a tu perfil.</p>' +
+    '<p>• Cada capítulo termina con un cuadro para reclamar.</p></div>' +
+    '<button class="boton" type="button" data-cerrar>Entendido</button>');
+}
+function verSinVidas() {
+  abrirHoja('<h3>Sin vidas</h3><p>Se recupera una vida cada ' + MIN_VIDA + ' minutos.</p><p class="estrellas">♥</p><p>Próxima vida en <b id="cuenta-vida">' + mmss(faltaVida()) + '</b></p><button class="boton sec" type="button" data-cerrar>Volver al mapa</button>');
 }
 
 // ---------- Juego ----------
-let NV = null;          // nivel actual
-let encontradas = new Set();
-let reveladas = new Set();
-let celdas = new Map(); // "r,c" -> { ch, idx: [indices de palabras] }
-let activa = 0;         // índice de la palabra activa (pista)
-let letras = [];
-let sel = [];
-let arrastrando = false;
+let NV = null, encontradas = new Set(), reveladas = new Set(), celdas = new Map(), activa = 0;
+let letras = [], sel = [], arrastrando = false, juegoActivo = false, tiempoMs = 0, ultimoTick = 0;
 
 function mostrarVista(v) {
   document.getElementById('vista-mapa').style.display = v === 'mapa' ? 'flex' : 'none';
   document.getElementById('vista-juego').style.display = v === 'juego' ? 'flex' : 'none';
+  document.getElementById('btn-inicio').style.display = v === 'juego' ? 'none' : 'none';
   window.scrollTo(0, 0);
 }
 function abrirNivel(n) {
   regenerarVidas();
+  if (n > nivelActual()) return;
+  if (S.vidas <= 0) { verSinVidas(); return; }
   const nv = NIVELES[n - 1];
-  if (!nv) return;
-  const retomando = S.enCurso && S.enCurso.n === n;
-  if (!retomando) {
-    if (S.vidas <= 0) { sinVidas(); return; }
-    if (S.vidas === MAX_VIDAS) S.ultimaVida = Date.now();
-    S.vidas -= 1;
-    S.enCurso = { n: n, encontradas: [], reveladas: [] };
-    guardar();
-  }
+  let retomar = S.enCurso && S.enCurso.n === n;
+  if (!retomar) S.enCurso = { n: n, enc: [], rev: [], tiempo: tiempoBase(nv) };
   NV = nv;
-  encontradas = new Set(S.enCurso.encontradas);
-  reveladas = new Set(S.enCurso.reveladas);
+  encontradas = new Set(S.enCurso.enc);
+  reveladas = new Set(S.enCurso.rev);
+  tiempoMs = S.enCurso.tiempo;
   letras = barajar(nv.base.split(''));
   sel = [];
-  activa = Math.max(0, nv.palabras.findIndex((p) => !encontradas.has(p.w)));
   construirCeldas();
+  activa = Math.max(0, nv.palabras.findIndex((p) => !encontradas.has(p.w)));
   const ci = capDe(n);
-  document.getElementById('t-cap').textContent = 'Capítulo ' + (ci + 1) + ' · ' + CAPS[ci].nombre;
-  document.getElementById('t-nivel').textContent = 'Nivel ' + n + ' de ' + NIVELES.length;
-  mensaje('', '');
+  document.getElementById('g-nivel').textContent = 'Nivel ' + n;
+  document.getElementById('msg').textContent = '';
+  guardar();
   mostrarVista('juego');
   dibujarTablero();
   dibujarRueda();
   dibujarPista();
-  pintarCabecera();
+  pintarTiempo();
+  juegoActivo = true;
+  ultimoTick = Date.now();
+}
+function salirAlMapa() {
+  if (juegoActivo && S.enCurso) { S.enCurso.enc = Array.from(encontradas); S.enCurso.rev = Array.from(reveladas); S.enCurso.tiempo = tiempoMs; guardar(); }
+  juegoActivo = false;
+  NV = null;
+  cerrarHoja();
+  mostrarVista('mapa');
+  pintarMapa();
 }
 function construirCeldas() {
   celdas = new Map();
@@ -334,17 +426,12 @@ function resuelta(k) {
 }
 function dibujarTablero() {
   const tab = document.getElementById('tablero');
-  const anchoDisp = Math.min(window.innerWidth, 520) - 28 - 28; // margen de la tarjeta de papel
-  const cs = Math.max(24, Math.min(46, Math.floor(anchoDisp / NV.cols), Math.floor(300 / NV.rows)));
+  const ancho = Math.min(window.innerWidth, 480) - 28 - 16 - 8;
+  const cs = Math.max(26, Math.min(48, Math.floor(ancho / NV.cols), Math.floor(290 / NV.rows)));
   tab.style.width = (NV.cols * cs) + 'px';
   tab.style.height = (NV.rows * cs) + 'px';
-  // Números de inicio de palabra
-  const numeros = new Map();
-  let num = 1;
-  [...NV.palabras].sort((a, b) => a.r - b.r || a.c - b.c).forEach((p) => {
-    const k = p.r + ',' + p.c;
-    if (!numeros.has(k)) numeros.set(k, num++);
-  });
+  const numeros = new Map(); let num = 1;
+  [...NV.palabras].sort((a, b) => a.r - b.r || a.c - b.c).forEach((p) => { const k = p.r + ',' + p.c; if (!numeros.has(k)) numeros.set(k, num++); });
   const act = NV.palabras[activa];
   const actKeys = new Set();
   if (act) for (let i = 0; i < act.w.length; i++) actKeys.add((act.dir === 'H' ? act.r : act.r + i) + ',' + (act.dir === 'H' ? act.c + i : act.c));
@@ -352,62 +439,65 @@ function dibujarTablero() {
   celdas.forEach((info, k) => {
     const [r, c] = k.split(',').map(Number);
     const ok = resuelta(k);
-    const esPista = reveladas.has(k) && !info.idx.some((i) => encontradas.has(NV.palabras[i].w));
-    let cls = 'celda';
-    if (ok) cls += esPista ? ' pista' : ' resuelta';
+    const porPista = reveladas.has(k) && !info.idx.some((i) => encontradas.has(NV.palabras[i].w));
+    let cls = 'ficha';
+    if (!ok) cls += ' vacia'; else cls += porPista ? ' pista' : ' hecha';
     if (actKeys.has(k)) cls += ' activa';
     const n = numeros.get(k) ? '<span class="n">' + numeros.get(k) + '</span>' : '';
-    h += '<div class="' + cls + '" data-k="' + k + '" style="left:' + (c * cs) + 'px;top:' + (r * cs) + 'px;width:' + (cs - 3) + 'px;height:' + (cs - 3) + 'px;font-size:' + Math.round(cs * .5) + 'px">' + n + (ok ? info.ch : '') + '</div>';
+    h += '<div class="' + cls + '" data-k="' + k + '" style="left:' + (c * cs) + 'px;top:' + (r * cs) + 'px;width:' + (cs - 4) + 'px;height:' + (cs - 4) + 'px;font-size:' + Math.round(cs * .5) + 'px">' + n + (ok ? info.ch : '') + '</div>';
   });
   tab.innerHTML = h;
 }
 function dibujarPista() {
   const p = NV.palabras[activa];
-  const box = document.getElementById('pista-box');
+  const box = document.getElementById('pista');
   if (!p) { box.innerHTML = ''; return; }
   const dir = p.dir === 'H' ? 'Horizontal' : 'Vertical';
   const ya = encontradas.has(p.w);
-  box.innerHTML = '<small>' + dir + ' · ' + p.w.length + ' letras</small>' + (ya ? '<b>' + p.w + ':</b> ' : '') + esc(p.pista) + (ya ? '' : '');
+  box.innerHTML = '<small>' + dir + ' · ' + p.w.length + ' letras</small>' + (ya ? '<b>' + esc(p.w) + ':</b> ' : '') + esc(p.pista);
   dibujarTablero();
 }
-function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function dibujarRueda() {
   const rueda = document.getElementById('rueda');
   rueda.querySelectorAll('.letra').forEach((el) => el.remove());
-  const N = letras.length, R = 100, W = 140;
+  const N = letras.length, R = 102, C = 150;
   letras.forEach((ch, i) => {
     const ang = (2 * Math.PI * i / N) - Math.PI / 2;
     const el = document.createElement('div');
     el.className = 'letra';
     el.dataset.i = i;
-    el.style.left = (W + R * Math.cos(ang)) + 'px';
-    el.style.top = (W + R * Math.sin(ang)) + 'px';
+    el.style.left = (C + R * Math.cos(ang)) + 'px';
+    el.style.top = (C + R * Math.sin(ang)) + 'px';
     el.textContent = ch;
     rueda.appendChild(el);
   });
-  pintarPalabraFormada();
+  pintarFormada();
 }
-function pintarPalabraFormada() {
+function centroLetra(i) {
+  const el = document.querySelector('.letra[data-i="' + i + '"]');
+  if (!el) return null;
+  return [parseFloat(el.style.left), parseFloat(el.style.top)];
+}
+function pintarFormada() {
   const txt = sel.map((i) => letras[i]).join('');
-  const pill = document.getElementById('pill');
-  pill.innerHTML = txt ? '<span>' + esc(txt) + '</span>' : '<span class="vacia">Une las letras arrastrando el dedo</span>';
+  document.getElementById('formada').innerHTML = txt ? '<span>' + esc(txt) + '</span>' : '<span class="vacio">Une las letras</span>';
   document.querySelectorAll('.letra').forEach((el) => el.classList.toggle('sel', sel.includes(Number(el.dataset.i))));
+  const pts = sel.map(centroLetra).filter(Boolean).map((p) => p.join(',')).join(' ');
+  document.getElementById('trazo').setAttribute('points', pts);
 }
 function mensaje(txt, tipo) {
   const m = document.getElementById('msg');
   m.textContent = txt;
   m.className = 'msg' + (tipo ? ' ' + tipo : '');
 }
-function letraEn(x, y) {
-  const el = document.elementFromPoint(x, y);
-  return el && el.closest ? el.closest('.letra') : null;
-}
+function letraEn(x, y) { const el = document.elementFromPoint(x, y); return el && el.closest ? el.closest('.letra') : null; }
 function inicioArrastre(e) {
+  if (!juegoActivo) return;
   const el = e.target.closest && e.target.closest('.letra');
   if (!el) return;
   arrastrando = true;
   sel = [Number(el.dataset.i)];
-  pintarPalabraFormada();
+  pintarFormada();
   try { document.getElementById('rueda').setPointerCapture(e.pointerId); } catch (err) {}
 }
 function moverArrastre(e) {
@@ -415,23 +505,29 @@ function moverArrastre(e) {
   const el = letraEn(e.clientX, e.clientY);
   if (!el) return;
   const i = Number(el.dataset.i);
-  if (sel.length > 1 && i === sel[sel.length - 2]) { sel.pop(); pintarPalabraFormada(); return; }
-  if (!sel.includes(i)) { sel.push(i); pintarPalabraFormada(); }
+  if (sel.length > 1 && i === sel[sel.length - 2]) { sel.pop(); pintarFormada(); return; }
+  if (!sel.includes(i)) { sel.push(i); pintarFormada(); }
 }
 function finArrastre() {
   if (!arrastrando) return;
   arrastrando = false;
   const palabra = sel.map((i) => letras[i]).join('');
   sel = [];
-  pintarPalabraFormada();
+  pintarFormada();
   if (palabra.length >= 2) probar(palabra);
+}
+function sacudir() {
+  const f = document.querySelector('#formada span');
+  if (!f) return;
+  f.classList.remove('sacude'); void f.offsetWidth; f.classList.add('sacude');
 }
 function probar(p) {
   const idx = NV.palabras.findIndex((x) => x.w === p);
   if (idx < 0) {
-    mensaje('"' + p + '" no está en este crucigrama.', 'mal');
-    const pill = document.getElementById('pill');
-    pill.classList.remove('sacudir'); void pill.offsetWidth; pill.classList.add('sacudir');
+    tiempoMs = Math.max(0, tiempoMs - PENA_MS);
+    mensaje('"' + p + '" no está aquí: −5 segundos', 'mal');
+    sacudir();
+    pintarTiempo();
     return;
   }
   if (encontradas.has(p)) { mensaje('Ya encontraste "' + p + '".', ''); activa = idx; dibujarPista(); return; }
@@ -439,17 +535,17 @@ function probar(p) {
   activa = idx;
   const esBase = p === NV.base;
   S.puntos += esBase ? PT.base : PT.palabra;
-  S.enCurso.encontradas = Array.from(encontradas);
   if (!S.vocab.includes(p)) S.vocab.push(p);
+  S.enCurso.enc = Array.from(encontradas);
   guardar();
-  mensaje(ELOGIOS[Math.floor(Math.random() * ELOGIOS.length)] + ' +' + (esBase ? PT.base : PT.palabra) + ' ★', 'ok');
-  if (encontradas.size === NV.palabras.length) { dibujarPista(); setTimeout(completarNivel, 450); return; }
-  // Pasa a la siguiente palabra pendiente
+  mensaje((esBase ? '¡Palabra base! +' + PT.base : '¡Muy bien! +' + PT.palabra) + ' ★', 'ok');
+  if (encontradas.size === NV.palabras.length) { juegoActivo = false; dibujarPista(); setTimeout(completarNivel, 500); return; }
   const sig = NV.palabras.findIndex((x) => !encontradas.has(x.w));
   if (sig >= 0) activa = sig;
   dibujarPista();
 }
 function pistaDeLetra() {
+  if (!juegoActivo) return;
   let p = NV.palabras[activa];
   if (!p || encontradas.has(p.w)) p = NV.palabras.find((x) => !encontradas.has(x.w));
   if (!p) return;
@@ -460,63 +556,50 @@ function pistaDeLetra() {
     if (!resuelta(k)) {
       reveladas.add(k);
       S.puntos -= PT.pista;
-      S.enCurso.reveladas = Array.from(reveladas);
+      S.enCurso.rev = Array.from(reveladas);
       guardar();
-      mensaje('Pista: una letra de "' + p.w + '" está marcada en dorado.', '');
-      dibujarTablero();
-      pintarCabecera();
+      mensaje('Pista: una letra de "' + p.w + '" en azul.', '');
+      dibujarPista();
       return;
     }
   }
 }
+function pintarTiempo() {
+  const el = document.getElementById('g-tiempo');
+  document.getElementById('g-tiempo-t').textContent = mmss(tiempoMs);
+  el.classList.toggle('poco', tiempoMs <= 15000);
+}
 function completarNivel() {
+  juegoActivo = false;
   const numero = NV.n;
   const bono = PT.nivel + 10 * S.vidas;
   S.puntos += bono;
   S.completados = Math.max(S.completados, numero);
   S.enCurso = null;
-  const ci = capDe(numero);
-  const finCap = numero === CAPS[ci].fin;
-  let extra = '';
-  if (finCap) {
-    S.puntos += PT.cuadro;
-    extra = '<p><b>¡Capítulo completado!</b> Armaste el cuadro de <b>' + CAPS[ci].santo + '</b>. +' + PT.cuadro + ' ★</p><div class="cuadro" style="background-image:url(' + CAPS[ci].cuadro + ')"></div>';
-  }
   guardar();
+  const ci = capDe(numero);
   const v = VERSOS[(numero - 1) % VERSOS.length];
-  const hayMas = numero < NIVELES.length;
-  abrirCaja(
-    '<h3>¡Nivel ' + numero + ' completado!</h3>' +
-    '<p>+' + bono + ' puntos misioneros</p>' + extra +
-    '<div class="verso">“' + v.t + '”<small>' + v.r + '</small></div>' +
-    '<div class="btn-fila">' +
-      '<button class="btn sec" style="color:var(--azul);background:#fff;border-color:#C9D4EE" data-accion="mapa" type="button">Ver mapa</button>' +
-      (hayMas ? '<button class="btn" data-accion="siguiente" type="button">Siguiente nivel</button>' : '') +
-    '</div>'
-  );
+  if (numero === CAPS[ci].fin) {
+    const cap = CAPS[ci];
+    abrirHoja('<h3>¡Capítulo completado!</h3><p class="sub">Reclama tu cuadro</p><div class="premio" style="background-image:url(' + cap.cuadro + ')"></div><b style="font-size:18px">' + esc(cap.nombre) + '</b><p>' + esc(cap.desc) + '</p><button class="boton" type="button" data-accion="reclamar">RECLAMAR</button>');
+    return;
+  }
+  abrirHoja('<h3>¡Felicidades!</h3><p class="estrellas">★ ★ ★</p><p>Nivel ' + numero + ' completado · <b>+' + bono + ' ★</b></p>' +
+    '<div class="versiculo">“' + v.t + '”<small>' + v.r + '</small></div>' +
+    (numero < NIVELES.length ? '<button class="boton" type="button" data-accion="siguiente">NIVEL ' + (numero + 1) + '</button>' : '') +
+    '<button class="boton sec" type="button" data-accion="mapa">Volver al mapa</button>');
 }
-function sinVidas() {
-  abrirCaja('<h3>Sin vidas por ahora</h3><p>Se recupera una vida cada ' + MIN_VIDA + ' minutos.</p><p>Próxima vida en <b id="cuenta2">' + mmss(faltaVida()) + '</b></p><button class="cerrar" data-accion="cerrar" type="button">Entendido</button>');
-}
-function abrirCaja(html) {
-  document.getElementById('caja').innerHTML = html;
-  document.getElementById('ov').classList.add('on');
-}
-function cerrarCaja() { document.getElementById('ov').classList.remove('on'); }
-function verDiccionario() {
-  const total = TOTAL_PALABRAS, sabidas = S.vocab.length;
-  const porPalabra = new Map();
-  NIVELES.forEach((n) => n.palabras.forEach((p) => { if (!porPalabra.has(p.w)) porPalabra.set(p.w, p); }));
-  let lista = '';
-  const ordenadas = Array.from(porPalabra.values()).sort((a, b) => a.w.localeCompare(b.w, 'es'));
-  ordenadas.forEach((p) => {
-    if (S.vocab.includes(p.w)) {
-      lista += '<div class="entrada"><b>' + p.w + '</b><p>' + esc(p.pista) + '</p><i>' + esc(p.nota) + '</i></div>';
-    } else {
-      lista += '<div class="entrada bloq"><b>' + '· '.repeat(Math.max(3, p.w.length)).trim() + '</b><p>Palabra por descubrir.</p></div>';
-    }
-  });
-  abrirCaja('<h3>Venezolario Católico</h3><p>Palabras descubiertas: <b>' + sabidas + '</b> de ' + total + '</p><div class="lista-dic">' + lista + '</div><button class="cerrar" data-accion="cerrar" type="button">Cerrar</button>');
+function tiempoAgotado() {
+  juegoActivo = false;
+  S.vidas = Math.max(0, S.vidas - 1);
+  S.enCurso = null;
+  guardar();
+  const n = NV ? NV.n : 1;
+  if (S.vidas > 0) {
+    abrirHoja('<h3>Se acabó el tiempo</h3><p>Perdiste una vida. Te quedan <b>' + S.vidas + '</b>.</p><div class="versiculo">“Velad y orad en todo tiempo.”<small>Lucas 21, 36</small></div><button class="boton" type="button" data-accion="reintentar" data-n="' + n + '">Reintentar</button><button class="boton sec" type="button" data-accion="mapa">Volver al mapa</button>');
+  } else {
+    abrirHoja('<h3>Sin vidas</h3><p>Se acabó el tiempo y no te quedan vidas.</p><p>Se recupera una en <b>' + mmss(faltaVida()) + '</b>.</p><button class="boton sec" type="button" data-accion="mapa">Volver al mapa</button>');
+  }
 }
 
 // ---------- Eventos ----------
@@ -526,45 +609,54 @@ rueda.addEventListener('pointermove', moverArrastre);
 rueda.addEventListener('pointerup', finArrastre);
 rueda.addEventListener('pointercancel', finArrastre);
 document.getElementById('btn-mezclar').onclick = () => { letras = barajar(letras); sel = []; dibujarRueda(); };
-document.getElementById('btn-borrar').onclick = () => { sel = []; pintarPalabraFormada(); };
+document.getElementById('btn-borrar').onclick = () => { sel = []; pintarFormada(); };
 document.getElementById('btn-pista').onclick = pistaDeLetra;
-document.getElementById('btn-dic').onclick = verDiccionario;
-document.getElementById('btn-dic-mapa').onclick = verDiccionario;
-document.getElementById('btn-atras').onclick = () => { if (document.getElementById('vista-juego').style.display !== 'none') volverMapa(); };
-function volverMapa() { NV = null; pintarMapa(); mostrarVista('mapa'); document.getElementById('t-cap').textContent = 'Palabras JUMA'; document.getElementById('t-nivel').textContent = 'Niveles'; }
-document.getElementById('capitulos').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-nivel]');
-  if (b && !b.disabled) abrirNivel(Number(b.dataset.nivel));
-});
+document.getElementById('btn-salir').onclick = salirAlMapa;
+document.getElementById('btn-inicio').onclick = salirAlMapa;
+document.getElementById('btn-jugar').onclick = () => abrirNivel(nivelActual());
+document.getElementById('btn-capitulos').onclick = verCapitulos;
+document.getElementById('btn-relicario').onclick = verRelicario;
+document.getElementById('btn-ayuda').onclick = verAyuda;
 document.getElementById('tablero').addEventListener('click', (e) => {
-  const c = e.target.closest('.celda');
-  if (!c || !NV) return;
-  const k = c.dataset.k;
-  const info = celdas.get(k);
+  const c = e.target.closest('.ficha');
+  if (!c || !NV || !juegoActivo) return;
+  const info = celdas.get(c.dataset.k);
   if (!info) return;
-  // Toca una casilla: elige la palabra que pasa por ella; si hay dos, alterna
-  const opciones = info.idx;
-  const pos = opciones.indexOf(activa);
-  activa = opciones[(pos + 1) % opciones.length];
+  const pos = info.idx.indexOf(activa);
+  activa = info.idx[(pos + 1) % info.idx.length];
   dibujarPista();
 });
-document.getElementById('ov').addEventListener('click', (e) => {
-  if (e.target.id === 'ov') return cerrarCaja();
-  const b = e.target.closest('[data-accion]');
+document.getElementById('fondo').addEventListener('click', (e) => {
+  if (e.target.id === 'fondo') { if (document.getElementById('hoja').dataset.bloqueo !== '1') cerrarHoja(); return; }
+  const b = e.target.closest('[data-accion],[data-cerrar],[data-nivel]');
   if (!b) return;
+  if (b.dataset.cerrar !== undefined) { cerrarHoja(); return; }
+  if (b.dataset.nivel) { cerrarHoja(); abrirNivel(Number(b.dataset.nivel)); return; }
   const a = b.dataset.accion;
-  if (a === 'cerrar') cerrarCaja();
-  if (a === 'mapa') { cerrarCaja(); volverMapa(); }
-  if (a === 'siguiente') { cerrarCaja(); abrirNivel(NV.n + 1); }
+  if (a === 'mapa') { cerrarHoja(); salirAlMapa(); return; }
+  if (a === 'reclamar') { cerrarHoja(); salirAlMapa(); return; }
+  if (a === 'siguiente') { cerrarHoja(); abrirNivel(NV.n + 1); return; }
+  if (a === 'reintentar') { cerrarHoja(); abrirNivel(Number(b.dataset.n)); return; }
 });
-window.addEventListener('resize', () => { if (NV) dibujarTablero(); });
+window.addEventListener('resize', () => { if (NV && juegoActivo) dibujarTablero(); });
+
+// Reloj: descuenta el tiempo del nivel y revisa las vidas
 setInterval(() => {
+  const ahora = Date.now();
+  if (juegoActivo && NV) {
+    tiempoMs -= (ahora - ultimoTick);
+    if (tiempoMs <= 0) { tiempoMs = 0; pintarTiempo(); tiempoAgotado(); }
+    else pintarTiempo();
+  }
+  ultimoTick = ahora;
   const antes = S.vidas;
   regenerarVidas();
-  if (S.vidas !== antes) { guardar(); pintarCabecera(); }
-  const c = document.getElementById('cuenta'); if (c) c.textContent = mmss(faltaVida());
-  const c2 = document.getElementById('cuenta2'); if (c2) c2.textContent = mmss(faltaVida());
-}, 1000);
+  if (S.vidas !== antes) { guardar(); }
+  if (!juegoActivo) {
+    if (document.getElementById('vista-mapa').style.display !== 'none') pintarMapa();
+  }
+  const cv = document.getElementById('cuenta-vida'); if (cv) cv.textContent = mmss(faltaVida());
+}, 250);
 
 cargar();
 pintarMapa();
