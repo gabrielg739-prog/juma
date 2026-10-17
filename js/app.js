@@ -3424,7 +3424,7 @@ function renderJuegosView() {
       </article>
       <article class="lib-card">
         <div class="lib-cover" style="--bk:#7A2E5C"><b>Cuentas de gracia</b></div>
-        <div class="lib-info"><h2>Cuentas de gracia</h2><small>Tres en línea · símbolos de la fe</small><p>Une símbolos de la fe, crea cruces, custodias y palomas, y cumple las metas de 40 niveles.</p>
+        <div class="lib-info"><h2>Cuentas de gracia</h2><small>Tres en línea · símbolos de la fe</small><p>Une la Virgen, el Sagrado Corazón, la Biblia, el cáliz y las manos que oran; crea rayos de luz, bendiciones y la paloma del Espíritu en 40 niveles.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/cuentas-de-gracia.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
@@ -3447,7 +3447,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=80" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=82" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }

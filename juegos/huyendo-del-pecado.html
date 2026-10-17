@@ -1249,27 +1249,114 @@ function crearMisionero() {
 }
 const J = crearMisionero();
 
-/* ---------- La sombra del pecado que lo persigue ---------- */
+/* ---------- El Tentador: un hombre de abrigo negro que persigue al misionero ---------- */
 function crearSombra() {
-  const raiz = new THREE.Group();
-  const mat = new THREE.MeshLambertMaterial({ color: 0x241433, emissive: 0x160822, side: THREE.DoubleSide });
-  const manto = new THREE.Mesh(new THREE.ConeGeometry(0.78, 2.1, 18, 1, true), mat); manto.position.y = 1.15; raiz.add(manto);
-  const capucha = new THREE.Mesh(new THREE.SphereGeometry(0.42, 18, 14), mat); capucha.position.y = 2.18; capucha.scale.set(1, 1.15, 1); raiz.add(capucha);
-  const pico = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.5, 10), mat); pico.position.set(0, 2.55, 0.15); pico.rotation.x = 0.6; raiz.add(pico);
-  const cara = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 12), new THREE.MeshBasicMaterial({ color: 0x050208 })); cara.position.set(0, 2.12, -0.2); raiz.add(cara);
-  const matOjo = new THREE.MeshBasicMaterial({ color: 0xff2a2a });
-  for (const l of [-1, 1]) { const o = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), matOjo); o.position.set(0.11 * l, 2.16, -0.47); raiz.add(o); }
-  const brillo = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX_CHISPA, color: 0xff2a50, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending }));
-  brillo.position.set(0, 2.1, -0.4); brillo.scale.set(1.3, 0.7, 1); raiz.add(brillo);
-  const brazos = [-1, 1].map((l) => {
-    const b = new THREE.Group(); b.position.set(0.45 * l, 1.8, -0.05); raiz.add(b);
-    const a = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.7, 4, 8), mat); a.position.y = -0.42; b.add(a);
-    for (let i = -1; i <= 1; i++) { const u = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.22, 6), matOjo); u.position.set(i * 0.05, -0.9, 0); u.rotation.x = Math.PI; b.add(u); }
-    return b;
+  const est = (c, r, m, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: r, metalness: m || 0 }, o || {}));
+  // Tela del abrigo con trama (textura y relieve dibujados)
+  const tela = lienzo(64, 64, (g) => {
+    g.fillStyle = '#d8d8d8'; g.fillRect(0, 0, 64, 64);
+    for (let y = 0; y < 64; y += 2) { g.fillStyle = y % 4 ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.18)'; g.fillRect(0, y, 64, 1); }
+    for (let k = 0; k < 220; k++) { g.fillStyle = `rgba(0,0,0,${0.05 + rnd() * 0.08})`; g.fillRect(rnd() * 64, rnd() * 64, 2, 1); }
   });
+  tela.wrapS = tela.wrapT = THREE.RepeatWrapping; tela.repeat.set(3, 3);
+  const M = {
+    abrigo: est(0x1a1720, 0.82, 0, { map: tela }),
+    forro: est(0x6e0f1c, 0.45, 0, { side: THREE.DoubleSide }),
+    camisa: est(0x4a0c14, 0.4),
+    corbata: est(0x0b0a0d, 0.25, 0.1),
+    pantalon: est(0x16151b, 0.85, 0, { map: tela }),
+    zapato: est(0x08080a, 0.12, 0.4),
+    piel: est(0xc7aea3, 0.5),
+    labio: est(0x6a3a3c, 0.45),
+    pelo: est(0x0a090c, 0.28, 0.15),
+    ojo: new THREE.MeshBasicMaterial({ color: 0xff3b2a }),
+    una: est(0x1a0c10, 0.2, 0.2)
+  };
+  const raiz = new THREE.Group();
+  const giro = new THREE.Group(); giro.position.y = 1; raiz.add(giro);
+  const cuerpo = new THREE.Group(); cuerpo.position.y = -1; giro.add(cuerpo);
+  const malla = (geo, mat, x, y, z, padre) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; padre.add(m); return m; };
+  // Piernas con rodilla y zapatos de charol
+  const piernas = [-1, 1].map((l) => {
+    const p = new THREE.Group(); p.position.set(0.11 * l, 0.95, 0); cuerpo.add(p);
+    malla(new THREE.CapsuleGeometry(0.085, 0.3, 4, 12), M.pantalon, 0, -0.22, 0, p);
+    const rod = new THREE.Group(); rod.position.y = -0.45; p.add(rod);
+    malla(new THREE.CapsuleGeometry(0.068, 0.32, 4, 12), M.pantalon, 0, -0.21, 0, rod);
+    const pie = malla(new THREE.CapsuleGeometry(0.055, 0.17, 4, 10), M.zapato, 0, -0.45, -0.07, rod); pie.rotation.x = Math.PI / 2; pie.scale.set(1.15, 1, 0.8);
+    return { p, rod };
+  });
+  const torso = new THREE.Group(); torso.position.y = 0.95; cuerpo.add(torso);
+  malla(new THREE.CylinderGeometry(0.19, 0.2, 0.18, 20), M.pantalon, 0, 0.04, 0, torso);
+  const pecho = malla(new THREE.CylinderGeometry(0.25, 0.19, 0.5, 22), M.abrigo, 0, 0.33, 0, torso); pecho.scale.z = 0.72;
+  const hombros = malla(new THREE.SphereGeometry(0.25, 22, 12), M.abrigo, 0, 0.55, 0, torso); hombros.scale.set(1.28, 0.42, 0.74);
+  // Camisa roja oscura, corbata y solapas
+  const camisa = malla(new THREE.CylinderGeometry(0.06, 0.012, 0.26, 3), M.camisa, 0, 0.47, -0.168, torso); camisa.rotation.y = Math.PI; camisa.scale.z = 0.2;
+  malla(new THREE.BoxGeometry(0.04, 0.24, 0.015), M.corbata, 0, 0.43, -0.178, torso);
+  for (const l of [-1, 1]) { const sol = malla(new THREE.BoxGeometry(0.075, 0.3, 0.02), M.abrigo, 0.06 * l, 0.44, -0.172, torso); sol.rotation.z = -0.32 * l; }
+  for (let k = 0; k < 2; k++) malla(new THREE.SphereGeometry(0.014, 8, 6), M.zapato, 0.07, 0.2 + k * 0.1, -0.15, torso);
+  // Faldones del abrigo que ondean al correr
+  const colas = [-1, 1].map((l) => {
+    const c = new THREE.Group(); c.position.y = 0.12; torso.add(c);
+    const geo = new THREE.CylinderGeometry(0.205, 0.32, 0.78, 16, 4, true, l > 0 ? 0 : Math.PI * 1.22, Math.PI * 0.78);
+    malla(geo, M.abrigo, 0, -0.39, 0, c).scale.z = 0.85;
+    const f = malla(geo, M.forro, 0, -0.39, 0, c); f.scale.set(0.97, 0.99, 0.82);
+    return c;
+  });
+  malla(new THREE.CylinderGeometry(0.065, 0.07, 0.12, 12), M.piel, 0, 0.66, 0, torso);
+  const cuello = malla(new THREE.CylinderGeometry(0.1, 0.12, 0.08, 16, 1, true), M.abrigo, 0, 0.64, 0.01, torso); cuello.material = M.abrigo;
+  // Brazos con codo, mano con dedos y uñas oscuras
+  const brazos = [-1, 1].map((l) => {
+    const b = new THREE.Group(); b.position.set(0.3 * l, 0.55, 0); torso.add(b);
+    malla(new THREE.CapsuleGeometry(0.075, 0.22, 4, 12), M.abrigo, 0, -0.16, 0, b);
+    const codo = new THREE.Group(); codo.position.y = -0.31; b.add(codo);
+    malla(new THREE.CapsuleGeometry(0.064, 0.2, 4, 12), M.abrigo, 0, -0.14, 0, codo);
+    malla(new THREE.CylinderGeometry(0.055, 0.055, 0.04, 12), M.camisa, 0, -0.27, 0, codo);
+    const mano = new THREE.Group(); mano.position.y = -0.31; codo.add(mano);
+    malla(new THREE.BoxGeometry(0.075, 0.09, 0.035), M.piel, 0, -0.03, 0, mano);
+    for (let d = 0; d < 4; d++) {
+      const dd = malla(new THREE.CapsuleGeometry(0.011, 0.06, 3, 6), M.piel, (d - 1.5) * 0.018, -0.105, -0.004, mano); dd.rotation.x = -0.4;
+      malla(new THREE.ConeGeometry(0.009, 0.03, 5), M.una, (d - 1.5) * 0.018, -0.155, -0.025, mano).rotation.x = Math.PI - 0.4;
+    }
+    const pul = malla(new THREE.CapsuleGeometry(0.012, 0.045, 3, 6), M.piel, -0.045 * l, -0.06, -0.02, mano); pul.rotation.z = 0.6 * l;
+    // Llama oscura del poder en la mano
+    const llama = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX_CHISPA, color: 0xb0203a, transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending }));
+    llama.position.y = -0.08; llama.scale.setScalar(0.35); mano.add(llama);
+    b.rotation.z = 0.1 * l;
+    return { b, codo, mano, llama };
+  });
+  // Cabeza de rasgos humanos: pómulos marcados, mandíbula, nariz, orejas, pelo engominado
+  const cabeza = new THREE.Group(); cabeza.position.set(0, 0.72, 0); torso.add(cabeza);
+  malla(new THREE.SphereGeometry(0.112, 26, 20), M.piel, 0, 0.13, 0, cabeza).scale.set(0.9, 1.15, 1.02);
+  malla(new THREE.SphereGeometry(0.088, 20, 14), M.piel, 0, 0.055, -0.025, cabeza).scale.set(0.9, 0.72, 0.98);
+  malla(new THREE.SphereGeometry(0.03, 10, 8), M.piel, 0, 0.0, -0.088, cabeza).scale.set(1.1, 0.8, 0.8);
+  const nariz = malla(new THREE.ConeGeometry(0.02, 0.07, 8), M.piel, 0, 0.115, -0.112, cabeza); nariz.rotation.x = -1.25;
+  malla(new THREE.SphereGeometry(0.018, 8, 6), M.piel, 0, 0.088, -0.118, cabeza);
+  for (const l of [-1, 1]) {
+    malla(new THREE.SphereGeometry(0.03, 10, 8), M.piel, 0.068 * l, 0.1, -0.075, cabeza).scale.set(1, 0.7, 0.8);
+    const oreja = malla(new THREE.SphereGeometry(0.028, 10, 8), M.piel, 0.103 * l, 0.12, 0.005, cabeza); oreja.scale.set(0.4, 1.2, 0.85);
+    const cuenca = malla(new THREE.SphereGeometry(0.024, 10, 8), M.pelo, 0.038 * l, 0.142, -0.093, cabeza); cuenca.scale.set(1.2, 0.75, 0.5);
+    const ojo = malla(new THREE.SphereGeometry(0.012, 8, 6), M.ojo, 0.038 * l, 0.142, -0.103, cabeza); ojo.castShadow = false;
+    const ceja = malla(new THREE.BoxGeometry(0.05, 0.011, 0.014), M.pelo, 0.04 * l, 0.172, -0.1, cabeza); ceja.rotation.z = 0.38 * l;
+  }
+  // Sonrisa torcida
+  const boca = malla(new THREE.TorusGeometry(0.03, 0.006, 5, 12, Math.PI * 0.8), M.labio, 0.006, 0.058, -0.098, cabeza); boca.rotation.set(0.1, 0, Math.PI + 0.25);
+  const pelo = malla(new THREE.SphereGeometry(0.118, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.52), M.pelo, 0, 0.15, 0.012, cabeza); pelo.scale.set(0.93, 1.12, 1.05); pelo.rotation.x = -0.18;
+  const nuca = malla(new THREE.SphereGeometry(0.121, 22, 14, 0, Math.PI, 0, Math.PI * 0.72), M.pelo, 0, 0.13, 0.008, cabeza); nuca.scale.set(0.93, 1.14, 1.06);
+  const pico = malla(new THREE.ConeGeometry(0.03, 0.05, 6), M.pelo, 0, 0.215, -0.1, cabeza); pico.rotation.x = Math.PI + 0.5;
+  // Brillo rojo de los ojos y aura de su poder
+  const brillo = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX_CHISPA, color: 0xff2030, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending }));
+  brillo.position.set(0, 0.142, -0.13); brillo.scale.set(0.28, 0.09, 1); cabeza.add(brillo);
+  const aura = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX_CHISPA, color: 0x5a0a30, transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending }));
+  aura.position.y = 1.15; aura.scale.set(2.2, 2.8, 1); raiz.add(aura);
+  const luz = new THREE.PointLight(0xff2a3a, 0, 7, 1.6); luz.position.set(0, 1.4, -0.4); raiz.add(luz);
+  // Bola de fuego oscuro que lanza
+  const bola = new THREE.Group(); bola.visible = false; scene.add(bola);
+  const nucleo = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX_CHISPA, color: 0xff3048, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); nucleo.scale.setScalar(1.1); bola.add(nucleo);
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX_CHISPA, color: 0x7a10a0, transparent: true, opacity: 0.8, depthWrite: false, blending: THREE.AdditiveBlending })); halo.scale.setScalar(2.2); bola.add(halo);
+  const luzBola = new THREE.PointLight(0xff3050, 0, 9, 1.5); bola.add(luzBola);
   raiz.visible = false;
   scene.add(raiz);
-  return { raiz, brazos, manto };
+  return { raiz, giro, cuerpo, torso, piernas, brazos, colas, cabeza, brillo, aura, luz, bola, luzBola, M };
 }
 const SOMBRA = crearSombra();
 
@@ -1570,7 +1657,7 @@ function tropezar(o) {
   carril = o.carril + lado;
   carrilPrev = carril;
   px = o.x + lado * 1.56;
-  if (tropiezoT > 0 || persD < 7.5) {
+  if (tropiezoT > 0 || (persD < 7.5 && acechoDur <= 0)) {
     if (escudoT > 0) { escudoT = 0; invulT = 1.2; SND.romper(); aviso('¡La fe te protegió!'); return; }
     tipoFin = 'atrapado';
     terminarPorChoque();
@@ -1718,8 +1805,10 @@ function actualizar(dt) {
   generarCielo();
 
   // La sombra se acerca al tropezar y al comenzar
-  if (tropiezoT > 0) { tropiezoT = Math.max(0, tropiezoT - dt); persObj = 1.9; }
-  else persObj = tRun < 1.6 ? 2.0 : 16;
+  if (acechoDur > 0) { acechoDur -= dt; if (acechoDur <= 0) finAcecho(); }
+  else if (tRun > 8 && tropiezoT <= 0 && poder.alas <= 0 && (acechoT -= dt) <= 0) { acechoT = 24 + rnd() * 16; empezarAcecho(); }
+  if (tropiezoT > 0) { tropiezoT = Math.max(0, tropiezoT - dt); persObj = 1.9; acechoDur = 0; }
+  else persObj = tRun < 1.6 ? 2.0 : acechoDur > 0 ? 2.4 : 16;
 
   progresoMision('metros', run.metros, 0);
   progresoMision('puntos', run.puntos, 0);
@@ -1814,20 +1903,143 @@ function animarJugador(dt) {
   R.M.zapato.emissive.setHex(poder.sandalias > 0 && estado !== 'menu' ? 0x2a8a10 : 0x000000);
   R.raiz.visible = window.__dios || !(invulT > 0 && estado === 'jugando' && Math.floor(reloj * 14) % 2 === 0);
 }
+/* Animación del Tentador: corre, salta detrás del misionero, se teletransporta en humo y lanza fuego oscuro */
+let tFase = 0, tY = 0, tVy = 0, tSuelo = true, tSaltoCola = -1, tVuelta = 0, tLanzar = 0, bolaT = -1, bolaX = 0, bolaY = 0, bolaS = 0, bolaVX = 0, bolaObjX = 0;
+let acechoT = 22, acechoDur = 0, ultimaTent = -1;
+const TENTACIONES = [
+  ['«Nadie se va a enterar…»', 'Dios ve en lo secreto (Mt 6,6)'],
+  ['«Solo una vez, no pasa nada»', 'Dios no permite que seas tentado más allá de tus fuerzas (1 Co 10,13)'],
+  ['«Mañana rezas, hoy diviértete»', 'Velen y oren para no caer en tentación (Mt 26,41)'],
+  ['«Todos lo hacen»', 'No se amolden a este mundo (Rom 12,2)'],
+  ['«Tú no vales nada»', 'Eres precioso a mis ojos y yo te amo (Is 43,4)'],
+  ['«Dios ya no te perdona»', 'Su misericordia es eterna (Sal 136)'],
+  ['«Quédate en la cama, la Misa es aburrida»', 'Yo soy el pan de vida (Jn 6,35)'],
+  ['«Véngate, se lo merece»', 'Amen a sus enemigos (Mt 5,44)']
+];
+function empezarAcecho() {
+  acechoDur = 4.2;
+  let k; do { k = Math.floor(rnd() * TENTACIONES.length); } while (k === ultimaTent && TENTACIONES.length > 1);
+  ultimaTent = k;
+  aviso('El Tentador te alcanza', TENTACIONES[k][0]);
+  // Aparece de golpe envuelto en humo
+  emitir(px + (px > 0.5 ? -1.25 : 1.25), 1, dist - 2.5, 22, 0x1a0820, { vel: 2.5, tam: 1.3, vida: 0.8, normal: true });
+  emitir(px + (px > 0.5 ? -1.25 : 1.25), 1.2, dist - 2.5, 12, 0xff2a50, { vel: 3.5, tam: 0.5, vida: 0.5 });
+  persD = 2.5; sombraX = px + (px > 0.5 ? -1.25 : 1.25);
+  tLanzar = 1.5;
+}
+function finAcecho() {
+  aviso('¡Resististe!', TENTACIONES[ultimaTent][1], 'oro');
+  if (run) run.puntos += 150 * mult();
+  emitir(sombraX, 1, dist - persD, 18, 0x1a0820, { vel: 2.2, tam: 1.2, vida: 0.7, normal: true });
+  persD = 14;
+}
+function lanzarBola() {
+  const T = SOMBRA, m = T.brazos[1].mano;
+  m.updateWorldMatrix(true, false);
+  const v = new THREE.Vector3(); m.getWorldPosition(v);
+  bolaX = v.x; bolaY = v.y; bolaS = dist - v.z;
+  // Pasa rozando por el carril de al lado y estalla delante
+  const lib = [0, 1, 2].filter((c) => c !== carril);
+  bolaObjX = CARRIL_X[lib[Math.floor(rnd() * lib.length)]];
+  bolaT = 0;
+  T.bola.visible = true;
+  SND.poder && SND.poder();
+}
 function animarSombra(dt) {
+  const T = SOMBRA;
   const visible = persD < 9.5 && estado !== 'menu' && estado !== 'cargando';
-  SOMBRA.raiz.visible = visible;
+  T.raiz.visible = visible;
   if (estado === 'jugando' || estado === 'choque') persD += (persObj - persD) * Math.min(1, dt * (persObj < persD ? 2.6 : 0.7));
-  if (!visible) { sombraX = px; return; }
+  // Bola de fuego en vuelo
+  if (bolaT >= 0) {
+    bolaT += dt;
+    const k = Math.min(1, bolaT / 0.9);
+    bolaS += (velocidad + 26) * dt;
+    bolaX += (bolaObjX - bolaX) * Math.min(1, dt * 5);
+    bolaY = 1.4 + Math.sin(k * Math.PI) * 1.4 - k * 1.1;
+    T.bola.position.set(bolaX, bolaY, dist - bolaS);
+    T.bola.children[0].material.rotation += dt * 8;
+    T.luzBola.intensity = 30;
+    if (rnd() < 0.7) emitir(bolaX, bolaY, bolaS, 1, rnd() < 0.5 ? 0xff3048 : 0x7a10a0, { vel: 0.8, tam: 0.7, vida: 0.4 });
+    if (k >= 1) {
+      emitir(bolaX, 0.4, bolaS, 26, 0xff2a40, { vel: 6, tam: 0.8, vida: 0.6, grav: 8 });
+      emitir(bolaX, 0.6, bolaS, 14, 0x1a0820, { vel: 2.5, tam: 1.4, vida: 0.9, normal: true });
+      sacudida = Math.max(sacudida, 0.25); SND.romper && SND.romper();
+      bolaT = -1; T.bola.visible = false; T.luzBola.intensity = 0;
+    }
+  }
+  if (!visible) { sombraX = px; T.luz.intensity = 0; return; }
   const lado = px > 0.5 ? -1.25 : 1.25;
   sombraX += (px + lado - sombraX) * Math.min(1, dt * 4);
-  SOMBRA.raiz.scale.setScalar(0.8);
-  SOMBRA.raiz.position.set(sombraX, 0.1 + Math.sin(reloj * 5) * 0.08, persD);
-  SOMBRA.brazos[0].rotation.x = 1.25 + Math.sin(reloj * 9) * 0.25;
-  SOMBRA.brazos[1].rotation.x = 1.25 - Math.sin(reloj * 9) * 0.25;
-  SOMBRA.manto.scale.x = 1 + Math.sin(reloj * 7) * 0.05;
+  // Salta cuando el misionero salta (con un instante de retraso) y a veces da una voltereta
+  if (estado === 'jugando') {
+    if (!enSuelo && vy > 2 && tSuelo && tSaltoCola < 0) tSaltoCola = 0.22;
+    if (tSaltoCola >= 0) { tSaltoCola -= dt; if (tSaltoCola < 0 && tSuelo) { tSuelo = false; tVy = 9; tVuelta = rnd() < 0.35 ? 0.0001 : 0; } }
+  }
+  // Sube de un salto al techo de los trenes que tiene delante
+  const sV = dist - persD;
+  let piso = 0, pisoAdelante = 0;
+  for (const o of obstaculos) {
+    if (o.tipo !== 'tren' || Math.abs(CARRIL_X[o.carril] - sombraX) > 0.9) continue;
+    if (o.s0 - 0.5 < sV && o.s1 > sV) piso = TREN_ALTO;
+    if (o.s0 - 4 < sV && o.s1 > sV) pisoAdelante = TREN_ALTO;
+  }
+  if (tSuelo && pisoAdelante > tY + 0.2) { tSuelo = false; tVy = 14; tVuelta = 0; }
+  else if (tSuelo && tY > piso + 0.05) { tSuelo = false; tVy = 0; }
+  if (!tSuelo) {
+    tVy -= 24 * dt; tY += tVy * dt;
+    if (tVuelta > 0) tVuelta += dt;
+    if (tY <= piso && tVy <= 0) { tY = piso; tVy = 0; tSuelo = true; tVuelta = 0; emitir(sombraX, 0.1, dist - persD, 5, 0x3a2a3a, { vel: 1.2, tam: 0.6, vida: 0.4, normal: true }); }
+  }
+  if (estado === 'jugando') tFase += dt * (velocidad * 0.6 + 3.5);
+  const R = T, k = Math.min(1, dt * 18);
+  let pI, pD, rI, rD, bI, bD, cI, cD, bZI = -0.1, bZD = 0.1, tx, cab = 0.1, giroX = 0;
+  if (!tSuelo) {
+    const p = clamp((9 - tVy) / 18, 0, 1), a = Math.sin(p * Math.PI);
+    pI = 1.4 * a + 0.2; pD = 0.5 * a - 0.2; rI = -1.9 * a - 0.2; rD = -1.3 * a - 0.3;
+    bI = -0.6; bD = 2.2 * a; cI = 0.6; cD = 0.4; bZI = -0.5; bZD = 0.6; tx = -0.25;
+    if (tVuelta > 0) { giroX = -suave(p) * Math.PI * 2; pI = pD = 1.6; rI = rD = -2.2; bI = bD = 1; cI = cD = 1.9; }
+  } else if (estado === 'choque' || estado === 'fin') {
+    // Se detiene y se ríe con los brazos abiertos
+    pI = pD = 0; rI = rD = -0.05; bI = bD = 0.3; cI = cD = 0.5; bZI = -1.1 + Math.sin(reloj * 14) * 0.08; bZD = 1.1 - Math.sin(reloj * 14) * 0.08; tx = 0.1; cab = -0.25 + Math.sin(reloj * 18) * 0.06;
+  } else {
+    const sn = Math.sin(tFase), cs = Math.cos(tFase);
+    pI = sn * 1.15; pD = -sn * 1.15;
+    rI = -(0.2 + Math.max(0, cs) * 1.75); rD = -(0.2 + Math.max(0, -cs) * 1.75);
+    bI = -sn * 1.2; bD = sn * 1.2; cI = 1.4 + Math.max(0, sn) * 0.3; cD = 1.4 + Math.max(0, -sn) * 0.3;
+    tx = -0.32 + Math.sin(tFase * 2) * 0.04;
+    R.cuerpo.position.y = -1 + Math.abs(sn) * 0.09;
+    R.torso.rotation.y = sn * 0.16;
+  }
+  // Lanza el fuego: brazo derecho atrás y luego adelante
+  if (tLanzar > 0) {
+    tLanzar -= dt;
+    if (tLanzar < 0.55) { const a = tLanzar > 0.3 ? 1 : tLanzar / 0.3; bD = 2.8 * a + bD * (1 - a); cD = 0.2; bZD = 0.3; }
+    if (tLanzar <= 0.3 && tLanzar + dt > 0.3) lanzarBola();
+  }
+  R.giro.rotation.x = giroX;
+  ap(R.piernas[0].p.rotation, 'x', pI, k); ap(R.piernas[1].p.rotation, 'x', pD, k);
+  ap(R.piernas[0].rod.rotation, 'x', rI, k); ap(R.piernas[1].rod.rotation, 'x', rD, k);
+  ap(R.brazos[0].b.rotation, 'x', bI, k); ap(R.brazos[1].b.rotation, 'x', bD, k);
+  ap(R.brazos[0].codo.rotation, 'x', cI, k); ap(R.brazos[1].codo.rotation, 'x', cD, k);
+  ap(R.brazos[0].b.rotation, 'z', bZI, k); ap(R.brazos[1].b.rotation, 'z', bZD, k);
+  ap(R.torso.rotation, 'x', tx, k); ap(R.cabeza.rotation, 'x', cab, k);
+  // Faldones del abrigo hacia atrás según la velocidad
+  const vel = estado === 'jugando' ? Math.min(1, velocidad / 25) : 0.1;
+  R.colas[0].rotation.x = -0.15 - vel * 0.45 + Math.sin(reloj * 13) * 0.06 * vel;
+  R.colas[1].rotation.x = -0.15 - vel * 0.45 + Math.sin(reloj * 13 + 1.7) * 0.06 * vel;
+  R.colas[0].rotation.z = -0.08 - vel * 0.1; R.colas[1].rotation.z = 0.08 + vel * 0.1;
+  // Poder: llamas en las manos, ojos y aura que laten
+  const pulso = 0.75 + Math.sin(reloj * 11) * 0.25;
+  for (const b of R.brazos) { b.llama.scale.setScalar(0.28 + pulso * 0.14 + (tLanzar > 0 ? 0.35 : 0)); b.llama.material.rotation = reloj * 5; }
+  R.brillo.material.opacity = 0.6 + pulso * 0.4;
+  R.aura.material.opacity = 0.35 + pulso * 0.2;
+  R.luz.intensity = 6 + pulso * 4;
+  R.raiz.scale.setScalar(1.12);
+  R.raiz.position.set(sombraX, tY, persD);
+  R.raiz.rotation.y = (estado === 'choque' || estado === 'fin') ? Math.PI * 0 : (px - sombraX) * -0.15;
   estelaT -= dt;
-  if (estelaT <= 0) { estelaT = 0.06; emitir(sombraX + (rnd() - 0.5) * 0.6, 0.4 + rnd() * 0.8, dist - persD, 1, 0x2a1238, { vel: 0.6, tam: 0.9, vida: 0.6, normal: true }); }
+  if (estelaT <= 0) { estelaT = 0.07; emitir(sombraX + (rnd() - 0.5) * 0.5, 0.3 + rnd() * 1.4, dist - persD - 0.3, 1, 0x1c0a24, { vel: 0.5, tam: 0.8, vida: 0.55, normal: true }); }
 }
 const dummy = new THREE.Object3D();
 function dibujarMonedas() {
@@ -2000,7 +2212,7 @@ function iniciar() {
   escudoT = 0; invulT = 0; tropiezoT = 0; tropiezoCD = 0; animTropiezo = 0;
   carril = 1; carrilPrev = 1; px = 0; py = 0; vy = 0; enSuelo = true; rodarT = 0; colaSalto = 0; colaRodar = false; alturaSuelo = 0;
   tRun = 0; arranqueT = 0; revividas = 0; velocidad = 6; prevDist = dist;
-  persD = 2.0; persObj = 2.0; sombraX = 1.25;
+  persD = 2.0; persObj = 2.0; sombraX = 1.25; acechoT = 20 + rnd() * 8; acechoDur = 0; tY = 0; tSuelo = true; bolaT = -1; SOMBRA.bola.visible = false;
   estado = 'jugando';
   musT = 0;
   $('menu').hidden = true; $('fin').hidden = true; $('pausa').hidden = true;
@@ -2191,7 +2403,7 @@ window.__huirListo = true;
 const carga = $('carga');
 carga.classList.add('fuera');
 setTimeout(() => { carga.hidden = true; }, 400);
-window.__huir = { paso, iniciar, mover, saltar, rodar, usarEscudo, revivir, mostrarMenu, get estado() { return estado; }, get dist() { return dist; }, get run() { return run; }, get obstaculos() { return obstaculos; }, get monedas() { return monedas; }, get items() { return items; }, get escena() { return escena; }, get tuneles() { return tuneles; }, get jugador() { return { px, py, carril, enSuelo, invulT, escudoT, persD }; }, set invul(v) { invulT = v; }, scene, S };
+window.__huir = { paso, iniciar, mover, saltar, rodar, usarEscudo, revivir, mostrarMenu, get estado() { return estado; }, get dist() { return dist; }, get run() { return run; }, get obstaculos() { return obstaculos; }, get monedas() { return monedas; }, get items() { return items; }, get escena() { return escena; }, get tuneles() { return tuneles; }, acecho: () => { acechoT = 0; tRun = Math.max(tRun, 9); }, get jugador() { return { px, py, carril, enSuelo, invulT, escudoT, persD }; }, set invul(v) { invulT = v; }, scene, S };
 </script>
 </body>
 </html>
