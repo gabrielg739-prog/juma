@@ -3419,17 +3419,17 @@ function renderJuegosView() {
       </article>
       <article class="lib-card">
         <div class="lib-cover" style="--bk:#4A2A6E"><b>Memoria de santos</b></div>
-        <div class="lib-info"><h2>Memoria de santos</h2><small>Juego de memoria</small><p>Une cada rostro con su nombre y descubre el dato de cada santo del carisma.</p>
+        <div class="lib-info"><h2>Memoria de santos</h2><small>Juego de memoria · 10 niveles</small><p>Une santos y signos de la fe con su nombre, en tres dificultades, y aprende algo nuevo en cada pareja.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/memoria-santos.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
         <div class="lib-cover" style="--bk:#7A2E5C"><b>Cuentas de gracia</b></div>
-        <div class="lib-info"><h2>Cuentas de gracia</h2><small>Tres en línea · símbolos de la fe</small><p>Une símbolos de la fe para limpiar el tablero y llegar a la meta en cada uno de los 20 niveles.</p>
+        <div class="lib-info"><h2>Cuentas de gracia</h2><small>Tres en línea · símbolos de la fe</small><p>Une símbolos de la fe, crea cruces, custodias y palomas, y cumple las metas de 40 niveles.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/cuentas-de-gracia.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
         <div class="lib-cover" style="--bk:#2A1640"><b>Luz contra el pecado</b></div>
-        <div class="lib-info"><h2>Luz contra el pecado</h2><small>Acción en primera persona · San José Allamano</small><p>Recorre cinco caminos oscuros, bendice a los pecados con el hisopo y abre el Sagrario en cada nivel.</p>
+        <div class="lib-info"><h2>Luz contra el pecado</h2><small>Acción en primera persona · San José Allamano</small><p>Siete lugares oscuros, cuatro armas de la fe y seis pecados que vencer, hasta llegar al Tentador.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/luz-contra-el-pecado.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
