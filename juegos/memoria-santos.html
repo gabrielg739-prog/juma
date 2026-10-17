@@ -7,75 +7,96 @@
 <title>Memoria de santos · JUMA</title>
 <style>
   :root {
-    --glass: rgba(26,14,38,.66); --glass-2: rgba(26,14,38,.84); --borde: rgba(255,255,255,.22);
-    --gold: #FFD25A; --gold-2: #C98F12; --verde: #52B23A; --verde-2: #2E7D20;
-    --plum: #3A2150; --plum-2: #2A1640; --cream: #FFF3D6; --ink: #2B1A3F; --muted: #7A6A8C;
+    --glass: rgba(26, 14, 38, .66); --glass-2: rgba(26, 14, 38, .86); --borde: rgba(255, 255, 255, .22);
+    --gold: #ffd25a; --gold-2: #c98f12; --verde-2: #2e7d20;
+    --plum-2: #2a1640; --cream: #fff3d6; --ink: #2b1a3f; --muted: #7a6a8c; --ease: cubic-bezier(0.23, 1, 0.32, 1);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
   html, body { margin: 0; height: 100%; }
   body { font-family: "Trebuchet MS", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #fff; min-height: 100%; overflow-x: hidden; background: #1a1020; }
   .bg { position: fixed; inset: 0; z-index: 0; background: #1a1020 center / cover no-repeat url(fondos/f2.jpg); }
-  .bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(48,20,60,.6) 0%, rgba(30,12,40,.7) 55%, rgba(18,6,28,.9) 100%); }
+  .bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(48, 20, 60, .62) 0%, rgba(30, 12, 40, .72) 55%, rgba(18, 6, 28, .92) 100%); }
   button { font: inherit; cursor: pointer; border: 0; color: inherit; }
   button:focus-visible, .carta:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   svg { display: block; }
-  .app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; padding: calc(env(safe-area-inset-top,0px) + 12px) 16px calc(env(safe-area-inset-bottom,0px) + 18px); display: flex; flex-direction: column; gap: 12px; }
+  .app { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; padding: calc(env(safe-area-inset-top, 0px) + 12px) 14px calc(env(safe-area-inset-bottom, 0px) + 18px); display: flex; flex-direction: column; gap: 12px; }
   .top { display: flex; align-items: center; gap: 8px; }
-  .redondo { width: 46px; height: 46px; border-radius: 50%; background: var(--glass-2); border: 2px solid var(--borde); display: grid; place-items: center; flex: 0 0 auto; }
+  .redondo { width: 46px; height: 46px; border-radius: 50%; background: var(--glass-2); border: 2px solid var(--borde); display: grid; place-items: center; flex: 0 0 auto; transition: transform .12s var(--ease); }
   .redondo:active { transform: scale(.94); }
   .espacio { flex: 1; }
-  .pill { height: 42px; padding: 0 14px; border-radius: 999px; background: var(--glass-2); border: 2px solid var(--borde); display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: 15px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pill { height: 40px; padding: 0 14px; border-radius: 999px; background: var(--glass-2); border: 2px solid var(--borde); display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: 15px; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .pill.gold { color: var(--gold); }
-  .titulo { text-align: center; margin: 16px 0 0; font-family: Georgia, "Times New Roman", serif; font-weight: 400; line-height: 1; text-shadow: 0 3px 12px rgba(0,0,0,.6); }
-  .titulo .a { display: block; font-size: 40px; }
-  .titulo .b { display: block; font-size: 22px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin-top: 8px; }
-  .sub { text-align: center; font-size: 15px; line-height: 1.4; text-shadow: 0 2px 6px rgba(0,0,0,.7); margin: 6px 8px 0; }
-  .mejor { text-align: center; font-weight: 800; font-size: 14px; text-shadow: 0 2px 6px rgba(0,0,0,.7); opacity: .95; }
-  .btn-grande { width: 100%; height: 66px; border-radius: 999px; font-size: 24px; font-weight: 900; letter-spacing: .04em; background: linear-gradient(180deg, #62C943, #3A9A22); box-shadow: 0 6px 0 var(--verde-2), 0 14px 24px rgba(0,0,0,.35); color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
+  .titulo { text-align: center; margin: 14px 0 0; font-family: Georgia, "Times New Roman", serif; font-weight: 400; line-height: 1; text-shadow: 0 3px 12px rgba(0, 0, 0, .6); }
+  .titulo .a { display: block; font-size: 42px; }
+  .titulo .b { display: block; font-size: 20px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin-top: 8px; }
+  .sub { text-align: center; font-size: 15px; line-height: 1.4; text-shadow: 0 2px 6px rgba(0, 0, 0, .7); margin: 6px 8px 0; }
+  .btn-grande { width: 100%; height: 64px; border-radius: 999px; font-size: 23px; font-weight: 900; letter-spacing: .04em; background: linear-gradient(180deg, #62c943, #3a9a22); box-shadow: 0 6px 0 var(--verde-2), 0 14px 24px rgba(0, 0, 0, .35); color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .25); transition: transform .12s var(--ease); }
   .btn-grande:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--verde-2); }
-  .btn2 { height: 50px; border-radius: 999px; background: var(--glass-2); border: 2px solid var(--borde); font-weight: 800; font-size: 16px; padding: 0 20px; }
-  .btn2:active { transform: scale(.97); }
-  .centro { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 16px; }
-  .como { background: var(--glass); border: 2px solid var(--borde); border-radius: 20px; padding: 12px 14px; font-size: 14.5px; line-height: 1.45; }
+  .centro { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+  .como { background: var(--glass); border: 2px solid var(--borde); border-radius: 20px; padding: 12px 14px; font-size: 14px; line-height: 1.45; }
   .como b { color: var(--gold); }
-  .marcador { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
-  .marcador .pill { height: 36px; font-size: 14px; padding: 0 12px; }
-  .tablero { display: grid; gap: 10px; perspective: 1000px; margin: 4px 0; }
-  .carta { position: relative; aspect-ratio: 3 / 4; border-radius: 14px; transform-style: preserve-3d; transition: transform .5s cubic-bezier(.23,1,.32,1); cursor: pointer; }
+  .como p { margin: 4px 0; }
+  .dific { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .dific button { padding: 10px 4px; border-radius: 16px; background: var(--glass-2); border: 2px solid var(--borde); font-weight: 800; font-size: 14px; line-height: 1.2; }
+  .dific button small { display: block; font-weight: 700; font-size: 11px; opacity: .78; margin-top: 3px; }
+  .dific button[aria-pressed="true"] { border-color: var(--gold); background: rgba(255, 210, 90, .2); }
+  .mapa { display: grid; grid-template-columns: repeat(5, 1fr); gap: 9px; }
+  .nivel { aspect-ratio: 1; border-radius: 18px; background: var(--glass-2); border: 2px solid var(--borde); display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; box-shadow: 0 4px 0 rgba(0, 0, 0, .3); }
+  .nivel small { font-size: 10.5px; color: var(--gold); min-height: 13px; }
+  .nivel.bloq { opacity: .4; }
+  .nivel.listo { background: linear-gradient(180deg, #8a5bb8, #4a2a6e); border-color: var(--gold); }
+  .marcador { display: flex; gap: 6px; justify-content: space-between; flex-wrap: wrap; }
+  .marcador .pill { height: 36px; font-size: 14px; padding: 0 11px; }
+  .reloj { height: 8px; border-radius: 4px; background: rgba(0, 0, 0, .4); overflow: hidden; }
+  .reloj i { display: block; height: 100%; background: linear-gradient(90deg, #ff6a6a, #ffd25a); transform-origin: left; }
+  .tablero { display: grid; gap: 8px; perspective: 1100px; margin: 2px 0; }
+  .carta { position: relative; aspect-ratio: 3 / 4; border-radius: 14px; transform-style: preserve-3d; transition: transform .5s var(--ease), left .45s var(--ease), top .45s var(--ease); cursor: pointer; }
   .carta.volteada { transform: rotateY(180deg); }
-  .cara { position: absolute; inset: 0; border-radius: 14px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; box-shadow: 0 6px 14px rgba(0,0,0,.35); }
-  .dorso { background: radial-gradient(circle at 50% 35%, #8A5BB8, #4A2A6E 70%); border: 3px solid rgba(255,255,255,.35); display: grid; place-items: center; }
-  .dorso::before { content: ""; width: 42%; aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(255,210,90,.7); box-shadow: inset 0 0 0 4px rgba(255,210,90,.2); }
+  .carta.mueve { animation: mueve .5s var(--ease); }
+  @keyframes mueve { 50% { transform: scale(.85) rotate(6deg); } }
+  .cara { position: absolute; inset: 0; border-radius: 14px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; box-shadow: 0 6px 14px rgba(0, 0, 0, .35); }
+  .dorso { background: #3a1f5a; border: 3px solid #e8c56a; }
+  .dorso svg { width: 100%; height: 100%; }
   .frente { transform: rotateY(180deg); background: var(--cream); color: var(--ink); border: 3px solid #fff; display: flex; flex-direction: column; }
   .frente img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .frente.txt { padding: 6px; justify-content: center; align-items: center; text-align: center; background: linear-gradient(180deg, #FFF8E8, #F4E3B8); }
-  .frente.txt b { font-family: Georgia, serif; font-size: clamp(11px, 3vw, 14px); line-height: 1.15; color: var(--plum-2); }
-  .frente.txt i { font-style: normal; font-size: clamp(9px, 2.5vw, 11px); color: var(--muted); margin-top: 4px; line-height: 1.2; }
-  .frente.txt .cruz { font-size: 18px; color: var(--gold-2); margin-bottom: 4px; }
+  .frente.icono { border-color: #fff4d0; }
+  .frente.icono svg { width: 100%; height: 100%; }
+  .frente.txt { padding: 6px; justify-content: center; align-items: center; text-align: center; background: linear-gradient(180deg, #fff8e8, #f4e3b8); }
+  .frente.txt b { font-family: Georgia, serif; font-size: clamp(11px, 3vw, 15px); line-height: 1.15; color: var(--plum-2); }
+  .frente.txt i { font-style: normal; font-size: clamp(8.5px, 2.4vw, 11px); color: var(--muted); margin-top: 4px; line-height: 1.2; }
+  .frente.txt .cruz { font-size: 16px; color: var(--gold-2); margin-bottom: 3px; }
+  .carta.dorada .frente { box-shadow: 0 0 0 3px var(--gold), 0 0 22px rgba(255, 210, 90, .8); }
+  .carta.dorada .dorso { border-color: #fff3b0; box-shadow: 0 0 16px rgba(255, 210, 90, .7); }
   .carta.hecha { cursor: default; }
-  .carta.hecha .cara { box-shadow: 0 0 0 3px var(--gold), 0 6px 14px rgba(0,0,0,.35); }
-  .carta.hecha .frente { filter: saturate(1.1); }
+  .carta.hecha .cara { box-shadow: 0 0 0 3px var(--gold), 0 6px 14px rgba(0, 0, 0, .35); }
+  .carta.hecha.brilla { animation: brilla .7s var(--ease); }
+  @keyframes brilla { 40% { transform: rotateY(180deg) scale(1.1); } }
   .carta.error { animation: sacude .4s; }
   @keyframes sacude { 25% { transform: rotateY(180deg) translateX(-5px); } 75% { transform: rotateY(180deg) translateX(5px); } }
-  .dato { min-height: 56px; background: rgba(255,243,214,.96); color: var(--ink); border-radius: 18px; padding: 10px 14px; font-size: 14.5px; line-height: 1.35; box-shadow: 0 5px 14px rgba(0,0,0,.35); opacity: 0; transition: opacity .3s; }
+  .chispa { position: fixed; width: 8px; height: 8px; border-radius: 50%; pointer-events: none; z-index: 40; background: radial-gradient(circle, #fff, #ffd25a 60%, rgba(255, 210, 90, 0)); animation: chispa .8s var(--ease) forwards; }
+  @keyframes chispa { to { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; } }
+  .dato { min-height: 56px; background: rgba(255, 243, 214, .96); color: var(--ink); border-radius: 18px; padding: 10px 14px; font-size: 14.5px; line-height: 1.35; box-shadow: 0 5px 14px rgba(0, 0, 0, .35); opacity: 0; transition: opacity .3s; }
   .dato.on { opacity: 1; }
-  .dato small { display: block; color: #8A3FBF; font-weight: 900; font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 2px; }
-  .fondo { position: fixed; inset: 0; background: rgba(12,4,20,.72); display: none; align-items: flex-end; justify-content: center; padding: 14px; z-index: 30; }
+  .dato small { display: block; color: #8a3fbf; font-weight: 900; font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 2px; }
+  .acciones { display: flex; gap: 8px; }
+  .acciones button { flex: 1; height: 46px; border-radius: 999px; background: var(--glass-2); border: 2px solid var(--borde); font-weight: 800; font-size: 14.5px; }
+  .acciones button:disabled { opacity: .45; }
+  .aviso { text-align: center; font-weight: 900; color: var(--gold); min-height: 20px; text-shadow: 0 2px 6px rgba(0, 0, 0, .7); }
+  .fondo { position: fixed; inset: 0; background: rgba(12, 4, 20, .72); display: none; align-items: flex-end; justify-content: center; padding: 14px; z-index: 30; }
   .fondo.on { display: flex; }
-  .hoja { width: 100%; max-width: 440px; max-height: 90vh; overflow: auto; background: linear-gradient(180deg, #FFF8E8, #F8EBD0); color: var(--ink); border-radius: 28px; padding: 22px 18px 18px; box-shadow: 0 -10px 40px rgba(0,0,0,.45); text-align: center; animation: sube .35s cubic-bezier(.23,1,.32,1); }
+  .hoja { width: 100%; max-width: 440px; max-height: 90vh; overflow: auto; background: linear-gradient(180deg, #fff8e8, #f8ebd0); color: var(--ink); border-radius: 28px; padding: 22px 18px 18px; box-shadow: 0 -10px 40px rgba(0, 0, 0, .45); text-align: center; animation: sube .35s var(--ease); }
   @keyframes sube { from { transform: translateY(40px); opacity: 0; } }
   .hoja h3 { font-family: Georgia, serif; margin: 0 0 4px; font-size: 28px; color: var(--plum-2); }
   .hoja p { margin: 6px 0; font-size: 15px; line-height: 1.45; }
   .hoja .sub2 { color: var(--muted); font-size: 14px; }
-  .estrellas { font-size: 34px; letter-spacing: 6px; color: var(--gold-2); margin: 6px 0; }
-  .boton { width: 100%; height: 56px; border-radius: 999px; background: linear-gradient(180deg, #62C943, #3A9A22); color: #fff; font-weight: 900; font-size: 18px; letter-spacing: .03em; box-shadow: 0 5px 0 var(--verde-2); margin-top: 12px; }
-  .boton.sec { background: #fff; color: var(--plum-2); box-shadow: 0 5px 0 #D8CDE6; border: 2px solid #D8CDE6; }
+  .estrellas { font-size: 36px; letter-spacing: 6px; color: var(--gold-2); margin: 6px 0; }
+  .boton { width: 100%; height: 56px; border-radius: 999px; background: linear-gradient(180deg, #62c943, #3a9a22); color: #fff; font-weight: 900; font-size: 18px; letter-spacing: .03em; box-shadow: 0 5px 0 var(--verde-2); margin-top: 12px; transition: transform .12s var(--ease); }
+  .boton.sec { background: #fff; color: var(--plum-2); box-shadow: 0 5px 0 #d8cde6; border: 2px solid #d8cde6; }
   .boton:active { transform: translateY(3px); }
-  #btn-pista:disabled { opacity: .5; }
-  .carta.pulso .cara { box-shadow: 0 0 0 3px #fff, 0 0 18px rgba(255,210,90,.9); }
   .lista-santos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; text-align: left; }
-  .lista-santos div { background: #fff; border: 2px solid #EADFBF; border-radius: 14px; padding: 8px; font-size: 13px; }
-  .lista-santos b { display: block; color: #7A47B0; font-size: 13.5px; }
+  .lista-santos div { background: #fff; border: 2px solid #eadfbf; border-radius: 14px; padding: 8px; font-size: 13px; }
+  .lista-santos b { display: block; color: #7a47b0; font-size: 13.5px; }
   .lista-santos i { font-style: normal; color: var(--muted); font-size: 12px; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
@@ -84,290 +105,357 @@
 <div class="bg" aria-hidden="true"></div>
 <div class="app">
   <header class="top">
-    <button class="redondo" id="btn-cerrar" type="button" aria-label="Cerrar juego">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-    </button>
+    <button class="redondo" id="btn-cerrar" type="button" aria-label="Cerrar juego"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <button class="redondo" id="btn-atras" type="button" aria-label="Volver" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="espacio"></div>
     <button class="redondo" id="btn-sonido" type="button" aria-label="Sonido"></button>
-    <div class="pill gold" id="p-pts" title="Puntos misioneros">★ <span id="t-pts">0</span></div>
+    <div class="pill gold" title="Puntos misioneros">★ <span id="t-pts">0</span></div>
   </header>
 
-  <!-- INICIO -->
   <section id="vista-inicio" class="centro">
-    <h1 class="titulo"><span class="a">Memoria</span><span class="b">de santos</span></h1>
-    <p class="sub">Une cada rostro con su nombre. Cada pareja que encuentras te cuenta algo de su vida.</p>
-    <p class="mejor" id="m-mejor"></p>
+    <h1 class="titulo"><span class="a">Memoria</span><span class="b">de santos y signos</span></h1>
+    <p class="sub">Encuentra las parejas: cada santo con su nombre y cada signo de la fe con su significado.</p>
     <div class="como">
-      <p>• Toca una carta para voltearla y luego otra.</p>
-      <p>• Si son la misma persona, quedan <b>encendidas</b> y aparece su dato.</p>
-      <p>• Hay <b>3 rondas</b>, cada una con más parejas.</p>
-      <p>• Ganas <b>★ puntos misioneros</b> por cada pareja y por terminar cada ronda.</p>
+      <p>• Voltea dos cartas. Si forman pareja quedan <b>encendidas</b> y aprendes algo nuevo.</p>
+      <p>• <b>10 niveles</b> con más cartas cada vez. Las <b>cartas doradas</b> valen el doble.</p>
+      <p>• Encadena aciertos para sumar <b>racha</b>. Menos movimientos, más estrellas.</p>
     </div>
+    <div class="dific" id="dific"></div>
     <button class="btn-grande" id="btn-jugar" type="button">JUGAR</button>
   </section>
 
-  <!-- JUEGO -->
-  <section id="vista-juego" style="display:none;flex-direction:column;gap:12px">
+  <section id="vista-mapa" hidden style="flex-direction:column;gap:12px">
+    <h2 class="titulo"><span class="a" style="font-size:30px">Niveles</span></h2>
+    <div class="mapa" id="mapa"></div>
+    <p class="sub" id="m-dif"></p>
+  </section>
+
+  <section id="vista-juego" hidden style="flex-direction:column;gap:10px">
     <div class="marcador">
-      <span class="pill" id="g-ronda">Ronda 1 de 3</span>
-      <span class="pill" id="g-mov">Movimientos 0</span>
+      <span class="pill" id="g-nivel">Nivel 1</span>
+      <span class="pill" id="g-mov">0 movimientos</span>
       <span class="pill" id="g-tiempo">0:00</span>
       <span class="pill gold" id="g-racha">Racha 0</span>
     </div>
+    <div class="reloj" id="g-reloj" hidden><i id="g-reloj-b"></i></div>
+    <div class="aviso" id="g-aviso"></div>
     <div class="tablero" id="tablero"></div>
     <div class="dato" id="dato" role="status" aria-live="polite"></div>
-    <button class="boton sec" id="btn-pista" type="button" style="margin-top:0">Pista · cuesta 2 movimientos</button>
+    <div class="acciones">
+      <button type="button" id="btn-pista">💡 Pista <b id="t-pistas">2</b></button>
+    </div>
   </section>
 </div>
-
 <div class="fondo" id="fondo"><div class="hoja" id="hoja"></div></div>
 
 <script>
-const CLAVE = 'juma-memoria-v1';
-const RONDAS = [
-  { pares: 3, cols: 3 },
-  { pares: 4, cols: 4 },
-  { pares: 5, cols: 5 }
+'use strict';
+const $ = (id) => document.getElementById(id);
+const CLAVE = 'juma-memoria-v2';
+const NIVELES = [
+  { pares: 3, cols: 3 }, { pares: 4, cols: 4 }, { pares: 5, cols: 5 }, { pares: 6, cols: 4 }, { pares: 6, cols: 4, dorada: true },
+  { pares: 8, cols: 4, dorada: true }, { pares: 8, cols: 4, dorada: true }, { pares: 9, cols: 6, dorada: true }, { pares: 10, cols: 5, dorada: true }, { pares: 10, cols: 5, dorada: true }
 ];
+const DIFS = {
+  facil: { n: 'Fácil', d: 'Cartas iguales y vistazo inicial', vistazo: 2600, iguales: true, tiempo: 0, mezcla: false },
+  normal: { n: 'Normal', d: 'Imagen con su nombre', vistazo: 0, iguales: false, tiempo: 0, mezcla: false },
+  dificil: { n: 'Difícil', d: 'Contra reloj y cartas que se mueven', vistazo: 0, iguales: false, tiempo: 1, mezcla: true }
+};
 const SANTOS = [
-  { id: 'allamano', img: 'cuadros/cap2-allamano.jpg', nombre: 'San José Allamano', dato: 'Fundador de los Misioneros de la Consolata. Su lema: ser misioneros en la cabeza, en la boca y en el corazón.' },
+  { id: 'allamano', img: 'cuadros/cap2-allamano.jpg', nombre: 'San José Allamano', dato: 'Fundador de los Misioneros y las Misioneras de la Consolata. Su lema: ser misioneros en la cabeza, en la boca y en el corazón.' },
   { id: 'irene', img: 'cuadros/cap3-irene-stefani.jpg', nombre: 'Irene Stefani', dato: 'Misionera de la Consolata que sirvió en Kenia, cerca de los enfermos y de los más pobres.' },
-  { id: 'cafasso', img: 'cuadros/cap4-cafasso.jpg', nombre: 'San José Cafasso', dato: 'Sacerdote de Turín y maestro de José Allamano. Atendió con amor a los sacerdotes y a los pobres.' },
-  { id: 'leonella', img: 'cuadros/cap5-leonella.jpg', nombre: 'Leonella Sgorbati', dato: 'Misionera de la Consolata que entregó su vida en Somalia en 2006, por amor al pueblo al que servía.' },
+  { id: 'cafasso', img: 'cuadros/cap4-cafasso.jpg', nombre: 'San José Cafasso', dato: 'Sacerdote de Turín, tío y maestro de José Allamano. Atendió con amor a los presos y a los pobres.' },
+  { id: 'leonella', img: 'cuadros/cap5-leonella.jpg', nombre: 'Leonella Sgorbati', dato: 'Misionera de la Consolata que entregó su vida en Somalia en 2006, perdonando a quienes la atacaron.' },
   { id: 'consolata', img: 'cuadros/cap1-consolata.jpg', nombre: 'Virgen de la Consolata', dato: 'Madre y guía de los Misioneros de la Consolata. Su santuario está en Turín.' }
 ];
+/* Signos de la fe dibujados en SVG */
+const SIGNOS = [
+  { id: 'cruz', nombre: 'La cruz', dato: 'Signo del amor de Jesús, que entregó su vida por todos.', color: ['#ffd25a', '#b8780a'], svg: '<path d="M28 10h8v14h12v8H36v24h-8V32H16v-8h12z" fill="url(#oro)" stroke="#7a4a08" stroke-width="1.5"/>' },
+  { id: 'paloma', nombre: 'La paloma', dato: 'Representa al Espíritu Santo, que da paz, fuerza y alegría.', color: ['#8fd6ff', '#2a6aa8'], svg: '<path d="M10 36c8-2 14-8 18-16 2 6 6 10 12 10l10-6-4 8c-4 8-12 12-22 12-6 0-10-3-14-8z" fill="#fff"/><path d="M28 20c-6-6-14-6-18-4 6 1 12 5 14 12z" fill="#e8f4ff"/><circle cx="44" cy="27" r="1.6" fill="#2a3a5a"/>' },
+  { id: 'caliz', nombre: 'El cáliz', dato: 'Recuerda la Eucaristía: Jesús se queda con nosotros como alimento.', color: ['#c79bff', '#5a2a9a'], svg: '<path d="M18 14h28c0 12-6 20-14 20s-14-8-14-20z" fill="url(#oro)"/><rect x="30" y="34" width="4" height="12" fill="url(#oro)"/><ellipse cx="32" cy="48" rx="11" ry="3.5" fill="url(#oro)"/><circle cx="32" cy="10" r="6" fill="#fff"/><path d="M32 6v8M28 10h8" stroke="#c98f12" stroke-width="1.5"/>' },
+  { id: 'biblia', nombre: 'La Biblia', dato: 'La Palabra de Dios que ilumina y guía el camino.', color: ['#ff8a5a', '#9a2a10'], svg: '<path d="M14 14c6-2 12-2 18 2v34c-6-4-12-4-18-2z" fill="#fff"/><path d="M50 14c-6-2-12-2-18 2v34c6-4 12-4 18-2z" fill="#f4ead6"/><path d="M41 22v12M37 26h8" stroke="#c42a2a" stroke-width="2.5"/><path d="M18 22h9M18 27h9M18 32h7" stroke="#bba" stroke-width="1.2"/>' },
+  { id: 'rosario', nombre: 'El rosario', dato: 'Oración con María meditando la vida de Jesús.', color: ['#ff7aa8', '#9a1a50'], svg: '<g fill="#fff">' + Array.from({ length: 18 }, (_, i) => { const a = i / 18 * Math.PI * 2; return `<circle cx="${32 + Math.cos(a) * 15}" cy="${26 + Math.sin(a) * 13}" r="2.4"/>`; }).join('') + '</g><path d="M32 39v16M27 45h10" stroke="url(#oro)" stroke-width="3.5"/>' },
+  { id: 'vela', nombre: 'La vela', dato: 'Cristo es la luz del mundo; el cristiano lleva esa luz a otros.', color: ['#ffb86b', '#a8500a'], svg: '<rect x="26" y="28" width="12" height="26" rx="2" fill="#fffbea"/><path d="M32 8c6 7 6 12 0 17-6-5-6-10 0-17z" fill="url(#llama)"/><circle cx="32" cy="18" r="10" fill="rgba(255,240,180,.35)"/>' },
+  { id: 'corazon', nombre: 'El Sagrado Corazón', dato: 'El amor infinito de Jesús por cada persona.', color: ['#ff5c6a', '#8a0a1a'], svg: '<path d="M32 52L14 34a10 10 0 0 1 18-12 10 10 0 0 1 18 12z" fill="#fff"/><path d="M32 12v12M27 17h10" stroke="url(#oro)" stroke-width="3"/><path d="M24 28c4 4 12 4 16 0" stroke="#e85a6a" stroke-width="2" fill="none"/>' },
+  { id: 'ancla', nombre: 'El ancla', dato: 'Signo de la esperanza firme en Dios, que no nos deja hundir.', color: ['#5ac8c0', '#1a6a64'], svg: '<circle cx="32" cy="13" r="4" fill="none" stroke="#fff" stroke-width="3"/><path d="M32 17v34M24 24h16M16 38c2 9 9 13 16 13s14-4 16-13" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><path d="M12 40l4-5 4 5M44 40l4-5 4 5" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>' },
+  { id: 'pez', nombre: 'El pez', dato: 'Antiguo signo secreto de los primeros cristianos.', color: ['#6aa8ff', '#1a3a8a'], svg: '<path d="M10 32c10-14 30-14 38 0-8 14-28 14-38 0z" fill="#fff"/><path d="M48 32l8-8v16z" fill="#fff"/><circle cx="20" cy="30" r="2" fill="#1a3a8a"/><path d="M26 26c4 4 4 8 0 12" stroke="#cfe0ff" stroke-width="2" fill="none"/>' },
+  { id: 'llaves', nombre: 'Las llaves', dato: 'Signo de san Pedro y de la Iglesia que Jesús le confió.', color: ['#e8c56a', '#7a5a10'], svg: '<g fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"><circle cx="20" cy="18" r="6"/><path d="M24 22l20 22M38 38l4-4M42 42l4-4"/><circle cx="44" cy="18" r="6"/><path d="M40 22L20 44M26 38l-4-4M22 42l-4-4"/></g>' },
+  { id: 'mundo', nombre: 'El mundo', dato: 'La misión: llevar el Evangelio a todos los pueblos.', color: ['#5ad07a', '#1a6a2a'], svg: '<circle cx="32" cy="32" r="20" fill="#3a8ae0"/><path d="M18 26c6-4 10 2 14-2s8-2 8 4-6 6-4 10 6 2 8 6" fill="none" stroke="#7ad07a" stroke-width="5" stroke-linecap="round"/><circle cx="32" cy="32" r="20" fill="none" stroke="#fff" stroke-width="2.5"/><path d="M32 4v6M29 7h6" stroke="url(#oro)" stroke-width="2.5"/>' },
+  { id: 'estrella', nombre: 'La estrella', dato: 'María, estrella de la evangelización, que nos lleva a Jesús.', color: ['#4a5ac8', '#1a1a5a'], svg: '<path d="M32 8l6 16h17l-14 10 5 17-14-10-14 10 5-17-14-10h17z" fill="url(#oro)" stroke="#fff3c0" stroke-width="1.2"/><text x="32" y="38" text-anchor="middle" font-family="Georgia" font-size="12" fill="#5a2a00">M</text>' }
+];
+const DEFS = '<defs><linearGradient id="oro" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset=".5" stop-color="#ffcf3a"/><stop offset="1" stop-color="#b8780a"/></linearGradient><radialGradient id="llama" cx=".5" cy=".7" r=".6"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="#ffd060"/><stop offset="1" stop-color="#ff6a1a"/></radialGradient></defs>';
+const DORSO = '<svg viewBox="0 0 90 120" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="dg" cx=".5" cy=".4" r=".75"><stop offset="0" stop-color="#8a5bb8"/><stop offset="1" stop-color="#2a1640"/></radialGradient><pattern id="dp" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M6 0v12M0 6h12" stroke="rgba(255,210,90,.12)" stroke-width="1"/></pattern></defs><rect width="90" height="120" fill="url(#dg)"/><rect width="90" height="120" fill="url(#dp)"/><rect x="7" y="7" width="76" height="106" rx="9" fill="none" stroke="rgba(255,210,90,.55)" stroke-width="1.5"/><circle cx="45" cy="60" r="20" fill="none" stroke="rgba(255,210,90,.7)" stroke-width="2"/><path d="M45 44v32M33 56h24" stroke="#ffd25a" stroke-width="4" stroke-linecap="round"/><circle cx="45" cy="60" r="27" fill="none" stroke="rgba(255,210,90,.25)" stroke-width="1"/></svg>';
+const ELEMENTOS = SANTOS.map((s) => Object.assign({ tipo: 'santo' }, s)).concat(SIGNOS.map((s) => Object.assign({ tipo: 'signo' }, s)));
 
-// ---------- Guardado ----------
-let S = { puntos: 0, mejores: {} };
-try { const d = JSON.parse(localStorage.getItem(CLAVE) || 'null'); if (d) S = Object.assign(S, d); } catch (e) {}
+/* ---------- Guardado ---------- */
+let S = { puntos: 0, nivelMax: 1, estrellas: {}, dificultad: 'normal', mejores: {} };
+try {
+  const d = JSON.parse(localStorage.getItem(CLAVE) || 'null');
+  if (d) S = Object.assign(S, d);
+  else { const v1 = JSON.parse(localStorage.getItem('juma-memoria-v1') || 'null'); if (v1) S.puntos = v1.puntos || 0; }
+  if (!DIFS[S.dificultad]) S.dificultad = 'normal';
+} catch (e) { /* sin datos */ }
 function guardar() {
-  try { localStorage.setItem(CLAVE, JSON.stringify(S)); } catch (e) {}
-  try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', juego: 'memoria', total: S.puntos }, location.origin); } catch (e) {}
+  try { localStorage.setItem(CLAVE, JSON.stringify(S)); } catch (e) { /* nada */ }
+  try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', juego: 'memoria', total: S.puntos }, location.origin); } catch (e) { /* nada */ }
 }
 function barajar(a) { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; }
 function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
-// ---------- Sonidos (sintetizados) ----------
+/* ---------- Sonido ---------- */
 let AC = null, sonidoOn = true;
-try { sonidoOn = localStorage.getItem('juma-memoria-sonido') !== '0'; } catch (e) {}
-function ac() {
-  if (!sonidoOn) return null;
-  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
-  if (AC.state === 'suspended') AC.resume();
-  return AC;
-}
-function tono(f, dur, tipo, vol, retardo) {
+try { sonidoOn = localStorage.getItem('juma-memoria-sonido') !== '0'; } catch (e) { /* nada */ }
+function ac() { if (!sonidoOn) return null; if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } } if (AC.state === 'suspended') AC.resume(); return AC; }
+function tono(f, dur, tipo, vol, ret) {
   const a = ac(); if (!a) return;
-  const t0 = a.currentTime + (retardo || 0);
+  const t0 = a.currentTime + (ret || 0);
   const o = a.createOscillator(), g = a.createGain();
   o.type = tipo || 'triangle'; o.frequency.setValueAtTime(f, t0);
-  g.gain.setValueAtTime(0.0001, t0);
-  g.gain.exponentialRampToValueAtTime(vol || 0.14, t0 + 0.012);
-  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol || 0.13, t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + dur + 0.03);
 }
 const SND = {
-  voltear() { tono(700, 0.09, 'triangle', 0.09); },
-  acierto() { [523.25, 659.25, 783.99].forEach((f, i) => tono(f, 0.3, 'triangle', 0.15, i * 0.07)); },
-  fallo() { tono(200, 0.22, 'sawtooth', 0.07, 0); },
-  ronda() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tono(f, 0.45, 'triangle', 0.15, i * 0.12)); },
-  fin() { [392, 523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tono(f, 1.1, 'sine', 0.12, i * 0.14)); }
+  voltear() { tono(700, 0.08, 'triangle', 0.08); },
+  acierto(r) { const k = Math.pow(1.06, Math.min(r, 8)); [523.25, 659.25, 783.99].forEach((f, i) => tono(f * k, 0.3, 'triangle', 0.13, i * 0.07)); },
+  dorada() { [784, 988, 1318, 1568].forEach((f, i) => tono(f, 0.4, 'sine', 0.11, i * 0.07)); },
+  fallo() { tono(200, 0.22, 'sawtooth', 0.06); },
+  mezcla() { [600, 450, 700, 500].forEach((f, i) => tono(f, 0.12, 'square', 0.04, i * 0.06)); },
+  ronda() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tono(f, 0.45, 'triangle', 0.14, i * 0.12)); },
+  fin() { [392, 523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tono(f, 1.1, 'sine', 0.11, i * 0.14)); },
+  tic() { tono(1200, 0.04, 'square', 0.03); }
 };
-function pintarSonido() {
-  document.getElementById('btn-sonido').innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="#fff"/>' + (sonidoOn ? '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>') + '</svg>';
-}
-document.getElementById('btn-sonido').onclick = () => {
-  sonidoOn = !sonidoOn;
-  try { localStorage.setItem('juma-memoria-sonido', sonidoOn ? '1' : '0'); } catch (e) {}
-  pintarSonido(); if (sonidoOn) SND.acierto();
-};
+function pintarSonido() { $('btn-sonido').innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="#fff"/>' + (sonidoOn ? '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>') + '</svg>'; }
+$('btn-sonido').onclick = () => { sonidoOn = !sonidoOn; try { localStorage.setItem('juma-memoria-sonido', sonidoOn ? '1' : '0'); } catch (e) { /* nada */ } pintarSonido(); if (sonidoOn) SND.acierto(0); };
 pintarSonido();
 
-// ---------- Estado de la partida ----------
-let ronda = 0, cartas = [], abiertas = [], bloqueado = true, encontrados = 0, movimientos = 0;
-let inicioT = 0, reloj = null, jugando = false, datoTimer = null;
-let racha = 0, pistaLista = true;
-
-function mmss(ms) { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+/* ---------- Estado ---------- */
+let nivel = 1, DIF = DIFS[S.dificultad], cartas = [], abiertas = [], bloqueado = true, encontrados = 0, movimientos = 0;
+let inicioT = 0, reloj = null, jugando = false, datoTimer = null, racha = 0, fallosSeguidos = 0, pistas = 2, limiteT = 0, ganadosNivel = 0;
+const cfgN = () => NIVELES[nivel - 1];
+function mmss(ms) { const s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 function mostrarVista(v) {
-  document.getElementById('vista-inicio').style.display = v === 'inicio' ? 'flex' : 'none';
-  document.getElementById('vista-juego').style.display = v === 'juego' ? 'flex' : 'none';
-  document.body.classList.toggle('en-juego', v === 'juego');
-}
-function pintarInicio() {
-  document.getElementById('t-pts').textContent = S.puntos.toLocaleString('es-VE');
-  const m = S.mejores[3];
-  document.getElementById('m-mejor').textContent = m ? 'Mejor marca en la ronda 3: ' + m + ' movimientos' : 'Aún no has terminado las 3 rondas';
-}
-
-function iniciarRonda(n) {
-  ronda = n;
-  const cfg = RONDAS[n - 1];
-  const elegidos = barajar(SANTOS).slice(0, cfg.pares);
-  const mazo = [];
-  elegidos.forEach((s) => {
-    mazo.push({ par: s.id, tipo: 'img', s, volteada: false, hecha: false });
-    mazo.push({ par: s.id, tipo: 'txt', s, volteada: false, hecha: false });
-  });
-  cartas = barajar(mazo);
-  abiertas = []; bloqueado = false; encontrados = 0; movimientos = 0;
-  racha = 0; pistaLista = true;
-  document.getElementById('g-racha').textContent = 'Racha 0';
-  document.getElementById('btn-pista').disabled = false;
-  document.getElementById('g-ronda').textContent = 'Ronda ' + n + ' de 3';
-  pintarMarcador();
-  construirTablero(cfg);
-  document.getElementById('dato').classList.remove('on');
-  document.getElementById('dato').innerHTML = '';
-  mostrarVista('juego');
-  inicioT = Date.now(); clearInterval(reloj);
-  reloj = setInterval(() => { if (jugando) document.getElementById('g-tiempo').textContent = mmss(Date.now() - inicioT); }, 500);
-  jugando = true;
+  for (const id of ['inicio', 'mapa', 'juego']) { $('vista-' + id).hidden = id !== v; $('vista-' + id).style.display = id === v ? 'flex' : ''; }
+  $('btn-atras').hidden = v === 'inicio';
   window.scrollTo(0, 0);
 }
+function pintarPts() { $('t-pts').textContent = S.puntos.toLocaleString('es'); }
+
+function frenteHtml(c) {
+  const e = c.e;
+  if (c.vista === 'img') return '<div class="cara frente"><img src="' + e.img + '" alt="' + esc(e.nombre) + '" loading="lazy"></div>';
+  if (c.vista === 'icono') return '<div class="cara frente icono" style="background:radial-gradient(circle at 50% 38%,' + e.color[0] + ',' + e.color[1] + ')"><svg viewBox="0 0 64 80">' + DEFS + '<g transform="translate(0,6)">' + e.svg + '</g></svg></div>';
+  return '<div class="cara frente txt"><span class="cruz">✚</span><b>' + esc(e.nombre) + '</b><i>' + esc(e.dato.split(/[.:]/)[0]) + '.</i></div>';
+}
+function iniciarNivel(n) {
+  nivel = n; DIF = DIFS[S.dificultad];
+  const cfg = cfgN();
+  // Primero santos y signos que aún no se conocen, luego el resto
+  const elegidos = barajar(ELEMENTOS).slice(0, cfg.pares);
+  const mazo = [];
+  const doradaId = cfg.dorada ? elegidos[Math.floor(Math.random() * elegidos.length)].id : null;
+  elegidos.forEach((e) => {
+    const vistaA = e.tipo === 'santo' ? 'img' : 'icono';
+    const vistaB = DIF.iguales ? vistaA : 'txt';
+    mazo.push({ par: e.id, e, vista: vistaA, hecha: false, volteada: false, dorada: e.id === doradaId });
+    mazo.push({ par: e.id, e, vista: vistaB, hecha: false, volteada: false, dorada: e.id === doradaId });
+  });
+  cartas = barajar(mazo);
+  abiertas = []; encontrados = 0; movimientos = 0; racha = 0; fallosSeguidos = 0; pistas = 2; ganadosNivel = 0;
+  limiteT = DIF.tiempo ? (cfg.pares * 9 + 15) * 1000 : 0;
+  $('g-nivel').textContent = 'Nivel ' + n;
+  $('g-racha').textContent = 'Racha 0';
+  $('t-pistas').textContent = pistas; $('btn-pista').disabled = false;
+  $('g-reloj').hidden = !limiteT;
+  $('g-aviso').textContent = '';
+  pintarMarcador();
+  construirTablero(cfg);
+  $('dato').classList.remove('on'); $('dato').innerHTML = '';
+  mostrarVista('juego');
+  jugando = true; bloqueado = true;
+  const empezar = () => {
+    bloqueado = false; inicioT = Date.now(); clearInterval(reloj);
+    reloj = setInterval(tick, 250);
+  };
+  if (DIF.vistazo) {
+    setTimeout(() => cartas.forEach((c, i) => elCarta(i).classList.add('volteada')), 250);
+    $('g-aviso').textContent = '¡Memoriza!';
+    setTimeout(() => { cartas.forEach((c, i) => elCarta(i).classList.remove('volteada')); $('g-aviso').textContent = ''; setTimeout(empezar, 450); }, 250 + DIF.vistazo);
+  } else empezar();
+}
+function tick() {
+  if (!jugando || bloqueado && !inicioT) return;
+  const t = Date.now() - inicioT;
+  $('g-tiempo').textContent = limiteT ? mmss(limiteT - t) : mmss(t);
+  if (limiteT) {
+    const k = Math.max(0, 1 - t / limiteT);
+    $('g-reloj-b').style.transform = 'scaleX(' + k.toFixed(3) + ')';
+    if (limiteT - t < 10000 && Math.floor(t / 1000) !== Math.floor((t - 250) / 1000)) SND.tic();
+    if (t >= limiteT) perderTiempo();
+  }
+}
 function construirTablero(cfg) {
-  const tab = document.getElementById('tablero');
+  const tab = $('tablero');
   tab.style.gridTemplateColumns = 'repeat(' + cfg.cols + ', 1fr)';
-  tab.innerHTML = cartas.map((c, i) => {
-    const frente = c.tipo === 'img'
-      ? '<div class="cara frente"><img src="' + c.s.img + '" alt="' + esc(c.s.nombre) + '" loading="lazy"></div>'
-      : '<div class="cara frente txt"><span class="cruz">✚</span><b>' + esc(c.s.nombre) + '</b><i>' + esc(c.s.dato.split('.')[0]) + '.</i></div>';
-    return '<div class="carta" data-i="' + i + '" role="button" tabindex="0" aria-label="Carta boca abajo">' +
-      '<div class="cara dorso"></div>' + frente + '</div>';
-  }).join('');
+  tab.style.gap = cfg.cols >= 5 ? '6px' : '8px';
+  tab.innerHTML = cartas.map((c, i) => '<div class="carta' + (c.dorada ? ' dorada' : '') + '" data-i="' + i + '" role="button" tabindex="0" aria-label="Carta boca abajo"><div class="cara dorso">' + DORSO + '</div>' + frenteHtml(c) + '</div>').join('');
 }
-function pintarMarcador() {
-  document.getElementById('g-mov').textContent = 'Movimientos ' + movimientos;
-}
-function voltear(card) {
-  if (!jugando || bloqueado || card.volteada || card.hecha) return;
-  card.volteada = true;
-  cartaEl(card).classList.add('volteada');
-  cartaEl(card).setAttribute('aria-label', esc(card.tipo === 'img' ? 'Foto de santo' : card.s.nombre));
+function elCarta(i) { return document.querySelector('.carta[data-i="' + i + '"]'); }
+function pintarMarcador() { $('g-mov').textContent = movimientos + (movimientos === 1 ? ' movimiento' : ' movimientos'); }
+function voltear(i) {
+  const c = cartas[i];
+  if (!jugando || bloqueado || c.volteada || c.hecha) return;
+  c.volteada = true;
+  const el = elCarta(i); el.classList.add('volteada'); el.setAttribute('aria-label', c.e.nombre);
   SND.voltear();
-  abiertas.push(card);
+  abiertas.push(i);
   if (abiertas.length === 2) {
     movimientos++; pintarMarcador();
     bloqueado = true;
     const [a, b] = abiertas;
-    if (a.par === b.par) setTimeout(() => acierto(a, b), 380);
-    else setTimeout(() => fallo(a, b), 900);
+    if (cartas[a].par === cartas[b].par) setTimeout(() => acierto(a, b), 380);
+    else setTimeout(() => fallo(a, b), 850);
   }
 }
-function cartaEl(card) { return document.querySelector('.carta[data-i="' + cartas.indexOf(card) + '"]'); }
+function chispas(el, n, color) {
+  const r = el.getBoundingClientRect();
+  for (let k = 0; k < n; k++) {
+    const d = document.createElement('div'); d.className = 'chispa';
+    d.style.left = (r.left + r.width / 2) + 'px'; d.style.top = (r.top + r.height / 2) + 'px';
+    const a = Math.random() * Math.PI * 2, v = 40 + Math.random() * 70;
+    d.style.setProperty('--dx', Math.cos(a) * v + 'px'); d.style.setProperty('--dy', Math.sin(a) * v + 'px');
+    if (color) d.style.background = color;
+    document.body.appendChild(d); setTimeout(() => d.remove(), 850);
+  }
+}
 function acierto(a, b) {
-  a.hecha = b.hecha = true;
-  [a, b].forEach((c) => { const el = cartaEl(c); el.classList.add('hecha'); el.setAttribute('aria-label', 'Pareja encontrada'); });
-  encontrados++;
-  racha++;
-  const extraR = racha > 1 ? 5 * racha : 0;
-  S.puntos += 10 + extraR;
-  document.getElementById('g-racha').textContent = 'Racha ' + racha;
-  guardar(); pintarInicioPts();
-  SND.acierto();
-  mostrarDato(a.s);
+  const ca = cartas[a], cb = cartas[b];
+  ca.hecha = cb.hecha = true;
+  encontrados++; racha++; fallosSeguidos = 0;
+  let pts = 10 + (racha > 1 ? 5 * racha : 0);
+  if (ca.dorada) { pts *= 2; SND.dorada(); $('g-aviso').textContent = '¡Carta dorada! Puntos dobles'; if (limiteT) { limiteT += 8000; $('g-aviso').textContent += ' · +8 s'; } }
+  else SND.acierto(racha);
+  S.puntos += pts; ganadosNivel += pts;
+  [a, b].forEach((i) => { const el = elCarta(i); el.classList.add('hecha', 'brilla'); el.setAttribute('aria-label', 'Pareja encontrada: ' + ca.e.nombre); chispas(el, ca.dorada ? 18 : 10); });
+  $('g-racha').textContent = 'Racha ' + racha;
+  guardar(); pintarPts();
+  mostrarDato(ca.e);
   abiertas = []; bloqueado = false;
-  if (encontrados === RONDAS[ronda - 1].pares) setTimeout(finRonda, 700);
+  if (encontrados === cfgN().pares) setTimeout(finNivel, 700);
 }
 function fallo(a, b) {
-  racha = 0; document.getElementById('g-racha').textContent = 'Racha 0';
-  [a, b].forEach((c) => { const el = cartaEl(c); el.classList.add('error'); });
+  racha = 0; fallosSeguidos++;
+  $('g-racha').textContent = 'Racha 0';
+  [a, b].forEach((i) => elCarta(i).classList.add('error'));
   SND.fallo();
   setTimeout(() => {
-    [a, b].forEach((c) => { c.volteada = false; const el = cartaEl(c); el.classList.remove('volteada', 'error'); el.setAttribute('aria-label', 'Carta boca abajo'); });
-    abiertas = []; bloqueado = false;
+    [a, b].forEach((i) => { cartas[i].volteada = false; const el = elCarta(i); el.classList.remove('volteada', 'error'); el.setAttribute('aria-label', 'Carta boca abajo'); });
+    abiertas = [];
+    if (DIF.mezcla && fallosSeguidos >= 2) { fallosSeguidos = 0; mezclarDos(); } else bloqueado = false;
   }, 420);
 }
-function pintarInicioPts() { document.getElementById('t-pts').textContent = S.puntos.toLocaleString('es-VE'); }
-function mostrarDato(s) {
-  const d = document.getElementById('dato');
-  d.innerHTML = '<small>' + esc(s.nombre) + '</small>' + esc(s.dato);
+/* En difícil, tras dos fallos seguidos dos cartas ocultas cambian de lugar */
+function mezclarDos() {
+  const ocultas = cartas.map((c, i) => i).filter((i) => !cartas[i].hecha && !cartas[i].volteada);
+  if (ocultas.length < 4) { bloqueado = false; return; }
+  const x = ocultas.splice(Math.floor(Math.random() * ocultas.length), 1)[0];
+  const y = ocultas.splice(Math.floor(Math.random() * ocultas.length), 1)[0];
+  SND.mezcla();
+  $('g-aviso').textContent = '¡Dos cartas cambiaron de lugar!';
+  const ex = elCarta(x), ey = elCarta(y);
+  ex.classList.add('mueve'); ey.classList.add('mueve');
+  setTimeout(() => {
+    [cartas[x], cartas[y]] = [cartas[y], cartas[x]];
+    ex.outerHTML = '<div class="carta' + (cartas[x].dorada ? ' dorada' : '') + '" data-i="' + x + '" role="button" tabindex="0" aria-label="Carta boca abajo"><div class="cara dorso">' + DORSO + '</div>' + frenteHtml(cartas[x]) + '</div>';
+    ey.outerHTML = '<div class="carta' + (cartas[y].dorada ? ' dorada' : '') + '" data-i="' + y + '" role="button" tabindex="0" aria-label="Carta boca abajo"><div class="cara dorso">' + DORSO + '</div>' + frenteHtml(cartas[y]) + '</div>';
+    bloqueado = false;
+    setTimeout(() => { if ($('g-aviso').textContent.startsWith('¡Dos')) $('g-aviso').textContent = ''; }, 1500);
+  }, 500);
+}
+function mostrarDato(e) {
+  const d = $('dato');
+  d.innerHTML = '<small>' + esc(e.nombre) + '</small>' + esc(e.dato);
   d.classList.add('on');
   clearTimeout(datoTimer);
-  datoTimer = setTimeout(() => d.classList.remove('on'), 4200);
+  datoTimer = setTimeout(() => d.classList.remove('on'), 4800);
 }
-function estrellas(mov, pares) {
-  if (mov <= pares) return 3;
-  if (mov <= pares + 3) return 2;
-  return 1;
-}
-function finRonda() {
+function estrellasDe(mov, pares) { if (mov <= pares + 1) return 3; if (mov <= Math.ceil(pares * 1.6)) return 2; return 1; }
+function finNivel() {
   jugando = false; clearInterval(reloj);
-  const cfg = RONDAS[ronda - 1];
+  const cfg = cfgN();
   const tiempo = Date.now() - inicioT;
-  const extra = Math.max(0, cfg.pares * 3 - (movimientos - cfg.pares));
-  const tBono = tiempo < 45000 ? 15 : 0;
-  const bono = 20 + extra + tBono;
-  S.mejoresT = S.mejoresT || {};
-  if (!S.mejoresT[ronda] || tiempo < S.mejoresT[ronda]) S.mejoresT[ronda] = tiempo;
-  S.puntos += bono;
-  const mejor = S.mejores[ronda];
-  if (!mejor || movimientos < mejor) S.mejores[ronda] = movimientos;
-  guardar(); pintarInicioPts();
+  const est = estrellasDe(movimientos, cfg.pares);
+  const previo = S.estrellas[nivel] || 0;
+  const bono = 15 + est * 8 + (S.dificultad === 'dificil' ? 15 : S.dificultad === 'normal' ? 5 : 0) + (previo === 0 ? 10 : 0);
+  S.puntos += bono; ganadosNivel += bono;
+  S.estrellas[nivel] = Math.max(previo, est);
+  if (nivel + 1 > S.nivelMax && nivel < NIVELES.length) S.nivelMax = nivel + 1;
+  const clave = S.dificultad + nivel;
+  if (!S.mejores[clave] || movimientos < S.mejores[clave]) S.mejores[clave] = movimientos;
+  guardar(); pintarPts();
   SND.ronda();
-  const est = estrellas(movimientos, cfg.pares);
-  const ultima = ronda === RONDAS.length;
-  const lista = SANTOS.filter((s) => cartas.some((c) => c.s.id === s.id)).map((s) => '<div><b>' + esc(s.nombre) + '</b><i>' + esc(s.dato.split('.')[0]) + '.</i></div>').join('');
-  abrirHoja('<h3>' + (ultima ? '¡Memoria completa!' : '¡Ronda ' + ronda + ' completa!') + '</h3>' +
+  const ultima = nivel === NIVELES.length;
+  const lista = cartas.filter((c, i) => cartas.findIndex((d) => d.par === c.par) === i).map((c) => '<div><b>' + esc(c.e.nombre) + '</b><i>' + esc(c.e.dato.split(/[.:]/)[0]) + '.</i></div>').join('');
+  abrirHoja('<h3>' + (ultima ? '¡Memoria completa!' : '¡Nivel ' + nivel + ' superado!') + '</h3>' +
     '<p class="estrellas">' + '★'.repeat(est) + '<span style="opacity:.3">' + '★'.repeat(3 - est) + '</span></p>' +
     '<p>Movimientos: <b>' + movimientos + '</b> · Tiempo: <b>' + mmss(tiempo) + '</b></p>' +
-    '<p class="sub2">+' + bono + ' ★ por terminar la ronda' + (tBono ? ' (incluye +15 por rapidez)' : '') + '</p>' + (S.mejoresT[ronda] ? '<p class="sub2">Mejor tiempo: ' + mmss(S.mejoresT[ronda]) + '</p>' : '') +
+    '<p class="sub2">Mejor marca en ' + DIFS[S.dificultad].n.toLowerCase() + ': ' + S.mejores[clave] + ' movimientos</p>' +
+    '<p>+' + ganadosNivel + ' ★ puntos misioneros en este nivel</p>' +
     '<div class="lista-santos">' + lista + '</div>' +
-    (ultima
-      ? '<button class="boton" type="button" data-accion="reiniciar">JUGAR DE NUEVO</button><button class="boton sec" type="button" data-accion="mapa">Volver al inicio</button>'
-      : '<button class="boton" type="button" data-accion="siguiente">RONDA ' + (ronda + 1) + '</button><button class="boton sec" type="button" data-accion="mapa">Volver al inicio</button>'));
+    (ultima ? '<button class="boton" type="button" data-accion="mapa">VER NIVELES</button>' : '<button class="boton" type="button" data-accion="siguiente">NIVEL ' + (nivel + 1) + '</button><button class="boton sec" type="button" data-accion="mapa">Ver niveles</button>'));
   if (ultima) setTimeout(SND.fin, 300);
 }
-
+function perderTiempo() {
+  jugando = false; clearInterval(reloj); bloqueado = true;
+  tono(300, 0.5, 'sawtooth', 0.06);
+  abrirHoja('<h3>Se acabó el tiempo</h3><p>Encontraste <b>' + encontrados + '</b> de <b>' + cfgN().pares + '</b> parejas.</p><p class="sub2">Las cartas doradas dan 8 segundos más. ¡Inténtalo otra vez!</p>' +
+    '<button class="boton" type="button" data-accion="reintentar">REINTENTAR</button><button class="boton sec" type="button" data-accion="mapa">Ver niveles</button>');
+}
 function pista() {
-  if (!jugando || bloqueado || abiertas.length > 0 || !pistaLista) return;
-  pistaLista = false;
-  movimientos += 2; pintarMarcador();
-  const ocultas = cartas.filter((c) => !c.hecha && !c.volteada);
+  if (!jugando || bloqueado || abiertas.length > 0 || pistas <= 0) return;
+  pistas--; $('t-pistas').textContent = pistas; if (pistas <= 0) $('btn-pista').disabled = true;
+  movimientos += 1; pintarMarcador();
+  // Muestra una pareja todavía oculta durante un momento
+  const ocultas = cartas.map((c, i) => i).filter((i) => !cartas[i].hecha);
+  const par = cartas[ocultas[Math.floor(Math.random() * ocultas.length)]].par;
+  const idx = ocultas.filter((i) => cartas[i].par === par);
   bloqueado = true;
-  ocultas.forEach((c) => { const el = cartaEl(c); el.classList.add('volteada', 'pulso'); });
-  document.getElementById('btn-pista').disabled = true;
-  setTimeout(() => {
-    ocultas.forEach((c) => { if (!c.volteada && !c.hecha) cartaEl(c).classList.remove('volteada'); });
-    ocultas.forEach((c) => { const el = cartaEl(c); if (el) el.classList.remove('pulso'); });
-    bloqueado = false;
-  }, 1300);
-  setTimeout(() => { pistaLista = true; const b = document.getElementById('btn-pista'); if (b && jugando) b.disabled = false; }, 15000);
+  idx.forEach((i) => elCarta(i).classList.add('volteada'));
+  setTimeout(() => { idx.forEach((i) => { if (!cartas[i].hecha && !cartas[i].volteada) elCarta(i).classList.remove('volteada'); }); bloqueado = false; }, 1200);
 }
-document.getElementById('btn-pista').addEventListener('click', pista);
+$('btn-pista').addEventListener('click', pista);
 
-// ---------- Ventanas ----------
-function abrirHoja(html) { document.getElementById('hoja').innerHTML = html; document.getElementById('fondo').classList.add('on'); }
-function cerrarHoja() { document.getElementById('fondo').classList.remove('on'); }
-function volverInicio() {
-  jugando = false; clearInterval(reloj); cerrarHoja(); mostrarVista('inicio'); pintarInicio();
+/* ---------- Pantallas ---------- */
+function abrirHoja(html) { $('hoja').innerHTML = html; $('fondo').classList.add('on'); }
+function cerrarHoja() { $('fondo').classList.remove('on'); }
+function pintarDific() { $('dific').innerHTML = Object.entries(DIFS).map(([k, d]) => `<button type="button" data-dif="${k}" aria-pressed="${k === S.dificultad}">${d.n}<small>${d.d}</small></button>`).join(''); }
+function pintarMapa() {
+  let h = '';
+  for (let n = 1; n <= NIVELES.length; n++) {
+    const bloq = n > S.nivelMax, est = S.estrellas[n] || 0;
+    h += `<button type="button" class="nivel${bloq ? ' bloq' : ''}${est ? ' listo' : ''}" data-nivel="${n}"${bloq ? ' disabled' : ''}>${n}<small>${est ? '★'.repeat(est) : NIVELES[n - 1].pares + ' parejas'}</small></button>`;
+  }
+  $('mapa').innerHTML = h;
+  $('m-dif').textContent = 'Dificultad: ' + DIFS[S.dificultad].n + ' · ' + DIFS[S.dificultad].d;
 }
-
-// ---------- Eventos ----------
-document.getElementById('btn-jugar').onclick = () => { iniciarRonda(1); };
-document.getElementById('btn-cerrar').onclick = () => {
-  if (window.parent && window.parent !== window) { try { window.parent.postMessage({ tipo: 'juma-cerrar' }, location.origin); } catch (e) {} }
-  else volverInicio();
+$('dific').addEventListener('click', (e) => { const b = e.target.closest('[data-dif]'); if (!b) return; S.dificultad = b.dataset.dif; guardar(); pintarDific(); });
+$('btn-jugar').onclick = () => { ac(); pintarMapa(); mostrarVista('mapa'); };
+$('mapa').addEventListener('click', (e) => { const b = e.target.closest('[data-nivel]'); if (!b || b.disabled) return; iniciarNivel(Number(b.dataset.nivel)); });
+$('btn-atras').onclick = () => { if (!$('vista-juego').hidden) { jugando = false; clearInterval(reloj); pintarMapa(); mostrarVista('mapa'); } else mostrarVista('inicio'); };
+$('btn-cerrar').onclick = () => {
+  if (window.parent && window.parent !== window) { try { window.parent.postMessage({ tipo: 'juma-cerrar' }, location.origin); } catch (e) { /* nada */ } }
+  else { jugando = false; clearInterval(reloj); cerrarHoja(); mostrarVista('inicio'); }
 };
-document.getElementById('tablero').addEventListener('click', (e) => {
-  const el = e.target.closest('.carta'); if (!el) return;
-  voltear(cartas[Number(el.dataset.i)]);
-});
-document.getElementById('tablero').addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter' && e.key !== ' ') return;
-  const el = e.target.closest('.carta'); if (!el) return;
-  e.preventDefault(); voltear(cartas[Number(el.dataset.i)]);
-});
-document.getElementById('fondo').addEventListener('click', (e) => {
-  if (e.target.id === 'fondo') return;
+$('tablero').addEventListener('click', (e) => { const el = e.target.closest('.carta'); if (el) voltear(Number(el.dataset.i)); });
+$('tablero').addEventListener('keydown', (e) => { if (e.key !== 'Enter' && e.key !== ' ') return; const el = e.target.closest('.carta'); if (!el) return; e.preventDefault(); voltear(Number(el.dataset.i)); });
+$('fondo').addEventListener('click', (e) => {
   const b = e.target.closest('[data-accion]'); if (!b) return;
-  const a = b.dataset.accion;
-  if (a === 'siguiente') { cerrarHoja(); iniciarRonda(ronda + 1); return; }
-  if (a === 'reiniciar') { cerrarHoja(); iniciarRonda(1); return; }
-  if (a === 'mapa') { volverInicio(); return; }
+  const a = b.dataset.accion; cerrarHoja();
+  if (a === 'siguiente') iniciarNivel(nivel + 1);
+  else if (a === 'reintentar') iniciarNivel(nivel);
+  else if (a === 'mapa') { pintarMapa(); mostrarVista('mapa'); }
 });
-
-pintarInicio();
+pintarPts();
+pintarDific();
 mostrarVista('inicio');
 </script>
 </body>
