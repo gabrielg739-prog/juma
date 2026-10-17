@@ -3410,15 +3410,48 @@ function renderJuegosView() {
   el.innerHTML = `<div class="wrap lib-wrap">
     <p class="eyebrow">Juegos JUMA</p>
     <h1 class="h-display h-lg">Juegos para compartir</h1>
-    <p class="body" style="max-width:56ch;margin:10px 0 28px">Estamos preparando juegos para jugar en comunidad. Muy pronto estarán aquí.</p>
-    <div class="lib-grid"><article class="lib-card lib-soon"><div class="lib-cover lib-cover-empty" aria-hidden="true">${ic('gamepad')}</div><div class="lib-info"><h2>En construcción</h2><p>Aquí aparecerán los juegos que vayamos desarrollando.</p></div></article></div></div>`;
+    <p class="body" style="max-width:56ch;margin:10px 0 28px">Juega, aprende de la fe y de la misión, y suma puntos misioneros que aparecen en tu perfil.</p>
+    <div class="lib-grid">
+      <article class="lib-card">
+        <div class="lib-cover" style="--bk:#0A235C"><b>Palabras JUMA</b></div>
+        <div class="lib-info"><h2>Palabras JUMA</h2><small>Crucigrama y rueda de letras</small><p>Forma palabras del manual y de la fe, completa los crucigramas y arma los cuadros de cada capítulo.</p>
+        <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/palabras-juma.html">${ic('gamepad')}Jugar</button></div>
+      </article>
+      <article class="lib-card lib-soon"><div class="lib-cover lib-cover-empty" aria-hidden="true">${ic('gamepad')}</div><div class="lib-info"><h2>Próximamente</h2><p>Aquí aparecerán nuevos juegos.</p></div></article>
+    </div></div>`;
+}
+/* Juego a pantalla completa (mismo marco que la Biblioteca) */
+function abrirJuego(url) {
+  if (!currentUser) { openAuthModal(); return; }
+  if ($('#lib-reader')) return;
+  const r = document.createElement('div');
+  r.id = 'lib-reader';
+  r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
+  r.innerHTML = `<button type="button" class="lib-close" data-cerrar-libro aria-label="Cerrar juego">${ic('x')}<span>Cerrar</span></button><iframe title="Juego" src="${esc(url)}" allow="fullscreen"></iframe>`;
+  document.body.appendChild(r);
+  document.documentElement.style.overflow = 'hidden';
+}
+document.addEventListener('click', (e) => {
+  const j = e.target.closest('[data-jugar-juego]'); if (j) abrirJuego(j.dataset.jugarJuego);
+});
+/* El juego envía sus puntos misioneros; se guardan en el perfil público (miembros/{uid}) */
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin || !e.data || e.data.tipo !== 'juma-puntos') return;
+  guardarPuntosMisioneros(Number(e.data.total) || 0);
+});
+let ultimoEnvioPuntos = -1;
+function guardarPuntosMisioneros(total) {
+  if (!currentUser || !fb.setDoc || !fb.db) return;
+  if (total === ultimoEnvioPuntos) return;
+  ultimoEnvioPuntos = total;
+  fb.setDoc(fb.doc(fb.db, 'miembros', currentUser.uid), { puntosMisioneros: total, puntosActualizado: fb.serverTimestamp() }, { merge: true }).catch(() => {});
 }
 
 /* ===================== Amigos: todos los registrados con nombre y foto ===================== */
 function openFriendsModal() {
   if (!currentUser) { openAuthModal(); return; }
   const lista = getRegisteredMembersForDm(miUid(), miCorreo());
-  const fila = (m) => `<button type="button" class="fr-row" data-open-dm="${esc(m.uid)}"><span class="av-wrap" data-pres="${esc(m.uid)}">${avatarHtml(m.foto, (m.primerNombre || m.nombre).charAt(0).toUpperCase())}</span><span class="fr-n"><b>${esc(m.nombre)}</b><small>${esc(roleLabel(m.rol))}</small></span></button>`;
+  const fila = (m) => `<button type="button" class="fr-row" data-open-dm="${esc(m.uid)}"><span class="av-wrap" data-pres="${esc(m.uid)}">${avatarHtml(m.foto, (m.primerNombre || m.nombre).charAt(0).toUpperCase())}</span><span class="fr-n"><b>${esc(m.nombre)}</b><small>${esc(roleLabel(m.rol))} · ★ ${Number((m.raw && m.raw.puntosMisioneros) || 0).toLocaleString('es-VE')}</small></span></button>`;
   openModal(`<div class="overlay overlay-sheet" role="dialog" aria-modal="true" aria-labelledby="fr-t">
     <div class="sheet sheet-auto" style="max-width:460px">
       <div class="chat-top notif-head"><div><b id="fr-t" style="font-size:19px;display:block">Amigos</b><small style="font-size:12.5px">${lista.length} registrado${lista.length === 1 ? '' : 's'} en JUMA</small></div>

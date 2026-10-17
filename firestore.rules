@@ -130,7 +130,7 @@ service cloud.firestore {
     // ---------- Directorio mínimo para miembros (sin datos personales) ----------
     match /miembros/{uid} {
       function miembroValido() {
-        return request.resource.data.keys().hasOnly(['uid', 'nombre', 'primerNombre', 'foto', 'rol', 'parroquia', 'cumple', 'sexo', 'actualizado', 'sinCuenta'])
+        return request.resource.data.keys().hasOnly(['uid', 'nombre', 'primerNombre', 'foto', 'rol', 'parroquia', 'cumple', 'sexo', 'actualizado', 'sinCuenta', 'puntosMisioneros', 'puntosActualizado'])
           && request.resource.data.uid == uid
           && request.resource.data.nombre is string
           && request.resource.data.nombre.size() <= 80

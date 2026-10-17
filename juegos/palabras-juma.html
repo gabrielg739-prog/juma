@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0A235C">
+<title>Palabras JUMA</title>
+<style>
+  :root {
+    --azul: #0A235C; --azul-2: #1E4FD8; --azul-3: #DCE7FF;
+    --oro: #F5C518; --oro-2: #B88A00; --crema: #FFFBF0; --papel: #FFF8E7;
+    --ink: #0F1B3D; --muted: #5B6785; --linea: rgba(10,35,92,.14);
+    --ok: #15803D; --mal: #B91C1C;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 500px at 50% -180px, rgba(30,79,216,.55), transparent 70%),
+      linear-gradient(180deg, #0A235C 0%, #071845 100%);
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+  button { font: inherit; cursor: pointer; border: 0; }
+  button:focus-visible { outline: 3px solid var(--oro); outline-offset: 2px; }
+  .app { max-width: 520px; margin: 0 auto; padding: 12px 14px 26px; min-height: 100vh; display: flex; flex-direction: column; gap: 14px; color: #fff; }
+
+  /* Cabecera */
+  .top { display: flex; align-items: center; gap: 8px; }
+  .icono-btn { width: 42px; height: 42px; border-radius: 14px; background: rgba(255,255,255,.1); color: #fff; display: grid; place-items: center; font-size: 18px; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.16); }
+  .titulo { flex: 1; min-width: 0; }
+  .titulo small { display: block; opacity: .75; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+  .titulo b { display: block; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pill { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 6px 11px; font-weight: 800; font-size: 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+  .pill .ico { color: var(--oro); }
+  .corazones { letter-spacing: 1px; color: #FF6B8A; }
+  .corazones .vacio { color: rgba(255,255,255,.3); }
+
+  /* Tarjetas y botones */
+  .tarjeta { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 20px; padding: 14px; }
+  .btn { background: var(--oro); color: #1B1400; border-radius: 14px; padding: 12px 16px; font-weight: 800; font-size: 15px; box-shadow: 0 3px 0 var(--oro-2); }
+  .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--oro-2); }
+  .btn.sec { background: rgba(255,255,255,.1); color: #fff; box-shadow: none; border: 1px solid rgba(255,255,255,.2); }
+  .btn.blanco { background: #fff; color: var(--azul); box-shadow: 0 3px 0 #C9D4EE; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn-fila { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  h1 { font-size: 26px; line-height: 1.15; margin: 4px 0 0; letter-spacing: -.01em; }
+  .sub { margin: 4px 0 0; opacity: .85; font-size: 14.5px; line-height: 1.45; }
+
+  /* Mapa de niveles */
+  .cap-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .cap-cab h2 { margin: 0; font-size: 17px; color: var(--oro); }
+  .cap-cab span { font-size: 12.5px; opacity: .8; white-space: nowrap; }
+  .grid-niveles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px; }
+  .nv { aspect-ratio: 1; border-radius: 14px; background: #fff; color: var(--azul); font-weight: 900; font-size: 16px; box-shadow: 0 3px 0 #C9D4EE; }
+  .nv.hecho { background: var(--ok); color: #fff; box-shadow: 0 3px 0 #0E5A2A; }
+  .nv.actual { background: var(--oro); color: #1B1400; box-shadow: 0 3px 0 var(--oro-2), 0 0 0 4px rgba(245,197,24,.35); }
+  .nv:disabled { background: rgba(255,255,255,.1); color: rgba(255,255,255,.4); box-shadow: none; }
+  .mosaico { width: 100%; max-width: 200px; aspect-ratio: 4/5; margin: 12px auto 0; border-radius: 12px; overflow: hidden; display: grid; grid-template-columns: repeat(4,1fr); grid-template-rows: repeat(5,1fr); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); }
+  .pieza { background-repeat: no-repeat; background-size: 400% 500%; background-color: rgba(10,35,92,.9); }
+  .pieza.off { background-image: none !important; background-color: rgba(10,35,92,.9); }
+  .pieza.off::after { content: ""; display: block; width: 100%; height: 100%; background: repeating-linear-gradient(45deg, rgba(255,255,255,.04) 0 6px, transparent 6px 12px); }
+  .santo { text-align: center; font-size: 14px; margin-top: 8px; opacity: .9; }
+  .aviso { font-size: 14px; line-height: 1.45; }
+
+  /* Juego */
+  .papel { background: var(--papel); color: var(--ink); border-radius: 22px; padding: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.25), inset 0 0 0 1px rgba(184,138,0,.25); }
+  .tablero-wrap { display: flex; justify-content: center; min-height: 120px; }
+  .tablero { position: relative; }
+  .celda { position: absolute; border-radius: 7px; background: #fff; border: 1.5px solid #D5DBEA; display: grid; place-items: center; font-weight: 900; color: var(--azul); user-select: none; transition: background .2s, transform .2s; }
+  .celda.resuelta { background: var(--azul-2); border-color: var(--azul-2); color: #fff; }
+  .celda.pista { background: var(--oro); border-color: var(--oro-2); color: #1B1400; }
+  .celda.activa { box-shadow: 0 0 0 3px var(--oro); z-index: 2; }
+  .celda .n { position: absolute; top: 2px; left: 4px; font-size: 9px; font-weight: 800; color: var(--muted); }
+  .celda.resuelta .n { color: rgba(255,255,255,.8); }
+  .celda.nuevo { animation: aparece .45s cubic-bezier(.2,1.4,.4,1); }
+  @keyframes aparece { 0% { transform: scale(.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .pista-box { border-radius: 14px; background: #fff; border: 1px solid var(--linea); padding: 10px 12px; font-size: 14.5px; line-height: 1.4; min-height: 64px; }
+  .pista-box small { display: block; font-weight: 800; color: var(--azul-2); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; }
+  .msg { min-height: 22px; text-align: center; font-weight: 800; font-size: 15px; }
+  .msg.ok { color: var(--ok); }
+  .msg.mal { color: var(--mal); }
+  .pill-palabra { min-height: 46px; display: flex; align-items: center; justify-content: center; }
+  .pill-palabra span { background: #fff; color: var(--azul); border-radius: 14px; padding: 8px 18px; font-size: 22px; font-weight: 900; letter-spacing: 3px; box-shadow: 0 3px 0 #C9D4EE; text-transform: uppercase; min-width: 70px; text-align: center; }
+  .pill-palabra span.vacia { background: rgba(255,255,255,.12); color: rgba(255,255,255,.55); box-shadow: none; font-size: 14px; letter-spacing: 0; font-weight: 700; }
+  .pill-palabra span.error { background: #FEE2E2; color: var(--mal); }
+  .rueda { position: relative; width: 280px; height: 280px; margin: 0 auto; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .rueda-fondo { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.14), rgba(255,255,255,.04) 70%); border: 1px solid rgba(255,255,255,.14); }
+  .letra { position: absolute; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; background: #fff; color: var(--azul); font-weight: 900; font-size: 24px; display: grid; place-items: center; box-shadow: 0 4px 0 #C9D4EE; transition: transform .12s, background .12s; }
+  .letra.sel { background: var(--oro); color: #1B1400; box-shadow: 0 4px 0 var(--oro-2); transform: scale(1.1); }
+  .rueda-centro { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); }
+  .rueda-centro button { background: rgba(255,255,255,.12); color: #fff; border-radius: 999px; padding: 9px 14px; font-weight: 800; font-size: 13px; border: 1px solid rgba(255,255,255,.2); }
+  .acciones { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .acciones .btn { padding: 11px 6px; font-size: 13.5px; }
+  .sacudir { animation: sacudir .38s; }
+  @keyframes sacudir { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+  /* Ventanas */
+  .ov { position: fixed; inset: 0; background: rgba(4,12,35,.72); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 20; }
+  .ov.on { display: flex; }
+  .caja { background: #fff; color: var(--ink); border-radius: 22px; padding: 20px; width: 100%; max-width: 380px; max-height: 88vh; overflow: auto; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+  .caja h3 { margin: 0 0 6px; color: var(--azul); font-size: 21px; }
+  .caja p { margin: 6px 0; font-size: 15px; line-height: 1.45; }
+  .verso { font-style: italic; background: var(--crema); border: 1px solid rgba(184,138,0,.3); border-radius: 14px; padding: 12px; margin: 12px 0; font-size: 15px; line-height: 1.45; }
+  .verso small { display: block; font-style: normal; font-weight: 800; color: var(--muted); margin-top: 6px; font-size: 12.5px; }
+  .cuadro { width: 100%; aspect-ratio: 4/5; max-width: 240px; margin: 10px auto; border-radius: 14px; background: linear-gradient(135deg,#1E4FD8,#F5C518) center/cover no-repeat; box-shadow: 0 6px 16px rgba(0,0,0,.2); }
+  .lista-dic { text-align: left; display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .entrada { border: 1px solid var(--linea); border-radius: 14px; padding: 10px 12px; }
+  .entrada b { color: var(--azul); font-size: 16px; letter-spacing: 1px; }
+  .entrada p { margin: 4px 0 0; font-size: 14px; line-height: 1.4; }
+  .entrada i { display: block; color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .entrada.bloq { background: #F3F5FA; color: var(--muted); }
+  .cerrar { background: var(--azul); color: #fff; border-radius: 14px; padding: 11px 18px; font-weight: 800; margin-top: 12px; width: 100%; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <button class="icono-btn" id="btn-atras" type="button" aria-label="Volver al mapa">←</button>
+    <div class="titulo"><small id="t-cap">Palabras JUMA</small><b id="t-nivel">Niveles</b></div>
+    <div class="pill" title="Puntos misioneros"><span class="ico">★</span><span id="t-pts">0</span></div>
+    <div class="pill corazones" id="t-vidas" title="Vidas" aria-label="Vidas">♥♥♥♥♥</div>
+  </header>
+
+  <!-- MAPA -->
+  <section id="vista-mapa" style="display:flex;flex-direction:column;gap:14px">
+    <div>
+      <h1>Palabras JUMA</h1>
+      <p class="sub">Forma palabras con las letras de la rueda y completa el crucigrama. Cada nivel cuesta una vida. Al terminar cada capítulo armas un cuadro.</p>
+    </div>
+    <div class="tarjeta aviso" id="aviso-vidas" style="display:none"></div>
+    <div id="capitulos" style="display:flex;flex-direction:column;gap:14px"></div>
+    <div class="btn-fila"><button class="btn sec" id="btn-dic-mapa" type="button">Venezolario Católico</button></div>
+  </section>
+
+  <!-- JUEGO -->
+  <section id="vista-juego" style="display:none;flex-direction:column;gap:14px">
+    <div class="papel">
+      <div class="tablero-wrap"><div class="tablero" id="tablero"></div></div>
+    </div>
+    <div class="pista-box" id="pista-box"></div>
+    <div class="msg" id="msg"></div>
+    <div class="pill-palabra" id="pill"></div>
+    <div class="rueda" id="rueda"><div class="rueda-fondo"></div><div class="rueda-centro"><button type="button" id="btn-mezclar">↻ Mezclar</button></div></div>
+    <div class="acciones">
+      <button class="btn sec" id="btn-pista" type="button">Pista de letra<br><small>−15 ★</small></button>
+      <button class="btn sec" id="btn-borrar" type="button">Borrar</button>
+      <button class="btn sec" id="btn-dic" type="button">Venezolario</button>
+    </div>
+  </section>
+</div>
+
+<div class="ov" id="ov"><div class="caja" id="caja"></div></div>
+
+<script>
+const NIVELES = [{"n":1,"base":"CIRIO","rows":3,"cols":6,"palabras":[{"w":"CIRIO","r":0,"c":1,"dir":"H","pista":"Vela grande de cera","nota":"El cirio pascual simboliza a Cristo resucitado."},{"w":"RIO","r":0,"c":3,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"RICO","r":2,"c":0,"dir":"H","pista":"Que tiene muchos bienes","nota":"Es más fácil pasar un camello por el ojo de una aguja (Marcos 10, 25)."}]},{"n":2,"base":"CORTE","rows":3,"cols":5,"palabras":[{"w":"CORTE","r":0,"c":0,"dir":"H","pista":"Acción de cortar","nota":"El Reino de Dios se hace presente en la justicia y la paz."},{"w":"ECO","r":0,"c":4,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"RETO","r":2,"c":1,"dir":"H","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."}]},{"n":3,"base":"NADIE","rows":3,"cols":5,"palabras":[{"w":"NADIE","r":2,"c":0,"dir":"H","pista":"Ninguna persona","nota":"Nadie viene al Padre sino por mí (Juan 14, 6)."},{"w":"DIA","r":0,"c":1,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."},{"w":"IDEA","r":0,"c":0,"dir":"H","pista":"Pensamiento que surge en la mente","nota":"Una buena idea puede cambiar una comunidad."}]},{"n":4,"base":"NECIO","rows":3,"cols":5,"palabras":[{"w":"NECIO","r":2,"c":0,"dir":"H","pista":"Persona sin juicio","nota":"El necio dice en su corazón: no hay Dios (Salmo 14, 1)."},{"w":"ECO","r":0,"c":4,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"ONCE","r":0,"c":1,"dir":"H","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."}]},{"n":5,"base":"NOCHE","rows":4,"cols":5,"palabras":[{"w":"NOCHE","r":1,"c":0,"dir":"H","pista":"Tiempo sin sol","nota":"Pedro dijo: Señor, en tu nombre echaré la red (Lucas 5, 5)."},{"w":"ECO","r":1,"c":4,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"ONCE","r":0,"c":0,"dir":"V","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."}]},{"n":6,"base":"RADIO","rows":3,"cols":5,"palabras":[{"w":"RADIO","r":2,"c":0,"dir":"H","pista":"Medio para escuchar noticias","nota":"La radio también lleva la Buena Noticia a los hogares."},{"w":"RIO","r":0,"c":4,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"DIA","r":0,"c":1,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."}]},{"n":7,"base":"RECTO","rows":3,"cols":7,"palabras":[{"w":"RECTO","r":2,"c":0,"dir":"H","pista":"Derecho, sin torcerse","nota":"Haz rectos tus caminos ante el Señor."},{"w":"ECO","r":0,"c":4,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"RETO","r":0,"c":3,"dir":"H","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."}]},{"n":8,"base":"COLOR","rows":4,"cols":5,"palabras":[{"w":"COLOR","r":1,"c":0,"dir":"H","pista":"Lo que vemos según la luz","nota":"Los colores del logo de JUMA representan los continentes."},{"w":"ORO","r":1,"c":3,"dir":"V","pista":"Metal precioso amarillo","nota":"Los magos llevaron oro, incienso y mirra (Mateo 2, 11)."},{"w":"LOCO","r":3,"c":0,"dir":"H","pista":"Que pierde la razón","nota":"Dios no nos pide ser locos, sino sabios en el amor."},{"w":"CORO","r":0,"c":3,"dir":"V","pista":"Grupo de personas que cantan juntas","nota":"El coro juvenil anima la misa."}]},{"n":9,"base":"MARCA","rows":4,"cols":5,"palabras":[{"w":"MARCA","r":1,"c":0,"dir":"H","pista":"Señal que distingue algo","nota":"El bautismo marca a quien pertenece a Cristo."},{"w":"MAR","r":1,"c":0,"dir":"V","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"ARMA","r":0,"c":2,"dir":"V","pista":"Instrumento para atacar o defender","nota":"La oración es el arma del cristiano."},{"w":"RAMA","r":0,"c":4,"dir":"V","pista":"Parte de un árbol que sale del tronco","nota":"Yo soy la vid, vosotros los sarmientos (Juan 15, 5)."}]},{"n":10,"base":"MARIA","rows":4,"cols":5,"palabras":[{"w":"MARIA","r":3,"c":0,"dir":"H","pista":"Madre de Jesús","nota":"Primera discípula: respondió hágase en mí según tu palabra."},{"w":"RAMA","r":0,"c":1,"dir":"V","pista":"Parte de un árbol que sale del tronco","nota":"Yo soy la vid, vosotros los sarmientos (Juan 15, 5)."},{"w":"ARMA","r":0,"c":4,"dir":"V","pista":"Instrumento para atacar o defender","nota":"La oración es el arma del cristiano."},{"w":"MAR","r":1,"c":0,"dir":"H","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."}]},{"n":11,"base":"PALMA","rows":4,"cols":5,"palabras":[{"w":"PALMA","r":3,"c":0,"dir":"H","pista":"Árbol de hojas grandes","nota":"Domingo de Ramos: la gente agitó palmas al recibir a Jesús."},{"w":"ALMA","r":0,"c":1,"dir":"V","pista":"Parte espiritual de la persona","nota":"Dios creó al hombre con un alma inmortal."},{"w":"LAMA","r":1,"c":1,"dir":"H","pista":"Barro o fango","nota":"Dios levanta al pobre del lodo."},{"w":"MALA","r":0,"c":4,"dir":"V","pista":"Que no es buena","nota":"Líbranos del mal."}]},{"n":12,"base":"TOMAR","rows":4,"cols":7,"palabras":[{"w":"TOMAR","r":1,"c":2,"dir":"H","pista":"Coger algo con las manos","nota":"Tomad y comed (Mateo 26, 26)."},{"w":"MAR","r":0,"c":5,"dir":"V","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"ROTA","r":0,"c":3,"dir":"V","pista":"Partida en pedazos","nota":"Rota por dentro, pero no vencida."},{"w":"ROMA","r":3,"c":0,"dir":"H","pista":"Ciudad sede del Papa","nota":"Ahí vive el sucesor de Pedro."},{"w":"AMOR","r":0,"c":0,"dir":"V","pista":"Sentimiento de cariño que se entrega","nota":"Dios es amor (1 Juan 4, 8)."}]},{"n":13,"base":"AGUILA","rows":4,"cols":7,"palabras":[{"w":"AGUILA","r":2,"c":1,"dir":"H","pista":"Ave de gran vuelo","nota":"Los que esperan en el Señor levantarán alas como águilas."},{"w":"AGUA","r":0,"c":3,"dir":"V","pista":"Líquido transparente que bebemos","nota":"En el bautismo se usa agua como signo de vida nueva."},{"w":"IGUAL","r":0,"c":0,"dir":"H","pista":"Del mismo valor","nota":"Todos somos iguales ante Dios."}]},{"n":14,"base":"CRISTO","rows":3,"cols":8,"palabras":[{"w":"CRISTO","r":0,"c":2,"dir":"H","pista":"Hijo de Dios hecho hombre, el Mesías","nota":"Jesús es el Cristo, el Ungido de Dios."},{"w":"RIO","r":0,"c":3,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"RICO","r":2,"c":0,"dir":"H","pista":"Que tiene muchos bienes","nota":"Es más fácil pasar un camello por el ojo de una aguja (Marcos 10, 25)."}]},{"n":15,"base":"MUSICA","rows":4,"cols":6,"palabras":[{"w":"MUSICA","r":0,"c":0,"dir":"H","pista":"Arte de combinar sonidos","nota":"La música ayuda a orar y a celebrar la fe."},{"w":"MIS","r":0,"c":0,"dir":"V","pista":"Pronombre de posesión","nota":"Mis ovejas escuchan mi voz (Juan 10, 27)."},{"w":"MISA","r":0,"c":0,"dir":"V","pista":"Celebración de la Eucaristía","nota":"Al final, el sacerdote dice: Id, la misa ha terminado. Es un envío."}]},{"n":16,"base":"OCULTO","rows":4,"cols":6,"palabras":[{"w":"OCULTO","r":3,"c":0,"dir":"H","pista":"Escondido","nota":"Nada hay oculto que no llegue a conocerse (Mateo 10, 26)."},{"w":"LOCO","r":0,"c":5,"dir":"V","pista":"Que pierde la razón","nota":"Dios no nos pide ser locos, sino sabios en el amor."},{"w":"CULTO","r":1,"c":1,"dir":"H","pista":"Adoración a Dios","nota":"El culto verdadero se hace con espíritu y verdad (Juan 4, 24)."}]},{"n":17,"base":"OSCURO","rows":4,"cols":6,"palabras":[{"w":"OSCURO","r":3,"c":0,"dir":"H","pista":"Sin luz","nota":"La luz brilla en la oscuridad (Juan 1, 5)."},{"w":"ORO","r":1,"c":5,"dir":"V","pista":"Metal precioso amarillo","nota":"Los magos llevaron oro, incienso y mirra (Mateo 2, 11)."},{"w":"CORO","r":0,"c":5,"dir":"V","pista":"Grupo de personas que cantan juntas","nota":"El coro juvenil anima la misa."}]},{"n":18,"base":"PASTOR","rows":4,"cols":6,"palabras":[{"w":"PASTOR","r":1,"c":0,"dir":"H","pista":"Quien cuida un rebaño","nota":"El buen pastor da la vida por las ovejas (Juan 10, 11)."},{"w":"ROTA","r":0,"c":4,"dir":"V","pista":"Partida en pedazos","nota":"Rota por dentro, pero no vencida."},{"w":"TROPA","r":3,"c":0,"dir":"H","pista":"Grupo de personas","nota":"La tropa de jóvenes salió a misionar."}]},{"n":19,"base":"SEMANA","rows":4,"cols":6,"palabras":[{"w":"SEMANA","r":1,"c":0,"dir":"H","pista":"Siete días","nota":"Dios creó el mundo en seis días."},{"w":"MESA","r":0,"c":1,"dir":"V","pista":"Mueble donde se come","nota":"La Eucaristía es la mesa del Señor."},{"w":"MASA","r":0,"c":3,"dir":"V","pista":"Mezcla de harina y agua","nota":"Un poco de levadura fermenta toda la masa (Mateo 13, 33)."}]},{"n":20,"base":"SIERVO","rows":5,"cols":6,"palabras":[{"w":"SIERVO","r":2,"c":0,"dir":"H","pista":"Quien sirve a otro","nota":"Jesús vino a servir, y nos pide servir como Él."},{"w":"RIO","r":2,"c":3,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"SERIO","r":0,"c":3,"dir":"V","pista":"Grave o formal","nota":"La misión es un compromiso serio."}]},{"n":21,"base":"SIMPLE","rows":4,"cols":6,"palabras":[{"w":"SIMPLE","r":2,"c":0,"dir":"H","pista":"Sencillo","nota":"Sean simples como palomas y astutos como serpientes (Mateo 10, 16)."},{"w":"MIS","r":0,"c":0,"dir":"V","pista":"Pronombre de posesión","nota":"Mis ovejas escuchan mi voz (Juan 10, 27)."},{"w":"PIEL","r":0,"c":5,"dir":"V","pista":"Cubierta del cuerpo","nota":"Dios hizo al hombre con piel y con alma."}]},{"n":22,"base":"CUARTO","rows":4,"cols":6,"palabras":[{"w":"CUARTO","r":1,"c":0,"dir":"H","pista":"Habitación de una casa","nota":"Ora en tu cuarto, a solas con el Padre (Mateo 6, 6)."},{"w":"ARCO","r":0,"c":3,"dir":"V","pista":"Figura curva de un puente","nota":"Arco iris: señal de la alianza de Dios (Génesis 9, 13)."},{"w":"ROCA","r":0,"c":5,"dir":"V","pista":"Piedra grande y firme","nota":"Quien escucha la palabra construye sobre roca."},{"w":"ROTA","r":3,"c":2,"dir":"H","pista":"Partida en pedazos","nota":"Rota por dentro, pero no vencida."}]},{"n":23,"base":"GLORIA","rows":4,"cols":6,"palabras":[{"w":"GLORIA","r":2,"c":0,"dir":"H","pista":"Honor y alabanza a Dios","nota":"Gloria a Dios en el cielo, y paz a los hombres."},{"w":"RIO","r":0,"c":2,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"LARGO","r":0,"c":0,"dir":"H","pista":"De mucha longitud","nota":"El camino de la fe es largo, pero Dios camina con nosotros."},{"w":"LAGO","r":0,"c":0,"dir":"V","pista":"Gran masa de agua dulce","nota":"Jesús calmó la tormenta en el lago (Marcos 4, 39)."}]},{"n":24,"base":"PRECIO","rows":4,"cols":6,"palabras":[{"w":"PRECIO","r":1,"c":0,"dir":"H","pista":"Valor en dinero de algo","nota":"Fuisteis comprados a precio (1 Corintios 6, 20)."},{"w":"RICO","r":0,"c":4,"dir":"V","pista":"Que tiene muchos bienes","nota":"Es más fácil pasar un camello por el ojo de una aguja (Marcos 10, 25)."},{"w":"ECO","r":1,"c":2,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"RIO","r":3,"c":0,"dir":"H","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."}]},{"n":25,"base":"RAPIDO","rows":3,"cols":7,"palabras":[{"w":"RAPIDO","r":2,"c":1,"dir":"H","pista":"Veloz","nota":"María fue deprisa a visitar a su prima Isabel (Lucas 1, 39)."},{"w":"RIO","r":0,"c":6,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"DIA","r":0,"c":2,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."},{"w":"RADIO","r":0,"c":0,"dir":"H","pista":"Medio para escuchar noticias","nota":"La radio también lleva la Buena Noticia a los hogares."}]},{"n":26,"base":"RETIRO","rows":4,"cols":7,"palabras":[{"w":"RETIRO","r":2,"c":1,"dir":"H","pista":"Tiempo de silencio y oración","nota":"Lugar para escuchar a Dios con calma."},{"w":"RIO","r":0,"c":6,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"RETO","r":0,"c":3,"dir":"V","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."},{"w":"TORRE","r":0,"c":0,"dir":"H","pista":"Edificio alto y estrecho","nota":"Una torre sin cimientos se cae."}]},{"n":27,"base":"SALMOS","rows":4,"cols":6,"palabras":[{"w":"SALMOS","r":1,"c":0,"dir":"H","pista":"Cantos de la Biblia","nota":"Los salmos son oración para todos los tiempos."},{"w":"SOL","r":0,"c":4,"dir":"V","pista":"Astro que da luz y calor al día","nota":"Cristo es el sol que nace de lo alto (Lucas 1, 78)."},{"w":"MALO","r":0,"c":1,"dir":"V","pista":"Que no es bueno","nota":"Líbranos del mal."},{"w":"LOMA","r":3,"c":0,"dir":"H","pista":"Pequeña elevación del terreno","nota":"Monte alto y tranquilo para orar."}]},{"n":28,"base":"TIERNO","rows":5,"cols":6,"palabras":[{"w":"TIERNO","r":0,"c":0,"dir":"H","pista":"Delicado, cariñoso","nota":"Dios es tierno y compasivo (Salmo 103, 8)."},{"w":"REINO","r":0,"c":3,"dir":"V","pista":"Territorio gobernado por un rey","nota":"Venga a nosotros tu Reino."},{"w":"RETO","r":4,"c":0,"dir":"H","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."},{"w":"RIO","r":2,"c":2,"dir":"H","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."}]},{"n":29,"base":"CONTAR","rows":5,"cols":7,"palabras":[{"w":"CONTAR","r":0,"c":1,"dir":"H","pista":"Narrar o decir números","nota":"Contar las maravillas de Dios es parte de la misión."},{"w":"ARCO","r":0,"c":5,"dir":"V","pista":"Figura curva de un puente","nota":"Arco iris: señal de la alianza de Dios (Génesis 9, 13)."},{"w":"CANTO","r":0,"c":1,"dir":"V","pista":"Música cantada","nota":"Cantar en la liturgia une las voces de la comunidad."},{"w":"ROTA","r":4,"c":0,"dir":"H","pista":"Partida en pedazos","nota":"Rota por dentro, pero no vencida."},{"w":"ROCA","r":2,"c":3,"dir":"H","pista":"Piedra grande y firme","nota":"Quien escucha la palabra construye sobre roca."}]},{"n":30,"base":"CORONA","rows":4,"cols":6,"palabras":[{"w":"CORONA","r":3,"c":0,"dir":"H","pista":"Aro que se pone en la cabeza","nota":"La corona de espinas fue la burla al Rey."},{"w":"ORO","r":1,"c":3,"dir":"V","pista":"Metal precioso amarillo","nota":"Los magos llevaron oro, incienso y mirra (Mateo 2, 11)."},{"w":"ARCO","r":1,"c":0,"dir":"H","pista":"Figura curva de un puente","nota":"Arco iris: señal de la alianza de Dios (Génesis 9, 13)."},{"w":"CORO","r":0,"c":3,"dir":"V","pista":"Grupo de personas que cantan juntas","nota":"El coro juvenil anima la misa."},{"w":"ROCA","r":0,"c":5,"dir":"V","pista":"Piedra grande y firme","nota":"Quien escucha la palabra construye sobre roca."}]},{"n":31,"base":"MARCHA","rows":4,"cols":6,"palabras":[{"w":"MARCHA","r":0,"c":0,"dir":"H","pista":"Movimiento de avanzar","nota":"La Iglesia está en marcha hacia el Reino."},{"w":"RAMA","r":0,"c":2,"dir":"V","pista":"Parte de un árbol que sale del tronco","nota":"Yo soy la vid, vosotros los sarmientos (Juan 15, 5)."},{"w":"MAR","r":3,"c":1,"dir":"H","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"MARCA","r":3,"c":1,"dir":"H","pista":"Señal que distingue algo","nota":"El bautismo marca a quien pertenece a Cristo."},{"w":"ARMA","r":0,"c":5,"dir":"V","pista":"Instrumento para atacar o defender","nota":"La oración es el arma del cristiano."}]},{"n":32,"base":"PIEDRA","rows":5,"cols":7,"palabras":[{"w":"PIEDRA","r":3,"c":1,"dir":"H","pista":"Roca dura","nota":"Tú eres Pedro, y sobre esta piedra edificaré mi Iglesia (Mateo 16, 18)."},{"w":"PADRE","r":0,"c":5,"dir":"V","pista":"Primera persona de la Trinidad","nota":"Padre nuestro que estás en el cielo."},{"w":"PEDIR","r":0,"c":2,"dir":"V","pista":"Solicitar algo","nota":"Pedid y se os dará (Mateo 7, 7)."},{"w":"IDEA","r":1,"c":0,"dir":"H","pista":"Pensamiento que surge en la mente","nota":"Una buena idea puede cambiar una comunidad."},{"w":"DIA","r":0,"c":0,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."}]},{"n":33,"base":"MIRADA","rows":5,"cols":6,"palabras":[{"w":"MIRADA","r":1,"c":0,"dir":"H","pista":"Acción de mirar","nota":"Jesús miró a Pedro con amor (Lucas 22, 61)."},{"w":"ARMA","r":1,"c":3,"dir":"V","pista":"Instrumento para atacar o defender","nota":"La oración es el arma del cristiano."},{"w":"RAMA","r":4,"c":0,"dir":"H","pista":"Parte de un árbol que sale del tronco","nota":"Yo soy la vid, vosotros los sarmientos (Juan 15, 5)."},{"w":"MAR","r":0,"c":5,"dir":"V","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"DIA","r":0,"c":1,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."},{"w":"MARIA","r":0,"c":5,"dir":"V","pista":"Madre de Jesús","nota":"Primera discípula: respondió hágase en mí según tu palabra."}]},{"n":34,"base":"MORADA","rows":4,"cols":8,"palabras":[{"w":"MORADA","r":0,"c":0,"dir":"H","pista":"Lugar donde se habita","nota":"En la casa de mi Padre hay muchas moradas (Juan 14, 2)."},{"w":"AMOR","r":0,"c":5,"dir":"V","pista":"Sentimiento de cariño que se entrega","nota":"Dios es amor (1 Juan 4, 8)."},{"w":"ARMA","r":3,"c":4,"dir":"H","pista":"Instrumento para atacar o defender","nota":"La oración es el arma del cristiano."},{"w":"RAMA","r":0,"c":2,"dir":"V","pista":"Parte de un árbol que sale del tronco","nota":"Yo soy la vid, vosotros los sarmientos (Juan 15, 5)."},{"w":"MAR","r":0,"c":0,"dir":"V","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"ROMA","r":2,"c":0,"dir":"H","pista":"Ciudad sede del Papa","nota":"Ahí vive el sucesor de Pedro."}]},{"n":35,"base":"CIERTO","rows":8,"cols":6,"palabras":[{"w":"CIERTO","r":5,"c":0,"dir":"H","pista":"Verdadero, seguro","nota":"Es cierto que Dios nunca abandona a sus hijos."},{"w":"RECTO","r":3,"c":0,"dir":"V","pista":"Derecho, sin torcerse","nota":"Haz rectos tus caminos ante el Señor."},{"w":"RICO","r":3,"c":0,"dir":"H","pista":"Que tiene muchos bienes","nota":"Es más fácil pasar un camello por el ojo de una aguja (Marcos 10, 25)."},{"w":"RIO","r":3,"c":5,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"ECO","r":5,"c":2,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"RETO","r":0,"c":3,"dir":"V","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."},{"w":"CORTE","r":0,"c":1,"dir":"H","pista":"Acción de cortar","nota":"El Reino de Dios se hace presente en la justicia y la paz."}]},{"n":36,"base":"CONSEJO","rows":3,"cols":7,"palabras":[{"w":"CONSEJO","r":2,"c":0,"dir":"H","pista":"Opinión que se da a otro","nota":"Consejo de Dios: escuchad a vuestros hermanos."},{"w":"ECO","r":0,"c":6,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"ONCE","r":0,"c":3,"dir":"H","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."}]},{"n":37,"base":"SONRISA","rows":3,"cols":7,"palabras":[{"w":"SONRISA","r":2,"c":0,"dir":"H","pista":"Gesto de alegría en la cara","nota":"Una sonrisa puede abrir el corazón de alguien."},{"w":"RIO","r":0,"c":1,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"RISA","r":0,"c":1,"dir":"H","pista":"Expresión de alegría","nota":"El que sirve con alegría ilumina a los demás."}]},{"n":38,"base":"FAMILIA","rows":4,"cols":7,"palabras":[{"w":"FAMILIA","r":3,"c":0,"dir":"H","pista":"Grupo de personas unidas por lazos","nota":"La familia es la primera escuela de fe."},{"w":"LAMA","r":0,"c":1,"dir":"V","pista":"Barro o fango","nota":"Dios levanta al pobre del lodo."},{"w":"ALMA","r":1,"c":1,"dir":"H","pista":"Parte espiritual de la persona","nota":"Dios creó al hombre con un alma inmortal."},{"w":"MALA","r":0,"c":6,"dir":"V","pista":"Que no es buena","nota":"Líbranos del mal."}]},{"n":39,"base":"SEMILLA","rows":4,"cols":7,"palabras":[{"w":"SEMILLA","r":1,"c":0,"dir":"H","pista":"Grano que se siembra para crecer","nota":"La Palabra es semilla que da fruto (Mateo 13)."},{"w":"MIS","r":0,"c":3,"dir":"V","pista":"Pronombre de posesión","nota":"Mis ovejas escuchan mi voz (Juan 10, 27)."},{"w":"MISA","r":0,"c":3,"dir":"V","pista":"Celebración de la Eucaristía","nota":"Al final, el sacerdote dice: Id, la misa ha terminado. Es un envío."},{"w":"MESA","r":3,"c":0,"dir":"H","pista":"Mueble donde se come","nota":"La Eucaristía es la mesa del Señor."}]},{"n":40,"base":"CORDERO","rows":4,"cols":7,"palabras":[{"w":"CORDERO","r":2,"c":0,"dir":"H","pista":"Cría de la oveja","nota":"Cordero de Dios, que quitas el pecado del mundo (Juan 1, 29)."},{"w":"ORO","r":1,"c":2,"dir":"V","pista":"Metal precioso amarillo","nota":"Los magos llevaron oro, incienso y mirra (Mateo 2, 11)."},{"w":"ECO","r":1,"c":0,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"CORO","r":0,"c":2,"dir":"V","pista":"Grupo de personas que cantan juntas","nota":"El coro juvenil anima la misa."},{"w":"CREDO","r":0,"c":2,"dir":"H","pista":"Profesión de la fe","nota":"En el Credo proclamamos lo que creemos."}]},{"n":41,"base":"ROSARIO","rows":4,"cols":7,"palabras":[{"w":"ROSARIO","r":0,"c":0,"dir":"H","pista":"Oración mariana con cuentas","nota":"Muchas familias venezolanas rezan el rosario en mayo."},{"w":"RISA","r":0,"c":0,"dir":"V","pista":"Expresión de alegría","nota":"El que sirve con alegría ilumina a los demás."},{"w":"RIO","r":0,"c":4,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"ORAR","r":0,"c":6,"dir":"V","pista":"Hablar con Dios","nota":"Rezar con calma, cada día, también cuando cuesta."},{"w":"ORO","r":2,"c":2,"dir":"H","pista":"Metal precioso amarillo","nota":"Los magos llevaron oro, incienso y mirra (Mateo 2, 11)."}]},{"n":42,"base":"SEMBRAR","rows":5,"cols":7,"palabras":[{"w":"SEMBRAR","r":4,"c":0,"dir":"H","pista":"Poner semillas en la tierra","nota":"El que siembra con generosidad cosecha con generosidad (2 Corintios 9, 6)."},{"w":"MAR","r":2,"c":4,"dir":"V","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"REMAR","r":0,"c":4,"dir":"V","pista":"Impulsar una barca con remos","nota":"Los apóstoles remaban contra el viento (Marcos 6, 48)."},{"w":"SABER","r":0,"c":6,"dir":"V","pista":"Tener conocimiento","nota":"Conoceréis la verdad y la verdad os hará libres."},{"w":"MESA","r":1,"c":3,"dir":"H","pista":"Mueble donde se come","nota":"La Eucaristía es la mesa del Señor."}]},{"n":43,"base":"SOLEDAD","rows":4,"cols":8,"palabras":[{"w":"SOLEDAD","r":3,"c":0,"dir":"H","pista":"Estado de estar solo","nota":"Jesús nunca deja solos a los que lo buscan."},{"w":"DEDO","r":0,"c":1,"dir":"V","pista":"Parte de la mano","nota":"El dedo de Dios está aquí (Lucas 11, 20)."},{"w":"SEDA","r":0,"c":5,"dir":"V","pista":"Tela fina y suave","nota":"Vestidos de seda son signo de lujo, pero no de amor."},{"w":"EDAD","r":0,"c":0,"dir":"H","pista":"Tiempo que se ha vivido","nota":"Jesús creció en edad, sabiduría y gracia (Lucas 2, 52)."},{"w":"SOL","r":0,"c":5,"dir":"H","pista":"Astro que da luz y calor al día","nota":"Cristo es el sol que nace de lo alto (Lucas 1, 78)."}]},{"n":44,"base":"CORAZON","rows":5,"cols":8,"palabras":[{"w":"CORAZON","r":1,"c":0,"dir":"H","pista":"Centro del amor de la persona","nota":"Misioneros en el corazón: amar lo que se anuncia."},{"w":"ROCA","r":0,"c":1,"dir":"V","pista":"Piedra grande y firme","nota":"Quien escucha la palabra construye sobre roca."},{"w":"ARCO","r":1,"c":3,"dir":"V","pista":"Figura curva de un puente","nota":"Arco iris: señal de la alianza de Dios (Génesis 9, 13)."},{"w":"ORO","r":4,"c":3,"dir":"H","pista":"Metal precioso amarillo","nota":"Los magos llevaron oro, incienso y mirra (Mateo 2, 11)."},{"w":"CORO","r":4,"c":2,"dir":"H","pista":"Grupo de personas que cantan juntas","nota":"El coro juvenil anima la misa."},{"w":"CORONA","r":4,"c":2,"dir":"H","pista":"Aro que se pone en la cabeza","nota":"La corona de espinas fue la burla al Rey."}]},{"n":45,"base":"HERMANO","rows":4,"cols":9,"palabras":[{"w":"HERMANO","r":3,"c":0,"dir":"H","pista":"Hijo de los mismos padres; cristiano","nota":"Somos hermanos porque tenemos un mismo Padre."},{"w":"MANO","r":0,"c":6,"dir":"V","pista":"Extremidad para tomar y servir","nota":"Trabajar con las manos al servicio de otros."},{"w":"HORA","r":0,"c":4,"dir":"V","pista":"Sesenta minutos","nota":"Velad y orad en todo tiempo (Lucas 21, 36)."},{"w":"AMOR","r":0,"c":2,"dir":"V","pista":"Sentimiento de cariño que se entrega","nota":"Dios es amor (1 Juan 4, 8)."},{"w":"MAR","r":0,"c":6,"dir":"H","pista":"Gran extensión de agua salada","nota":"Duc in altum: rema mar adentro (Lucas 5, 4)."},{"w":"ROMA","r":0,"c":8,"dir":"V","pista":"Ciudad sede del Papa","nota":"Ahí vive el sucesor de Pedro."}]},{"n":46,"base":"SECRETO","rows":6,"cols":7,"palabras":[{"w":"SECRETO","r":2,"c":0,"dir":"H","pista":"Algo oculto","nota":"Tu Padre que ve en lo secreto te recompensará (Mateo 6, 6)."},{"w":"RECTO","r":1,"c":4,"dir":"V","pista":"Derecho, sin torcerse","nota":"Haz rectos tus caminos ante el Señor."},{"w":"RETO","r":5,"c":1,"dir":"H","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."},{"w":"ECO","r":1,"c":2,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"RESTO","r":0,"c":0,"dir":"V","pista":"Lo que queda","nota":"El resto se cumplirá en el tiempo de Dios."},{"w":"CORTE","r":1,"c":6,"dir":"V","pista":"Acción de cortar","nota":"El Reino de Dios se hace presente en la justicia y la paz."}]},{"n":47,"base":"ORACION","rows":6,"cols":7,"palabras":[{"w":"ORACION","r":3,"c":0,"dir":"H","pista":"Diálogo con Dios","nota":"Orar es hablar con Dios y también dejar que Él nos hable."},{"w":"ORO","r":1,"c":5,"dir":"V","pista":"Metal precioso amarillo","nota":"Los magos llevaron oro, incienso y mirra (Mateo 2, 11)."},{"w":"RICO","r":0,"c":0,"dir":"V","pista":"Que tiene muchos bienes","nota":"Es más fácil pasar un camello por el ojo de una aguja (Marcos 10, 25)."},{"w":"ARCO","r":1,"c":2,"dir":"H","pista":"Figura curva de un puente","nota":"Arco iris: señal de la alianza de Dios (Génesis 9, 13)."},{"w":"ROCA","r":1,"c":3,"dir":"V","pista":"Piedra grande y firme","nota":"Quien escucha la palabra construye sobre roca."},{"w":"CORO","r":0,"c":5,"dir":"V","pista":"Grupo de personas que cantan juntas","nota":"El coro juvenil anima la misa."},{"w":"CORONA","r":0,"c":5,"dir":"V","pista":"Aro que se pone en la cabeza","nota":"La corona de espinas fue la burla al Rey."}]},{"n":48,"base":"SINCERO","rows":7,"cols":7,"palabras":[{"w":"SINCERO","r":2,"c":0,"dir":"H","pista":"Que dice la verdad","nota":"Un corazón sincero se abre a Dios."},{"w":"NECIO","r":0,"c":3,"dir":"V","pista":"Persona sin juicio","nota":"El necio dice en su corazón: no hay Dios (Salmo 14, 1)."},{"w":"REINO","r":2,"c":5,"dir":"V","pista":"Territorio gobernado por un rey","nota":"Venga a nosotros tu Reino."},{"w":"ECO","r":0,"c":6,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"RICO","r":4,"c":0,"dir":"H","pista":"Que tiene muchos bienes","nota":"Es más fácil pasar un camello por el ojo de una aguja (Marcos 10, 25)."},{"w":"SERIO","r":2,"c":0,"dir":"V","pista":"Grave o formal","nota":"La misión es un compromiso serio."},{"w":"ONCE","r":6,"c":0,"dir":"H","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."}]},{"n":49,"base":"CARISMA","rows":4,"cols":12,"palabras":[{"w":"CARISMA","r":1,"c":1,"dir":"H","pista":"Don del Espíritu para servir a la Iglesia","nota":"El carisma es el regalo con el que Dios nos hace útiles a los demás."},{"w":"MASA","r":0,"c":7,"dir":"V","pista":"Mezcla de harina y agua","nota":"Un poco de levadura fermenta toda la masa (Mateo 13, 33)."},{"w":"ARMA","r":0,"c":3,"dir":"V","pista":"Instrumento para atacar o defender","nota":"La oración es el arma del cristiano."},{"w":"MARIA","r":3,"c":6,"dir":"H","pista":"Madre de Jesús","nota":"Primera discípula: respondió hágase en mí según tu palabra."},{"w":"CASA","r":0,"c":10,"dir":"V","pista":"Lugar donde vive una familia","nota":"La familia es la primera iglesia doméstica."},{"w":"MARCA","r":0,"c":7,"dir":"H","pista":"Señal que distingue algo","nota":"El bautismo marca a quien pertenece a Cristo."},{"w":"MISA","r":3,"c":0,"dir":"H","pista":"Celebración de la Eucaristía","nota":"Al final, el sacerdote dice: Id, la misa ha terminado. Es un envío."}]},{"n":50,"base":"MILAGRO","rows":6,"cols":9,"palabras":[{"w":"MILAGRO","r":4,"c":2,"dir":"H","pista":"Hecho que supera la naturaleza","nota":"Jesús realizó milagros para mostrar el amor del Padre."},{"w":"MAGO","r":2,"c":6,"dir":"V","pista":"Sabio que venía de Oriente","nota":"Los magos siguieron la estrella hasta Belén."},{"w":"GLORIA","r":0,"c":3,"dir":"V","pista":"Honor y alabanza a Dios","nota":"Gloria a Dios en el cielo, y paz a los hombres."},{"w":"LAGO","r":2,"c":0,"dir":"H","pista":"Gran masa de agua dulce","nota":"Jesús calmó la tormenta en el lago (Marcos 4, 39)."},{"w":"AMOR","r":2,"c":8,"dir":"V","pista":"Sentimiento de cariño que se entrega","nota":"Dios es amor (1 Juan 4, 8)."},{"w":"LARGO","r":0,"c":0,"dir":"H","pista":"De mucha longitud","nota":"El camino de la fe es largo, pero Dios camina con nosotros."},{"w":"LOMA","r":2,"c":0,"dir":"V","pista":"Pequeña elevación del terreno","nota":"Monte alto y tranquilo para orar."}]},{"n":51,"base":"BAUTISMO","rows":4,"cols":8,"palabras":[{"w":"BAUTISMO","r":1,"c":0,"dir":"H","pista":"Primer sacramento de la vida cristiana","nota":"Con el bautismo entramos en la familia de Dios."},{"w":"MISA","r":0,"c":4,"dir":"V","pista":"Celebración de la Eucaristía","nota":"Al final, el sacerdote dice: Id, la misa ha terminado. Es un envío."},{"w":"MIS","r":1,"c":6,"dir":"V","pista":"Pronombre de posesión","nota":"Mis ovejas escuchan mi voz (Juan 10, 27)."}]},{"n":52,"base":"PREGUNTA","rows":3,"cols":10,"palabras":[{"w":"PREGUNTA","r":2,"c":0,"dir":"H","pista":"Frase para pedir una respuesta","nota":"Jesús hacía preguntas para hacer pensar."},{"w":"PAN","r":0,"c":5,"dir":"V","pista":"Alimento hecho de harina","nota":"Danos hoy nuestro pan de cada día."},{"w":"PARTE","r":0,"c":5,"dir":"H","pista":"Porción de un todo","nota":"Cada miembro tiene su parte en el cuerpo de Cristo (1 Corintios 12)."}]},{"n":53,"base":"ESTRELLA","rows":5,"cols":9,"palabras":[{"w":"ESTRELLA","r":4,"c":1,"dir":"H","pista":"Astro luminoso del cielo nocturno","nota":"Los Magos siguieron una estrella hasta Jesús (Mateo 2)."},{"w":"ESTAR","r":0,"c":4,"dir":"V","pista":"Permanecer en un lugar","nota":"Yo estaré con ustedes todos los días (Mateo 28, 20)."},{"w":"TALLER","r":0,"c":0,"dir":"H","pista":"Lugar de trabajo manual","nota":"Jesús trabajó en el taller de José en Nazaret."},{"w":"LETRA","r":0,"c":8,"dir":"V","pista":"Signo que forma las palabras","nota":"La letra mata, pero el Espíritu da vida (2 Corintios 3, 6)."}]},{"n":54,"base":"INCIENSO","rows":4,"cols":8,"palabras":[{"w":"INCIENSO","r":1,"c":0,"dir":"H","pista":"Resina que se quema en el culto","nota":"Los magos ofrecieron incienso al Niño Dios."},{"w":"ONCE","r":0,"c":1,"dir":"V","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."},{"w":"ECO","r":1,"c":4,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"NECIO","r":3,"c":0,"dir":"H","pista":"Persona sin juicio","nota":"El necio dice en su corazón: no hay Dios (Salmo 14, 1)."}]},{"n":55,"base":"INOCENTE","rows":4,"cols":8,"palabras":[{"w":"INOCENTE","r":1,"c":0,"dir":"H","pista":"Que no ha cometido mal","nota":"Jesús fue inocente y dio la vida por nosotros."},{"w":"ECO","r":1,"c":4,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"NECIO","r":3,"c":0,"dir":"H","pista":"Persona sin juicio","nota":"El necio dice en su corazón: no hay Dios (Salmo 14, 1)."},{"w":"ONCE","r":0,"c":1,"dir":"V","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."}]},{"n":56,"base":"PARABOLA","rows":5,"cols":8,"palabras":[{"w":"PARABOLA","r":3,"c":0,"dir":"H","pista":"Relato que enseña una verdad","nota":"Jesús enseñaba con parábolas."},{"w":"PARA","r":0,"c":3,"dir":"V","pista":"Con la finalidad de","nota":"Ve y anuncia el Reino de Dios."},{"w":"ARBOL","r":0,"c":5,"dir":"V","pista":"Planta grande con tronco y ramas","nota":"Por sus frutos se conoce el árbol (Mateo 12, 33)."},{"w":"PALABRA","r":1,"c":0,"dir":"H","pista":"Unidad del lenguaje","nota":"La Palabra se hizo carne (Juan 1, 14)."}]},{"n":57,"base":"VALIENTE","rows":5,"cols":8,"palabras":[{"w":"VALIENTE","r":3,"c":0,"dir":"H","pista":"Con valor para enfrentar peligros","nota":"Sed valientes, yo he vencido al mundo (Juan 16, 33)."},{"w":"VELA","r":0,"c":1,"dir":"V","pista":"Cilindro de cera que da luz","nota":"Cristo es la luz; la vela encendida es su signo."},{"w":"VENTA","r":1,"c":0,"dir":"H","pista":"Acción de vender","nota":"Jesús echó a los vendedores del templo (Juan 2, 16)."},{"w":"LINEA","r":0,"c":7,"dir":"V","pista":"Trazo recto o fila","nota":"Seguir la línea del Evangelio nos lleva a Cristo."}]},{"n":58,"base":"NACIONES","rows":5,"cols":8,"palabras":[{"w":"NACIONES","r":0,"c":0,"dir":"H","pista":"Pueblos y países del mundo","nota":"Id y haced discípulos a todas las naciones (Mateo 28, 19)."},{"w":"ECO","r":0,"c":6,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"NECIO","r":0,"c":0,"dir":"V","pista":"Persona sin juicio","nota":"El necio dice en su corazón: no hay Dios (Salmo 14, 1)."},{"w":"NACION","r":2,"c":2,"dir":"H","pista":"Pueblo unido por una historia","nota":"Un pueblo, una nación, un destino."},{"w":"ONCE","r":0,"c":4,"dir":"V","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."}]},{"n":59,"base":"DESIERTO","rows":5,"cols":8,"palabras":[{"w":"DESIERTO","r":2,"c":0,"dir":"H","pista":"Lugar seco y sin agua","nota":"En el desierto Jesús oró cuarenta días."},{"w":"RIO","r":2,"c":5,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"RETO","r":1,"c":1,"dir":"V","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."},{"w":"DIOS","r":4,"c":3,"dir":"H","pista":"Creador y Padre de todo","nota":"Dios nos ama antes de que lo busquemos."},{"w":"SERIO","r":0,"c":5,"dir":"V","pista":"Grave o formal","nota":"La misión es un compromiso serio."},{"w":"RESTO","r":0,"c":3,"dir":"H","pista":"Lo que queda","nota":"El resto se cumplirá en el tiempo de Dios."}]},{"n":60,"base":"FRATERNO","rows":5,"cols":8,"palabras":[{"w":"FRATERNO","r":1,"c":0,"dir":"H","pista":"Propio de hermanos","nota":"El amor fraterno es señal del discípulo."},{"w":"RETO","r":0,"c":4,"dir":"V","pista":"Desafío","nota":"Ser misionero es un reto que vale la pena."},{"w":"TORRE","r":0,"c":7,"dir":"V","pista":"Edificio alto y estrecho","nota":"Una torre sin cimientos se cae."},{"w":"ROTA","r":1,"c":1,"dir":"V","pista":"Partida en pedazos","nota":"Rota por dentro, pero no vencida."},{"w":"ORAR","r":3,"c":4,"dir":"H","pista":"Hablar con Dios","nota":"Rezar con calma, cada día, también cuando cuesta."},{"w":"FARO","r":4,"c":0,"dir":"H","pista":"Torre con luz para guiar barcos","nota":"Tu palabra es lámpara a mis pies (Salmo 119, 105)."}]},{"n":61,"base":"LIBERTAD","rows":5,"cols":10,"palabras":[{"w":"LIBERTAD","r":2,"c":0,"dir":"H","pista":"Poder de decidir","nota":"Donde está el Espíritu del Señor, hay libertad (2 Corintios 3, 17)."},{"w":"LETRA","r":0,"c":5,"dir":"V","pista":"Signo que forma las palabras","nota":"La letra mata, pero el Espíritu da vida (2 Corintios 3, 6)."},{"w":"LIBRE","r":0,"c":5,"dir":"H","pista":"Que no está atado","nota":"La verdad os hará libres (Juan 8, 32)."},{"w":"TARDE","r":4,"c":4,"dir":"H","pista":"Parte del día después del mediodía","nota":"Quédate con nosotros, que anochece (Lucas 24, 29)."},{"w":"IDEA","r":0,"c":3,"dir":"V","pista":"Pensamiento que surge en la mente","nota":"Una buena idea puede cambiar una comunidad."},{"w":"DIA","r":1,"c":1,"dir":"V","pista":"Tiempo de veinticuatro horas","nota":"El domingo es el día del Señor."}]},{"n":62,"base":"SENCILLO","rows":5,"cols":8,"palabras":[{"w":"SENCILLO","r":2,"c":0,"dir":"H","pista":"Sin complicaciones","nota":"Dios se revela a los sencillos."},{"w":"NECIO","r":0,"c":3,"dir":"V","pista":"Persona sin juicio","nota":"El necio dice en su corazón: no hay Dios (Salmo 14, 1)."},{"w":"CIELO","r":0,"c":1,"dir":"V","pista":"Morada de Dios y de los santos","nota":"Padre nuestro que estás en el cielo."},{"w":"ECO","r":0,"c":7,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"ONCE","r":4,"c":3,"dir":"H","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."},{"w":"SOL","r":0,"c":5,"dir":"V","pista":"Astro que da luz y calor al día","nota":"Cristo es el sol que nace de lo alto (Lucas 1, 78)."}]},{"n":63,"base":"SILENCIO","rows":5,"cols":8,"palabras":[{"w":"SILENCIO","r":1,"c":0,"dir":"H","pista":"Ausencia de ruido","nota":"En el silencio se escucha la voz de Dios."},{"w":"ECO","r":0,"c":5,"dir":"V","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."},{"w":"CIELO","r":0,"c":1,"dir":"V","pista":"Morada de Dios y de los santos","nota":"Padre nuestro que estás en el cielo."},{"w":"NECIO","r":0,"c":3,"dir":"V","pista":"Persona sin juicio","nota":"El necio dice en su corazón: no hay Dios (Salmo 14, 1)."},{"w":"SOL","r":0,"c":7,"dir":"V","pista":"Astro que da luz y calor al día","nota":"Cristo es el sol que nace de lo alto (Lucas 1, 78)."},{"w":"ONCE","r":4,"c":3,"dir":"H","pista":"Número entre el diez y el doce","nota":"Los once apóstoles fueron enviados a todo el mundo."}]},{"n":64,"base":"ALLAMANO","rows":4,"cols":11,"palabras":[{"w":"ALLAMANO","r":3,"c":0,"dir":"H","pista":"Fundador de los Misioneros de la Consolata","nota":"Su lema: ser misioneros en la cabeza, en la boca y en el corazón."},{"w":"LOMA","r":0,"c":0,"dir":"V","pista":"Pequeña elevación del terreno","nota":"Monte alto y tranquilo para orar."},{"w":"ALMA","r":0,"c":5,"dir":"V","pista":"Parte espiritual de la persona","nota":"Dios creó al hombre con un alma inmortal."},{"w":"MALA","r":0,"c":3,"dir":"V","pista":"Que no es buena","nota":"Líbranos del mal."},{"w":"MALO","r":0,"c":7,"dir":"V","pista":"Que no es bueno","nota":"Líbranos del mal."},{"w":"LAMA","r":2,"c":7,"dir":"H","pista":"Barro o fango","nota":"Dios levanta al pobre del lodo."},{"w":"MANO","r":0,"c":7,"dir":"H","pista":"Extremidad para tomar y servir","nota":"Trabajar con las manos al servicio de otros."}]},{"n":65,"base":"SERVICIO","rows":6,"cols":9,"palabras":[{"w":"SERVICIO","r":3,"c":1,"dir":"H","pista":"Ayudar a otros sin esperar nada a cambio","nota":"Jesús no vino a ser servido, sino a servir (Mateo 20, 28)."},{"w":"RIO","r":2,"c":7,"dir":"V","pista":"Corriente de agua que va al mar","nota":"Del seno de quien cree correrán ríos de agua viva (Juan 7, 38)."},{"w":"RICO","r":2,"c":5,"dir":"V","pista":"Que tiene muchos bienes","nota":"Es más fácil pasar un camello por el ojo de una aguja (Marcos 10, 25)."},{"w":"SIERVO","r":0,"c":3,"dir":"V","pista":"Quien sirve a otro","nota":"Jesús vino a servir, y nos pide servir como Él."},{"w":"CIRIO","r":0,"c":7,"dir":"V","pista":"Vela grande de cera","nota":"El cirio pascual simboliza a Cristo resucitado."},{"w":"SERIO","r":1,"c":0,"dir":"H","pista":"Grave o formal","nota":"La misión es un compromiso serio."},{"w":"ECO","r":5,"c":1,"dir":"H","pista":"Sonido que regresa","nota":"Anunciar el Evangelio es como un eco de Cristo en el mundo."}]},{"n":66,"base":"PASTORAL","rows":5,"cols":12,"palabras":[{"w":"PASTORAL","r":2,"c":0,"dir":"H","pista":"Acción de la Iglesia para cuidar al pueblo","nota":"La pastoral juvenil acompaña a los jóvenes."},{"w":"PARA","r":1,"c":6,"dir":"V","pista":"Con la finalidad de","nota":"Ve y anuncia el Reino de Dios."},{"w":"ALTAR","r":0,"c":3,"dir":"V","pista":"Mesa donde se celebra la Misa","nota":"En el altar la comunidad recibe el Cuerpo de Cristo."},{"w":"PASTOR","r":4,"c":5,"dir":"H","pista":"Quien cuida un rebaño","nota":"El buen pastor da la vida por las ovejas (Juan 10, 11)."},{"w":"PLATO","r":0,"c":1,"dir":"V","pista":"Recipiente para comida","nota":"Se comparte el plato en la mesa de la familia."},{"w":"PASAR","r":0,"c":10,"dir":"V","pista":"Ir más allá","nota":"Jesús pasó haciendo el bien (Hechos 10, 38)."},{"w":"TROPA","r":0,"c":7,"dir":"H","pista":"Grupo de personas","nota":"La tropa de jóvenes salió a misionar."}]},{"n":67,"base":"DOCTRINA","rows":6,"cols":10,"palabras":[{"w":"DOCTRINA","r":2,"c":0,"dir":"H","pista":"Enseñanza de la fe","nota":"La doctrina de la Iglesia se transmite de generación en generación."},{"w":"ROCA","r":1,"c":1,"dir":"V","pista":"Piedra grande y firme","nota":"Quien escucha la palabra construye sobre roca."},{"w":"ARCO","r":1,"c":4,"dir":"V","pista":"Figura curva de un puente","nota":"Arco iris: señal de la alianza de Dios (Génesis 9, 13)."},{"w":"CONTAR","r":0,"c":6,"dir":"V","pista":"Narrar o decir números","nota":"Contar las maravillas de Dios es parte de la misión."},{"w":"CANTO","r":4,"c":0,"dir":"H","pista":"Música cantada","nota":"Cantar en la liturgia une las voces de la comunidad."},{"w":"RICO","r":5,"c":6,"dir":"H","pista":"Que tiene muchos bienes","nota":"Es más fácil pasar un camello por el ojo de una aguja (Marcos 10, 25)."},{"w":"RADIO","r":1,"c":9,"dir":"V","pista":"Medio para escuchar noticias","nota":"La radio también lleva la Buena Noticia a los hogares."}]}];
+const CAPS = [
+  { nombre: 'La Madre de la Consolata', tema: 'Carisma y María', fin: 20, santo: 'Virgen de la Consolata', cuadro: 'cuadros/cap1-consolata.jpg' },
+  { nombre: 'José Allamano', tema: 'Carisma y espiritualidad', fin: 40, santo: 'Beato José Allamano', cuadro: 'cuadros/cap2-allamano.jpg' },
+  { nombre: 'Jesús Buen Pastor', tema: 'Vocación y servicio', fin: 60, santo: 'Jesús Buen Pastor', cuadro: 'cuadros/cap3-buen-pastor.jpg' },
+  { nombre: 'Sagrado Corazón', tema: 'Eucaristía y misión', fin: NIVELES.length, santo: 'Sagrado Corazón de Jesús', cuadro: 'cuadros/cap4-sagrado-corazon.jpg' }
+];
+const VERSOS = [
+  { t: 'Id, pues, y haced discípulos a todas las naciones.', r: 'Mateo 28, 19' },
+  { t: 'Vosotros sois la luz del mundo.', r: 'Mateo 5, 14' },
+  { t: 'Yo soy la vid, vosotros los sarmientos.', r: 'Juan 15, 5' },
+  { t: 'Id por todo el mundo y proclamad el Evangelio a toda criatura.', r: 'Marcos 16, 15' },
+  { t: 'Me seréis testigos hasta lo último de la tierra.', r: 'Hechos 1, 8' },
+  { t: 'He aquí la esclava del Señor; hágase en mí según tu palabra.', r: 'Lucas 1, 38' },
+  { t: 'Venid a mí todos los que estáis cansados y agobiados, y yo os haré descansar.', r: 'Mateo 11, 28' },
+  { t: 'Como el Padre me ha enviado, así también yo os envío.', r: 'Juan 20, 21' },
+  { t: 'Amaos unos a otros como yo os he amado.', r: 'Juan 13, 34' },
+  { t: 'Deben ser misioneros en la cabeza, en la boca y en el corazón.', r: 'San José Allamano, citado en el manual de JUMA' }
+];
+const ELOGIOS = ['¡Bendito sea Dios!', '¡Muy bien, sigue así!', '¡Amén, así mismo es!', '¡Qué buen acierto!', '¡Dios te cuide!', '¡Fiel como siempre!'];
+const MAX_VIDAS = 5;
+const MIN_VIDA = 20;
+const INTERVALO = MIN_VIDA * 60 * 1000;
+const CLAVE = 'juma-palabras-v2';
+const PT = { palabra: 10, base: 30, nivel: 50, cuadro: 200, pista: 15 };
+const TOTAL_PALABRAS = (() => { const s = new Set(); NIVELES.forEach((n) => n.palabras.forEach((p) => s.add(p.w))); return s.size; })();
+
+// ---------- Estado guardado en este dispositivo ----------
+let S;
+function cargar() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { d = null; }
+  S = Object.assign({ completados: 0, puntos: 0, vidas: MAX_VIDAS, ultimaVida: Date.now(), enCurso: null, vocab: [] }, d || {});
+  regenerarVidas();
+}
+function guardar() {
+  try { localStorage.setItem(CLAVE, JSON.stringify(S)); } catch (e) {}
+  avisarPadre();
+}
+function regenerarVidas() {
+  const ahora = Date.now();
+  if (S.vidas >= MAX_VIDAS) { S.vidas = MAX_VIDAS; S.ultimaVida = ahora; return; }
+  const pasan = Math.floor((ahora - S.ultimaVida) / INTERVALO);
+  if (pasan > 0) {
+    S.vidas = Math.min(MAX_VIDAS, S.vidas + pasan);
+    S.ultimaVida += pasan * INTERVALO;
+    if (S.vidas >= MAX_VIDAS) S.ultimaVida = ahora;
+  }
+}
+function faltaVida() { return Math.max(0, S.ultimaVida + INTERVALO - Date.now()); }
+function mmss(ms) { const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+// Los puntos se envían a la página de JUMA para guardarlos en el perfil público
+function avisarPadre() {
+  try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', total: S.puntos }, location.origin); } catch (e) {}
+}
+function capDe(n) { return CAPS.findIndex((c) => n <= c.fin); }
+function inicioCap(ci) { return ci === 0 ? 1 : CAPS[ci - 1].fin + 1; }
+function barajar(a) { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; }
+
+// ---------- Mapa ----------
+function pintarMapa() {
+  regenerarVidas();
+  const hoy = S.completados + 1;
+  let h = '';
+  CAPS.forEach((c, ci) => {
+    const ini = inicioCap(ci), total = c.fin - ini + 1;
+    const hechos = Math.max(0, Math.min(total, S.completados - ini + 1));
+    h += '<div class="tarjeta"><div class="cap-cab"><h2>Capítulo ' + (ci + 1) + ': ' + c.nombre + '</h2><span>' + hechos + '/' + total + '</span></div>';
+    h += '<p class="sub" style="margin-top:4px;font-size:13px">' + c.tema + '</p>';
+    h += '<div class="grid-niveles">';
+    for (let n = ini; n <= c.fin; n++) {
+      let cls = 'nv', dis = '';
+      if (n <= S.completados) cls += ' hecho';
+      else if (n === hoy) cls += ' actual';
+      else dis = ' disabled';
+      h += '<button class="' + cls + '" data-nivel="' + n + '" type="button"' + dis + '>' + n + '</button>';
+    }
+    h += '</div>';
+    h += '<div class="mosaico">' + piezas(ci, hechos, total) + '</div>';
+    h += '<div class="santo">' + c.santo + (hechos >= total ? ' · cuadro armado' : ' · ' + hechos + ' de ' + total + ' piezas') + '</div>';
+    h += '</div>';
+  });
+  document.getElementById('capitulos').innerHTML = h;
+  // Si una imagen del cuadro no existe, se queda el color de respaldo
+  CAPS.forEach((c) => { const im = new Image(); im.src = c.cuadro; });
+  pintarCabecera();
+}
+function piezas(ci, hechos, total) {
+  const c = CAPS[ci];
+  const piezasN = 20;
+  let h = '';
+  for (let k = 0; k < piezasN; k++) {
+    const col = k % 4, fila = Math.floor(k / 4);
+    const x = (col * 100 / 3).toFixed(2), y = (fila * 100 / 4).toFixed(2);
+    const on = k < Math.round(hechos / total * piezasN);
+    h += '<div class="pieza' + (on ? '' : ' off') + '" style="background-image:url(' + c.cuadro + ');background-position:' + x + '% ' + y + '%"></div>';
+  }
+  return h;
+}
+function pintarCabecera() {
+  document.getElementById('t-pts').textContent = S.puntos.toLocaleString('es-VE');
+  let v = '';
+  for (let i = 0; i < MAX_VIDAS; i++) v += i < S.vidas ? '♥' : '<span class="vacio">♥</span>';
+  document.getElementById('t-vidas').innerHTML = v;
+  const av = document.getElementById('aviso-vidas');
+  if (S.vidas < MAX_VIDAS) {
+    av.style.display = 'block';
+    av.innerHTML = 'Te quedan <b>' + S.vidas + '</b> de ' + MAX_VIDAS + ' vidas. Se recupera una cada ' + MIN_VIDA + ' minutos. Próxima en <b id="cuenta">' + mmss(faltaVida()) + '</b>.';
+  } else {
+    av.style.display = 'none';
+    av.innerHTML = '';
+  }
+}
+
+// ---------- Juego ----------
+let NV = null;          // nivel actual
+let encontradas = new Set();
+let reveladas = new Set();
+let celdas = new Map(); // "r,c" -> { ch, idx: [indices de palabras] }
+let activa = 0;         // índice de la palabra activa (pista)
+let letras = [];
+let sel = [];
+let arrastrando = false;
+
+function mostrarVista(v) {
+  document.getElementById('vista-mapa').style.display = v === 'mapa' ? 'flex' : 'none';
+  document.getElementById('vista-juego').style.display = v === 'juego' ? 'flex' : 'none';
+  window.scrollTo(0, 0);
+}
+function abrirNivel(n) {
+  regenerarVidas();
+  const nv = NIVELES[n - 1];
+  if (!nv) return;
+  const retomando = S.enCurso && S.enCurso.n === n;
+  if (!retomando) {
+    if (S.vidas <= 0) { sinVidas(); return; }
+    if (S.vidas === MAX_VIDAS) S.ultimaVida = Date.now();
+    S.vidas -= 1;
+    S.enCurso = { n: n, encontradas: [], reveladas: [] };
+    guardar();
+  }
+  NV = nv;
+  encontradas = new Set(S.enCurso.encontradas);
+  reveladas = new Set(S.enCurso.reveladas);
+  letras = barajar(nv.base.split(''));
+  sel = [];
+  activa = Math.max(0, nv.palabras.findIndex((p) => !encontradas.has(p.w)));
+  construirCeldas();
+  const ci = capDe(n);
+  document.getElementById('t-cap').textContent = 'Capítulo ' + (ci + 1) + ' · ' + CAPS[ci].nombre;
+  document.getElementById('t-nivel').textContent = 'Nivel ' + n + ' de ' + NIVELES.length;
+  mensaje('', '');
+  mostrarVista('juego');
+  dibujarTablero();
+  dibujarRueda();
+  dibujarPista();
+  pintarCabecera();
+}
+function construirCeldas() {
+  celdas = new Map();
+  NV.palabras.forEach((p, idx) => {
+    for (let i = 0; i < p.w.length; i++) {
+      const r = p.dir === 'H' ? p.r : p.r + i, c = p.dir === 'H' ? p.c + i : p.c;
+      const k = r + ',' + c;
+      if (!celdas.has(k)) celdas.set(k, { ch: p.w[i], idx: [] });
+      celdas.get(k).idx.push(idx);
+    }
+  });
+}
+function resuelta(k) {
+  if (reveladas.has(k)) return true;
+  return celdas.get(k).idx.some((i) => encontradas.has(NV.palabras[i].w));
+}
+function dibujarTablero() {
+  const tab = document.getElementById('tablero');
+  const anchoDisp = Math.min(window.innerWidth, 520) - 28 - 28; // margen de la tarjeta de papel
+  const cs = Math.max(24, Math.min(46, Math.floor(anchoDisp / NV.cols), Math.floor(300 / NV.rows)));
+  tab.style.width = (NV.cols * cs) + 'px';
+  tab.style.height = (NV.rows * cs) + 'px';
+  // Números de inicio de palabra
+  const numeros = new Map();
+  let num = 1;
+  [...NV.palabras].sort((a, b) => a.r - b.r || a.c - b.c).forEach((p) => {
+    const k = p.r + ',' + p.c;
+    if (!numeros.has(k)) numeros.set(k, num++);
+  });
+  const act = NV.palabras[activa];
+  const actKeys = new Set();
+  if (act) for (let i = 0; i < act.w.length; i++) actKeys.add((act.dir === 'H' ? act.r : act.r + i) + ',' + (act.dir === 'H' ? act.c + i : act.c));
+  let h = '';
+  celdas.forEach((info, k) => {
+    const [r, c] = k.split(',').map(Number);
+    const ok = resuelta(k);
+    const esPista = reveladas.has(k) && !info.idx.some((i) => encontradas.has(NV.palabras[i].w));
+    let cls = 'celda';
+    if (ok) cls += esPista ? ' pista' : ' resuelta';
+    if (actKeys.has(k)) cls += ' activa';
+    const n = numeros.get(k) ? '<span class="n">' + numeros.get(k) + '</span>' : '';
+    h += '<div class="' + cls + '" data-k="' + k + '" style="left:' + (c * cs) + 'px;top:' + (r * cs) + 'px;width:' + (cs - 3) + 'px;height:' + (cs - 3) + 'px;font-size:' + Math.round(cs * .5) + 'px">' + n + (ok ? info.ch : '') + '</div>';
+  });
+  tab.innerHTML = h;
+}
+function dibujarPista() {
+  const p = NV.palabras[activa];
+  const box = document.getElementById('pista-box');
+  if (!p) { box.innerHTML = ''; return; }
+  const dir = p.dir === 'H' ? 'Horizontal' : 'Vertical';
+  const ya = encontradas.has(p.w);
+  box.innerHTML = '<small>' + dir + ' · ' + p.w.length + ' letras</small>' + (ya ? '<b>' + p.w + ':</b> ' : '') + esc(p.pista) + (ya ? '' : '');
+  dibujarTablero();
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function dibujarRueda() {
+  const rueda = document.getElementById('rueda');
+  rueda.querySelectorAll('.letra').forEach((el) => el.remove());
+  const N = letras.length, R = 100, W = 140;
+  letras.forEach((ch, i) => {
+    const ang = (2 * Math.PI * i / N) - Math.PI / 2;
+    const el = document.createElement('div');
+    el.className = 'letra';
+    el.dataset.i = i;
+    el.style.left = (W + R * Math.cos(ang)) + 'px';
+    el.style.top = (W + R * Math.sin(ang)) + 'px';
+    el.textContent = ch;
+    rueda.appendChild(el);
+  });
+  pintarPalabraFormada();
+}
+function pintarPalabraFormada() {
+  const txt = sel.map((i) => letras[i]).join('');
+  const pill = document.getElementById('pill');
+  pill.innerHTML = txt ? '<span>' + esc(txt) + '</span>' : '<span class="vacia">Une las letras arrastrando el dedo</span>';
+  document.querySelectorAll('.letra').forEach((el) => el.classList.toggle('sel', sel.includes(Number(el.dataset.i))));
+}
+function mensaje(txt, tipo) {
+  const m = document.getElementById('msg');
+  m.textContent = txt;
+  m.className = 'msg' + (tipo ? ' ' + tipo : '');
+}
+function letraEn(x, y) {
+  const el = document.elementFromPoint(x, y);
+  return el && el.closest ? el.closest('.letra') : null;
+}
+function inicioArrastre(e) {
+  const el = e.target.closest && e.target.closest('.letra');
+  if (!el) return;
+  arrastrando = true;
+  sel = [Number(el.dataset.i)];
+  pintarPalabraFormada();
+  try { document.getElementById('rueda').setPointerCapture(e.pointerId); } catch (err) {}
+}
+function moverArrastre(e) {
+  if (!arrastrando) return;
+  const el = letraEn(e.clientX, e.clientY);
+  if (!el) return;
+  const i = Number(el.dataset.i);
+  if (sel.length > 1 && i === sel[sel.length - 2]) { sel.pop(); pintarPalabraFormada(); return; }
+  if (!sel.includes(i)) { sel.push(i); pintarPalabraFormada(); }
+}
+function finArrastre() {
+  if (!arrastrando) return;
+  arrastrando = false;
+  const palabra = sel.map((i) => letras[i]).join('');
+  sel = [];
+  pintarPalabraFormada();
+  if (palabra.length >= 2) probar(palabra);
+}
+function probar(p) {
+  const idx = NV.palabras.findIndex((x) => x.w === p);
+  if (idx < 0) {
+    mensaje('"' + p + '" no está en este crucigrama.', 'mal');
+    const pill = document.getElementById('pill');
+    pill.classList.remove('sacudir'); void pill.offsetWidth; pill.classList.add('sacudir');
+    return;
+  }
+  if (encontradas.has(p)) { mensaje('Ya encontraste "' + p + '".', ''); activa = idx; dibujarPista(); return; }
+  encontradas.add(p);
+  activa = idx;
+  const esBase = p === NV.base;
+  S.puntos += esBase ? PT.base : PT.palabra;
+  S.enCurso.encontradas = Array.from(encontradas);
+  if (!S.vocab.includes(p)) S.vocab.push(p);
+  guardar();
+  mensaje(ELOGIOS[Math.floor(Math.random() * ELOGIOS.length)] + ' +' + (esBase ? PT.base : PT.palabra) + ' ★', 'ok');
+  if (encontradas.size === NV.palabras.length) { dibujarPista(); setTimeout(completarNivel, 450); return; }
+  // Pasa a la siguiente palabra pendiente
+  const sig = NV.palabras.findIndex((x) => !encontradas.has(x.w));
+  if (sig >= 0) activa = sig;
+  dibujarPista();
+}
+function pistaDeLetra() {
+  let p = NV.palabras[activa];
+  if (!p || encontradas.has(p.w)) p = NV.palabras.find((x) => !encontradas.has(x.w));
+  if (!p) return;
+  if (S.puntos < PT.pista) { mensaje('Necesitas ' + PT.pista + ' ★ para una pista.', 'mal'); return; }
+  for (let i = 0; i < p.w.length; i++) {
+    const r = p.dir === 'H' ? p.r : p.r + i, c = p.dir === 'H' ? p.c + i : p.c;
+    const k = r + ',' + c;
+    if (!resuelta(k)) {
+      reveladas.add(k);
+      S.puntos -= PT.pista;
+      S.enCurso.reveladas = Array.from(reveladas);
+      guardar();
+      mensaje('Pista: una letra de "' + p.w + '" está marcada en dorado.', '');
+      dibujarTablero();
+      pintarCabecera();
+      return;
+    }
+  }
+}
+function completarNivel() {
+  const numero = NV.n;
+  const bono = PT.nivel + 10 * S.vidas;
+  S.puntos += bono;
+  S.completados = Math.max(S.completados, numero);
+  S.enCurso = null;
+  const ci = capDe(numero);
+  const finCap = numero === CAPS[ci].fin;
+  let extra = '';
+  if (finCap) {
+    S.puntos += PT.cuadro;
+    extra = '<p><b>¡Capítulo completado!</b> Armaste el cuadro de <b>' + CAPS[ci].santo + '</b>. +' + PT.cuadro + ' ★</p><div class="cuadro" style="background-image:url(' + CAPS[ci].cuadro + ')"></div>';
+  }
+  guardar();
+  const v = VERSOS[(numero - 1) % VERSOS.length];
+  const hayMas = numero < NIVELES.length;
+  abrirCaja(
+    '<h3>¡Nivel ' + numero + ' completado!</h3>' +
+    '<p>+' + bono + ' puntos misioneros</p>' + extra +
+    '<div class="verso">“' + v.t + '”<small>' + v.r + '</small></div>' +
+    '<div class="btn-fila">' +
+      '<button class="btn sec" style="color:var(--azul);background:#fff;border-color:#C9D4EE" data-accion="mapa" type="button">Ver mapa</button>' +
+      (hayMas ? '<button class="btn" data-accion="siguiente" type="button">Siguiente nivel</button>' : '') +
+    '</div>'
+  );
+}
+function sinVidas() {
+  abrirCaja('<h3>Sin vidas por ahora</h3><p>Se recupera una vida cada ' + MIN_VIDA + ' minutos.</p><p>Próxima vida en <b id="cuenta2">' + mmss(faltaVida()) + '</b></p><button class="cerrar" data-accion="cerrar" type="button">Entendido</button>');
+}
+function abrirCaja(html) {
+  document.getElementById('caja').innerHTML = html;
+  document.getElementById('ov').classList.add('on');
+}
+function cerrarCaja() { document.getElementById('ov').classList.remove('on'); }
+function verDiccionario() {
+  const total = TOTAL_PALABRAS, sabidas = S.vocab.length;
+  const porPalabra = new Map();
+  NIVELES.forEach((n) => n.palabras.forEach((p) => { if (!porPalabra.has(p.w)) porPalabra.set(p.w, p); }));
+  let lista = '';
+  const ordenadas = Array.from(porPalabra.values()).sort((a, b) => a.w.localeCompare(b.w, 'es'));
+  ordenadas.forEach((p) => {
+    if (S.vocab.includes(p.w)) {
+      lista += '<div class="entrada"><b>' + p.w + '</b><p>' + esc(p.pista) + '</p><i>' + esc(p.nota) + '</i></div>';
+    } else {
+      lista += '<div class="entrada bloq"><b>' + '· '.repeat(Math.max(3, p.w.length)).trim() + '</b><p>Palabra por descubrir.</p></div>';
+    }
+  });
+  abrirCaja('<h3>Venezolario Católico</h3><p>Palabras descubiertas: <b>' + sabidas + '</b> de ' + total + '</p><div class="lista-dic">' + lista + '</div><button class="cerrar" data-accion="cerrar" type="button">Cerrar</button>');
+}
+
+// ---------- Eventos ----------
+const rueda = document.getElementById('rueda');
+rueda.addEventListener('pointerdown', inicioArrastre);
+rueda.addEventListener('pointermove', moverArrastre);
+rueda.addEventListener('pointerup', finArrastre);
+rueda.addEventListener('pointercancel', finArrastre);
+document.getElementById('btn-mezclar').onclick = () => { letras = barajar(letras); sel = []; dibujarRueda(); };
+document.getElementById('btn-borrar').onclick = () => { sel = []; pintarPalabraFormada(); };
+document.getElementById('btn-pista').onclick = pistaDeLetra;
+document.getElementById('btn-dic').onclick = verDiccionario;
+document.getElementById('btn-dic-mapa').onclick = verDiccionario;
+document.getElementById('btn-atras').onclick = () => { if (document.getElementById('vista-juego').style.display !== 'none') volverMapa(); };
+function volverMapa() { NV = null; pintarMapa(); mostrarVista('mapa'); document.getElementById('t-cap').textContent = 'Palabras JUMA'; document.getElementById('t-nivel').textContent = 'Niveles'; }
+document.getElementById('capitulos').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-nivel]');
+  if (b && !b.disabled) abrirNivel(Number(b.dataset.nivel));
+});
+document.getElementById('tablero').addEventListener('click', (e) => {
+  const c = e.target.closest('.celda');
+  if (!c || !NV) return;
+  const k = c.dataset.k;
+  const info = celdas.get(k);
+  if (!info) return;
+  // Toca una casilla: elige la palabra que pasa por ella; si hay dos, alterna
+  const opciones = info.idx;
+  const pos = opciones.indexOf(activa);
+  activa = opciones[(pos + 1) % opciones.length];
+  dibujarPista();
+});
+document.getElementById('ov').addEventListener('click', (e) => {
+  if (e.target.id === 'ov') return cerrarCaja();
+  const b = e.target.closest('[data-accion]');
+  if (!b) return;
+  const a = b.dataset.accion;
+  if (a === 'cerrar') cerrarCaja();
+  if (a === 'mapa') { cerrarCaja(); volverMapa(); }
+  if (a === 'siguiente') { cerrarCaja(); abrirNivel(NV.n + 1); }
+});
+window.addEventListener('resize', () => { if (NV) dibujarTablero(); });
+setInterval(() => {
+  const antes = S.vidas;
+  regenerarVidas();
+  if (S.vidas !== antes) { guardar(); pintarCabecera(); }
+  const c = document.getElementById('cuenta'); if (c) c.textContent = mmss(faltaVida());
+  const c2 = document.getElementById('cuenta2'); if (c2) c2.textContent = mmss(faltaVida());
+}, 1000);
+
+cargar();
+pintarMapa();
+mostrarVista('mapa');
+</script>
+</body>
+</html>
