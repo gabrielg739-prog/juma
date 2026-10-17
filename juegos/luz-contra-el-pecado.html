@@ -41,6 +41,11 @@
   .hud.on .pausa-btn { display: block; }
   .pausa-btn { position: absolute; right: 12px; top: calc(env(safe-area-inset-top,0px) + 12px); }
   .ind { top: calc(env(safe-area-inset-top,0px) + 66px); }
+  #destello { background: radial-gradient(circle at 50% 45%, rgba(255,246,200,.95), rgba(255,210,90,.35) 45%, rgba(255,210,90,0) 75%); opacity: 0; transition: opacity .7s ease-out; }
+  #destello.on { opacity: 1; transition: none; }
+  .bendecir.super { display: block; width: 78px; height: 78px; font-size: 13px; line-height: 1.1; background: radial-gradient(circle at 50% 35%, #d9b8ff, #6a2fb0 75%); border-color: #efe0ff; box-shadow: 0 6px 0 #3b1a66, 0 10px 20px rgba(0,0,0,.5); color: #fff; opacity: .45; }
+  .bendecir.super.listo { opacity: 1; animation: latido 1s infinite; }
+  @keyframes latido { 50% { transform: scale(1.06); } }
   .pantalla { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(8,3,14,.72); backdrop-filter: blur(3px); }
   .pantalla[hidden] { display: none; }
   .tarjeta { width: 100%; max-width: 420px; max-height: 92vh; overflow: auto; text-align: center; padding: 22px 20px 20px; border-radius: 26px; background: linear-gradient(180deg, rgba(40,20,60,.96), rgba(18,8,30,.97)); border: 2px solid rgba(255,210,90,.55); box-shadow: 0 20px 50px rgba(0,0,0,.6); }
@@ -73,13 +78,15 @@
     <div id="h-nivel">Nivel 1</div>
     <div>Pecados <b id="h-enem">0</b></div>
     <div>Bendiciones <b id="h-ammo">40</b></div>
+    <div>Súper <b id="h-poder">0/3</b></div>
     <div>★ <b id="h-pts">0</b></div>
   </div>
   <button class="pausa-btn" id="b-pausa" type="button" aria-label="Pausa">II</button>
   <canvas class="mini" id="mini" width="236" height="236"></canvas>
   <div class="mira" aria-hidden="true"></div>
   <div class="joy" id="joy"><i id="joy-k"></i></div>
-  <div class="botones"><button class="bendecir" id="b-fuego" type="button">BENDECIR</button></div>
+  <div class="botones"><button class="bendecir super" id="b-super" type="button">SÚPER<br><small>R</small></button><button class="bendecir" id="b-fuego" type="button">BENDECIR</button></div>
+  <div class="capa" id="destello"></div>
 </div>
 
 <div class="pantalla" id="menu">
@@ -330,6 +337,7 @@ const teclas = {};
 let joy = { activo: false, id: -1, ox: 0, oy: 0, dx: 0, dy: 0 };
 let mirada = { id: -1, x: 0 };
 let fuego = false, mouseDown = false;
+let poder = 0, enSuper = false;
 let clickTap = null;
 
 // ---------- Generación del mapa ----------
@@ -401,7 +409,7 @@ function iniciarNivel(n) {
   }
   jugador = { x: 1.5, y: 1.5, a: 0, hp: 100, ammo: 40, cool: 0, retroceso: 0, destello: 0, paso: 0 };
   balas = []; bolasEnemigas = []; particulas = [];
-  puntosNivel = 0; hurtT = 0;
+  puntosNivel = 0; hurtT = 0; poder = 0;
   sinPecados = enemigos.length;
   vidas = vidas || MAX_VIDAS;
   aviso('Derrota a los pecados · Nivel ' + (n + 1));
@@ -469,6 +477,31 @@ function disparar() {
   SND.bendicion();
   actualizarHud();
 }
+function superPoder() {
+  if (estado !== 'jugando' || poder < 3) return;
+  poder = 0; enSuper = true;
+  const R = 4.2;
+  for (let k = 0; k < 56; k++) {
+    const a = k / 56 * Math.PI * 2;
+    particulas.push({ x: jugador.x, y: jugador.y, z: 0.5, vx: Math.cos(a) * 5.5, vy: Math.sin(a) * 5.5, vz: 0.3, vida: 0.9, max: 0.9, spr: SPR.luz });
+  }
+  explotar(jugador.x, jugador.y, 'blanca', 30, 0.5);
+  balas = balas.filter(() => true);
+  for (const b of bolasEnemigas) if (Math.hypot(b.x - jugador.x, b.y - jugador.y) < R) explotar(b.x, b.y, 'oro', 8, 0.5);
+  bolasEnemigas = bolasEnemigas.filter((b) => Math.hypot(b.x - jugador.x, b.y - jugador.y) >= R);
+  for (const e of enemigos) {
+    if (e.muerto || Math.hypot(e.x - jugador.x, e.y - jugador.y) > R) continue;
+    e.vida -= 4; e.flash = 0.2;
+    if (e.vida <= 0) matarEnemigo(e);
+  }
+  enSuper = false;
+  const fl = document.getElementById('destello');
+  fl.classList.add('on');
+  setTimeout(() => fl.classList.remove('on'), 90);
+  [880, 1174, 1568].forEach((f, i) => tono(f, 0.5, 'triangle', 0.14, i * 0.06));
+  aviso('¡Bendición mayor!');
+  actualizarHud();
+}
 function danoJugador(d) {
   jugador.hp = Math.max(0, jugador.hp - d);
   hurtT = 0.35; SND.dano();
@@ -477,6 +510,7 @@ function danoJugador(d) {
 }
 function matarEnemigo(e) {
   e.muerto = true; e.muerteT = 0;
+  if (!enSuper) poder = Math.min(3, poder + 1);
   const pts = TIPOS[e.tipo].pts;
   puntosNivel += pts * 10; S.puntos += pts; guardar();
   explotar(e.x, e.y, 'oro', 26, 0.45);
@@ -731,6 +765,8 @@ function actualizarHud() {
   document.getElementById('h-enem').textContent = sinPecados;
   document.getElementById('h-ammo').textContent = jugador.ammo;
   document.getElementById('h-pts').textContent = S.puntos;
+  document.getElementById('h-poder').textContent = poder + '/3';
+  const bs = document.getElementById('b-super'); if (bs) bs.classList.toggle('listo', poder >= 3);
 }
 
 let ultimoT = 0, frameN = 0;
@@ -842,6 +878,7 @@ function finVidas() {
 // ---------- Controles ----------
 addEventListener('keydown', (e) => {
   teclas[e.code] = true;
+  if (e.code === 'KeyR' && !e.repeat) superPoder();
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
   if (e.code === 'Space' && estado === 'jugando' && !e.repeat) fuego = true;
   if (e.code === 'Escape' || e.code === 'KeyP') { if (estado === 'jugando') pausar(); else if (estado === 'pausa' && !document.getElementById('pausa').hidden) seguir(); }
@@ -903,6 +940,7 @@ bf.addEventListener('pointerdown', (e) => { e.stopPropagation(); fuego = true; t
 bf.addEventListener('pointerup', (e) => { e.stopPropagation(); fuego = false; });
 bf.addEventListener('pointercancel', () => { fuego = false; });
 document.getElementById('b-pausa').onclick = pausar;
+document.getElementById('b-super').onclick = superPoder;
 document.getElementById('b-seguir').onclick = seguir;
 document.getElementById('b-salir').onclick = volverMenu;
 document.getElementById('b-jugar').onclick = () => { vidas = MAX_VIDAS; empezar(0); };
