@@ -522,12 +522,19 @@ const TEX_CHISPA = lienzo(64, 64, (g) => {
 })();
 
 /* ---------- Vía: grava, traviesas, rieles, aceras, faroles y catenaria ---------- */
-const texGrava = lienzo(128, 128, (g, w, h) => {
-  g.fillStyle = '#3f4a60'; g.fillRect(0, 0, w, h);
-  motas(g, w, h, 1100, ['#4d5a73', '#353e52', '#56627a', '#2f3748', '#5f6b82'], 2);
+const texGrava = lienzo(256, 256, (g, w, h) => {
+  // Balasto: piedras sueltas con luz arriba y sombra abajo
+  g.fillStyle = '#353e50'; g.fillRect(0, 0, w, h);
+  const cols = ['#58637a', '#4a556b', '#646e84', '#3f4a5e', '#6f7890', '#525a6c'];
+  for (let i = 0; i < 1500; i++) {
+    const x = Math.random() * w, y = Math.random() * h, r = 2 + Math.random() * 4.5, a = Math.random() * Math.PI;
+    g.fillStyle = 'rgba(15,18,28,.55)'; g.beginPath(); g.ellipse(x + 1, y + 1.5, r, r * 0.75, a, 0, 7); g.fill();
+    g.fillStyle = cols[(Math.random() * cols.length) | 0]; g.beginPath(); g.ellipse(x, y, r, r * 0.75, a, 0, 7); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.16)'; g.beginPath(); g.ellipse(x - r * 0.3, y - r * 0.3, r * 0.45, r * 0.3, a, 0, 7); g.fill();
+  }
 });
-texGrava.repeat.set(4, 75);
-const suelo = new THREE.Mesh(new THREE.PlaneGeometry(8.8, 300), new THREE.MeshLambertMaterial({ map: texGrava }));
+texGrava.repeat.set(2.5, 70);
+const suelo = new THREE.Mesh(new THREE.PlaneGeometry(8.8, 300), new THREE.MeshLambertMaterial({ map: texGrava, normalMap: mapaNormal(texGrava, 5) }));
 suelo.rotation.x = -Math.PI / 2; suelo.position.set(0, 0, -140); suelo.receiveShadow = true;
 scene.add(suelo);
 
@@ -538,7 +545,7 @@ const texAcera = lienzo(128, 128, (g, w, h) => {
   g.fillRect(0, 0, w, 3); g.fillRect(0, h / 2, w, 3); g.fillRect(0, 0, 3, h / 2); g.fillRect(w / 2, h / 2, 3, h / 2);
 });
 texAcera.repeat.set(3, 150);
-const matAcera = new THREE.MeshLambertMaterial({ map: texAcera });
+const matAcera = new THREE.MeshLambertMaterial({ map: texAcera, normalMap: mapaNormal(texAcera, 3) });
 const matBordillo = new THREE.MeshLambertMaterial({ color: 0xa7b0c0 });
 for (const lado of [-1, 1]) {
   const acera = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 300), matAcera);
@@ -557,7 +564,16 @@ const grupoVia = new THREE.Group();
 scene.add(grupoVia);
 (function crearVia() {
   const n = Math.ceil(262 / ESP_TRAV);
-  const trav = new THREE.InstancedMesh(new THREE.BoxGeometry(2.25, 0.2, 0.55), new THREE.MeshLambertMaterial({ color: 0xffffff }), n * 3);
+  const trav = new THREE.InstancedMesh(new THREE.BoxGeometry(2.25, 0.2, 0.55), (() => {
+    // Madera de las traviesas: vetas, nudos y grietas (el color de cada una lo da la instancia)
+    const t = lienzo(256, 64, (g, w, h) => {
+      g.fillStyle = '#e6e0d8'; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 70; i++) { g.strokeStyle = `rgba(90,60,40,${0.12 + Math.random() * 0.22})`; g.lineWidth = 0.5 + Math.random() * 1.6; const y = Math.random() * h; g.beginPath(); g.moveTo(0, y); g.bezierCurveTo(w * 0.3, y + (Math.random() - 0.5) * 8, w * 0.7, y + (Math.random() - 0.5) * 8, w, y + (Math.random() - 0.5) * 4); g.stroke(); }
+      for (let i = 0; i < 3; i++) { const x = Math.random() * w, y = Math.random() * h; g.strokeStyle = 'rgba(70,40,25,.5)'; g.lineWidth = 1.2; g.beginPath(); g.ellipse(x, y, 7, 3, 0, 0, 7); g.stroke(); g.beginPath(); g.ellipse(x, y, 3, 1.4, 0, 0, 7); g.stroke(); }
+      for (let i = 0; i < 4; i++) { g.strokeStyle = 'rgba(30,18,10,.55)'; g.lineWidth = 1; const x = Math.random() * w, y = Math.random() * h; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 20 + Math.random() * 40, y + (Math.random() - 0.5) * 3); g.stroke(); }
+    }, false);
+    return new THREE.MeshLambertMaterial({ color: 0xffffff, map: t, normalMap: mapaNormal(t, 4) });
+  })(), n * 3);
   const m4 = new THREE.Matrix4(), col = new THREE.Color();
   let k = 0;
   for (let c = 0; c < 3; c++) for (let i = 0; i < n; i++) {
@@ -569,7 +585,7 @@ scene.add(grupoVia);
   }
   trav.receiveShadow = true;
   grupoVia.add(trav);
-  const rieles = new THREE.InstancedMesh(new THREE.BoxGeometry(0.12, 0.2, 262), new THREE.MeshPhongMaterial({ color: 0xb4bfce, specular: 0xffffff, shininess: 70 }), 6);
+  const rieles = new THREE.InstancedMesh(new THREE.BoxGeometry(0.12, 0.2, 262), new THREE.MeshStandardMaterial({ color: 0xc8d0dc, metalness: 0.85, roughness: 0.32, envMapIntensity: 1.1 }), 6);
   k = 0;
   for (let c = 0; c < 3; c++) for (const d of [-0.74, 0.74]) { m4.makeTranslation(CARRIL_X[c] + d, 0.225, -119); rieles.setMatrixAt(k++, m4); }
   rieles.receiveShadow = true;
@@ -1144,221 +1160,330 @@ function actualizarParticulas(dt) {
   }
 }
 
-/* ---------- El misionero ---------- */
-function crearMisionero() {
-  const M = {
-    sotana: new THREE.MeshLambertMaterial({ color: 0x2e2640 }),
-    manga: new THREE.MeshLambertMaterial({ color: 0x3a3152 }),
-    piel: new THREE.MeshLambertMaterial({ color: 0xf0c09a }),
-    nariz: new THREE.MeshLambertMaterial({ color: 0xe8a888 }),
-    mejilla: new THREE.MeshLambertMaterial({ color: 0xf29a9a }),
-    pelo: new THREE.MeshLambertMaterial({ color: 0xd9d6d0 }),
-    negro: new THREE.MeshLambertMaterial({ color: 0x17141d }),
-    blanco: new THREE.MeshLambertMaterial({ color: 0xffffff }),
-    boca: new THREE.MeshLambertMaterial({ color: 0x7a2a2a }),
-    cuero: new THREE.MeshLambertMaterial({ color: 0x8a5528 }),
-    cueroOsc: new THREE.MeshLambertMaterial({ color: 0x5e3716 }),
-    manta: new THREE.MeshLambertMaterial({ color: 0xc9a46a }),
-    faja: new THREE.MeshLambertMaterial({ color: 0xc0262f }),
-    zapato: new THREE.MeshLambertMaterial({ color: 0x241a14 })
-  };
-  const raiz = new THREE.Group();
-  const giro = new THREE.Group(); giro.position.y = 0.85; raiz.add(giro);
-  const cuerpo = new THREE.Group(); cuerpo.position.y = -0.85; giro.add(cuerpo);
-  const malla = (geo, mat, x, y, z, padre) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; padre.add(m); return m; };
-
-  const piernas = [-1, 1].map((l) => {
-    const p = new THREE.Group(); p.position.set(0.15 * l, 0.87, 0); cuerpo.add(p);
-    malla(new THREE.CapsuleGeometry(0.115, 0.24, 4, 10), M.negro, 0, -0.2, 0, p);
-    const rod = new THREE.Group(); rod.position.y = -0.4; p.add(rod);
-    malla(new THREE.CapsuleGeometry(0.1, 0.24, 4, 10), M.negro, 0, -0.19, 0, rod);
-    malla(new THREE.BoxGeometry(0.21, 0.13, 0.38), M.zapato, 0, -0.41, -0.07, rod);
-    return { p, rod };
-  });
-  const torso = new THREE.Group(); torso.position.y = 0.82; cuerpo.add(torso);
-  const falda = malla(new THREE.CylinderGeometry(0.34, 0.47, 0.62, 22), M.sotana, 0, -0.08, 0, torso);
-  malla(new THREE.CylinderGeometry(0.31, 0.345, 0.52, 22), M.sotana, 0, 0.47, 0, torso);
-  const hombros = malla(new THREE.SphereGeometry(0.31, 22, 12), M.sotana, 0, 0.72, 0, torso); hombros.scale.set(1.18, 0.5, 0.92);
-  malla(new THREE.CylinderGeometry(0.352, 0.352, 0.09, 22), M.faja, 0, 0.22, 0, torso);
-  const radioPecho = (y) => 0.345 - ((y - 0.21) / 0.52) * 0.035;
-  for (let i = 0; i < 5; i++) { const y = 0.3 + i * 0.09; malla(new THREE.SphereGeometry(0.022, 6, 6), M.negro, 0, y, -radioPecho(y) - 0.004, torso); }
-  const cz = -radioPecho(0.5) - 0.022;
-  malla(new THREE.BoxGeometry(0.055, 0.2, 0.03), new THREE.MeshPhongMaterial({ color: 0xffc83d, emissive: 0x6a4500, shininess: 90 }), 0.09, 0.5, cz, torso);
-  malla(new THREE.BoxGeometry(0.14, 0.05, 0.03), new THREE.MeshPhongMaterial({ color: 0xffc83d, emissive: 0x6a4500, shininess: 90 }), 0.09, 0.54, cz, torso);
-  malla(new THREE.CylinderGeometry(0.135, 0.15, 0.07, 16), M.blanco, 0, 0.77, 0, torso);
-  malla(new THREE.CylinderGeometry(0.095, 0.1, 0.14, 12), M.piel, 0, 0.84, 0, torso);
-  // Mochila con manta enrollada y una cruz blanca (lo que se ve desde la cámara)
-  const mochila = new THREE.Group(); mochila.position.set(0, 0.45, 0.33); torso.add(mochila);
-  malla(new THREE.BoxGeometry(0.52, 0.58, 0.26), M.cuero, 0, 0, 0.06, mochila);
-  malla(new THREE.BoxGeometry(0.54, 0.2, 0.29), M.cueroOsc, 0, 0.2, 0.06, mochila);
-  malla(new THREE.BoxGeometry(0.36, 0.2, 0.06), M.cueroOsc, 0, -0.12, 0.21, mochila);
-  const rollo = malla(new THREE.CylinderGeometry(0.11, 0.11, 0.62, 12), M.manta, 0, 0.37, 0.06, mochila); rollo.rotation.z = Math.PI / 2;
-  malla(new THREE.BoxGeometry(0.05, 0.17, 0.02), M.blanco, 0, 0.06, 0.205, mochila);
-  malla(new THREE.BoxGeometry(0.13, 0.05, 0.02), M.blanco, 0, 0.09, 0.205, mochila);
-  for (const l of [-1, 1]) malla(new THREE.BoxGeometry(0.06, 0.5, 0.04), M.cueroOsc, 0.17 * l, 0.47, -radioPecho(0.47) - 0.01, torso);
-  const brazos = [-1, 1].map((l) => {
-    const b = new THREE.Group(); b.position.set(0.37 * l, 0.68, 0); torso.add(b);
-    malla(new THREE.CapsuleGeometry(0.1, 0.16, 4, 10), M.manga, 0, -0.15, 0, b);
-    const codo = new THREE.Group(); codo.position.y = -0.3; b.add(codo);
-    malla(new THREE.CapsuleGeometry(0.09, 0.14, 4, 10), M.manga, 0, -0.12, 0, codo);
-    malla(new THREE.CylinderGeometry(0.1, 0.1, 0.07, 10), M.sotana, 0, -0.24, 0, codo);
-    malla(new THREE.SphereGeometry(0.09, 12, 10), M.piel, 0, -0.33, 0, codo);
-    b.rotation.z = 0.12 * l;
-    return { b, codo };
-  });
-  const cabeza = new THREE.Group(); cabeza.position.set(0, 0.86, 0); torso.add(cabeza);
-  const craneo = malla(new THREE.SphereGeometry(0.24, 24, 18), M.piel, 0, 0.2, 0, cabeza); craneo.scale.set(1, 1.04, 1);
-  malla(new THREE.SphereGeometry(0.247, 20, 12, 0, Math.PI, Math.PI * 0.28, Math.PI * 0.42), M.pelo, 0, 0.2, 0, cabeza);
-  for (const l of [-1, 1]) {
-    malla(new THREE.SphereGeometry(0.06, 10, 8), M.piel, 0.235 * l, 0.19, 0.01, cabeza);
-    const o = malla(new THREE.SphereGeometry(0.048, 12, 10), M.blanco, 0.085 * l, 0.23, -0.205, cabeza); o.scale.z = 0.6;
-    malla(new THREE.SphereGeometry(0.028, 10, 8), M.negro, 0.085 * l, 0.23, -0.228, cabeza);
-    const ceja = malla(new THREE.BoxGeometry(0.09, 0.022, 0.02), M.pelo, 0.085 * l, 0.3, -0.214, cabeza); ceja.rotation.z = -0.15 * l;
-    const mj = malla(new THREE.SphereGeometry(0.04, 10, 8), M.mejilla, 0.13 * l, 0.15, -0.19, cabeza); mj.scale.z = 0.4;
+/* ---------- Personajes realistas: cuerpo humano articulado, ropa con textura y relieve ---------- */
+// Mapa de relieve (normal map) calculado a partir del brillo de una textura dibujada
+function mapaNormal(tex, fuerza) {
+  const src = tex.image, w = src.width, h = src.height;
+  const d = src.getContext('2d').getImageData(0, 0, w, h).data;
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'), o = g.createImageData(w, h);
+  const L = (x, y) => { x = (x + w) % w; y = (y + h) % h; const i = (y * w + x) * 4; return (d[i] + d[i + 1] + d[i + 2]) / 765; };
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const dx = (L(x + 1, y) - L(x - 1, y)) * fuerza, dy = (L(x, y + 1) - L(x, y - 1)) * fuerza;
+    const n = 1 / Math.hypot(dx, dy, 1), i = (y * w + x) * 4;
+    o.data[i] = (-dx * n * 0.5 + 0.5) * 255; o.data[i + 1] = (dy * n * 0.5 + 0.5) * 255; o.data[i + 2] = (n * 0.5 + 0.5) * 255; o.data[i + 3] = 255;
   }
-  malla(new THREE.SphereGeometry(0.045, 10, 8), M.nariz, 0, 0.18, -0.245, cabeza);
-  const boca = malla(new THREE.TorusGeometry(0.065, 0.014, 6, 14, Math.PI), M.boca, 0, 0.125, -0.222, cabeza); boca.rotation.z = Math.PI;
-  const sombrero = new THREE.Group(); sombrero.position.set(0, 0.36, 0.01); sombrero.rotation.x = 0.08; cabeza.add(sombrero);
-  malla(new THREE.CylinderGeometry(0.44, 0.44, 0.035, 30), M.negro, 0, 0, 0, sombrero);
-  const copa = malla(new THREE.SphereGeometry(0.235, 22, 12, 0, Math.PI * 2, 0, Math.PI / 2), M.negro, 0, 0, 0, sombrero); copa.scale.y = 0.72;
-  malla(new THREE.CylinderGeometry(0.238, 0.238, 0.05, 22), M.faja, 0, 0.03, 0, sombrero);
-
-  // Alas del Espíritu (solo con el poder)
-  const alas = new THREE.Group(); alas.position.set(0, 0.55, 0.42); alas.visible = false; torso.add(alas);
-  const matAla = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x2a3a4a });
-  const alasL = [-1, 1].map((l) => {
-    const p = new THREE.Group(); p.position.x = 0.1 * l; alas.add(p);
-    for (let i = 0; i < 3; i++) {
-      const f = malla(new THREE.SphereGeometry(0.5, 14, 10), matAla, (0.42 + i * 0.12) * l, 0.08 - i * 0.12, 0.02 * i, p);
-      f.scale.set(1 - i * 0.2, 0.3 - i * 0.05, 0.06); f.rotation.z = (0.35 + i * 0.15) * l;
-    }
-    return p;
-  });
-  // Aureola y aura del escudo de la fe
-  const aureola = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.035, 8, 26), new THREE.MeshBasicMaterial({ color: 0xffe27a }));
-  aureola.rotation.x = Math.PI / 2; aureola.position.y = 0.72; aureola.visible = false; cabeza.add(aureola);
-  const aura = new THREE.Mesh(new THREE.SphereGeometry(1.25, 24, 18), new THREE.MeshBasicMaterial({ color: 0xffd86b, transparent: true, opacity: 0.16, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
-  aura.position.y = 0.95; aura.visible = false; raiz.add(aura);
-  const tabla = new THREE.Group(); tabla.visible = false; raiz.add(tabla);
-  const tablaMat = new THREE.MeshPhongMaterial({ color: 0xffc83d, emissive: 0x7a4a00, specular: 0xffffff, shininess: 90 });
-  const tb = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 0.75, 4, 12), tablaMat); tb.rotation.x = Math.PI / 2; tb.scale.set(1, 1, 0.22); tb.position.y = 0.06; tabla.add(tb);
-  const tc1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 0.5), new THREE.MeshBasicMaterial({ color: 0xffffff })); tc1.position.y = 0.13; tabla.add(tc1);
-  const tc2 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.02, 0.06), new THREE.MeshBasicMaterial({ color: 0xffffff })); tc2.position.set(0, 0.13, -0.08); tabla.add(tc2);
-  scene.add(raiz);
-  return { raiz, giro, cuerpo, torso, piernas, brazos, cabeza, falda, alas, alasL, aureola, aura, tabla, M };
+  g.putImageData(o, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = tex.wrapS; t.wrapT = tex.wrapT; t.repeat.copy(tex.repeat); t.anisotropy = MAX_ANISO;
+  return t;
 }
-const J = crearMisionero();
+// Reflejos del cielo para los materiales realistas (no cambia el resto de la ciudad)
+(function entornoCielo() {
+  const pm = new THREE.PMREMGenerator(renderer);
+  const env = new THREE.Scene();
+  const cielo = lienzo(16, 256, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, 0, h);
+    gr.addColorStop(0, '#5aa6ee'); gr.addColorStop(0.45, '#d8ecfa'); gr.addColorStop(0.55, '#c9b49a'); gr.addColorStop(1, '#6e6258');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  }, false);
+  env.add(new THREE.Mesh(new THREE.SphereGeometry(10, 24, 16), new THREE.MeshBasicMaterial({ map: cielo, side: THREE.BackSide })));
+  const s = new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  s.material.color.setScalar(6); s.position.set(-5, 7, -4); env.add(s);
+  scene.environment = pm.fromScene(env, 0.04).texture;
+  pm.dispose();
+})();
 
-/* ---------- El Tentador: un hombre de abrigo negro que persigue al misionero ---------- */
-function crearSombra() {
-  const est = (c, r, m, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: r, metalness: m || 0 }, o || {}));
-  // Tela del abrigo con trama (textura y relieve dibujados)
-  const tela = lienzo(64, 64, (g) => {
-    g.fillStyle = '#d8d8d8'; g.fillRect(0, 0, 64, 64);
-    for (let y = 0; y < 64; y += 2) { g.fillStyle = y % 4 ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.18)'; g.fillRect(0, y, 64, 1); }
-    for (let k = 0; k < 220; k++) { g.fillStyle = `rgba(0,0,0,${0.05 + rnd() * 0.08})`; g.fillRect(rnd() * 64, rnd() * 64, 2, 1); }
+// Telas, cuero y piel dibujados (con su relieve)
+function texTela(base, rep, hilo) {
+  const t = lienzo(128, 128, (g, w, h) => {
+    g.fillStyle = base; g.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 2) { g.fillStyle = y % 4 ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.22)'; g.fillRect(0, y, w, 1); }
+    for (let x = 0; x < w; x += 2) { g.fillStyle = x % 4 ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.16)'; g.fillRect(x, 0, 1, h); }
+    for (let i = 0; i < 260; i++) { g.fillStyle = `rgba(${hilo || '0,0,0'},${0.04 + Math.random() * 0.08})`; g.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 4, 1); }
   });
-  tela.wrapS = tela.wrapT = THREE.RepeatWrapping; tela.repeat.set(3, 3);
-  const M = {
-    abrigo: est(0x1a1720, 0.82, 0, { map: tela }),
-    forro: est(0x6e0f1c, 0.45, 0, { side: THREE.DoubleSide }),
-    camisa: est(0x4a0c14, 0.4),
-    corbata: est(0x0b0a0d, 0.25, 0.1),
-    pantalon: est(0x16151b, 0.85, 0, { map: tela }),
-    zapato: est(0x08080a, 0.12, 0.4),
-    piel: est(0xc7aea3, 0.5),
-    labio: est(0x6a3a3c, 0.45),
-    pelo: est(0x0a090c, 0.28, 0.15),
-    ojo: new THREE.MeshBasicMaterial({ color: 0xff3b2a }),
-    una: est(0x1a0c10, 0.2, 0.2)
-  };
+  t.repeat.set(rep, rep);
+  return t;
+}
+const TEX_CUERO = lienzo(128, 128, (g, w, h) => {
+  g.fillStyle = '#8a5528'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 900; i++) { const v = Math.random(); g.fillStyle = v < 0.5 ? 'rgba(60,30,10,.18)' : 'rgba(255,220,170,.08)'; g.beginPath(); g.arc(Math.random() * w, Math.random() * h, 0.5 + Math.random() * 2, 0, 7); g.fill(); }
+  for (let i = 0; i < 18; i++) { g.strokeStyle = 'rgba(50,25,8,.25)'; g.lineWidth = 0.6; g.beginPath(); const y = Math.random() * h; g.moveTo(0, y); g.bezierCurveTo(w * 0.3, y + 6, w * 0.6, y - 6, w, y + 2); g.stroke(); }
+  g.setLineDash([3, 3]); g.strokeStyle = 'rgba(240,210,150,.7)'; g.lineWidth = 1.2; g.strokeRect(6, 6, w - 12, h - 12);
+});
+const TEX_PIEL = lienzo(64, 64, (g, w, h) => {
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 700; i++) { g.fillStyle = `rgba(150,90,70,${Math.random() * 0.06})`; g.fillRect(Math.random() * w, Math.random() * h, 1, 1); }
+  for (let i = 0; i < 40; i++) { g.fillStyle = 'rgba(190,80,70,.04)'; g.beginPath(); g.arc(Math.random() * w, Math.random() * h, 3 + Math.random() * 5, 0, 7); g.fill(); }
+});
+const TEX_PELO = lienzo(128, 128, (g, w, h) => {
+  g.fillStyle = '#808080'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 700; i++) {
+    const x = Math.random() * w, y = Math.random() * h, l = 6 + Math.random() * 18;
+    g.strokeStyle = Math.random() < 0.5 ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.28)'; g.lineWidth = 0.7;
+    g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 2, y + l / 2, x + (Math.random() - 0.5) * 4, y + l); g.stroke();
+  }
+});
+TEX_PELO.repeat.set(3, 2);
+
+// Miembro con forma de músculo: torneado, más grueso arriba, con un bulto (bíceps, pantorrilla)
+function geoMiembro(r0, r1, largo, bulto, pico) {
+  const pts = [];
+  for (let i = 0; i <= 4; i++) { const a = -Math.PI / 2 + (i / 4) * (Math.PI / 2); pts.push(new THREE.Vector2(Math.max(0.0005, Math.cos(a) * r1), -largo + Math.sin(a) * r1 * 0.7)); }
+  for (let i = 1; i < 12; i++) {
+    const s = i / 12, pk = pico == null ? 0.5 : pico;
+    const b = bulto * Math.exp(-((s - pk) * (s - pk)) / 0.06);
+    pts.push(new THREE.Vector2(r1 + (r0 - r1) * s + b, -largo * (1 - s)));
+  }
+  for (let i = 0; i <= 4; i++) { const a = (i / 4) * (Math.PI / 2); pts.push(new THREE.Vector2(Math.max(0.0005, Math.cos(a) * r0), Math.sin(a) * r0 * 0.7)); }
+  return new THREE.LatheGeometry(pts, 16);
+}
+function geoPerfil(perfil, seg) { return new THREE.LatheGeometry(perfil.map(([r, y]) => new THREE.Vector2(Math.max(0.0005, r), y)), seg || 24); }
+
+/* Constructor de un ser humano. o: materiales y detalles de ropa */
+function crearHumano(o) {
+  const M = o.M;
   const raiz = new THREE.Group();
   const giro = new THREE.Group(); giro.position.y = 1; raiz.add(giro);
   const cuerpo = new THREE.Group(); cuerpo.position.y = -1; giro.add(cuerpo);
   const malla = (geo, mat, x, y, z, padre) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; padre.add(m); return m; };
-  // Piernas con rodilla y zapatos de charol
+  const cadera = new THREE.Group(); cadera.position.y = 0.98; cuerpo.add(cadera);
+  malla(geoPerfil([[0, -0.13], [0.11, -0.12], [0.155, -0.07], [0.165, 0.0], [0.16, 0.08], [0, 0.09]]), M.pantalon, 0, 0, 0, cadera).scale.z = 0.74;
+  // Piernas: muslo, rodilla, pantorrilla, tobillo y zapato
   const piernas = [-1, 1].map((l) => {
-    const p = new THREE.Group(); p.position.set(0.11 * l, 0.95, 0); cuerpo.add(p);
-    malla(new THREE.CapsuleGeometry(0.085, 0.3, 4, 12), M.pantalon, 0, -0.22, 0, p);
-    const rod = new THREE.Group(); rod.position.y = -0.45; p.add(rod);
-    malla(new THREE.CapsuleGeometry(0.068, 0.32, 4, 12), M.pantalon, 0, -0.21, 0, rod);
-    const pie = malla(new THREE.CapsuleGeometry(0.055, 0.17, 4, 10), M.zapato, 0, -0.45, -0.07, rod); pie.rotation.x = Math.PI / 2; pie.scale.set(1.15, 1, 0.8);
-    return { p, rod };
+    const p = new THREE.Group(); p.position.set(0.095 * l, -0.04, 0); cadera.add(p);
+    malla(geoMiembro(0.088, 0.058, 0.44, 0.01, 0.65), M.pantalon, 0, 0, 0, p);
+    const rod = new THREE.Group(); rod.position.y = -0.46; p.add(rod);
+    malla(new THREE.SphereGeometry(0.06, 12, 10), M.pantalon, 0, 0, -0.005, rod);
+    malla(geoMiembro(0.058, 0.04, 0.42, 0.014, 0.72), M.pantalon, 0, 0, 0, rod);
+    const tob = new THREE.Group(); tob.position.y = -0.44; rod.add(tob);
+    const zap = malla(new THREE.CapsuleGeometry(0.048, 0.15, 4, 12), M.zapato, 0, -0.035, -0.06, tob); zap.rotation.x = Math.PI / 2; zap.scale.set(1.08, 1, 0.78);
+    const suela = malla(new THREE.BoxGeometry(0.1, 0.022, 0.26), M.suela, 0, -0.07, -0.06, tob); suela.receiveShadow = true;
+    malla(new THREE.CylinderGeometry(0.046, 0.05, 0.05, 12), M.pantalon, 0, 0.0, 0, tob);
+    return { p, rod, tob };
   });
-  const torso = new THREE.Group(); torso.position.y = 0.95; cuerpo.add(torso);
-  malla(new THREE.CylinderGeometry(0.19, 0.2, 0.18, 20), M.pantalon, 0, 0.04, 0, torso);
-  const pecho = malla(new THREE.CylinderGeometry(0.25, 0.19, 0.5, 22), M.abrigo, 0, 0.33, 0, torso); pecho.scale.z = 0.72;
-  const hombros = malla(new THREE.SphereGeometry(0.25, 22, 12), M.abrigo, 0, 0.55, 0, torso); hombros.scale.set(1.28, 0.42, 0.74);
-  // Camisa roja oscura, corbata y solapas
-  const camisa = malla(new THREE.CylinderGeometry(0.06, 0.012, 0.26, 3), M.camisa, 0, 0.47, -0.168, torso); camisa.rotation.y = Math.PI; camisa.scale.z = 0.2;
-  malla(new THREE.BoxGeometry(0.04, 0.24, 0.015), M.corbata, 0, 0.43, -0.178, torso);
-  for (const l of [-1, 1]) { const sol = malla(new THREE.BoxGeometry(0.075, 0.3, 0.02), M.abrigo, 0.06 * l, 0.44, -0.172, torso); sol.rotation.z = -0.32 * l; }
-  for (let k = 0; k < 2; k++) malla(new THREE.SphereGeometry(0.014, 8, 6), M.zapato, 0.07, 0.2 + k * 0.1, -0.15, torso);
-  // Faldones del abrigo que ondean al correr
-  const colas = [-1, 1].map((l) => {
-    const c = new THREE.Group(); c.position.y = 0.12; torso.add(c);
-    const geo = new THREE.CylinderGeometry(0.205, 0.32, 0.78, 16, 4, true, l > 0 ? 0 : Math.PI * 1.22, Math.PI * 0.78);
-    malla(geo, M.abrigo, 0, -0.39, 0, c).scale.z = 0.85;
-    const f = malla(geo, M.forro, 0, -0.39, 0, c); f.scale.set(0.97, 0.99, 0.82);
-    return c;
-  });
-  malla(new THREE.CylinderGeometry(0.065, 0.07, 0.12, 12), M.piel, 0, 0.66, 0, torso);
-  const cuello = malla(new THREE.CylinderGeometry(0.1, 0.12, 0.08, 16, 1, true), M.abrigo, 0, 0.64, 0.01, torso); cuello.material = M.abrigo;
-  // Brazos con codo, mano con dedos y uñas oscuras
+  // Tronco: abdomen y pecho por separado para que giren al correr
+  const torso = new THREE.Group(); torso.position.y = 0.04; cadera.add(torso);
+  malla(geoPerfil([[0, -0.12], [0.16, -0.11], [0.168, -0.03], [0.158, 0.09], [0.162, 0.2], [0.17, 0.27], [0, 0.28]]), M.torso, 0, 0, 0, torso).scale.z = 0.72;
+  const pecho = new THREE.Group(); pecho.position.y = 0.22; torso.add(pecho);
+  malla(geoPerfil([[0, -0.05], [0.16, -0.04], [0.18, 0.06], [0.198, 0.15], [0.205, 0.23], [0.19, 0.3], [0.15, 0.34], [0.09, 0.37], [0.055, 0.385], [0, 0.39]]), M.torso, 0, 0, 0, pecho).scale.z = 0.68;
+  malla(new THREE.CylinderGeometry(0.054, 0.06, 0.1, 14), M.piel, 0, 0.4, 0.008, pecho);
+  // Brazos: hombro, bíceps, codo, antebrazo, muñeca, mano con cinco dedos
   const brazos = [-1, 1].map((l) => {
-    const b = new THREE.Group(); b.position.set(0.3 * l, 0.55, 0); torso.add(b);
-    malla(new THREE.CapsuleGeometry(0.075, 0.22, 4, 12), M.abrigo, 0, -0.16, 0, b);
-    const codo = new THREE.Group(); codo.position.y = -0.31; b.add(codo);
-    malla(new THREE.CapsuleGeometry(0.064, 0.2, 4, 12), M.abrigo, 0, -0.14, 0, codo);
-    malla(new THREE.CylinderGeometry(0.055, 0.055, 0.04, 12), M.camisa, 0, -0.27, 0, codo);
-    const mano = new THREE.Group(); mano.position.y = -0.31; codo.add(mano);
-    malla(new THREE.BoxGeometry(0.075, 0.09, 0.035), M.piel, 0, -0.03, 0, mano);
+    malla(new THREE.SphereGeometry(0.068, 14, 10), M.manga, 0.2 * l, 0.29, 0, pecho).scale.set(1, 0.85, 1);
+    const b = new THREE.Group(); b.position.set(0.215 * l, 0.285, 0); pecho.add(b);
+    malla(geoMiembro(0.056, 0.046, 0.28, 0.008, 0.6), M.manga, 0, 0, 0, b);
+    const codo = new THREE.Group(); codo.position.y = -0.29; b.add(codo);
+    malla(new THREE.SphereGeometry(0.047, 12, 8), M.manga, 0, 0, 0, codo);
+    malla(geoMiembro(0.049, 0.035, 0.25, 0.008, 0.75), M.manga, 0, 0, 0, codo);
+    malla(new THREE.CylinderGeometry(0.04, 0.04, 0.035, 14), M.puno, 0, -0.245, 0, codo);
+    const mano = new THREE.Group(); mano.position.y = -0.27; codo.add(mano);
+    const palma = malla(new THREE.CapsuleGeometry(0.03, 0.035, 4, 10), M.piel, 0, -0.045, 0, mano); palma.scale.set(0.5, 1, 1.05);
+    const dedos = [];
     for (let d = 0; d < 4; d++) {
-      const dd = malla(new THREE.CapsuleGeometry(0.011, 0.06, 3, 6), M.piel, (d - 1.5) * 0.018, -0.105, -0.004, mano); dd.rotation.x = -0.4;
-      malla(new THREE.ConeGeometry(0.009, 0.03, 5), M.una, (d - 1.5) * 0.018, -0.155, -0.025, mano).rotation.x = Math.PI - 0.4;
+      const dg = new THREE.Group(); dg.position.set(0, -0.08, -0.024 + d * 0.016); mano.add(dg);
+      const f1 = malla(new THREE.CapsuleGeometry(0.0085, 0.022 + (d === 1 || d === 2 ? 0.006 : 0), 3, 6), M.piel, 0, -0.016, 0, dg);
+      const dg2 = new THREE.Group(); dg2.position.y = -0.034; dg.add(dg2);
+      malla(new THREE.CapsuleGeometry(0.0078, 0.018, 3, 6), M.piel, 0, -0.012, 0, dg2);
+      if (M.una) malla(new THREE.ConeGeometry(0.006, 0.016, 5), M.una, 0, -0.03, 0, dg2).rotation.x = Math.PI;
+      dedos.push(dg, dg2); f1.castShadow = false;
     }
-    const pul = malla(new THREE.CapsuleGeometry(0.012, 0.045, 3, 6), M.piel, -0.045 * l, -0.06, -0.02, mano); pul.rotation.z = 0.6 * l;
-    // Llama oscura del poder en la mano
-    const llama = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX_CHISPA, color: 0xb0203a, transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending }));
-    llama.position.y = -0.08; llama.scale.setScalar(0.35); mano.add(llama);
-    b.rotation.z = 0.1 * l;
-    return { b, codo, mano, llama };
+    const pulgar = new THREE.Group(); pulgar.position.set(0.012 * -l, -0.035, -0.03); mano.add(pulgar);
+    malla(new THREE.CapsuleGeometry(0.009, 0.03, 3, 6), M.piel, 0, -0.02, 0, pulgar);
+    pulgar.rotation.set(-0.5, 0, 0.4 * -l);
+    b.rotation.z = 0.08 * l;
+    return { b, codo, mano, dedos, pulgar, l };
   });
-  // Cabeza de rasgos humanos: pómulos marcados, mandíbula, nariz, orejas, pelo engominado
-  const cabeza = new THREE.Group(); cabeza.position.set(0, 0.72, 0); torso.add(cabeza);
-  malla(new THREE.SphereGeometry(0.112, 26, 20), M.piel, 0, 0.13, 0, cabeza).scale.set(0.9, 1.15, 1.02);
-  malla(new THREE.SphereGeometry(0.088, 20, 14), M.piel, 0, 0.055, -0.025, cabeza).scale.set(0.9, 0.72, 0.98);
-  malla(new THREE.SphereGeometry(0.03, 10, 8), M.piel, 0, 0.0, -0.088, cabeza).scale.set(1.1, 0.8, 0.8);
-  const nariz = malla(new THREE.ConeGeometry(0.02, 0.07, 8), M.piel, 0, 0.115, -0.112, cabeza); nariz.rotation.x = -1.25;
-  malla(new THREE.SphereGeometry(0.018, 8, 6), M.piel, 0, 0.088, -0.118, cabeza);
+  // Cabeza con rasgos humanos
+  const cabeza = new THREE.Group(); cabeza.position.set(0, 0.425, 0.006); pecho.add(cabeza);
+  const P = M.piel;
+  malla(new THREE.SphereGeometry(0.105, 28, 22), P, 0, 0.125, 0.01, cabeza).scale.set(0.87, 1.0, 1.0);
+  malla(new THREE.SphereGeometry(0.084, 24, 18), P, 0, 0.075, -0.028, cabeza).scale.set(0.82, 0.86, 0.86);
+  malla(new THREE.SphereGeometry(0.03, 14, 10), P, 0, 0.022, -0.07, cabeza).scale.set(1.15, 0.85, 0.95);
   for (const l of [-1, 1]) {
-    malla(new THREE.SphereGeometry(0.03, 10, 8), M.piel, 0.068 * l, 0.1, -0.075, cabeza).scale.set(1, 0.7, 0.8);
-    const oreja = malla(new THREE.SphereGeometry(0.028, 10, 8), M.piel, 0.103 * l, 0.12, 0.005, cabeza); oreja.scale.set(0.4, 1.2, 0.85);
-    const cuenca = malla(new THREE.SphereGeometry(0.024, 10, 8), M.pelo, 0.038 * l, 0.142, -0.093, cabeza); cuenca.scale.set(1.2, 0.75, 0.5);
-    const ojo = malla(new THREE.SphereGeometry(0.012, 8, 6), M.ojo, 0.038 * l, 0.142, -0.103, cabeza); ojo.castShadow = false;
-    const ceja = malla(new THREE.BoxGeometry(0.05, 0.011, 0.014), M.pelo, 0.04 * l, 0.172, -0.1, cabeza); ceja.rotation.z = 0.38 * l;
+    malla(new THREE.SphereGeometry(0.02, 12, 10), P, 0.046 * l, 0.096, -0.066, cabeza).scale.set(1.2, 0.75, 0.8);
+    const oreja = malla(new THREE.SphereGeometry(0.027, 12, 10), P, 0.091 * l, 0.11, 0.006, cabeza); oreja.scale.set(0.38, 1.1, 0.72);
+    malla(new THREE.TorusGeometry(0.015, 0.004, 5, 12, Math.PI * 1.4), P, 0.094 * l, 0.112, 0.006, cabeza).rotation.set(0, Math.PI / 2 * l, -0.6);
   }
-  // Sonrisa torcida
-  const boca = malla(new THREE.TorusGeometry(0.03, 0.006, 5, 12, Math.PI * 0.8), M.labio, 0.006, 0.058, -0.098, cabeza); boca.rotation.set(0.1, 0, Math.PI + 0.25);
-  const pelo = malla(new THREE.SphereGeometry(0.118, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.52), M.pelo, 0, 0.15, 0.012, cabeza); pelo.scale.set(0.93, 1.12, 1.05); pelo.rotation.x = -0.18;
-  const nuca = malla(new THREE.SphereGeometry(0.121, 22, 14, 0, Math.PI, 0, Math.PI * 0.72), M.pelo, 0, 0.13, 0.008, cabeza); nuca.scale.set(0.93, 1.14, 1.06);
-  const pico = malla(new THREE.ConeGeometry(0.03, 0.05, 6), M.pelo, 0, 0.215, -0.1, cabeza); pico.rotation.x = Math.PI + 0.5;
-  // Brillo rojo de los ojos y aura de su poder
+  const ceja = malla(new THREE.CapsuleGeometry(0.016, 0.065, 4, 8), P, 0, 0.148, -0.088, cabeza); ceja.rotation.z = Math.PI / 2; ceja.scale.z = 0.7;
+  const puente = malla(new THREE.BoxGeometry(0.017, 0.05, 0.026), P, 0, 0.112, -0.097, cabeza); puente.rotation.x = 0.32;
+  malla(new THREE.SphereGeometry(0.0145, 12, 10), P, 0, 0.089, -0.108, cabeza);
+  for (const l of [-1, 1]) malla(new THREE.SphereGeometry(0.0105, 10, 8), P, 0.0125 * l, 0.086, -0.099, cabeza);
+  // Ojos: globo, iris, pupila, brillo y párpado que parpadea
+  const parpados = [];
+  for (const l of [-1, 1]) {
+    const ojo = new THREE.Group(); ojo.position.set(0.034 * l, 0.124, -0.087); cabeza.add(ojo);
+    const globo = new THREE.Mesh(new THREE.SphereGeometry(0.0145, 16, 12), M.ojoBlanco); ojo.add(globo);
+    const iris = new THREE.Mesh(new THREE.CircleGeometry(0.0078, 16), M.iris); iris.position.z = -0.0142; iris.rotation.y = Math.PI; ojo.add(iris);
+    const pup = new THREE.Mesh(new THREE.CircleGeometry(0.0036, 12), M.pupila); pup.position.z = -0.0146; pup.rotation.y = Math.PI; ojo.add(pup);
+    const br = new THREE.Mesh(new THREE.CircleGeometry(0.0016, 8), new THREE.MeshBasicMaterial({ color: 0xffffff })); br.position.set(0.003, 0.003, -0.0149); br.rotation.y = Math.PI; ojo.add(br);
+    const parp = new THREE.Mesh(new THREE.SphereGeometry(0.0158, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.5), P); parp.rotation.x = 0.25; ojo.add(parp);
+    const parpInf = new THREE.Mesh(new THREE.SphereGeometry(0.0152, 16, 6, 0, Math.PI * 2, Math.PI * 0.72, Math.PI * 0.28), P); ojo.add(parpInf);
+    parpados.push(parp);
+    const c = malla(new THREE.BoxGeometry(0.04, 0.0075, 0.012), M.cejas, 0.035 * l, 0.153, -0.099, cabeza); c.rotation.z = (o.cejaCeno || 0.1) * l; c.rotation.x = -0.2;
+  }
+  // Boca: labios superior e inferior
+  const labioS = malla(new THREE.CapsuleGeometry(0.0055, 0.026, 4, 8), M.labio, 0, 0.058, -0.094, cabeza); labioS.rotation.z = Math.PI / 2; labioS.scale.z = 0.6;
+  const labioI = malla(new THREE.CapsuleGeometry(0.0065, 0.02, 4, 8), M.labio, 0, 0.047, -0.092, cabeza); labioI.rotation.z = Math.PI / 2; labioI.scale.z = 0.65;
+  // Pelo con mechones (textura y relieve)
+  const pelo = malla(new THREE.SphereGeometry(0.111, 26, 16, 0, Math.PI * 2, 0, Math.PI * (o.peloCorto ? 0.5 : 0.56)), M.pelo, 0, 0.128, 0.014, cabeza);
+  pelo.scale.set(0.93, 1.05, 1.05); pelo.rotation.x = 0.42;
+  const nuca = malla(new THREE.SphereGeometry(0.112, 22, 14, 0, Math.PI, 0, Math.PI * 0.74), M.pelo, 0, 0.12, 0.012, cabeza); nuca.scale.set(0.9, 1.04, 1.04);
+  for (const l of [-1, 1]) { const pat = malla(new THREE.BoxGeometry(0.005, 0.03, 0.014), M.pelo, 0.087 * l, 0.125, -0.028, cabeza); pat.rotation.z = 0.08 * l; }
+  scene.add(raiz);
+  return { raiz, giro, cuerpo, cadera, torso, pecho, piernas, brazos, cabeza, parpados, labioI, M, malla,
+    fis: { y: null, vy: 0, x: null, vx: 0, ay: 0, ax: 0, parpT: 2 + Math.random() * 3 } };
+}
+
+/* Faldones de tela (sotana o abrigo) en dos mitades que siguen a cada pierna con físicas */
+function faldones(R, mat, forro, largo, r0, r1, abierto) {
+  return [-1, 1].map((l) => {
+    const g = new THREE.Group(); g.position.set(0, 0.0, 0); R.cadera.add(g);
+    const a0 = abierto ? (l > 0 ? 0.02 : Math.PI + 0.12) : (l > 0 ? 0 : Math.PI);
+    const geo = new THREE.CylinderGeometry(r0, r1, largo, 16, 5, true, a0, abierto ? Math.PI * 0.86 : Math.PI);
+    const m = R.malla(geo, mat, 0, -largo / 2 + 0.02, 0, g); m.scale.z = 0.8;
+    if (forro) { const f = R.malla(geo, forro, 0, -largo / 2 + 0.02, 0, g); f.scale.set(0.96, 0.995, 0.77); }
+    return { g, l, s: { x: 0, v: 0 }, sz: { x: 0, v: 0 } };
+  });
+}
+
+/* ---------- El misionero ---------- */
+function crearMisionero() {
+  const est = (c, r, m, x) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: r, metalness: m || 0, envMapIntensity: 0.45 }, x || {}));
+  const telaS = texTela('#d0c8dc', 4);
+  const M = {
+    torso: est(0x3a3150, 0.88, 0, { map: telaS, normalMap: mapaNormal(telaS, 3) }),
+    manga: null, puno: null,
+    pantalon: est(0x1f1d24, 0.85, 0, { map: texTela('#c8c8c8', 4) }),
+    zapato: est(0x2a1a12, 0.32, 0.05), suela: est(0x141010, 0.8),
+    piel: est(0xd29a74, 0.55, 0, { map: TEX_PIEL, normalMap: mapaNormal(TEX_PIEL, 1.2) }),
+    ojoBlanco: est(0xf4f1ec, 0.15), iris: est(0x4a2d16, 0.25), pupila: new THREE.MeshBasicMaterial({ color: 0x050505 }),
+    labio: est(0xa85c55, 0.4), cejas: est(0x2a1a10, 0.7),
+    pelo: est(0x2b1b10, 0.5, 0, { map: TEX_PELO, normalMap: mapaNormal(TEX_PELO, 4) }),
+    cuero: est(0xffffff, 0.55, 0, { map: TEX_CUERO, normalMap: mapaNormal(TEX_CUERO, 3) }),
+    cueroOsc: est(0x5a3416, 0.5), manta: est(0xc9a46a, 0.9, 0, { map: texTela('#e0d2b0', 2) }),
+    faja: est(0xb81f2b, 0.75, 0, { map: texTela('#ffffff', 3) }), blanco: est(0xf4f2ee, 0.6),
+    negro: est(0x121015, 0.7), oro: est(0xffcc55, 0.25, 1, { envMapIntensity: 1.2 }), fieltro: est(0x141218, 0.95, 0, { map: texTela('#9a9a9a', 3) })
+  };
+  M.manga = M.torso; M.puno = M.torso;
+  const R = crearHumano({ M, cejaCeno: 0.05, peloCorto: true });
+  const { malla, pecho, torso, cabeza } = R;
+  // Cuello clerical, botones, faja roja y cruz
+  malla(new THREE.CylinderGeometry(0.062, 0.066, 0.035, 18), M.blanco, 0, 0.385, 0.004, pecho);
+  const perfilPecho = [[-0.04, 0.16], [0.06, 0.18], [0.15, 0.198], [0.23, 0.205], [0.3, 0.19], [0.34, 0.15]];
+  const radioPecho = (y) => { for (let i = 1; i < perfilPecho.length; i++) if (y <= perfilPecho[i][0]) { const [y0, r0] = perfilPecho[i - 1], [y1, r1] = perfilPecho[i]; return r0 + (r1 - r0) * (y - y0) / (y1 - y0); } return 0.15; };
+  for (let i = 0; i < 5; i++) { const y = 0.33 - i * 0.075; malla(new THREE.SphereGeometry(0.0085, 8, 6), M.negro, 0, y, -radioPecho(y) * 0.68 - 0.004, pecho); }
+  malla(new THREE.CylinderGeometry(0.172, 0.172, 0.07, 22), M.faja, 0, 0.0, 0, torso).scale.z = 0.74;
+  const lazo = malla(new THREE.BoxGeometry(0.05, 0.24, 0.015), M.faja, 0.11, -0.12, -0.128, torso); lazo.rotation.z = 0.08;
+  malla(new THREE.BoxGeometry(0.014, 0.07, 0.008), M.oro, 0.0, 0.2, -0.142, pecho);
+  malla(new THREE.BoxGeometry(0.044, 0.012, 0.008), M.oro, 0.0, 0.215, -0.142, pecho);
+  R.faldas = faldones(R, M.torso, M.negro, 0.66, 0.17, 0.27, false);
+  // Mochila de cuero con correas, manta enrollada y cruz blanca
+  const mochila = new THREE.Group(); mochila.position.set(0, 0.17, 0.13); pecho.add(mochila);
+  const cuerpoM = new THREE.Group(); mochila.add(cuerpoM);
+  malla(new THREE.BoxGeometry(0.34, 0.4, 0.16), M.cuero, 0, -0.06, 0.08, cuerpoM);
+  malla(new THREE.CapsuleGeometry(0.08, 0.2, 4, 10), M.cuero, 0, -0.06, 0.14, cuerpoM).rotation.z = Math.PI / 2;
+  malla(new THREE.BoxGeometry(0.36, 0.14, 0.18), M.cueroOsc, 0, 0.1, 0.09, cuerpoM);
+  malla(new THREE.BoxGeometry(0.24, 0.12, 0.05), M.cueroOsc, 0, -0.17, 0.17, cuerpoM);
+  for (const l of [-1, 1]) {
+    malla(new THREE.BoxGeometry(0.03, 0.12, 0.012), M.cueroOsc, 0.09 * l, 0.02, 0.185, cuerpoM);
+    malla(new THREE.BoxGeometry(0.02, 0.02, 0.014), M.oro, 0.09 * l, -0.03, 0.19, cuerpoM);
+    const correa = malla(new THREE.BoxGeometry(0.04, 0.42, 0.012), M.cueroOsc, 0.105 * l, 0.17, -0.141, pecho); correa.rotation.x = 0.05;
+    const hombro = malla(new THREE.TorusGeometry(0.1, 0.012, 5, 14, Math.PI), M.cueroOsc, 0.105 * l, 0.31, 0.0, pecho); hombro.rotation.set(0, Math.PI / 2, 0); hombro.scale.set(1, 0.6, 1.3);
+  }
+  const rollo = malla(new THREE.CylinderGeometry(0.075, 0.075, 0.42, 16), M.manta, 0, 0.22, 0.09, cuerpoM); rollo.rotation.z = Math.PI / 2;
+  for (const l of [-1, 1]) { const at = malla(new THREE.TorusGeometry(0.078, 0.007, 4, 14), M.cueroOsc, 0.12 * l, 0.22, 0.09, cuerpoM); at.rotation.y = Math.PI / 2; }
+  malla(new THREE.BoxGeometry(0.035, 0.12, 0.01), M.blanco, 0, -0.06, 0.218, cuerpoM);
+  malla(new THREE.BoxGeometry(0.09, 0.033, 0.01), M.blanco, 0, -0.035, 0.218, cuerpoM);
+  R.mochila = cuerpoM;
+  // Sombrero de fieltro de ala ancha con cinta roja
+  const sombrero = new THREE.Group(); sombrero.position.set(0, 0.205, 0.006); sombrero.rotation.x = 0.07; cabeza.add(sombrero);
+  const ala = malla(geoPerfil([[0.0, 0.0], [0.205, -0.004], [0.215, 0.006], [0.2, 0.012], [0.11, 0.014], [0, 0.014]], 32), M.fieltro, 0, 0, 0, sombrero);
+  malla(geoPerfil([[0.112, 0.0], [0.108, 0.07], [0.098, 0.1], [0.06, 0.112], [0, 0.104]], 28), M.fieltro, 0, 0.008, 0, sombrero);
+  malla(new THREE.CylinderGeometry(0.113, 0.113, 0.026, 28, 1, true), M.faja, 0, 0.026, 0, sombrero);
+  ala.receiveShadow = true;
+  R.sombrero = sombrero; R.sombreroBase = { p: sombrero.position.clone(), r: sombrero.rotation.clone() };
+  // Alas del Espíritu (solo con el poder)
+  const alas = new THREE.Group(); alas.position.set(0, 0.25, 0.25); alas.visible = false; pecho.add(alas);
+  const matAla = est(0xffffff, 0.6, 0, { emissive: 0x334455 });
+  const alasL = [-1, 1].map((l) => {
+    const p = new THREE.Group(); p.position.x = 0.08 * l; alas.add(p);
+    for (let i = 0; i < 4; i++) {
+      const f = malla(new THREE.SphereGeometry(0.42, 14, 10), matAla, (0.36 + i * 0.1) * l, 0.06 - i * 0.1, 0.02 * i, p);
+      f.scale.set(1 - i * 0.18, 0.26 - i * 0.04, 0.05); f.rotation.z = (0.35 + i * 0.14) * l;
+    }
+    return p;
+  });
+  // Aureola, aura del escudo y tabla dorada
+  const aureola = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.022, 8, 28), new THREE.MeshBasicMaterial({ color: 0xffe27a }));
+  aureola.rotation.x = Math.PI / 2; aureola.position.y = 0.44; aureola.visible = false; cabeza.add(aureola);
+  const aura = new THREE.Mesh(new THREE.SphereGeometry(1.2, 24, 18), new THREE.MeshBasicMaterial({ color: 0xffd86b, transparent: true, opacity: 0.16, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+  aura.position.y = 1.0; aura.visible = false; R.raiz.add(aura);
+  const tabla = new THREE.Group(); tabla.visible = false; R.raiz.add(tabla);
+  const tb = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 0.75, 4, 12), est(0xffc83d, 0.25, 1, { emissive: 0x4a2a00, envMapIntensity: 1.3 })); tb.rotation.x = Math.PI / 2; tb.scale.set(1, 1, 0.22); tb.position.y = 0.06; tabla.add(tb);
+  const tc1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 0.5), new THREE.MeshBasicMaterial({ color: 0xffffff })); tc1.position.y = 0.13; tabla.add(tc1);
+  const tc2 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.02, 0.06), new THREE.MeshBasicMaterial({ color: 0xffffff })); tc2.position.set(0, 0.13, -0.08); tabla.add(tc2);
+  Object.assign(R, { alas, alasL, aureola, aura, tabla, escala: 1.38 });
+  R.fis.mochila = { x: 0, v: 0 }; R.fis.mochilaZ = { x: 0, v: 0 }; R.fis.somX = { x: 0, v: 0 }; R.fis.somZ = { x: 0, v: 0 };
+  R.fis.volando = null; R.fis.caida = { a: 0, v: 0 };
+  return R;
+}
+const J = crearMisionero();
+
+/* ---------- El Tentador: hombre de abrigo negro, ojos rojos y poderes oscuros ---------- */
+function crearSombra() {
+  const est = (c, r, m, x) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: r, metalness: m || 0, envMapIntensity: 0.4 }, x || {}));
+  const telaA = texTela('#bdbdc4', 5, '255,255,255');
+  const M = {
+    torso: est(0x1b1820, 0.8, 0, { map: telaA, normalMap: mapaNormal(telaA, 3) }),
+    pantalon: est(0x17161c, 0.8, 0, { map: texTela('#b0b0b0', 4) }),
+    zapato: est(0x050506, 0.1, 0.35, { envMapIntensity: 1.2 }), suela: est(0x0a0a0a, 0.7),
+    piel: est(0xc4aca2, 0.48, 0, { map: TEX_PIEL, normalMap: mapaNormal(TEX_PIEL, 1.2) }),
+    ojoBlanco: est(0xd8c8c0, 0.15), iris: new THREE.MeshBasicMaterial({ color: 0xff2a1a }), pupila: new THREE.MeshBasicMaterial({ color: 0x200000 }),
+    labio: est(0x6a3a3c, 0.35), cejas: est(0x080709, 0.6),
+    pelo: est(0x0b0a0d, 0.22, 0.2, { map: TEX_PELO, normalMap: mapaNormal(TEX_PELO, 3), envMapIntensity: 1 }),
+    forro: est(0x7a0f1e, 0.4, 0, { side: THREE.DoubleSide }), camisa: est(0x4a0c14, 0.4), corbata: est(0x0b0a0d, 0.22, 0.15),
+    una: est(0x1a0c10, 0.2, 0.2), puno: est(0x4a0c14, 0.4)
+  };
+  M.manga = M.torso;
+  const R = crearHumano({ M, cejaCeno: 0.42 });
+  const { malla, pecho, torso, cabeza } = R;
+  // Camisa roja oscura en V, corbata, solapas y botones
+  const camisa = malla(new THREE.CylinderGeometry(0.07, 0.008, 0.26, 3), M.camisa, 0, 0.25, -0.141, pecho); camisa.rotation.y = Math.PI; camisa.scale.z = 0.18;
+  const corbata = new THREE.Group(); corbata.position.set(0, 0.36, -0.15); pecho.add(corbata);
+  malla(new THREE.BoxGeometry(0.022, 0.022, 0.014), M.corbata, 0, 0, 0, corbata);
+  const hoja = malla(new THREE.BoxGeometry(0.036, 0.25, 0.01), M.corbata, 0, -0.13, 0, corbata);
+  for (const l of [-1, 1]) { const sol = malla(new THREE.BoxGeometry(0.06, 0.28, 0.018), M.torso, 0.065 * l, 0.24, -0.146, pecho); sol.rotation.set(-0.12, 0, -0.3 * l); }
+  for (let k = 0; k < 2; k++) malla(new THREE.SphereGeometry(0.011, 8, 6), M.zapato, 0.05, 0.03 + k * 0.08, -0.127, pecho);
+  malla(new THREE.CylinderGeometry(0.066, 0.075, 0.05, 18, 1, true), M.torso, 0, 0.385, 0.01, pecho);
+  R.faldas = faldones(R, M.torso, M.forro, 0.72, 0.19, 0.3, true);
+  R.corbata = corbata; R.fis.corb = { x: 0, v: 0 };
+  // Pelo engominado hacia atrás con pico en la frente, perilla oscura y ojeras
+  malla(new THREE.ConeGeometry(0.022, 0.04, 6), M.pelo, 0, 0.198, -0.088, cabeza).rotation.x = Math.PI + 0.55;
+  malla(new THREE.ConeGeometry(0.014, 0.035, 8), M.pelo, 0, 0.01, -0.085, cabeza).rotation.x = Math.PI - 0.3;
+  for (const l of [-1, 1]) malla(new THREE.SphereGeometry(0.016, 10, 8), est(0x5a4048, 0.6), 0.034 * l, 0.111, -0.084, cabeza).scale.set(1.3, 0.6, 0.6);
+  // Llamas oscuras en las manos
+  for (const b of R.brazos) {
+    const llama = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX_CHISPA, color: 0xb0203a, transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending }));
+    llama.position.y = -0.08; llama.scale.setScalar(0.3); b.mano.add(llama); b.llama = llama;
+  }
+  // Brillo rojo de los ojos, aura y luz de su poder
   const brillo = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX_CHISPA, color: 0xff2030, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending }));
-  brillo.position.set(0, 0.142, -0.13); brillo.scale.set(0.28, 0.09, 1); cabeza.add(brillo);
+  brillo.position.set(0, 0.125, -0.115); brillo.scale.set(0.13, 0.035, 1); cabeza.add(brillo);
   const aura = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX_CHISPA, color: 0x5a0a30, transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending }));
-  aura.position.y = 1.15; aura.scale.set(2.2, 2.8, 1); raiz.add(aura);
-  const luz = new THREE.PointLight(0xff2a3a, 0, 7, 1.6); luz.position.set(0, 1.4, -0.4); raiz.add(luz);
+  aura.position.y = 1.05; aura.scale.set(2.1, 2.7, 1); R.raiz.add(aura);
+  const luz = new THREE.PointLight(0xff2a3a, 0, 7, 1.6); luz.position.set(0, 2.3, 0.9); R.raiz.add(luz);
   // Bola de fuego oscuro que lanza
   const bola = new THREE.Group(); bola.visible = false; scene.add(bola);
   const nucleo = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX_CHISPA, color: 0xff3048, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); nucleo.scale.setScalar(1.1); bola.add(nucleo);
   const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX_CHISPA, color: 0x7a10a0, transparent: true, opacity: 0.8, depthWrite: false, blending: THREE.AdditiveBlending })); halo.scale.setScalar(2.2); bola.add(halo);
   const luzBola = new THREE.PointLight(0xff3050, 0, 9, 1.5); bola.add(luzBola);
-  raiz.visible = false;
-  scene.add(raiz);
-  return { raiz, giro, cuerpo, torso, piernas, brazos, colas, cabeza, brillo, aura, luz, bola, luzBola, M };
+  R.raiz.visible = false;
+  Object.assign(R, { brillo, aura, luz, bola, luzBola, escala: 1.3 });
+  return R;
 }
 const SOMBRA = crearSombra();
+
 
 /* ---------- Estado de la carrera ---------- */
 let estado = 'cargando';          // menu, jugando, pausa, choque, fin
@@ -1815,81 +1940,177 @@ function actualizar(dt) {
   actualizarHud();
 }
 
-/* ---------- Animación ---------- */
+/* ---------- Animación: poses humanas, físicas de tela y caídas ---------- */
 const ap = (obj, prop, val, k) => { obj[prop] += (val - obj[prop]) * k; };
+// Resorte amortiguado (masa-resorte) para la tela, la mochila y el sombrero
+function resorte(s, obj, k, d, dt, empuje) {
+  const n = dt > 0.017 ? 3 : 2, h = dt / n;
+  for (let i = 0; i < n; i++) { s.v += ((obj - s.x) * k - s.v * d + (empuje || 0)) * h; s.x += s.v * h; }
+  return s.x;
+}
+function poseNueva() {
+  return { cy: 0, cadY: 0, cadZ: 0, tx: 0, pX: 0, pY: 0, cabX: 0, cabY: 0, giroX: 0,
+    m: [0, 0], r: [-0.06, -0.06], t: [0.06, 0.06], bx: [0.06, 0.06], bz: [-0.1, 0.1], c: [0.3, 0.3], puno: [0.45, 0.45] };
+}
+// Ciclo de carrera: zancada, rodilla que sube, pie que apoya plano, cadera y hombros que giran en sentido contrario
+function poseCorrer(P, f) {
+  const s = Math.sin(f), c = Math.cos(f);
+  P.m[0] = 0.08 + s * 0.95; P.m[1] = 0.08 - s * 0.95;
+  P.r[0] = -(0.25 + Math.max(0, c) * 1.65); P.r[1] = -(0.25 + Math.max(0, -c) * 1.65);
+  for (let i = 0; i < 2; i++) {
+    const apoyo = clamp((i === 0 ? -c : c) * 2.2, 0, 1);
+    P.t[i] = -0.32 * (1 - apoyo) - (P.m[i] + P.r[i]) * apoyo;
+  }
+  P.cy = Math.abs(s) * 0.07 - 0.05;
+  P.cadY = -s * 0.16; P.pY = s * 0.32; P.cadZ = c * 0.05;
+  P.tx = -0.2 + Math.sin(f * 2) * 0.03; P.pX = -0.04;
+  P.bx[0] = -s * 0.9; P.bx[1] = s * 0.9;
+  P.c[0] = 1.35 + Math.max(0, -s) * 0.35; P.c[1] = 1.35 + Math.max(0, s) * 0.35;
+  P.bz[0] = -0.13; P.bz[1] = 0.13; P.puno[0] = P.puno[1] = 1.45;
+  P.cabY = -(P.cadY + P.pY) * 0.8; P.cabX = 0.15;
+}
+function poseSalto(P, p, tr) {
+  const a = Math.sin(p * Math.PI);
+  if (tr === 'voltereta') {
+    P.giroX = -suave(p) * Math.PI * 2;
+    P.m = [1.6, 1.6]; P.r = [-2.2, -2.2]; P.t = [-0.4, -0.4]; P.bx = [1.1, 1.1]; P.c = [1.8, 1.8]; P.tx = -0.4; P.cabX = 0.3; P.puno = [1.4, 1.4];
+  } else if (tr === 'estrella') {
+    P.m = [0.35 * a, -0.25 * a]; P.r = [-0.3, -0.3]; P.t = [-0.5, -0.5]; P.bx = [0.15, 0.15]; P.bz = [-2.3 * a - 0.15, 2.3 * a + 0.15]; P.c = [0.1, 0.1]; P.puno = [0, 0]; P.cabX = -0.2;
+  } else {
+    P.m = [1.4 * a + 0.2, 0.35 * a - 0.25]; P.r = [-1.9 * a - 0.25, -1.1 * a - 0.45]; P.t = [-0.35, -0.55];
+    P.bx = [2.4 * a - 0.1, -0.5]; P.c = [0.35, 1.2]; P.bz = [-0.45, 0.5]; P.tx = -0.12; P.cabX = 0.1; P.puno = [0.6, 1.1];
+    P.cadY = 0.1 * a; P.pY = -0.2 * a;
+  }
+}
+function aplicarPose(R, P, k) {
+  for (let i = 0; i < 2; i++) {
+    const L = R.piernas[i], B = R.brazos[i];
+    ap(L.p.rotation, 'x', P.m[i], k); ap(L.rod.rotation, 'x', P.r[i], k); ap(L.tob.rotation, 'x', P.t[i], k);
+    ap(B.b.rotation, 'x', P.bx[i], k); ap(B.b.rotation, 'z', P.bz[i], k); ap(B.codo.rotation, 'x', P.c[i], k);
+    for (let j = 0; j < B.dedos.length; j++) ap(B.dedos[j].rotation, 'z', -B.l * P.puno[i] * (j % 2 ? 0.95 : 0.8), k);
+    ap(B.pulgar.rotation, 'x', -0.5 - P.puno[i] * 0.35, k);
+  }
+  ap(R.cadera.rotation, 'y', P.cadY, k); ap(R.cadera.rotation, 'z', P.cadZ, k);
+  ap(R.torso.rotation, 'x', P.tx, k); ap(R.pecho.rotation, 'x', P.pX, k); ap(R.pecho.rotation, 'y', P.pY, k);
+  ap(R.cabeza.rotation, 'x', P.cabX, k); ap(R.cabeza.rotation, 'y', P.cabY, k);
+  ap(R.cuerpo.position, 'y', -1 + P.cy, k);
+  R.giro.rotation.x = P.giroX;
+}
+// Inercia de lo que cuelga y de la tela: reacciona a la aceleración real del cuerpo
+function fisica(R, dt, avance, parpAbierto) {
+  const F = R.fis;
+  if (dt <= 0) return;
+  const y = R.raiz.position.y + R.cuerpo.position.y, x = R.raiz.position.x;
+  if (F.y === null) { F.y = y; F.x = x; }
+  const vy = (y - F.y) / dt, vx = (x - F.x) / dt;
+  F.ay = clamp((vy - F.vy) / dt, -90, 90); F.ax = clamp((vx - F.vx) / dt, -60, 60);
+  F.vy = vy; F.vx = vx; F.y = y; F.x = x;
+  for (const f of R.faldas) {
+    const i = f.l < 0 ? 0 : 1;
+    const obj = R.piernas[i].p.rotation.x * 0.62 - avance * 0.011 - Math.max(0, -F.vy) * 0.02;
+    f.g.rotation.x = clamp(resorte(f.s, obj, 150, 11, dt, F.ay * 0.05), -1.4, 1.4);
+    f.g.rotation.z = f.l * 0.04 + clamp(resorte(f.sz, -F.vx * 0.03, 110, 9, dt), -0.5, 0.5);
+  }
+  if (R.mochila) {
+    R.mochila.position.y = clamp(resorte(F.mochila, 0, 180, 10, dt, -F.ay * 0.25), -0.08, 0.08);
+    R.mochila.rotation.x = R.mochila.position.y * 2.2;
+    R.mochila.rotation.z = clamp(resorte(F.mochilaZ, 0, 140, 9, dt, F.ax * 0.06), -0.35, 0.35);
+  }
+  if (R.sombrero && !F.volando) {
+    const b = R.sombreroBase;
+    R.sombrero.rotation.x = b.r.x + clamp(resorte(F.somX, 0, 160, 8, dt, -F.ay * 0.05 + avance * 0.004), -0.4, 0.4);
+    R.sombrero.rotation.z = clamp(resorte(F.somZ, 0, 160, 8, dt, F.ax * 0.05), -0.4, 0.4);
+  }
+  if (R.corbata) R.corbata.rotation.x = clamp(resorte(F.corb, -avance * 0.03 - 0.05, 90, 6, dt, -F.ay * 0.06), -1.4, 0.3);
+  // Parpadeo natural
+  F.parpT -= dt;
+  const cerrado = F.parpT < 0.13 && F.parpT > 0;
+  if (F.parpT <= 0) F.parpT = 2.2 + Math.random() * 3.5;
+  for (const p of R.parpados) p.rotation.x = cerrado ? -1.25 : parpAbierto;
+}
+// El sombrero sale volando al chocar y rebota en el suelo
+function soltarSombrero() {
+  const R = J; if (R.fis.volando) return;
+  scene.attach(R.sombrero);
+  R.fis.volando = { vx: (rnd() - 0.5) * 1.6, vy: 5.2, vz: 2.2, wx: 7 + rnd() * 5, wz: (rnd() - 0.5) * 9, piso: alturaSuelo, quieto: false };
+}
+function restaurarSombrero() {
+  const R = J; if (!R.fis.volando) return;
+  R.cabeza.add(R.sombrero);
+  R.sombrero.position.copy(R.sombreroBase.p); R.sombrero.rotation.copy(R.sombreroBase.r); R.sombrero.scale.setScalar(1);
+  R.fis.volando = null; R.fis.somX.x = R.fis.somX.v = R.fis.somZ.x = R.fis.somZ.v = 0;
+}
+function moverSombrero(dt) {
+  const v = J.fis.volando, s = J.sombrero; if (!v || v.quieto) return;
+  v.vy -= 22 * dt;
+  s.position.x += v.vx * dt; s.position.y += v.vy * dt; s.position.z += v.vz * dt;
+  s.rotation.x += v.wx * dt; s.rotation.z += v.wz * dt;
+  if (s.position.y < v.piso + 0.03 && v.vy < 0) {
+    s.position.y = v.piso + 0.03;
+    v.vy = -v.vy * 0.35; v.vx *= 0.6; v.vz *= 0.6; v.wx *= 0.5; v.wz *= 0.5;
+    // Se acomoda boca arriba o de lado sobre el suelo
+    s.rotation.x = Math.round(s.rotation.x / Math.PI) * Math.PI * 0.6 + s.rotation.x * 0.4;
+    s.rotation.z *= 0.4;
+    if (v.vy < 0.6) { v.quieto = true; s.rotation.x = Math.round(s.rotation.x / Math.PI) * Math.PI; s.rotation.z = 0; }
+  }
+}
 function animarJugador(dt) {
-  const R = J;
+  const R = J, F = R.fis;
   const conTabla = escudoT > 0 && estado !== 'menu';
-  R.raiz.position.set(px, py + (conTabla ? 0.14 : 0), 0);
-  const k = Math.min(1, dt * 20);
+  const k = Math.min(1, dt * 18);
   const corriendo = estado === 'jugando' || (estado === 'pausa' && run);
   const enAire = !enSuelo && poder.alas <= 0;
-  if (estado === 'jugando') fase += dt * (velocidad * 0.62 + 3);
-  // Postura objetivo: muslos (pI/pD), rodillas (rI/rD), hombros (bI/bD), codos (cI/cD)
-  let pI = 0, pD = 0, rI = -0.05, rD = -0.05, bI = 0, bD = 0, cI = 0.2, cD = 0.2, bZI = -0.12, bZD = 0.12, torsoX = 0, torsoY = 0, cuerpoY = 0, cabX = 0;
-  let giroX = 0;
+  if (estado === 'jugando') fase += dt * (velocidad * 0.6 + 3);
+  const P = poseNueva();
+  let kp = k;
   if (estado === 'menu' || estado === 'cargando') {
-    const t = reloj;
-    torsoX = Math.sin(t * 1.6) * 0.03; cuerpoY = Math.sin(t * 1.6) * 0.012;
-    bI = 0.05; bD = 0.05; cI = 0.25;
-    const ola = (t % 4) < 1.6;
-    bZD = ola ? 2.55 + Math.sin(t * 9) * 0.3 : 0.12; cD = ola ? 0.6 + Math.sin(t * 9) * 0.4 : 0.2;
-    cabX = -0.05;
+    // De pie, respirando, cambiando el peso y saludando
+    const t = reloj, resp = Math.sin(t * 1.7);
+    P.cy = resp * 0.005 - 0.01; P.tx = resp * 0.015; P.cadZ = Math.sin(t * 0.45) * 0.035; P.pX = resp * 0.01;
+    P.m = [0.04, -0.03]; P.r = [-0.1, -0.03]; P.t = [0.06, 0.06]; P.bz = [-0.1 - P.cadZ, 0.1];
+    const ola = (t % 5) < 1.8;
+    if (ola) { P.bz[1] = 2.55; P.bx[1] = 0.2; P.c[1] = 0.45 + Math.sin(t * 9) * 0.45; P.puno[1] = 0; P.cabY = 0.1; P.cabX = 0.05; }
+    P.cabX -= 0.03;
   } else if (estado === 'choque' || estado === 'fin') {
-    const c = Math.min(1, choqueT / 0.5);
-    giroX = suave(c) * (tipoFin === 'atrapado' ? -0.5 : 1.3);
-    bI = 2.6; bD = 2.4; cI = 0.4; cD = 0.4; bZI = -0.6; bZD = 0.6; pI = 0.6; pD = -0.2; rI = -0.8; rD = -0.3;
+    P.bx = [2.3, 1.9]; P.bz = [-0.95, 0.85]; P.c = [0.45, 0.75]; P.m = [0.55, 0.15]; P.r = [-0.75, -0.3]; P.t = [0.3, 0.1]; P.puno = [0.2, 0.3]; P.cabX = 0.35; P.tx = 0.1;
   } else if (poder.alas > 0 && corriendo) {
-    torsoX = -0.5; pI = -0.4 + Math.sin(reloj * 4) * 0.15; pD = -0.25 - Math.sin(reloj * 4) * 0.15; rI = -0.6; rD = -0.4;
-    bI = 2.9; bD = 2.9; cI = 0.1; cD = 0.1; bZI = -0.25; bZD = 0.25; cabX = 0.4;
+    P.tx = -0.5; P.m = [-0.4 + Math.sin(reloj * 4) * 0.15, -0.25 - Math.sin(reloj * 4) * 0.15]; P.r = [-0.6, -0.4]; P.t = [-0.6, -0.6];
+    P.bx = [2.9, 2.9]; P.c = [0.1, 0.1]; P.bz = [-0.25, 0.25]; P.cabX = 0.45; P.puno = [0, 0];
   } else if (rodarT > 0) {
     const p = 1 - rodarT / RODAR_T;
-    giroX = -suave(p) * Math.PI * 2;
-    pI = 1.7; pD = 1.7; rI = -2.3; rD = -2.3; bI = 0.9; bD = 0.9; cI = 1.9; cD = 1.9; cuerpoY = -0.25; torsoX = -0.5; cabX = 0.5;
+    P.giroX = -suave(p) * Math.PI * 2;
+    P.m = [1.7, 1.7]; P.r = [-2.3, -2.3]; P.t = [-0.3, -0.3]; P.bx = [0.9, 0.9]; P.c = [1.9, 1.9]; P.cy = -0.25; P.tx = -0.5; P.cabX = 0.5; P.puno = [1.4, 1.4];
+    kp = Math.min(1, dt * 26);
   } else if (enAire) {
     const v0 = saltoV0 || SALTO_V;
-    const p = clamp((v0 - vy) / (2 * v0), 0, 1);
-    if (truco === 'voltereta') {
-      giroX = -suave(p) * Math.PI * 2;
-      pI = 1.5; pD = 1.5; rI = -2.2; rD = -2.2; bI = 1.0; bD = 1.0; cI = 1.8; cD = 1.8; torsoX = -0.4;
-    } else if (truco === 'estrella') {
-      const a = Math.sin(p * Math.PI);
-      pI = 0.3 * a; pD = -0.2 * a; rI = -0.3; rD = -0.3; bI = 0.2; bD = 0.2; bZI = -2.4 * a - 0.2; bZD = 2.4 * a + 0.2; cI = 0.1; cD = 0.1; cabX = -0.2;
-    } else {
-      const a = Math.sin(p * Math.PI);
-      pI = 1.5 * a + 0.2; pD = 0.4 * a - 0.3; rI = -2.0 * a - 0.2; rD = -1.2 * a - 0.4; bI = 2.6 * a; bD = -0.5; cI = 0.3; cD = 1.2; bZI = -0.4; bZD = 0.5; torsoX = -0.15;
-    }
-  } else if (corriendo) {
-    const sn = Math.sin(fase), cs2 = Math.cos(fase);
-    pI = sn * 1.05; pD = -sn * 1.05;
-    rI = -(0.25 + Math.max(0, cs2) * 1.6); rD = -(0.25 + Math.max(0, -cs2) * 1.6);
-    bI = -sn * 1.1; bD = sn * 1.1;
-    cI = 1.35 + Math.max(0, sn) * 0.35; cD = 1.35 + Math.max(0, -sn) * 0.35;
-    cuerpoY = Math.abs(sn) * 0.1 - 0.02;
-    torsoX = -0.22 + Math.sin(fase * 2) * 0.03;
-    torsoY = sn * 0.14;
-    cabX = 0.15;
-    R.falda.rotation.x = Math.sin(fase * 2) * 0.06;
+    poseSalto(P, clamp((v0 - vy) / (2 * v0), 0, 1), truco);
+    kp = Math.min(1, dt * 24);
+  } else if (corriendo) poseCorrer(P, fase);
+  // Aterrizaje: flexiona rodillas y tobillos para amortiguar el golpe
+  aplastar = Math.max(0, aplastar - dt * 4);
+  if (aplastar > 0 && !enAire && rodarT <= 0 && corriendo) {
+    const a = Math.sin(aplastar * Math.PI * 0.5);
+    P.cy -= a * 0.17; P.tx -= a * 0.28; P.cabX += a * 0.2;
+    for (let i = 0; i < 2; i++) { P.m[i] += a * 0.6; P.r[i] -= a * 1.05; P.t[i] = P.t[i] * (1 - a) - (P.m[i] + P.r[i]) * a; }
+    P.bx[0] += a * 0.5; P.bx[1] += a * 0.5; P.bz[0] -= a * 0.3; P.bz[1] += a * 0.3;
   }
-  if (animTropiezo > 0) { const a = Math.sin((animTropiezo / 0.45) * Math.PI); torsoX += a * 0.6; bZI = -1.6 * a; bZD = 1.6 * a; }
-  R.giro.rotation.x = giroX;
-  const kp = rodarT > 0 || enAire ? Math.min(1, dt * 26) : k;
-  ap(R.piernas[0].p.rotation, 'x', pI, kp); ap(R.piernas[1].p.rotation, 'x', pD, kp);
-  ap(R.piernas[0].rod.rotation, 'x', rI, kp); ap(R.piernas[1].rod.rotation, 'x', rD, kp);
-  ap(R.brazos[0].b.rotation, 'x', bI, kp); ap(R.brazos[1].b.rotation, 'x', bD, kp);
-  ap(R.brazos[0].codo.rotation, 'x', cI, kp); ap(R.brazos[1].codo.rotation, 'x', cD, kp);
-  ap(R.brazos[0].b.rotation, 'z', bZI, kp); ap(R.brazos[1].b.rotation, 'z', bZD, kp);
-  ap(R.torso.rotation, 'x', torsoX, k); ap(R.torso.rotation, 'y', torsoY, k);
-  ap(R.cabeza.rotation, 'x', cabX, k);
-  ap(R.cuerpo.position, 'y', -0.85 + cuerpoY, k);
-  // Aplastar y estirar al aterrizar y al saltar
-  aplastar = Math.max(0, aplastar - dt * 6);
-  const est = enAire && vy > 0 ? 0.08 : 0;
-  const sy = 1 - aplastar * 0.22 + est, sxz = 1 + aplastar * 0.14 - est * 0.5;
-  R.giro.scale.set(sxz, sy, sxz);
+  if (animTropiezo > 0) { const a = Math.sin((animTropiezo / 0.45) * Math.PI); P.tx += a * 0.55; P.bz[0] = -1.5 * a; P.bz[1] = 1.5 * a; P.bx[0] += a; P.bx[1] += a; P.cabX -= a * 0.4; }
+  aplicarPose(R, P, kp);
+  R.raiz.scale.setScalar(R.escala);
+  // Caída con gravedad al chocar: se va de espaldas, golpea el suelo y rebota un poco
+  const C = F.caida;
+  if (estado === 'choque' || estado === 'fin') {
+    if (!C.activa) { C.activa = true; C.a = 0; C.v = tipoFin === 'atrapado' ? 1.4 : 3.4; soltarSombrero(); }
+    C.v += 15 * Math.sin(C.a + 0.06) * dt; C.a += C.v * dt;
+    if (C.a > 1.47) { C.a = 1.47; C.v = Math.abs(C.v) > 0.6 ? -Math.abs(C.v) * 0.3 : 0; }
+  } else { C.activa = false; C.a = Math.max(0, C.a - dt * 6); C.v = 0; }
+  R.raiz.position.set(px, py + (conTabla ? 0.14 : 0) + Math.sin(C.a) * 0.17, 0);
+  R.raiz.rotation.x = -C.a;
+  moverSombrero(dt);
+  fisica(R, dt, estado === 'jugando' ? velocidad : 0, 0.55);
   const dx = CARRIL_X[carril] - px;
   const deFrente = estado === 'menu' || estado === 'cargando' || estado === 'choque' || estado === 'fin';
-  ap(R.raiz.rotation, 'z', estado === 'jugando' ? -dx * 0.16 : 0, k);
+  ap(R.raiz.rotation, 'z', estado === 'jugando' ? -dx * 0.14 : 0, k);
   ap(R.raiz.rotation, 'y', deFrente ? Math.PI : (estado === 'jugando' ? -dx * 0.12 : 0), Math.min(1, dt * (deFrente ? 7 : 12)));
   // Poderes visibles
   R.alas.visible = poder.alas > 0 && estado !== 'menu';
@@ -1993,51 +2214,35 @@ function animarSombra(dt) {
   }
   if (estado === 'jugando') tFase += dt * (velocidad * 0.6 + 3.5);
   const R = T, k = Math.min(1, dt * 18);
-  let pI, pD, rI, rD, bI, bD, cI, cD, bZI = -0.1, bZD = 0.1, tx, cab = 0.1, giroX = 0;
+  const P = poseNueva();
   if (!tSuelo) {
-    const p = clamp((9 - tVy) / 18, 0, 1), a = Math.sin(p * Math.PI);
-    pI = 1.4 * a + 0.2; pD = 0.5 * a - 0.2; rI = -1.9 * a - 0.2; rD = -1.3 * a - 0.3;
-    bI = -0.6; bD = 2.2 * a; cI = 0.6; cD = 0.4; bZI = -0.5; bZD = 0.6; tx = -0.25;
-    if (tVuelta > 0) { giroX = -suave(p) * Math.PI * 2; pI = pD = 1.6; rI = rD = -2.2; bI = bD = 1; cI = cD = 1.9; }
+    poseSalto(P, clamp((9 - tVy) / 18, 0, 1), tVuelta > 0 ? 'voltereta' : 'normal');
+    P.bx[0] = -0.6; P.bz[0] = -0.5;
   } else if (estado === 'choque' || estado === 'fin') {
     // Se detiene y se ríe con los brazos abiertos
-    pI = pD = 0; rI = rD = -0.05; bI = bD = 0.3; cI = cD = 0.5; bZI = -1.1 + Math.sin(reloj * 14) * 0.08; bZD = 1.1 - Math.sin(reloj * 14) * 0.08; tx = 0.1; cab = -0.25 + Math.sin(reloj * 18) * 0.06;
+    P.bx = [0.3, 0.3]; P.c = [0.5, 0.5]; P.bz = [-1.1 + Math.sin(reloj * 14) * 0.08, 1.1 - Math.sin(reloj * 14) * 0.08]; P.puno = [0.1, 0.1];
+    P.tx = 0.12; P.cabX = 0.3 + Math.sin(reloj * 18) * 0.06; P.m = [0.05, -0.05];
   } else {
-    const sn = Math.sin(tFase), cs = Math.cos(tFase);
-    pI = sn * 1.15; pD = -sn * 1.15;
-    rI = -(0.2 + Math.max(0, cs) * 1.75); rD = -(0.2 + Math.max(0, -cs) * 1.75);
-    bI = -sn * 1.2; bD = sn * 1.2; cI = 1.4 + Math.max(0, sn) * 0.3; cD = 1.4 + Math.max(0, -sn) * 0.3;
-    tx = -0.32 + Math.sin(tFase * 2) * 0.04;
-    R.cuerpo.position.y = -1 + Math.abs(sn) * 0.09;
-    R.torso.rotation.y = sn * 0.16;
+    poseCorrer(P, tFase);
+    P.tx -= 0.1; P.puno = [0.7, 0.7];
   }
   // Lanza el fuego: brazo derecho atrás y luego adelante
   if (tLanzar > 0) {
     tLanzar -= dt;
-    if (tLanzar < 0.55) { const a = tLanzar > 0.3 ? 1 : tLanzar / 0.3; bD = 2.8 * a + bD * (1 - a); cD = 0.2; bZD = 0.3; }
+    if (tLanzar < 0.55) { const a = tLanzar > 0.3 ? 1 : tLanzar / 0.3; P.bx[1] = 2.8 * a + P.bx[1] * (1 - a); P.c[1] = 0.2; P.bz[1] = 0.3; P.puno[1] = 0; P.pY -= 0.4 * a; }
     if (tLanzar <= 0.3 && tLanzar + dt > 0.3) lanzarBola();
   }
-  R.giro.rotation.x = giroX;
-  ap(R.piernas[0].p.rotation, 'x', pI, k); ap(R.piernas[1].p.rotation, 'x', pD, k);
-  ap(R.piernas[0].rod.rotation, 'x', rI, k); ap(R.piernas[1].rod.rotation, 'x', rD, k);
-  ap(R.brazos[0].b.rotation, 'x', bI, k); ap(R.brazos[1].b.rotation, 'x', bD, k);
-  ap(R.brazos[0].codo.rotation, 'x', cI, k); ap(R.brazos[1].codo.rotation, 'x', cD, k);
-  ap(R.brazos[0].b.rotation, 'z', bZI, k); ap(R.brazos[1].b.rotation, 'z', bZD, k);
-  ap(R.torso.rotation, 'x', tx, k); ap(R.cabeza.rotation, 'x', cab, k);
-  // Faldones del abrigo hacia atrás según la velocidad
-  const vel = estado === 'jugando' ? Math.min(1, velocidad / 25) : 0.1;
-  R.colas[0].rotation.x = -0.15 - vel * 0.45 + Math.sin(reloj * 13) * 0.06 * vel;
-  R.colas[1].rotation.x = -0.15 - vel * 0.45 + Math.sin(reloj * 13 + 1.7) * 0.06 * vel;
-  R.colas[0].rotation.z = -0.08 - vel * 0.1; R.colas[1].rotation.z = 0.08 + vel * 0.1;
+  aplicarPose(R, P, k);
+  R.raiz.scale.setScalar(R.escala);
+  R.raiz.position.set(sombraX, tY, persD);
+  R.raiz.rotation.y = (estado === 'choque' || estado === 'fin') ? 0 : (px - sombraX) * -0.15;
+  fisica(R, dt, estado === 'jugando' ? velocidad : 0, 0.42);
   // Poder: llamas en las manos, ojos y aura que laten
   const pulso = 0.75 + Math.sin(reloj * 11) * 0.25;
-  for (const b of R.brazos) { b.llama.scale.setScalar(0.28 + pulso * 0.14 + (tLanzar > 0 ? 0.35 : 0)); b.llama.material.rotation = reloj * 5; }
+  for (const b of R.brazos) { b.llama.scale.setScalar(0.24 + pulso * 0.12 + (tLanzar > 0 ? 0.35 : 0)); b.llama.material.rotation = reloj * 5; }
   R.brillo.material.opacity = 0.6 + pulso * 0.4;
   R.aura.material.opacity = 0.35 + pulso * 0.2;
-  R.luz.intensity = 6 + pulso * 4;
-  R.raiz.scale.setScalar(1.12);
-  R.raiz.position.set(sombraX, tY, persD);
-  R.raiz.rotation.y = (estado === 'choque' || estado === 'fin') ? Math.PI * 0 : (px - sombraX) * -0.15;
+  R.luz.intensity = 3 + pulso * 2;
   estelaT -= dt;
   if (estelaT <= 0) { estelaT = 0.07; emitir(sombraX + (rnd() - 0.5) * 0.5, 0.3 + rnd() * 1.4, dist - persD - 0.3, 1, 0x1c0a24, { vel: 0.5, tam: 0.8, vida: 0.55, normal: true }); }
 }
@@ -2111,6 +2316,7 @@ function actualizarCamara(dt) {
     sacudida = Math.max(0, sacudida - dt * 1.8);
   }
   camara.lookAt(mira);
+  const co = window.__camOverride; if (co) { camara.position.set(co[0], co[1], co[2]); camara.lookAt(co[3], co[4], co[5]); }
   const extra = estado === 'jugando' ? clamp((velocidad - 17) * 0.35, 0, 6) + (poder.alas > 0 ? 3 : 0) : 0;
   const f = fovBase + extra;
   if (Math.abs(camara.fov - f) > 0.05) { camara.fov += (f - camara.fov) * Math.min(1, dt * 3); camara.updateProjectionMatrix(); }
@@ -2189,6 +2395,7 @@ function pintarAjustes() {
     </ul></div>`;
 }
 function mostrarMenu() {
+  restaurarSombrero();
   estado = 'menu';
   limpiarPista();
   persD = persObj = 30;
@@ -2200,6 +2407,7 @@ function mostrarMenu() {
   pintarMenu();
 }
 function iniciar() {
+  restaurarSombrero();
   if (estado === 'jugando' || estado === 'choque') return;
   audio();
   limpiarPista();
@@ -2260,6 +2468,7 @@ function mostrarFin() {
   $('b-menu').onclick = () => { SND.boton(); mostrarMenu(); };
 }
 function revivir() {
+  restaurarSombrero();
   const costo = costoRevivir();
   if (S.banco < costo || revividas >= 3) return;
   S.banco -= costo; revividas++;
@@ -2403,7 +2612,7 @@ window.__huirListo = true;
 const carga = $('carga');
 carga.classList.add('fuera');
 setTimeout(() => { carga.hidden = true; }, 400);
-window.__huir = { paso, iniciar, mover, saltar, rodar, usarEscudo, revivir, mostrarMenu, get estado() { return estado; }, get dist() { return dist; }, get run() { return run; }, get obstaculos() { return obstaculos; }, get monedas() { return monedas; }, get items() { return items; }, get escena() { return escena; }, get tuneles() { return tuneles; }, acecho: () => { acechoT = 0; tRun = Math.max(tRun, 9); }, get jugador() { return { px, py, carril, enSuelo, invulT, escudoT, persD }; }, set invul(v) { invulT = v; }, scene, S };
+window.__huir = { paso, iniciar, mover, saltar, rodar, usarEscudo, revivir, mostrarMenu, get estado() { return estado; }, get dist() { return dist; }, get run() { return run; }, get obstaculos() { return obstaculos; }, get monedas() { return monedas; }, get items() { return items; }, get escena() { return escena; }, get tuneles() { return tuneles; }, acecho: () => { acechoT = 0; tRun = Math.max(tRun, 9); }, chocar: () => { tipoFin = 'choque'; terminarPorChoque(); }, get T() { return SOMBRA; }, get JJ() { return J; }, get jugador() { return { px, py, carril, enSuelo, invulT, escudoT, persD }; }, set invul(v) { invulT = v; }, scene, S };
 </script>
 </body>
 </html>
