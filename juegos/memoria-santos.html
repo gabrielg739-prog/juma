@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2A1640">
+<title>Memoria de santos · JUMA</title>
+<style>
+  :root {
+    --glass: rgba(26,14,38,.66); --glass-2: rgba(26,14,38,.84); --borde: rgba(255,255,255,.22);
+    --gold: #FFD25A; --gold-2: #C98F12; --verde: #52B23A; --verde-2: #2E7D20;
+    --plum: #3A2150; --plum-2: #2A1640; --cream: #FFF3D6; --ink: #2B1A3F; --muted: #7A6A8C;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body { font-family: "Trebuchet MS", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #fff; min-height: 100%; overflow-x: hidden; background: #1a1020; }
+  .bg { position: fixed; inset: 0; z-index: 0; background: #1a1020 center / cover no-repeat url(fondos/f2.jpg); }
+  .bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(48,20,60,.6) 0%, rgba(30,12,40,.7) 55%, rgba(18,6,28,.9) 100%); }
+  button { font: inherit; cursor: pointer; border: 0; color: inherit; }
+  button:focus-visible, .carta:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  svg { display: block; }
+  .app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; padding: calc(env(safe-area-inset-top,0px) + 12px) 16px calc(env(safe-area-inset-bottom,0px) + 18px); display: flex; flex-direction: column; gap: 12px; }
+  .top { display: flex; align-items: center; gap: 8px; }
+  .redondo { width: 46px; height: 46px; border-radius: 50%; background: var(--glass-2); border: 2px solid var(--borde); display: grid; place-items: center; flex: 0 0 auto; }
+  .redondo:active { transform: scale(.94); }
+  .espacio { flex: 1; }
+  .pill { height: 42px; padding: 0 14px; border-radius: 999px; background: var(--glass-2); border: 2px solid var(--borde); display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: 15px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pill.gold { color: var(--gold); }
+  .titulo { text-align: center; margin: 16px 0 0; font-family: Georgia, "Times New Roman", serif; font-weight: 400; line-height: 1; text-shadow: 0 3px 12px rgba(0,0,0,.6); }
+  .titulo .a { display: block; font-size: 40px; }
+  .titulo .b { display: block; font-size: 22px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin-top: 8px; }
+  .sub { text-align: center; font-size: 15px; line-height: 1.4; text-shadow: 0 2px 6px rgba(0,0,0,.7); margin: 6px 8px 0; }
+  .mejor { text-align: center; font-weight: 800; font-size: 14px; text-shadow: 0 2px 6px rgba(0,0,0,.7); opacity: .95; }
+  .btn-grande { width: 100%; height: 66px; border-radius: 999px; font-size: 24px; font-weight: 900; letter-spacing: .04em; background: linear-gradient(180deg, #62C943, #3A9A22); box-shadow: 0 6px 0 var(--verde-2), 0 14px 24px rgba(0,0,0,.35); color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
+  .btn-grande:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--verde-2); }
+  .btn2 { height: 50px; border-radius: 999px; background: var(--glass-2); border: 2px solid var(--borde); font-weight: 800; font-size: 16px; padding: 0 20px; }
+  .btn2:active { transform: scale(.97); }
+  .centro { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 16px; }
+  .como { background: var(--glass); border: 2px solid var(--borde); border-radius: 20px; padding: 12px 14px; font-size: 14.5px; line-height: 1.45; }
+  .como b { color: var(--gold); }
+  .marcador { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+  .marcador .pill { height: 36px; font-size: 14px; padding: 0 12px; }
+  .tablero { display: grid; gap: 10px; perspective: 1000px; margin: 4px 0; }
+  .carta { position: relative; aspect-ratio: 3 / 4; border-radius: 14px; transform-style: preserve-3d; transition: transform .5s cubic-bezier(.23,1,.32,1); cursor: pointer; }
+  .carta.volteada { transform: rotateY(180deg); }
+  .cara { position: absolute; inset: 0; border-radius: 14px; backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; box-shadow: 0 6px 14px rgba(0,0,0,.35); }
+  .dorso { background: radial-gradient(circle at 50% 35%, #8A5BB8, #4A2A6E 70%); border: 3px solid rgba(255,255,255,.35); display: grid; place-items: center; }
+  .dorso::before { content: ""; width: 42%; aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(255,210,90,.7); box-shadow: inset 0 0 0 4px rgba(255,210,90,.2); }
+  .frente { transform: rotateY(180deg); background: var(--cream); color: var(--ink); border: 3px solid #fff; display: flex; flex-direction: column; }
+  .frente img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .frente.txt { padding: 6px; justify-content: center; align-items: center; text-align: center; background: linear-gradient(180deg, #FFF8E8, #F4E3B8); }
+  .frente.txt b { font-family: Georgia, serif; font-size: clamp(11px, 3vw, 14px); line-height: 1.15; color: var(--plum-2); }
+  .frente.txt i { font-style: normal; font-size: clamp(9px, 2.5vw, 11px); color: var(--muted); margin-top: 4px; line-height: 1.2; }
+  .frente.txt .cruz { font-size: 18px; color: var(--gold-2); margin-bottom: 4px; }
+  .carta.hecha { cursor: default; }
+  .carta.hecha .cara { box-shadow: 0 0 0 3px var(--gold), 0 6px 14px rgba(0,0,0,.35); }
+  .carta.hecha .frente { filter: saturate(1.1); }
+  .carta.error { animation: sacude .4s; }
+  @keyframes sacude { 25% { transform: rotateY(180deg) translateX(-5px); } 75% { transform: rotateY(180deg) translateX(5px); } }
+  .dato { min-height: 56px; background: rgba(255,243,214,.96); color: var(--ink); border-radius: 18px; padding: 10px 14px; font-size: 14.5px; line-height: 1.35; box-shadow: 0 5px 14px rgba(0,0,0,.35); opacity: 0; transition: opacity .3s; }
+  .dato.on { opacity: 1; }
+  .dato small { display: block; color: #8A3FBF; font-weight: 900; font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 2px; }
+  .fondo { position: fixed; inset: 0; background: rgba(12,4,20,.72); display: none; align-items: flex-end; justify-content: center; padding: 14px; z-index: 30; }
+  .fondo.on { display: flex; }
+  .hoja { width: 100%; max-width: 440px; max-height: 90vh; overflow: auto; background: linear-gradient(180deg, #FFF8E8, #F8EBD0); color: var(--ink); border-radius: 28px; padding: 22px 18px 18px; box-shadow: 0 -10px 40px rgba(0,0,0,.45); text-align: center; animation: sube .35s cubic-bezier(.23,1,.32,1); }
+  @keyframes sube { from { transform: translateY(40px); opacity: 0; } }
+  .hoja h3 { font-family: Georgia, serif; margin: 0 0 4px; font-size: 28px; color: var(--plum-2); }
+  .hoja p { margin: 6px 0; font-size: 15px; line-height: 1.45; }
+  .hoja .sub2 { color: var(--muted); font-size: 14px; }
+  .estrellas { font-size: 34px; letter-spacing: 6px; color: var(--gold-2); margin: 6px 0; }
+  .boton { width: 100%; height: 56px; border-radius: 999px; background: linear-gradient(180deg, #62C943, #3A9A22); color: #fff; font-weight: 900; font-size: 18px; letter-spacing: .03em; box-shadow: 0 5px 0 var(--verde-2); margin-top: 12px; }
+  .boton.sec { background: #fff; color: var(--plum-2); box-shadow: 0 5px 0 #D8CDE6; border: 2px solid #D8CDE6; }
+  .boton:active { transform: translateY(3px); }
+  .lista-santos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; text-align: left; }
+  .lista-santos div { background: #fff; border: 2px solid #EADFBF; border-radius: 14px; padding: 8px; font-size: 13px; }
+  .lista-santos b { display: block; color: #7A47B0; font-size: 13.5px; }
+  .lista-santos i { font-style: normal; color: var(--muted); font-size: 12px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<div class="app">
+  <header class="top">
+    <button class="redondo" id="btn-cerrar" type="button" aria-label="Cerrar juego">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="espacio"></div>
+    <button class="redondo" id="btn-sonido" type="button" aria-label="Sonido"></button>
+    <div class="pill gold" id="p-pts" title="Puntos misioneros">★ <span id="t-pts">0</span></div>
+  </header>
+
+  <!-- INICIO -->
+  <section id="vista-inicio" class="centro">
+    <h1 class="titulo"><span class="a">Memoria</span><span class="b">de santos</span></h1>
+    <p class="sub">Une cada rostro con su nombre. Cada pareja que encuentras te cuenta algo de su vida.</p>
+    <p class="mejor" id="m-mejor"></p>
+    <div class="como">
+      <p>• Toca una carta para voltearla y luego otra.</p>
+      <p>• Si son la misma persona, quedan <b>encendidas</b> y aparece su dato.</p>
+      <p>• Hay <b>3 rondas</b>, cada una con más parejas.</p>
+      <p>• Ganas <b>★ puntos misioneros</b> por cada pareja y por terminar cada ronda.</p>
+    </div>
+    <button class="btn-grande" id="btn-jugar" type="button">JUGAR</button>
+  </section>
+
+  <!-- JUEGO -->
+  <section id="vista-juego" style="display:none;flex-direction:column;gap:12px">
+    <div class="marcador">
+      <span class="pill" id="g-ronda">Ronda 1 de 3</span>
+      <span class="pill" id="g-mov">Movimientos 0</span>
+      <span class="pill" id="g-tiempo">0:00</span>
+    </div>
+    <div class="tablero" id="tablero"></div>
+    <div class="dato" id="dato" role="status" aria-live="polite"></div>
+  </section>
+</div>
+
+<div class="fondo" id="fondo"><div class="hoja" id="hoja"></div></div>
+
+<script>
+const CLAVE = 'juma-memoria-v1';
+const RONDAS = [
+  { pares: 3, cols: 3 },
+  { pares: 4, cols: 4 },
+  { pares: 5, cols: 5 }
+];
+const SANTOS = [
+  { id: 'allamano', img: 'cuadros/cap2-allamano.jpg', nombre: 'Beato José Allamano', dato: 'Fundador de los Misioneros de la Consolata. Su lema: ser misioneros en la cabeza, en la boca y en el corazón.' },
+  { id: 'irene', img: 'cuadros/cap3-irene-stefani.jpg', nombre: 'Irene Stefani', dato: 'Misionera de la Consolata que sirvió en Kenia, cerca de los enfermos y de los más pobres.' },
+  { id: 'cafasso', img: 'cuadros/cap4-cafasso.jpg', nombre: 'San José Cafasso', dato: 'Sacerdote de Turín y maestro de José Allamano. Atendió con amor a los sacerdotes y a los pobres.' },
+  { id: 'leonella', img: 'cuadros/cap5-leonella.jpg', nombre: 'Leonella Sgorbati', dato: 'Misionera de la Consolata que entregó su vida en Somalia en 2006, por amor al pueblo al que servía.' },
+  { id: 'consolata', img: 'cuadros/cap1-consolata.jpg', nombre: 'Virgen de la Consolata', dato: 'Madre y guía de los Misioneros de la Consolata. Su santuario está en Turín.' }
+];
+
+// ---------- Guardado ----------
+let S = { puntos: 0, mejores: {} };
+try { const d = JSON.parse(localStorage.getItem(CLAVE) || 'null'); if (d) S = Object.assign(S, d); } catch (e) {}
+function guardar() {
+  try { localStorage.setItem(CLAVE, JSON.stringify(S)); } catch (e) {}
+  try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', juego: 'memoria', total: S.puntos }, location.origin); } catch (e) {}
+}
+function barajar(a) { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; }
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+// ---------- Sonidos (sintetizados) ----------
+let AC = null, sonidoOn = true;
+try { sonidoOn = localStorage.getItem('juma-memoria-sonido') !== '0'; } catch (e) {}
+function ac() {
+  if (!sonidoOn) return null;
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  if (AC.state === 'suspended') AC.resume();
+  return AC;
+}
+function tono(f, dur, tipo, vol, retardo) {
+  const a = ac(); if (!a) return;
+  const t0 = a.currentTime + (retardo || 0);
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = tipo || 'triangle'; o.frequency.setValueAtTime(f, t0);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol || 0.14, t0 + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + dur + 0.03);
+}
+const SND = {
+  voltear() { tono(700, 0.09, 'triangle', 0.09); },
+  acierto() { [523.25, 659.25, 783.99].forEach((f, i) => tono(f, 0.3, 'triangle', 0.15, i * 0.07)); },
+  fallo() { tono(200, 0.22, 'sawtooth', 0.07, 0); },
+  ronda() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tono(f, 0.45, 'triangle', 0.15, i * 0.12)); },
+  fin() { [392, 523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tono(f, 1.1, 'sine', 0.12, i * 0.14)); }
+};
+function pintarSonido() {
+  document.getElementById('btn-sonido').innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="#fff"/>' + (sonidoOn ? '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>') + '</svg>';
+}
+document.getElementById('btn-sonido').onclick = () => {
+  sonidoOn = !sonidoOn;
+  try { localStorage.setItem('juma-memoria-sonido', sonidoOn ? '1' : '0'); } catch (e) {}
+  pintarSonido(); if (sonidoOn) SND.acierto();
+};
+pintarSonido();
+
+// ---------- Estado de la partida ----------
+let ronda = 0, cartas = [], abiertas = [], bloqueado = true, encontrados = 0, movimientos = 0;
+let inicioT = 0, reloj = null, jugando = false, datoTimer = null;
+
+function mmss(ms) { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function mostrarVista(v) {
+  document.getElementById('vista-inicio').style.display = v === 'inicio' ? 'flex' : 'none';
+  document.getElementById('vista-juego').style.display = v === 'juego' ? 'flex' : 'none';
+  document.body.classList.toggle('en-juego', v === 'juego');
+}
+function pintarInicio() {
+  document.getElementById('t-pts').textContent = S.puntos.toLocaleString('es-VE');
+  const m = S.mejores[3];
+  document.getElementById('m-mejor').textContent = m ? 'Mejor marca en la ronda 3: ' + m + ' movimientos' : 'Aún no has terminado las 3 rondas';
+}
+
+function iniciarRonda(n) {
+  ronda = n;
+  const cfg = RONDAS[n - 1];
+  const elegidos = barajar(SANTOS).slice(0, cfg.pares);
+  const mazo = [];
+  elegidos.forEach((s) => {
+    mazo.push({ par: s.id, tipo: 'img', s, volteada: false, hecha: false });
+    mazo.push({ par: s.id, tipo: 'txt', s, volteada: false, hecha: false });
+  });
+  cartas = barajar(mazo);
+  abiertas = []; bloqueado = false; encontrados = 0; movimientos = 0;
+  document.getElementById('g-ronda').textContent = 'Ronda ' + n + ' de 3';
+  pintarMarcador();
+  construirTablero(cfg);
+  document.getElementById('dato').classList.remove('on');
+  document.getElementById('dato').innerHTML = '';
+  mostrarVista('juego');
+  inicioT = Date.now(); clearInterval(reloj);
+  reloj = setInterval(() => { if (jugando) document.getElementById('g-tiempo').textContent = mmss(Date.now() - inicioT); }, 500);
+  jugando = true;
+  window.scrollTo(0, 0);
+}
+function construirTablero(cfg) {
+  const tab = document.getElementById('tablero');
+  tab.style.gridTemplateColumns = 'repeat(' + cfg.cols + ', 1fr)';
+  tab.innerHTML = cartas.map((c, i) => {
+    const frente = c.tipo === 'img'
+      ? '<div class="cara frente"><img src="' + c.s.img + '" alt="' + esc(c.s.nombre) + '" loading="lazy"></div>'
+      : '<div class="cara frente txt"><span class="cruz">✚</span><b>' + esc(c.s.nombre) + '</b><i>' + esc(c.s.dato.split('.')[0]) + '.</i></div>';
+    return '<div class="carta" data-i="' + i + '" role="button" tabindex="0" aria-label="Carta boca abajo">' +
+      '<div class="cara dorso"></div>' + frente + '</div>';
+  }).join('');
+}
+function pintarMarcador() {
+  document.getElementById('g-mov').textContent = 'Movimientos ' + movimientos;
+}
+function voltear(card) {
+  if (!jugando || bloqueado || card.volteada || card.hecha) return;
+  card.volteada = true;
+  cartaEl(card).classList.add('volteada');
+  cartaEl(card).setAttribute('aria-label', esc(card.tipo === 'img' ? 'Foto de santo' : card.s.nombre));
+  SND.voltear();
+  abiertas.push(card);
+  if (abiertas.length === 2) {
+    movimientos++; pintarMarcador();
+    bloqueado = true;
+    const [a, b] = abiertas;
+    if (a.par === b.par) setTimeout(() => acierto(a, b), 380);
+    else setTimeout(() => fallo(a, b), 900);
+  }
+}
+function cartaEl(card) { return document.querySelector('.carta[data-i="' + cartas.indexOf(card) + '"]'); }
+function acierto(a, b) {
+  a.hecha = b.hecha = true;
+  [a, b].forEach((c) => { const el = cartaEl(c); el.classList.add('hecha'); el.setAttribute('aria-label', 'Pareja encontrada'); });
+  encontrados++;
+  S.puntos += 10;
+  guardar(); pintarInicioPts();
+  SND.acierto();
+  mostrarDato(a.s);
+  abiertas = []; bloqueado = false;
+  if (encontrados === RONDAS[ronda - 1].pares) setTimeout(finRonda, 700);
+}
+function fallo(a, b) {
+  [a, b].forEach((c) => { const el = cartaEl(c); el.classList.add('error'); });
+  SND.fallo();
+  setTimeout(() => {
+    [a, b].forEach((c) => { c.volteada = false; const el = cartaEl(c); el.classList.remove('volteada', 'error'); el.setAttribute('aria-label', 'Carta boca abajo'); });
+    abiertas = []; bloqueado = false;
+  }, 420);
+}
+function pintarInicioPts() { document.getElementById('t-pts').textContent = S.puntos.toLocaleString('es-VE'); }
+function mostrarDato(s) {
+  const d = document.getElementById('dato');
+  d.innerHTML = '<small>' + esc(s.nombre) + '</small>' + esc(s.dato);
+  d.classList.add('on');
+  clearTimeout(datoTimer);
+  datoTimer = setTimeout(() => d.classList.remove('on'), 4200);
+}
+function estrellas(mov, pares) {
+  if (mov <= pares) return 3;
+  if (mov <= pares + 3) return 2;
+  return 1;
+}
+function finRonda() {
+  jugando = false; clearInterval(reloj);
+  const cfg = RONDAS[ronda - 1];
+  const tiempo = Date.now() - inicioT;
+  const extra = Math.max(0, cfg.pares * 3 - (movimientos - cfg.pares));
+  const bono = 20 + extra;
+  S.puntos += bono;
+  const mejor = S.mejores[ronda];
+  if (!mejor || movimientos < mejor) S.mejores[ronda] = movimientos;
+  guardar(); pintarInicioPts();
+  SND.ronda();
+  const est = estrellas(movimientos, cfg.pares);
+  const ultima = ronda === RONDAS.length;
+  const lista = SANTOS.filter((s) => cartas.some((c) => c.s.id === s.id)).map((s) => '<div><b>' + esc(s.nombre) + '</b><i>' + esc(s.dato.split('.')[0]) + '.</i></div>').join('');
+  abrirHoja('<h3>' + (ultima ? '¡Memoria completa!' : '¡Ronda ' + ronda + ' completa!') + '</h3>' +
+    '<p class="estrellas">' + '★'.repeat(est) + '<span style="opacity:.3">' + '★'.repeat(3 - est) + '</span></p>' +
+    '<p>Movimientos: <b>' + movimientos + '</b> · Tiempo: <b>' + mmss(tiempo) + '</b></p>' +
+    '<p class="sub2">+' + bono + ' ★ por terminar la ronda</p>' +
+    '<div class="lista-santos">' + lista + '</div>' +
+    (ultima
+      ? '<button class="boton" type="button" data-accion="reiniciar">JUGAR DE NUEVO</button><button class="boton sec" type="button" data-accion="mapa">Volver al inicio</button>'
+      : '<button class="boton" type="button" data-accion="siguiente">RONDA ' + (ronda + 1) + '</button><button class="boton sec" type="button" data-accion="mapa">Volver al inicio</button>'));
+  if (ultima) setTimeout(SND.fin, 300);
+}
+
+// ---------- Ventanas ----------
+function abrirHoja(html) { document.getElementById('hoja').innerHTML = html; document.getElementById('fondo').classList.add('on'); }
+function cerrarHoja() { document.getElementById('fondo').classList.remove('on'); }
+function volverInicio() {
+  jugando = false; clearInterval(reloj); cerrarHoja(); mostrarVista('inicio'); pintarInicio();
+}
+
+// ---------- Eventos ----------
+document.getElementById('btn-jugar').onclick = () => { iniciarRonda(1); };
+document.getElementById('btn-cerrar').onclick = () => {
+  if (window.parent && window.parent !== window) { try { window.parent.postMessage({ tipo: 'juma-cerrar' }, location.origin); } catch (e) {} }
+  else volverInicio();
+};
+document.getElementById('tablero').addEventListener('click', (e) => {
+  const el = e.target.closest('.carta'); if (!el) return;
+  voltear(cartas[Number(el.dataset.i)]);
+});
+document.getElementById('tablero').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const el = e.target.closest('.carta'); if (!el) return;
+  e.preventDefault(); voltear(cartas[Number(el.dataset.i)]);
+});
+document.getElementById('fondo').addEventListener('click', (e) => {
+  if (e.target.id === 'fondo') return;
+  const b = e.target.closest('[data-accion]'); if (!b) return;
+  const a = b.dataset.accion;
+  if (a === 'siguiente') { cerrarHoja(); iniciarRonda(ronda + 1); return; }
+  if (a === 'reiniciar') { cerrarHoja(); iniciarRonda(1); return; }
+  if (a === 'mapa') { volverInicio(); return; }
+});
+
+pintarInicio();
+mostrarVista('inicio');
+</script>
+</body>
+</html>
