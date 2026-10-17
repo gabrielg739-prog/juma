@@ -71,6 +71,8 @@
   .boton { width: 100%; height: 56px; border-radius: 999px; background: linear-gradient(180deg, #62C943, #3A9A22); color: #fff; font-weight: 900; font-size: 18px; letter-spacing: .03em; box-shadow: 0 5px 0 var(--verde-2); margin-top: 12px; }
   .boton.sec { background: #fff; color: var(--plum-2); box-shadow: 0 5px 0 #D8CDE6; border: 2px solid #D8CDE6; }
   .boton:active { transform: translateY(3px); }
+  #btn-pista:disabled { opacity: .5; }
+  .carta.pulso .cara { box-shadow: 0 0 0 3px #fff, 0 0 18px rgba(255,210,90,.9); }
   .lista-santos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; text-align: left; }
   .lista-santos div { background: #fff; border: 2px solid #EADFBF; border-radius: 14px; padding: 8px; font-size: 13px; }
   .lista-santos b { display: block; color: #7A47B0; font-size: 13.5px; }
@@ -110,9 +112,11 @@
       <span class="pill" id="g-ronda">Ronda 1 de 3</span>
       <span class="pill" id="g-mov">Movimientos 0</span>
       <span class="pill" id="g-tiempo">0:00</span>
+      <span class="pill gold" id="g-racha">Racha 0</span>
     </div>
     <div class="tablero" id="tablero"></div>
     <div class="dato" id="dato" role="status" aria-live="polite"></div>
+    <button class="boton sec" id="btn-pista" type="button" style="margin-top:0">Pista · cuesta 2 movimientos</button>
   </section>
 </div>
 
@@ -182,6 +186,7 @@ pintarSonido();
 // ---------- Estado de la partida ----------
 let ronda = 0, cartas = [], abiertas = [], bloqueado = true, encontrados = 0, movimientos = 0;
 let inicioT = 0, reloj = null, jugando = false, datoTimer = null;
+let racha = 0, pistaLista = true;
 
 function mmss(ms) { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 function mostrarVista(v) {
@@ -206,6 +211,9 @@ function iniciarRonda(n) {
   });
   cartas = barajar(mazo);
   abiertas = []; bloqueado = false; encontrados = 0; movimientos = 0;
+  racha = 0; pistaLista = true;
+  document.getElementById('g-racha').textContent = 'Racha 0';
+  document.getElementById('btn-pista').disabled = false;
   document.getElementById('g-ronda').textContent = 'Ronda ' + n + ' de 3';
   pintarMarcador();
   construirTablero(cfg);
@@ -251,7 +259,10 @@ function acierto(a, b) {
   a.hecha = b.hecha = true;
   [a, b].forEach((c) => { const el = cartaEl(c); el.classList.add('hecha'); el.setAttribute('aria-label', 'Pareja encontrada'); });
   encontrados++;
-  S.puntos += 10;
+  racha++;
+  const extraR = racha > 1 ? 5 * racha : 0;
+  S.puntos += 10 + extraR;
+  document.getElementById('g-racha').textContent = 'Racha ' + racha;
   guardar(); pintarInicioPts();
   SND.acierto();
   mostrarDato(a.s);
@@ -259,6 +270,7 @@ function acierto(a, b) {
   if (encontrados === RONDAS[ronda - 1].pares) setTimeout(finRonda, 700);
 }
 function fallo(a, b) {
+  racha = 0; document.getElementById('g-racha').textContent = 'Racha 0';
   [a, b].forEach((c) => { const el = cartaEl(c); el.classList.add('error'); });
   SND.fallo();
   setTimeout(() => {
@@ -284,7 +296,10 @@ function finRonda() {
   const cfg = RONDAS[ronda - 1];
   const tiempo = Date.now() - inicioT;
   const extra = Math.max(0, cfg.pares * 3 - (movimientos - cfg.pares));
-  const bono = 20 + extra;
+  const tBono = tiempo < 45000 ? 15 : 0;
+  const bono = 20 + extra + tBono;
+  S.mejoresT = S.mejoresT || {};
+  if (!S.mejoresT[ronda] || tiempo < S.mejoresT[ronda]) S.mejoresT[ronda] = tiempo;
   S.puntos += bono;
   const mejor = S.mejores[ronda];
   if (!mejor || movimientos < mejor) S.mejores[ronda] = movimientos;
@@ -296,13 +311,30 @@ function finRonda() {
   abrirHoja('<h3>' + (ultima ? '¡Memoria completa!' : '¡Ronda ' + ronda + ' completa!') + '</h3>' +
     '<p class="estrellas">' + '★'.repeat(est) + '<span style="opacity:.3">' + '★'.repeat(3 - est) + '</span></p>' +
     '<p>Movimientos: <b>' + movimientos + '</b> · Tiempo: <b>' + mmss(tiempo) + '</b></p>' +
-    '<p class="sub2">+' + bono + ' ★ por terminar la ronda</p>' +
+    '<p class="sub2">+' + bono + ' ★ por terminar la ronda' + (tBono ? ' (incluye +15 por rapidez)' : '') + '</p>' + (S.mejoresT[ronda] ? '<p class="sub2">Mejor tiempo: ' + mmss(S.mejoresT[ronda]) + '</p>' : '') +
     '<div class="lista-santos">' + lista + '</div>' +
     (ultima
       ? '<button class="boton" type="button" data-accion="reiniciar">JUGAR DE NUEVO</button><button class="boton sec" type="button" data-accion="mapa">Volver al inicio</button>'
       : '<button class="boton" type="button" data-accion="siguiente">RONDA ' + (ronda + 1) + '</button><button class="boton sec" type="button" data-accion="mapa">Volver al inicio</button>'));
   if (ultima) setTimeout(SND.fin, 300);
 }
+
+function pista() {
+  if (!jugando || bloqueado || abiertas.length > 0 || !pistaLista) return;
+  pistaLista = false;
+  movimientos += 2; pintarMarcador();
+  const ocultas = cartas.filter((c) => !c.hecha && !c.volteada);
+  bloqueado = true;
+  ocultas.forEach((c) => { const el = cartaEl(c); el.classList.add('volteada', 'pulso'); });
+  document.getElementById('btn-pista').disabled = true;
+  setTimeout(() => {
+    ocultas.forEach((c) => { if (!c.volteada && !c.hecha) cartaEl(c).classList.remove('volteada'); });
+    ocultas.forEach((c) => { const el = cartaEl(c); if (el) el.classList.remove('pulso'); });
+    bloqueado = false;
+  }, 1300);
+  setTimeout(() => { pistaLista = true; const b = document.getElementById('btn-pista'); if (b && jugando) b.disabled = false; }, 15000);
+}
+document.getElementById('btn-pista').addEventListener('click', pista);
 
 // ---------- Ventanas ----------
 function abrirHoja(html) { document.getElementById('hoja').innerHTML = html; document.getElementById('fondo').classList.add('on'); }

@@ -52,6 +52,12 @@
   @keyframes pop { to { transform: scale(0); opacity: 0; } }
   @keyframes caer { from { transform: translateY(-60%); opacity: .3; } }
   @keyframes sacude { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  .ficha.especial { box-shadow: 0 0 0 3px #fff3c4, 0 0 14px rgba(255,210,90,.9), inset 0 -4px 0 rgba(0,0,0,.25); animation: brillo 1.2s ease-in-out infinite; }
+  @keyframes brillo { 50% { filter: brightness(1.25); } }
+  .ficha.pista { outline: 3px dashed #fff; outline-offset: 2px; animation: latido .7s ease-in-out infinite; }
+  @keyframes latido { 50% { transform: scale(.92); } }
+  .btn-pista { height: 46px; border-radius: 999px; background: var(--glass-2); border: 2px solid var(--borde); font-weight: 800; font-size: 15px; color: #fff; }
+  .btn-pista:disabled { opacity: .5; }
   .ayuda { font-size: 13.5px; text-align: center; text-shadow: 0 2px 6px rgba(0,0,0,.7); min-height: 20px; font-weight: 700; }
   .fondo { position: fixed; inset: 0; background: rgba(12,4,20,.72); display: none; align-items: flex-end; justify-content: center; padding: 14px; z-index: 30; }
   .fondo.on { display: flex; }
@@ -110,6 +116,7 @@
     <div class="meta"><i id="g-barra"></i></div>
     <div class="tablero" id="tablero"></div>
     <div class="ayuda" id="ayuda"></div>
+    <button class="btn-pista" id="btn-pista" type="button">Pista de movimiento</button>
   </section>
 </div>
 
@@ -193,19 +200,66 @@ document.getElementById('btn-sonido').onclick = () => {
 pintarSonido();
 
 // ---------- Tablero ----------
+const BASE = 100;
+const baseDe = (v) => (v >= BASE ? v - BASE : v);
 let tab = [], nivel = 1, cfg = null, puntosNivel = 0, movs = 0, ocupado = false, sel = null, combo = 0;
+let pistaCeldas = new Set(), pistaLista = true, jugando = false;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const rnd = (n) => Math.floor(Math.random() * n);
+const clave = (r, c) => r + ',' + c;
 
-function celdasIguales(b, r, c, t) { return b[r][c] === t; }
 function buscarCoincidencias(b) {
   const m = new Set();
   for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) {
-    const t = b[r][c]; if (t < 0) continue;
-    if (c + 2 < COLS && b[r][c + 1] === t && b[r][c + 2] === t) { m.add(r + ',' + c); m.add(r + ',' + (c + 1)); m.add(r + ',' + (c + 2)); }
-    if (r + 2 < FILAS && b[r + 1][c] === t && b[r + 2][c] === t) { m.add(r + ',' + c); m.add((r + 1) + ',' + c); m.add((r + 2) + ',' + c); }
+    const v = b[r][c]; if (v < 0) continue;
+    const t = baseDe(v);
+    if (c + 2 < COLS && baseDe(b[r][c + 1]) === t && baseDe(b[r][c + 2]) === t && b[r][c + 1] >= 0 && b[r][c + 2] >= 0) { m.add(clave(r, c)); m.add(clave(r, c + 1)); m.add(clave(r, c + 2)); }
+    if (r + 2 < FILAS && baseDe(b[r + 1][c]) === t && baseDe(b[r + 2][c]) === t && b[r + 1][c] >= 0 && b[r + 2][c] >= 0) { m.add(clave(r, c)); m.add(clave(r + 1, c)); m.add(clave(r + 2, c)); }
   }
   return m;
+}
+// Filas de 4 o más: al terminarlas nace una pieza especial (cruz de luz)
+function filasLargas(b) {
+  const out = [];
+  for (let r = 0; r < FILAS; r++) {
+    let c = 0;
+    while (c < COLS) {
+      if (b[r][c] < 0) { c++; continue; }
+      const t = baseDe(b[r][c]); let e = c;
+      while (e + 1 < COLS && b[r][e + 1] >= 0 && baseDe(b[r][e + 1]) === t) e++;
+      if (e - c + 1 >= 4) { const celdas = []; for (let i = c; i <= e; i++) celdas.push(clave(r, i)); out.push({ celdas, t }); }
+      c = e + 1;
+    }
+  }
+  for (let c = 0; c < COLS; c++) {
+    let r = 0;
+    while (r < FILAS) {
+      if (b[r][c] < 0) { r++; continue; }
+      const t = baseDe(b[r][c]); let e = r;
+      while (e + 1 < FILAS && b[e + 1][c] >= 0 && baseDe(b[e + 1][c]) === t) e++;
+      if (e - r + 1 >= 4) { const celdas = []; for (let i = r; i <= e; i++) celdas.push(clave(i, c)); out.push({ celdas, t }); }
+      r = e + 1;
+    }
+  }
+  return out;
+}
+// Una cruz de luz limpia su fila y su columna (y activa otras cruces que toque)
+function expandir(m) {
+  const out = new Set(m);
+  const hechas = new Set();
+  let cambio = true;
+  while (cambio) {
+    cambio = false;
+    for (const k of Array.from(out)) {
+      const [r, c] = k.split(',').map(Number);
+      if (tab[r][c] >= BASE && !hechas.has(k)) {
+        hechas.add(k); cambio = true;
+        for (let i = 0; i < COLS; i++) if (tab[r][i] >= 0) out.add(clave(r, i));
+        for (let j = 0; j < FILAS; j++) if (tab[j][c] >= 0) out.add(clave(j, c));
+      }
+    }
+  }
+  return out;
 }
 function tableroInicial(tipos) {
   const b = Array.from({ length: FILAS }, () => Array(COLS).fill(-1));
@@ -218,26 +272,47 @@ function tableroInicial(tipos) {
   }
   return b;
 }
+function hayMovimiento(b) {
+  for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) {
+    for (const [dr, dc] of [[0, 1], [1, 0]]) {
+      const nr = r + dr, nc = c + dc; if (nr >= FILAS || nc >= COLS) continue;
+      const x = b[r][c], y = b[nr][nc];
+      b[r][c] = y; b[nr][nc] = x;
+      const ok = buscarCoincidencias(b).size > 0;
+      b[r][c] = x; b[nr][nc] = y;
+      if (ok) return { a: { r, c }, b: { r: nr, c: nc } };
+    }
+  }
+  return null;
+}
 function iniciarNivel(n) {
   nivel = n; cfg = configNivel(n);
   tab = tableroInicial(cfg.tipos);
+  let k = 0;
+  while (!hayMovimiento(tab) && k++ < 30) tab = tableroInicial(cfg.tipos);
   puntosNivel = 0; movs = cfg.movs; ocupado = false; sel = null; combo = 0;
+  pistaCeldas = new Set(); pistaLista = true;
   document.getElementById('g-nivel').textContent = 'Nivel ' + n;
+  document.getElementById('btn-pista').disabled = false;
   mostrarVista('juego');
+  jugando = true;
   pintar();
-  ayuda('Une 3 o más iguales');
+  ayuda('Une 3 o más iguales · las filas de 4 crean una cruz de luz');
 }
 function pintar(marcadas, nuevas) {
   const el = document.getElementById('tablero');
   let h = '';
   for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) {
-    const t = tab[r][c], k = r + ',' + c;
+    const v = tab[r][c], k = clave(r, c), t = baseDe(v);
     let cls = 'ficha';
     if (sel && sel.r === r && sel.c === c) cls += ' sel';
     if (marcadas && marcadas.has(k)) cls += ' quitar';
     if (nuevas && nuevas.has(k)) cls += ' caer';
-    h += '<div class="celda"><div class="' + cls + '" data-r="' + r + '" data-c="' + c + '" style="background:' + (t >= 0 ? 'linear-gradient(180deg,' + SIMBOLOS[t].c + ',' + SIMBOLOS[t].c + 'CC)' : 'transparent') + '">' +
-      (t >= 0 ? '<svg viewBox="0 0 40 40">' + SIMBOLOS[t].svg + '</svg>' : '') + '</div></div>';
+    if (v >= BASE) cls += ' especial';
+    if (pistaCeldas.has(k)) cls += ' pista';
+    const fondo = v >= 0 ? 'linear-gradient(180deg,' + SIMBOLOS[t].c + ',' + SIMBOLOS[t].c + 'CC)' : 'transparent';
+    h += '<div class="celda"><div class="' + cls + '" data-r="' + r + '" data-c="' + c + '" style="background:' + fondo + '">' +
+      (v >= 0 ? '<svg viewBox="0 0 40 40">' + SIMBOLOS[t].svg + '</svg>' : '') + '</div></div>';
   }
   el.innerHTML = h;
   document.getElementById('g-mov').textContent = 'Movimientos ' + movs;
@@ -251,8 +326,12 @@ function intercambiar(a, b) { const t = tab[a.r][a.c]; tab[a.r][a.c] = tab[b.r][
 
 async function intentarCambio(a, b) {
   if (ocupado) return;
+  pistaCeldas = new Set();
+  const va0 = tab[a.r][a.c], vb0 = tab[b.r][b.c];
   intercambiar(a, b);
-  if (buscarCoincidencias(tab).size === 0) {
+  const conEspecial = va0 >= BASE || vb0 >= BASE;
+  const coincide = buscarCoincidencias(tab).size > 0;
+  if (!coincide && !conEspecial) {
     intercambiar(a, b);
     SND.mal();
     const el = document.querySelector('.ficha[data-r="' + a.r + '"][data-c="' + a.c + '"]');
@@ -264,35 +343,75 @@ async function intentarCambio(a, b) {
   ocupado = true; sel = null;
   movs--; combo = 0;
   SND.cambio();
-  pintar();
-  await resolver();
+  // Las piezas especiales que se movieron se activan
+  const activar = new Set();
+  if (va0 >= BASE) activar.add(clave(b.r, b.c));
+  if (vb0 >= BASE) activar.add(clave(a.r, a.c));
+  // Filas de 4 o más: nace una cruz en la pieza movida (o en el centro de la fila)
+  const crear = [];
+  const origenes = new Set();
+  for (const fila of filasLargas(tab)) {
+    const mover = [clave(a.r, a.c), clave(b.r, b.c)].find((k) => fila.celdas.includes(k));
+    const origen = mover || fila.celdas[Math.floor(fila.celdas.length / 2)];
+    origenes.add(origen);
+    const [r, c] = origen.split(',').map(Number);
+    crear.push({ r, c, t: fila.t });
+  }
+  let m = new Set([...buscarCoincidencias(tab), ...activar]);
+  origenes.forEach((k) => m.delete(k));
+  await resolver(m, crear);
   ocupado = false;
+  if (!hayMovimiento(tab)) {
+    ayuda('Barajando las piezas…');
+    await wait(500);
+    tab = tableroInicial(cfg.tipos);
+    let k = 0; while (!hayMovimiento(tab) && k++ < 30) tab = tableroInicial(cfg.tipos);
+    pintar(null, new Set(tab.flat().map((_, i) => clave(Math.floor(i / COLS), i % COLS))));
+    ayuda('¡Nuevas piezas!');
+  }
   comprobarFin();
 }
 
-async function resolver() {
+async function resolver(m0, crear) {
+  let m = m0, primera = true;
   while (true) {
-    const m = buscarCoincidencias(tab);
+    if (!m) { m = buscarCoincidencias(tab); if (m.size === 0) break; }
+    m = expandir(m);
     if (m.size === 0) break;
     combo++;
     const n = m.size;
     SND.limpiar(combo);
     pintar(m);
+    if (combo > 1) ayuda('¡Combo ×' + combo + '!');
     await wait(230);
     puntosNivel += n * 10 * combo;
     m.forEach((k) => { const [r, c] = k.split(',').map(Number); tab[r][c] = -1; });
-    // Caen las fichas y se rellenan los huecos desde arriba
+    if (primera && crear) crear.forEach((s) => { tab[s.r][s.c] = BASE + s.t; });
     const nuevas = new Set();
     for (let c = 0; c < COLS; c++) {
       let escribe = FILAS - 1;
       for (let r = FILAS - 1; r >= 0; r--) if (tab[r][c] >= 0) { tab[escribe][c] = tab[r][c]; escribe--; }
-      for (let r = escribe; r >= 0; r--) { tab[r][c] = rnd(cfg.tipos); nuevas.add(r + ',' + c); }
+      for (let r = escribe; r >= 0; r--) { tab[r][c] = rnd(cfg.tipos); nuevas.add(clave(r, c)); }
     }
     pintar(null, nuevas);
     await wait(280);
+    m = null; primera = false;
   }
   guardar();
 }
+
+function pista() {
+  if (ocupado || !pistaLista || !jugando) return;
+  const mov = hayMovimiento(tab);
+  if (!mov) return;
+  pistaLista = false;
+  pistaCeldas = new Set([clave(mov.a.r, mov.a.c), clave(mov.b.r, mov.b.c)]);
+  pintar();
+  ayuda('Pista: intercambia las dos piezas iluminadas');
+  setTimeout(() => { pistaCeldas = new Set(); if (!ocupado) pintar(); }, 1800);
+  setTimeout(() => { pistaLista = true; }, 9000);
+}
+document.getElementById('btn-pista').addEventListener('click', pista);
 
 function comprobarFin() {
   if (puntosNivel >= cfg.meta) { finNivel(true); return; }
@@ -305,6 +424,7 @@ function estrellasDe(p) {
   return 1;
 }
 function finNivel(gano) {
+  jugando = false;
   if (gano) {
     const est = estrellasDe(puntosNivel);
     const previo = S.estrellas[nivel] || 0;
