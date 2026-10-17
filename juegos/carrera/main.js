@@ -224,6 +224,7 @@ function vistaInicio() {
   return `<div class="inicio-botones">
     <button type="button" class="gran" data-ir="modo">Jugar</button>
     <button type="button" class="sec" data-ir="ajustes">Ajustes</button>
+    <button type="button" class="sec" data-accion="salir">Salir del juego</button>
     <p class="mejor">Puntos guardados: <b>${puntosTotales()}</b></p>
     <p class="ayuda">Con botones: ◀ ▶ girar · A acelerar · B frenar · X usar objeto · Y derrapar. En el teclado: flechas o A y D para girar, ↑ acelerar, ↓ frenar, Shift o Z derrapar, Espacio o E usar objeto, P pausar.</p>
   </div>`;
@@ -392,6 +393,7 @@ function accion(a) {
     case 'repetir': case 'reiniciar': empezarCarrera(pistaActual); break;
     case 'continuar': togglePausa(false); break;
     case 'menu': volverMenu(); break;
+    case 'salir': try { window.parent.postMessage({ tipo: 'juma-cerrar' }, location.origin); } catch (e) {} break;
     default: break;
   }
 }

@@ -1,7 +1,7 @@
 {
- "version": "1a5faaf08713",
+ "version": "ba44b7aeac37",
  "recursos": "juma-recursos-v1",
- "tamano": 52251799,
+ "tamano": 52253163,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -740,13 +740,13 @@
   },
   {
    "ruta": "index.html",
-   "tamano": 147991,
-   "hash": "4c75ea91e3d1"
+   "tamano": 148398,
+   "hash": "8458c18ce42f"
   },
   {
    "ruta": "js/app.js",
-   "tamano": 491281,
-   "hash": "1533a5dfb06f"
+   "tamano": 492040,
+   "hash": "fcc4b6bd869d"
   },
   {
    "ruta": "js/fe.js",
@@ -830,8 +830,8 @@
   },
   {
    "ruta": "juegos/carrera/main.js",
-   "tamano": 31955,
-   "hash": "aafe16e7ad9f"
+   "tamano": 32153,
+   "hash": "068a60ca2558"
   },
   {
    "ruta": "juegos/carrera/objetos.js",
