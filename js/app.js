@@ -3419,8 +3419,13 @@ function renderJuegosView() {
       </article>
       <article class="lib-card">
         <div class="lib-cover" style="--bk:#4A2A6E"><b>Memoria de santos</b></div>
-        <div class="lib-info"><h2>Memoria de santos</h2><small>Juego de memoria</small><p>Une cada rostro con su nombre y descubre el dato de cada santo y beato del carisma.</p>
+        <div class="lib-info"><h2>Memoria de santos</h2><small>Juego de memoria</small><p>Une cada rostro con su nombre y descubre el dato de cada santo del carisma.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/memoria-santos.html">${ic('gamepad')}Jugar</button></div>
+      </article>
+      <article class="lib-card">
+        <div class="lib-cover" style="--bk:#7A2E5C"><b>Cuentas de gracia</b></div>
+        <div class="lib-info"><h2>Cuentas de gracia</h2><small>Tres en línea · símbolos de la fe</small><p>Une símbolos de la fe para limpiar el tablero y llegar a la meta en cada uno de los 20 niveles.</p>
+        <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/cuentas-de-gracia.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card lib-soon"><div class="lib-cover lib-cover-empty" aria-hidden="true">${ic('gamepad')}</div><div class="lib-info"><h2>Próximamente</h2><p>Aquí aparecerán nuevos juegos.</p></div></article>
     </div></div>`;
@@ -3432,7 +3437,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=73" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=74" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }
