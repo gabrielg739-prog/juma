@@ -113,7 +113,7 @@
   .misal-lista div.bloq { opacity: .45; }
   .misal-lista svg { width: 36px; height: 36px; flex: 0 0 auto; }
   /* Escena del presbiterio durante la Misa */
-  .presb { position: relative; height: min(30vh, 200px); border-radius: 20px; overflow: hidden; margin: 2px 0 4px; background: radial-gradient(ellipse at 50% 0%, #8a5a30, #3a200e 65%, #1a0c04); box-shadow: inset 0 0 50px rgba(0,0,0,.6), 0 8px 20px rgba(0,0,0,.4); }
+  .presb { position: relative; height: min(34vh, 250px); border-radius: 20px; overflow: hidden; margin: 2px 0 4px; background: radial-gradient(ellipse at 50% 0%, #8a5a30, #3a200e 65%, #1a0c04); box-shadow: inset 0 0 50px rgba(0,0,0,.6), 0 8px 20px rgba(0,0,0,.4); }
   .presb svg { width: 100%; height: 100%; display: block; }
   .presb .brazo { transform-box: fill-box; transition: transform .7s cubic-bezier(.34,1.3,.5,1); }
   .presb .bi { transform-origin: 90% 10%; } .presb .bd { transform-origin: 10% 10%; }
@@ -200,6 +200,7 @@
 <div class="fondo-hoja" id="fondo-hoja"><div class="hoja" id="hoja"></div></div>
 
 <script src="lib/sonido.js"></script>
+<script type="module">import { crear } from './lib/presbiterio3d.js'; window.Presb3D = { crear };</script>
 <script>
 'use strict';
 const $ = (id) => document.getElementById(id);
@@ -416,6 +417,7 @@ function fallar() {
 
 /* ---------- Menú ---------- */
 function pintarMenu() {
+  quitar3D();
   vista('menu'); enMisa = false; JS.pararMusica();
   const ri = rangoDe(S.total || 0), sig = RANGOS[ri + 1];
   $('rango').innerHTML = `<svg class="med" viewBox="0 0 46 46"><circle cx="23" cy="23" r="20" fill="#c0262f" stroke="#ffd25a" stroke-width="2.5"/><path d="M14 40c0-10 4-16 9-16s9 6 9 16z" fill="#fff"/><circle cx="23" cy="17" r="6" fill="#f0c8a0"/><path d="M23 26v12M19 30h8" stroke="#c9a040" stroke-width="2"/></svg><div style="flex:1"><small>Tu rango</small><b>${RANGOS[ri].n}</b><div class="barra"><i style="width:${sig ? Math.min(100, ((S.total || 0) - RANGOS[ri].p) / (sig.p - RANGOS[ri].p) * 100).toFixed(1) : 100}%"></i></div><small>${sig ? 'Faltan ' + (sig.p - (S.total || 0)).toLocaleString('es') + ' puntos para ' + sig.n : '¡El rango más alto!'} · Ayudas por Misa: ${1 + Math.min(2, ri)}</small></div>`;
@@ -559,7 +561,17 @@ function aviso(t) { $('a-sub').textContent = t; }
 let momentos = [], iMom = 0, tIni = 0, tLim = 0, respondido = false, imprevistos = new Set();
 const ACCIONES = ['rezar', 'cantar', 'silencio', 'paz', 'campanilla', 'vinajeras', 'jarra', 'copon', 'misal', 'purificador', 'incensario', 'cruzalta', 'mision', 'baculo'];
 // Dibuja el presbiterio: retablo, Sagrario, altar con velas, ambón, el sacerdote y el acólito
+let P3 = null;
+function quitar3D() { if (P3) { try { P3.destruir(); } catch (e) { /* nada */ } P3 = null; } }
 function escenaMisa() {
+  quitar3D();
+  if (window.Presb3D) {
+    try {
+      $('presb').innerHTML = ''; $('presb').className = 'presb';
+      P3 = window.Presb3D.crear($('presb'), { color: COLORES[M.color][0], solemne: !!M.solemne, sotana: ['#c0262f', '#c0262f', '#1a1a2a', '#6a2aa0', '#1a1a2a'][rangoDe(S.total || 0)] });
+      return;
+    } catch (e) { P3 = null; }
+  }
   const casulla = COLORES[M.color][0], sotana = ['#c0262f', '#c0262f', '#1a1a2a', '#6a2aa0', '#1a1a2a'][rangoDe(S.total || 0)];
   const vela = (x, id) => `<g id="${id}" class="vela-tocar"><rect x="${x - 3}" y="88" width="6" height="22" rx="1" fill="#fffbea"/><rect x="${x - 5}" y="108" width="10" height="4" rx="1" fill="#c9a040"/><path class="llama" d="M${x} 74c4 5 4 9 0 13-4-4-4-8 0-13z" fill="url(#llamaG)"/><circle class="llama" cx="${x}" cy="82" r="9" fill="rgba(255,220,120,.25)"/></g>`;
   $('presb').className = 'presb' + (M.solemne ? ' incienso' : '');
@@ -601,6 +613,7 @@ function escenaMisa() {
 }
 // Postura del sacerdote según el momento de la Misa
 function poseCura(m) {
+  if (P3) { P3.pose(m.n, m.consagra); return; }
   const bi = document.getElementById('bi'), bd = document.getElementById('bd'), cura = document.getElementById('cura'), ho = document.getElementById('hostia'), pr = $('presb');
   if (!bi) return;
   let i = 0, d = 0, x = 0, h = false;
@@ -619,10 +632,19 @@ function poseCura(m) {
   pr.classList.toggle('envio', /Envío/.test(n));
 }
 // Lo que el acólito lleva en las manos
-function acolitoLleva(accion) { const g = document.getElementById('lleva'); if (g) g.innerHTML = accion && ICONO[accion] ? DEF + ICONO[accion] : ''; }
+function acolitoLleva(accion) {
+  if (P3) { P3.lleva(accion && ICONO[accion] ? 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128">' + DEF + ICONO[accion] + '</svg>') : null); return; } const g = document.getElementById('lleva'); if (g) g.innerHTML = accion && ICONO[accion] ? DEF + ICONO[accion] : ''; }
 // Imprevisto: se apaga una vela y hay que tocarla para encenderla
 let velaT = 0;
+let velaApagada = -1;
 function imprevistoVela() {
+  if (P3) {
+    velaApagada = rnd() < 0.5 ? 0 : 1; P3.vela(velaApagada, false); velaT = performance.now();
+    $('presb').insertAdjacentHTML('beforeend', '<div class="aviso-vela" id="aviso-vela">¡Se apagó una vela! Tócala</div>');
+    JS.E.soplo(0.4, 0.1, 1800, 400);
+    setTimeout(() => { if (velaApagada >= 0 && P3) { P3.vela(velaApagada, true); velaApagada = -1; const a = $('aviso-vela'); if (a) a.remove(); } }, 3200);
+    return;
+  }
   const id = rnd() < 0.5 ? 'v1' : 'v2', v = document.getElementById(id); if (!v) return;
   v.classList.add('apagada'); velaT = performance.now();
   $('presb').insertAdjacentHTML('beforeend', '<div class="aviso-vela" id="aviso-vela">¡Se apagó una vela! Tócala</div>');
@@ -630,6 +652,15 @@ function imprevistoVela() {
   setTimeout(() => { if (v.classList.contains('apagada')) { v.classList.remove('apagada'); const a = $('aviso-vela'); if (a) a.remove(); } }, 3000);
 }
 $('presb').addEventListener('pointerdown', (e) => {
+  if (P3) {
+    if (velaApagada < 0) return;
+    const i = P3.velaTocada(e.clientX, e.clientY);
+    if (i !== velaApagada && !e.target.closest('.aviso-vela')) return;
+    P3.vela(velaApagada, true); velaApagada = -1; const a = $('aviso-vela'); if (a) a.remove();
+    const rap = Math.max(0, 1 - (performance.now() - velaT) / 3200);
+    SND.vela(); racha++; sumar(Math.round(40 + rap * 60), $('presb'));
+    return;
+  }
   const v = e.target.closest('.vela-tocar'); if (!v || !v.classList.contains('apagada')) return;
   v.classList.remove('apagada'); const a = $('aviso-vela'); if (a) a.remove();
   const rap = Math.max(0, 1 - (performance.now() - velaT) / 3000);
@@ -786,7 +817,7 @@ $('fondo-hoja').addEventListener('click', (e) => {
 $('motas').innerHTML = Array.from({ length: 12 }, () => `<i style="left:${(rnd() * 100).toFixed(1)}%;--t:${(4 + rnd() * 9).toFixed(0)}px;--d:${(9 + rnd() * 10).toFixed(1)}s;--r:-${(rnd() * 18).toFixed(1)}s;--x:${(rnd() * 80 - 40).toFixed(0)}px"></i>`).join('');
 guardar();
 pintarMenu();
-window.__sac = { get m() { return momentos[iMom]; }, empezar, get S() { return S; }, faseMisa, terminar };
+window.__sac = { get P3() { return P3; }, get m() { return momentos[iMom]; }, empezar, get S() { return S; }, faseMisa, terminar };
 </script>
 </body>
 </html>

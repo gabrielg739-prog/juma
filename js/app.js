@@ -3414,7 +3414,7 @@ function renderJuegosView() {
     <div class="lib-grid">
       <article class="lib-card">
         <div class="lib-cover" style="--bk:#6A3A10"><b>Sacristán</b></div>
-        <div class="lib-info"><h2>Sacristán</h2><small>La Misa y la misión · ¡Nuevo!</small><p>Elige el color litúrgico, prepara el altar y sirve en cada momento de la Misa mientras ves al sacerdote celebrar. Incluye la Misa de hoy según el calendario litúrgico, rangos de monaguillo a maestro de ceremonias y la misión al salir.</p>
+        <div class="lib-info"><h2>Sacristán</h2><small>La Misa y la misión · ¡Nuevo!</small><p>Elige el color litúrgico, prepara el altar y sirve en cada momento de la Misa en una iglesia en 3D, mientras ves al sacerdote celebrar. Incluye la Misa de hoy según el calendario litúrgico, rangos de monaguillo a maestro de ceremonias y la misión al salir.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/sacristan.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
@@ -3457,7 +3457,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=89" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=90" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }
