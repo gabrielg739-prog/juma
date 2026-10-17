@@ -54,7 +54,13 @@
   .btn-grande { width: 100%; height: 68px; border-radius: 999px; font-size: 26px; font-weight: 900; letter-spacing: .02em; background: linear-gradient(180deg, #62C943, #3A9A22); box-shadow: 0 6px 0 var(--verde-2), 0 14px 24px rgba(0,0,0,.35); color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
   .btn-grande:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--verde-2); }
   .btn-grande:disabled { background: #6B5E78; box-shadow: 0 6px 0 #463C52; color: #C9BFD6; }
-  .botones2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .botones2 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .btn2 small { display: block; font-size: 10.5px; opacity: .8; font-weight: 700; margin-top: -2px; }
+  .dific-op { display: grid; gap: 8px; margin: 10px 0; }
+  .dific-op button { padding: 12px 14px; border-radius: 16px; border: 2px solid #e4d6b0; background: #fff; text-align: left; color: #2b1a3f; font-weight: 800; font-size: 16px; }
+  .dific-op button small { display: block; font-weight: 600; font-size: 13px; color: #7a6a8c; margin-top: 2px; }
+  .dific-op button[aria-pressed="true"] { border-color: #c98f12; background: #fff4cf; }
+  .estrellas-n { font-size: 34px; letter-spacing: 6px; color: #c98f12; margin: 2px 0; }
   .btn2 { height: 50px; border-radius: 999px; background: var(--glass-2); border: 2px solid var(--borde); font-weight: 800; font-size: 16px; }
   .btn2:active { transform: scale(.97); }
   .aviso { text-align: center; font-size: 14.5px; font-weight: 700; text-shadow: 0 2px 6px rgba(0,0,0,.7); }
@@ -162,6 +168,7 @@
       <div class="botones2">
         <button class="btn2" id="btn-capitulos" type="button">Capítulos</button>
         <button class="btn2" id="btn-relicario" type="button">Relicario</button>
+        <button class="btn2" id="btn-dific" type="button">Dificultad<small id="m-dific">Normal</small></button>
       </div>
     </div>
   </section>
@@ -230,6 +237,13 @@ const MIN_VIDA = 20;
 const INTERVALO = MIN_VIDA * 60 * 1000;
 const CLAVE = 'juma-palabras-v3';
 const PT = { palabra: 10, base: 30, nivel: 50, pista: 15 };
+const DIFS = {
+  facil: { n: 'Fácil', d: 'Más tiempo, la primera letra de cada palabra a la vista y solo 2 s menos por error.', tiempo: 1.6, pena: 2000, costo: 1, letra: true, bono: 0 },
+  normal: { n: 'Normal', d: 'El reto de siempre: 5 s menos por cada error.', tiempo: 1, pena: 5000, costo: 1, letra: false, bono: 10 },
+  dificil: { n: 'Difícil', d: 'Menos tiempo, 8 s menos por error y pistas al doble. Más ★ al terminar.', tiempo: 0.7, pena: 8000, costo: 2, letra: false, bono: 30 }
+};
+const DIF = () => DIFS[S.dificultad] || DIFS.normal;
+let ultimoAcierto = 0, racha = 0;
 const PENA_MS = 5000;
 function fondo(ci) { const b = document.getElementById('bg'); b.style.backgroundImage = 'url(fondos/f' + (ci + 1) + '.jpg)'; b.style.backgroundPosition = ci === 0 ? 'center 18%' : 'center'; }
 function mosaicoHtml(img, piezas, grande, nueva) {
@@ -300,7 +314,8 @@ let S;
 function cargar() {
   let d = null;
   try { d = JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch (e) { d = null; }
-  S = Object.assign({ completados: 0, puntos: 0, vidas: MAX_VIDAS, ultimaVida: Date.now(), enCurso: null, vocab: [] }, d || {});
+  S = Object.assign({ completados: 0, puntos: 0, vidas: MAX_VIDAS, ultimaVida: Date.now(), enCurso: null, vocab: [], dificultad: 'normal', estrellas: {} }, d || {});
+  if (!DIFS[S.dificultad]) S.dificultad = 'normal';
   regenerarVidas();
 }
 function guardar() {
@@ -326,7 +341,7 @@ function capDe(n) { return CAPS.findIndex((c) => n <= c.fin); }
 function inicioCap(ci) { return ci === 0 ? 1 : CAPS[ci - 1].fin + 1; }
 function barajar(a) { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; }
 function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-function tiempoBase(nv) { return 45000 + 9000 * nv.palabras.length + 3000 * nv.base.length; }
+function tiempoBase(nv) { return Math.round((45000 + 9000 * nv.palabras.length + 3000 * nv.base.length) * DIF().tiempo); }
 
 // ---------- Mapa ----------
 function nivelActual() { return Math.min(S.completados + 1, NIVELES.length); }
@@ -404,7 +419,9 @@ function verAyuda() {
     '<p>• Une las letras de la rueda arrastrando el dedo para formar palabras.</p>' +
     '<p>• Las palabras se cruzan en el tablero. Cada palabra encontrada se llena con sus letras.</p>' +
     '<p>• Tienes un <b>tiempo</b> para cada nivel. Si se acaba, pierdes una <b>vida</b>.</p>' +
-    '<p>• Cada palabra incorrecta te quita <b>5 segundos</b>.</p>' +
+    '<p>• Cada palabra incorrecta te quita tiempo: <b>2, 5 u 8 segundos</b> según la dificultad.</p>' +
+    '<p>• Encuentra palabras seguidas en menos de 12 segundos para hacer <b>racha</b>: +4 segundos y ★ extra.</p>' +
+    '<p>• Termina con más tiempo de sobra para ganar hasta <b>3 estrellas</b>.</p>' +
     '<p>• Las vidas se recuperan solas: una cada ' + MIN_VIDA + ' minutos.</p>' +
     '<p>• Ganas <b>★ puntos misioneros</b> que se suman a tu perfil.</p>' +
     '<p>• Cada capítulo termina con un cuadro para reclamar.</p></div>' +
@@ -431,7 +448,13 @@ function abrirNivel(n) {
   if (S.vidas <= 0) { verSinVidas(); return; }
   const nv = NIVELES[n - 1];
   let retomar = S.enCurso && S.enCurso.n === n;
-  if (!retomar) S.enCurso = { n: n, enc: [], rev: [], tiempo: tiempoBase(nv) };
+  if (!retomar) {
+    S.enCurso = { n: n, enc: [], rev: [], tiempo: tiempoBase(nv), total: tiempoBase(nv) };
+    // En fácil se ve la primera letra de cada palabra
+    if (DIF().letra) nv.palabras.forEach((p) => { S.enCurso.rev.push(p.r + ',' + p.c); });
+  }
+  racha = 0; ultimoAcierto = 0;
+  const bp = document.querySelector('#btn-pista small'); if (bp) bp.textContent = '★' + PT.pista * DIF().costo;
   NV = nv;
   encontradas = new Set(S.enCurso.enc);
   reveladas = new Set(S.enCurso.rev);
@@ -578,8 +601,10 @@ function sacudir() {
 function probar(p) {
   const idx = NV.palabras.findIndex((x) => x.w === p);
   if (idx < 0) {
-    tiempoMs = Math.max(0, tiempoMs - PENA_MS);
-    mensaje('"' + p + '" no está aquí: −5 segundos', 'mal');
+    const pena = DIF().pena;
+    tiempoMs = Math.max(0, tiempoMs - pena);
+    racha = 0;
+    mensaje('"' + p + '" no está aquí: −' + Math.round(pena / 1000) + ' segundos', 'mal');
     SND.error();
     sacudir();
     pintarTiempo();
@@ -590,11 +615,17 @@ function probar(p) {
   activa = idx;
   const esBase = p === NV.base;
   S.puntos += esBase ? PT.base : PT.palabra;
+  // Racha: palabras seguidas en menos de 12 segundos dan tiempo extra
+  const ahoraR = Date.now();
+  racha = ahoraR - ultimoAcierto < 12000 ? racha + 1 : 1;
+  ultimoAcierto = ahoraR;
+  let extraRacha = '';
+  if (racha >= 2) { tiempoMs += 4000; S.puntos += 2 * racha; extraRacha = ' · ¡Racha ×' + racha + '! +4 s'; pintarTiempo(); }
   if (!S.vocab.includes(p)) S.vocab.push(p);
   S.enCurso.enc = Array.from(encontradas);
   guardar();
   if (esBase) SND.base(); else SND.acierto();
-  mensaje((esBase ? '¡Palabra base! +' + PT.base : '¡Muy bien! +' + PT.palabra) + ' ★', 'ok');
+  mensaje((esBase ? '¡Palabra base! +' + PT.base : '¡Muy bien! +' + PT.palabra) + ' ★' + extraRacha, 'ok');
   if (encontradas.size === NV.palabras.length) { juegoActivo = false; dibujarPista(); setTimeout(completarNivel, 500); return; }
   const sig = NV.palabras.findIndex((x) => !encontradas.has(x.w));
   if (sig >= 0) activa = sig;
@@ -605,13 +636,14 @@ function pistaDeLetra() {
   let p = NV.palabras[activa];
   if (!p || encontradas.has(p.w)) p = NV.palabras.find((x) => !encontradas.has(x.w));
   if (!p) return;
-  if (S.puntos < PT.pista) { mensaje('Necesitas ' + PT.pista + ' ★ para una pista.', 'mal'); return; }
+  const costo = PT.pista * DIF().costo;
+  if (S.puntos < costo) { mensaje('Necesitas ' + costo + ' ★ para una pista.', 'mal'); return; }
   for (let i = 0; i < p.w.length; i++) {
     const r = p.dir === 'H' ? p.r : p.r + i, c = p.dir === 'H' ? p.c + i : p.c;
     const k = r + ',' + c;
     if (!resuelta(k)) {
       reveladas.add(k);
-      S.puntos -= PT.pista;
+      S.puntos -= costo;
       S.enCurso.rev = Array.from(reveladas);
       guardar();
       SND.pista();
@@ -629,7 +661,12 @@ function pintarTiempo() {
 function completarNivel() {
   juegoActivo = false;
   const numero = NV.n;
-  const bono = PT.nivel + 10 * S.vidas;
+  const total = (S.enCurso && S.enCurso.total) || tiempoBase(NV);
+  const fr = tiempoMs / total;
+  const est = fr >= 0.5 ? 3 : fr >= 0.25 ? 2 : 1;
+  S.estrellas = S.estrellas || {};
+  S.estrellas[numero] = Math.max(S.estrellas[numero] || 0, est);
+  const bono = PT.nivel + 10 * S.vidas + DIF().bono + est * 5;
   S.puntos += bono;
   S.completados = Math.max(S.completados, numero);
   S.enCurso = null;
@@ -645,7 +682,7 @@ function completarNivel() {
     return;
   }
   SND.nivel();
-  abrirHoja('<h3>¡Felicidades!</h3><p class="sub">Nivel ' + numero + ' completado · <b>+' + bono + ' ★</b></p>' + mosaico +
+  abrirHoja('<h3>¡Felicidades!</h3><p class="estrellas-n">' + '★'.repeat(est) + '<span style="opacity:.25">' + '★'.repeat(3 - est) + '</span></p><p class="sub">Nivel ' + numero + ' completado en ' + DIF().n.toLowerCase() + ' · <b>+' + bono + ' ★</b></p>' + mosaico +
     '<p class="pieza-txt">Pieza ' + (idx + 1) + ' de 20 · ' + esc(cap.nombre) + '</p>' +
     '<div class="versiculo">“' + v.t + '”<small>' + v.r + '</small></div>' +
     (numero < NIVELES.length ? '<button class="boton" type="button" data-accion="siguiente">NIVEL ' + (numero + 1) + '</button>' : '') +
@@ -682,6 +719,13 @@ document.getElementById('btn-jugar').onclick = () => abrirNivel(nivelActual());
 document.getElementById('btn-capitulos').onclick = verCapitulos;
 document.getElementById('btn-relicario').onclick = verRelicario;
 document.getElementById('btn-ayuda').onclick = verAyuda;
+function verDificultad() {
+  abrirHoja('<h3>Dificultad</h3><p class="sub">Cambia cuando quieras. Se aplica al empezar un nivel.</p><div class="dific-op">' +
+    Object.entries(DIFS).map(([k, d]) => '<button type="button" data-dif="' + k + '" aria-pressed="' + (k === S.dificultad) + '">' + d.n + '<small>' + esc(d.d) + '</small></button>').join('') +
+    '</div><button class="boton sec" type="button" data-cerrar>Listo</button>');
+}
+function pintarDific() { const m = document.getElementById('m-dific'); if (m) m.textContent = DIF().n; }
+document.getElementById('btn-dific').onclick = verDificultad;
 document.getElementById('tablero').addEventListener('click', (e) => {
   const c = e.target.closest('.ficha');
   if (!c || !NV || !juegoActivo) return;
@@ -693,8 +737,9 @@ document.getElementById('tablero').addEventListener('click', (e) => {
 });
 document.getElementById('fondo').addEventListener('click', (e) => {
   if (e.target.id === 'fondo') { if (document.getElementById('hoja').dataset.bloqueo !== '1') cerrarHoja(); return; }
-  const b = e.target.closest('[data-accion],[data-cerrar],[data-nivel]');
+  const b = e.target.closest('[data-accion],[data-cerrar],[data-nivel],[data-dif]');
   if (!b) return;
+  if (b.dataset.dif) { S.dificultad = b.dataset.dif; if (S.enCurso && !juegoActivo) S.enCurso = null; guardar(); pintarDific(); verDificultad(); return; }
   if (b.dataset.cerrar !== undefined) { cerrarHoja(); return; }
   if (b.dataset.nivel) { cerrarHoja(); abrirNivel(Number(b.dataset.nivel)); return; }
   const a = b.dataset.accion;
@@ -724,6 +769,7 @@ setInterval(() => {
 }, 250);
 
 cargar();
+pintarDific();
 pintarMapa();
 mostrarVista('mapa');
 </script>
