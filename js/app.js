@@ -3417,6 +3417,11 @@ function renderJuegosView() {
         <div class="lib-info"><h2>Palabras JUMA</h2><small>Crucigrama y rueda de letras</small><p>Forma palabras del manual y de la fe, completa los crucigramas y arma los cuadros de cada capítulo.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/palabras-juma.html">${ic('gamepad')}Jugar</button></div>
       </article>
+      <article class="lib-card">
+        <div class="lib-cover" style="--bk:#4A2A6E"><b>Memoria de santos</b></div>
+        <div class="lib-info"><h2>Memoria de santos</h2><small>Juego de memoria</small><p>Une cada rostro con su nombre y descubre el dato de cada santo y beato del carisma.</p>
+        <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/memoria-santos.html">${ic('gamepad')}Jugar</button></div>
+      </article>
       <article class="lib-card lib-soon"><div class="lib-cover lib-cover-empty" aria-hidden="true">${ic('gamepad')}</div><div class="lib-info"><h2>Próximamente</h2><p>Aquí aparecerán nuevos juegos.</p></div></article>
     </div></div>`;
 }
@@ -3427,7 +3432,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=71" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=72" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }
@@ -3439,7 +3444,12 @@ window.addEventListener('message', (e) => {
   if (e.origin !== location.origin || !e.data) return;
   if (e.data.tipo === 'juma-cerrar') { cerrarLibro(); return; }
   if (e.data.tipo !== 'juma-puntos') return;
-  guardarPuntosMisioneros(Number(e.data.total) || 0);
+  /* Cada juego guarda su propio total; el perfil muestra la suma de todos */
+  let mapa = {};
+  try { mapa = JSON.parse(localStorage.getItem('juma-puntos-juegos') || '{}') || {}; } catch (x) { mapa = {}; }
+  mapa[String(e.data.juego || 'palabras').slice(0, 20)] = Math.max(0, Number(e.data.total) || 0);
+  try { localStorage.setItem('juma-puntos-juegos', JSON.stringify(mapa)); } catch (x) {}
+  guardarPuntosMisioneros(Object.values(mapa).reduce((a, b) => a + (Number(b) || 0), 0));
 });
 let ultimoEnvioPuntos = -1;
 function guardarPuntosMisioneros(total) {
