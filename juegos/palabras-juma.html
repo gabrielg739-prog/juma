@@ -45,6 +45,11 @@
   .mosaico { width: 42px; height: 54px; display: grid; grid-template-columns: repeat(4,1fr); grid-template-rows: repeat(5,1fr); gap: 1px; border-radius: 6px; overflow: hidden; border: 2px solid #fff; transform: rotate(8deg); box-shadow: 0 4px 8px rgba(0,0,0,.5); background: #222; }
   .mosaico u { background-size: 400% 500%; background-repeat: no-repeat; opacity: 0; text-decoration: none; }
   .mosaico u.on { opacity: 1; }
+  .mosaico u.nueva { opacity: 1; position: relative; z-index: 2; animation: pieza-cae .8s cubic-bezier(.23,1,.32,1) .45s both, pieza-brilla 1.4s ease-out .45s both; }
+  @keyframes pieza-cae { 0% { transform: translateY(-90px) scale(2.6) rotate(-10deg); opacity: 0; } 55% { opacity: 1; } 100% { transform: none; opacity: 1; } }
+  @keyframes pieza-brilla { 0% { filter: brightness(2.2) drop-shadow(0 0 12px #FFD25A); } 100% { filter: none; } }
+  .mosaico.grande { position: relative; overflow: visible; }
+  .pieza-txt { font-weight: 900; color: #7A47B0; letter-spacing: .06em; text-transform: uppercase; font-size: 13px; margin: 2px 0 0; }
   .mosaico.grande { width: 190px; height: 240px; transform: none; border-radius: 12px; border-width: 4px; border-color: var(--gold); box-shadow: 0 12px 28px rgba(0,0,0,.45), 0 0 30px rgba(255,210,90,.5); margin: 10px auto; }
   .btn-grande { width: 100%; height: 68px; border-radius: 999px; font-size: 26px; font-weight: 900; letter-spacing: .02em; background: linear-gradient(180deg, #62C943, #3A9A22); box-shadow: 0 6px 0 var(--verde-2), 0 14px 24px rgba(0,0,0,.35); color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
   .btn-grande:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--verde-2); }
@@ -227,11 +232,12 @@ const CLAVE = 'juma-palabras-v3';
 const PT = { palabra: 10, base: 30, nivel: 50, pista: 15 };
 const PENA_MS = 5000;
 function fondo(ci) { const b = document.getElementById('bg'); b.style.backgroundImage = 'url(fondos/f' + (ci + 1) + '.jpg)'; b.style.backgroundPosition = ci === 0 ? 'center 18%' : 'center'; }
-function mosaicoHtml(img, piezas, grande) {
+function mosaicoHtml(img, piezas, grande, nueva) {
   let h = '<div class="mosaico' + (grande ? ' grande' : '') + '">';
   for (let i = 0; i < 20; i++) {
     const c = i % 4, r = Math.floor(i / 4);
-    h += '<u class="' + (i < piezas ? 'on' : '') + '" style="background-image:url(' + img + ');background-position:' + (c * 100 / 3) + '% ' + (r * 100 / 4) + '%"></u>';
+    const cls = i === nueva ? 'on nueva' : (i < piezas ? 'on' : '');
+    h += '<u class="' + cls + '" style="background-image:url(' + img + ');background-position:' + (c * 100 / 3) + '% ' + (r * 100 / 4) + '%"></u>';
   }
   return h + '</div>';
 }
@@ -272,6 +278,7 @@ const SND = {
   tic() { tono(900, 0.05, 'square', 0.04); },
   nivel() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tono(f, 0.5, 'triangle', 0.16, i * 0.12)); tono(1318.5, 0.9, 'sine', 0.12, 0.5); },
   capitulo() { [392, 523.25, 659.25, 783.99, 1046.5].forEach((f, i) => { tono(f, 1.2, 'sine', 0.13, i * 0.14); tono(f * 2, 1.0, 'sine', 0.04, i * 0.14); }); },
+  pieza() { [1318.5, 1760, 2093].forEach((f, i) => tono(f, 0.35, 'sine', 0.1, 0.55 + i * 0.09)); },
   tiempo() { [440, 370, 311, 261].forEach((f, i) => tono(f, 0.3, 'triangle', 0.14, i * 0.16)); }
 };
 function pintarSonido() {
@@ -627,16 +634,19 @@ function completarNivel() {
   S.completados = Math.max(S.completados, numero);
   S.enCurso = null;
   guardar();
-  const ci = capDe(numero);
+  const ci = capDe(numero), cap = CAPS[ci];
+  const idx = numero - inicioCap(ci);
+  const mosaico = mosaicoHtml(cap.cuadro, idx, true, idx);
   const v = VERSOS[(numero - 1) % VERSOS.length];
-  if (numero === CAPS[ci].fin) {
-    const cap = CAPS[ci];
+  SND.pieza();
+  if (numero === cap.fin) {
     SND.capitulo();
-    abrirHoja('<h3>¡Capítulo completado!</h3><p class="sub">Reclama tu cuadro</p>' + mosaicoHtml(cap.cuadro, 20, true) + '<b style="font-size:18px">' + esc(cap.nombre) + '</b><p>' + esc(cap.desc) + '</p><button class="boton" type="button" data-accion="reclamar">RECLAMAR</button>');
+    abrirHoja('<h3>¡Capítulo completado!</h3><p class="sub">Ganaste la última pieza</p>' + mosaico + '<b style="font-size:18px">' + esc(cap.nombre) + '</b><p>' + esc(cap.desc) + '</p><button class="boton" type="button" data-accion="reclamar">RECLAMAR</button>');
     return;
   }
   SND.nivel();
-  abrirHoja('<h3>¡Felicidades!</h3><p class="estrellas">★ ★ ★</p><p>Nivel ' + numero + ' completado · <b>+' + bono + ' ★</b></p>' +
+  abrirHoja('<h3>¡Felicidades!</h3><p class="sub">Nivel ' + numero + ' completado · <b>+' + bono + ' ★</b></p>' + mosaico +
+    '<p class="pieza-txt">Pieza ' + (idx + 1) + ' de 20 · ' + esc(cap.nombre) + '</p>' +
     '<div class="versiculo">“' + v.t + '”<small>' + v.r + '</small></div>' +
     (numero < NIVELES.length ? '<button class="boton" type="button" data-accion="siguiente">NIVEL ' + (numero + 1) + '</button>' : '') +
     '<button class="boton sec" type="button" data-accion="mapa">Volver al mapa</button>');
