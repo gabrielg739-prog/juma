@@ -962,7 +962,7 @@ function drawChains(){
 /* ================= JUEGO: personajes, cámara, audio, interfaz y lógica ================= */
 const $=id=>document.getElementById(id);
 const CFG={claveGuardado:'camino_misionero_v1',clavePuntosJuma:'juma_puntos_camino_misionero',evento:'juma-puntos'};
-const P=PH;P.yaw=Math.PI;P.grounded=true;P.walk=0;P.speed=0;P.emote=0;P.emoteT=0;P.mood=0;
+const P=PH;P.yaw=Math.PI;P.grounded=true;P.walk=0;P.speed=0;P.fly=0;P.land=0;P.acc=0;P.emote=0;P.emoteT=0;P.mood=0;
 const S={mode:'menu',enc:0,lives:3,grace:0,lessons:[],done:[],tries:[],chStart:[],curEnc:-1,heart:20,step:0,opts:[],stepPts:0,shake:0,flash:0,
   t:0,wind:0,tod:0,todT:0,cam:{yaw:Math.PI,pitch:.32,dist:6.4,x:0,y:2,z:14,lx:0,ly:1.5,lz:0,shift:0,shiftT:0,fov:.95},
   settings:{q:'auto',sound:true,vib:true},classic:false,orbs:0,talkNear:-1,keys:{},joy:{x:0,y:0,on:false},jump:false,run:false,fps:60,dprScale:1,frames:0,ft:0,ending:false};
@@ -1005,29 +1005,50 @@ const _a=new Float32Array(16),_b=new Float32Array(16),_c=new Float32Array(16),_d
 const SHOE=hex('#2a2018'),OJO=hex('#fbfaf6'),PUP=hex('#1b1410'),BOCA=hex('#7a2f2a'),MEJ=hex('#ff9c9c');
 function oscuro(c,k){return [c[0]*k,c[1]*k,c[2]*k]}
 function drawHuman(x,y,z,yaw,o){
-  const sc=o.sc||1,t=S.t;M4.trs(ROOT,x,y+(o.hop||0),z,0,yaw,0,sc,sc,sc);
-  const ph=o.ph||0,amp=o.amp||0,tilt=(o.run||0)*.18,bob=Math.abs(Math.sin(ph))*.045*amp+Math.sin(t*1.6)*.006;
+  if(o.yo&&S.forzar)o=Object.assign({},o,S.forzar);const sc=o.sc||1,t=S.t;M4.trs(ROOT,x,y+(o.hop||0),z,0,yaw,0,sc,sc,sc);
+  const ph=o.ph||0,spd=o.spd||0,wlk=smooth(.25,1.1,spd),amp=wlk,rn=clamp((spd-4.2)/2.6,0,1),fly=o.fly||0,land=o.land||0;
   const skin=o.skin||hex('#e0ac7e'),shirt=o.shirt,pants=o.pants||hex('#3b4a6b'),hair=o.hair||hex('#2a1b12');
   const sl=o.slump||0;
-  child(_a,ROOT,0,.88+bob,0,tilt,0,0);                  // cadera
-  // piernas con rodilla
-  for(const sx of [-1,1]){const fase=ph+(sx>0?0:Math.PI),sw=Math.sin(fase)*.85*amp,kb=Math.max(0,Math.sin(fase+1.3))*1.05*amp+(o.hop?.25:0);
-   child(_b,_a,sx*.105,0,0,sw,0,0);
+  // ---- marcha: fase de paso -> muslo, rodilla, pie; la cadera sube y baja según el pie más bajo
+  const A=(.38+.07*spd)*wlk,Ksw=.45+.14*spd,LG={};let Hm=0;
+  for(const sx of [-1,1]){
+   const f=ph+(sx>0?0:Math.PI);let th=A*Math.sin(f),kb=0,fp=0;
+   const fn=((f+Math.PI/2)%TAU+TAU)%TAU-Math.PI/2;           // [-90°, 270°): 0 = apoyo medio
+   if(wlk>.01){
+    if(fn<Math.PI/6)kb=.2*Math.sin(2*Math.max(0,fn+Math.PI/2));           // amortigua al pisar
+    else if(fn<Math.PI/2)kb=.35*Ksw*(fn-Math.PI/6)/(Math.PI/3);            // se dobla al despegar
+    else{const u=(fn-Math.PI/2)/Math.PI;kb=Ksw*(.35*(1-u)+.65*Math.sin(Math.PI*u))}  // oscilación
+    kb*=wlk;
+    fp=-(th+kb);                                                           // pie plano en el apoyo
+    if(fn>Math.PI/6&&fn<Math.PI/2)fp+=.6*(fn-Math.PI/6)/(Math.PI/3);       // talón sube al despegar
+    else if(fn>=Math.PI/2)fp+=.6*Math.max(0,1-(fn-Math.PI/2)/(Math.PI*.35))-.18*clamp(((fn-Math.PI/2)/Math.PI-.6)/.4,0,1);
+   }
+   if(fly>0){                                                              // en el aire: una rodilla arriba
+    const up=sx<0?1:0,thA=up?-.85:.3,kbA=up?1.25:.55;
+    th=lerp(th,thA,fly);kb=lerp(kb,kbA,fly);fp=lerp(fp,up?.25:.5,fly)}
+   if(land>0){th-=.5*land;kb+=.85*land;fp-=.2*land}                        // amortigua el aterrizaje
+   LG[sx]={th,kb,fp};Hm=Math.max(Hm,.44*Math.cos(th)+.43*Math.cos(th+kb))}
+  const psi=wlk*(.07+.018*spd)*Math.sin(ph)*(1-fly),roll=.045*Math.cos(ph)*wlk*(1-fly),sway=.03*Math.cos(ph)*wlk*(1-fly)+Math.sin(t*.8)*.012*(1-wlk);
+  const lean=(.04+.02*spd)*wlk+clamp((o.acc||0)*.012,-.09,.14)*wlk+.28*land+.08*fly;
+  const pelY=Hm+.07-.02*land;
+  child(_a,ROOT,sway,pelY,0,0,psi,roll);                  // cadera
+  for(const sx of [-1,1]){const L=LG[sx];
+   child(_b,_a,sx*.105,0,0,L.th,0,0);
    child(_c,_b,0,-.22,0,0,0,0,.18,.46,.2);pushD('cyl',_c,pants,0,0,1,.05);
-   child(_d,_b,0,-.44,0,-kb,0,0);child(_c,_d,0,0,0,0,0,0,.16,.16,.17);pushD('sph',_c,pants,0,0,1,.05);
+   child(_d,_b,0,-.44,0,L.kb,0,0);child(_c,_d,0,0,0,0,0,0,.16,.16,.17);pushD('sph',_c,pants,0,0,1,.05);
    child(_c,_d,0,-.2,0,0,0,0,.15,.42,.16);pushD('cyl',_c,pants,0,0,1,.05);
-   child(_e,_d,0,-.43,0,kb*.6-sw*.25,0,0);child(_c,_e,0,0,.06,0,0,0,.19,.13,.33);pushD('sph',_c,SHOE,0,0,1,.25)}
+   child(_e,_d,0,-.43,0,L.fp,0,0);child(_c,_e,0,0,.06,0,0,0,.19,.13,.33);pushD('sph',_c,SHOE,0,0,1,.25)}
   // cadera y torso redondeados
   child(_c,_a,0,.02,0,0,0,0,.42,.22,.26);pushD('sph',_c,o.skirt?o.skirt:pants,0,0,1,.05);
   const brz=1+Math.sin(t*1.6)*.012;
-  child(_b,_a,0,.06,0,sl*.25,0,0);
+  child(_b,_a,0,.06,0,sl*.25+lean,-1.6*psi,-roll*.9);
   child(_c,_b,0,.28,0,0,0,0,.42,.56*brz,.26);pushD('cyl',_c,shirt,0,0,1,.12);
   child(_c,_b,0,.55,0,0,0,0,.5,.2,.28);pushD('sph',_c,shirt,0,0,1,.12);       // hombros
   if(o.skirt){child(_c,_a,0,-.24,0,0,0,0,.52,.62,.36);pushD('cone',_c,o.skirt,0,0,1,.05)}
   if(o.apron){child(_c,_a,0,.06,.15,0,0,0,.36,.62,.03);pushD('box',_c,o.apron,0,0,1,.05)}
   // cuello y cabeza (mira al jugador)
   child(_c,_b,0,.66,0,0,0,0,.12,.12,.12);pushD('cyl',_c,skin,0,0,1,.1);
-  const hy=o.headYaw||0,hp=(o.headPitch||0)+sl*.4;
+  const hy=(o.headYaw||0)+.6*psi,hp=(o.headPitch||0)+sl*.4-lean*.65;
   child(_d,_b,0,.66,0,hp,hy,0);
   child(_c,_d,0,.2,0,0,0,0,.27,.31,.28);pushD('sph',_c,skin,0,0,1,.12);
   // pelo
@@ -1048,11 +1069,13 @@ function drawHuman(x,y,z,yaw,o){
   if(o.glasses){for(const sx of [-1,1]){child(_c,_d,sx*.06,.215,.14,0,0,0,.075,.06,.012);pushD('box',_c,hex('#222'),.3,0,1,.4)}child(_c,_d,0,.22,.14,0,0,0,.05,.012,.012);pushD('box',_c,hex('#222'),0,0,1,.4)}
   // brazos con codo
   for(const sx of [-1,1]){
-   let rx=Math.sin(ph+(sx>0?Math.PI:0))*.7*amp,rz=sx*.09,eb=.25+amp*.35;
+   let rx=-LG[sx].th*(.85+.3*rn)+Math.sin(t*1.3+sx)*.03*(1-wlk),rz=sx*(.09+.05*rn),eb=.3+.22*wlk+.95*rn+.4*Math.max(0,-rx);
    if(o.talk&&sx<0){rx=-.9+Math.sin(t*5.2)*.35;rz=-.15;eb=.9+Math.sin(t*4.1)*.25}
    if(o.up){rx=-2.6+Math.sin(t*14)*.15;rz=sx*.3;eb=.2}
    if(o.hold&&sx>0){rx=-.55;rz=.05;eb=1.0}
    if(sl){rx=.12;rz=sx*.05;eb=.1}
+   if(fly>0){const sub=(o.vy||0)>0;rx=lerp(rx,sub?-1.5:-.5,fly);rz=lerp(rz,sx*(sub?.55:.95),fly);eb=lerp(eb,.5,fly)}
+   if(land>0){rx=lerp(rx,-.5,land);eb=lerp(eb,.7,land)}
    child(_d,_b,sx*.27,.56,0,rx,0,rz);
    child(_c,_d,0,0,0,0,0,0,.15,.15,.15);pushD('sph',_c,o.sleeve||shirt,0,0,1,.1);
    child(_c,_d,0,-.16,0,0,0,0,.12,.34,.13);pushD('cyl',_c,o.sleeve||shirt,0,0,1,.1);
@@ -1097,7 +1120,7 @@ function bindTouch(){
   joy.addEventListener('pointermove',mv);
   const up=e=>{if(e.pointerId!==jid)return;jid=null;S.joy.x=S.joy.y=0;S.joy.on=false;knob.style.transform='translate(0,0)'};
   joy.addEventListener('pointerup',up);joy.addEventListener('pointercancel',up);
-  $('bJump').addEventListener('pointerdown',e=>{S.jump=true;e.preventDefault()});
+  $('bJump').addEventListener('pointerdown',e=>{S.jump=true;S.jumpHeld=true;e.preventDefault()});['pointerup','pointercancel','pointerleave'].forEach(n=>$('bJump').addEventListener(n,()=>{S.jumpHeld=false}));
   $('bTalk').addEventListener('pointerdown',e=>{tryTalk();e.preventDefault()});
   $('bRun').addEventListener('pointerdown',e=>{S.run=!S.run;$('bRun').classList.toggle('on',S.run);e.preventDefault()});
   // cámara: arrastrar en el resto de la pantalla
@@ -1117,27 +1140,39 @@ function inputVec(){
   if(k.KeyW||k.ArrowUp)iy+=1;if(k.KeyS||k.ArrowDown)iy-=1;if(k.KeyD||k.ArrowRight)ix+=1;if(k.KeyA||k.ArrowLeft)ix-=1;
   if(S.joy.on){ix=S.joy.x;iy=S.joy.y}
   const l=Math.hypot(ix,iy);if(l>1){ix/=l;iy/=l}return [ix,iy]}
+function gait(dt){
+  const sp=P.speed;P.run=clamp((sp-4.2)/2.6,0,1);
+  P.fly+=((P.grounded?0:1)-P.fly)*(1-Math.exp(-dt*(P.grounded?18:12)));
+  P.land=Math.max(0,(P.land||0)-dt*3);
+  if(P.grounded&&sp>.25){const A=.38+.07*sp,pr=P.walk;P.walk+=dt*sp/(.86*A);   // el pie avanza lo que avanza el cuerpo: sin patinar
+   if(Math.floor((P.walk-Math.PI/2)/Math.PI)!==Math.floor((pr-Math.PI/2)/Math.PI)){AU.step();emitDust(P.x,P.y,P.z,sp>4.5?3:1)}}}
 function updatePlayer(dt){
   const [ix,iy]=inputVec();const cy=S.cam.yaw,fx=Math.sin(cy),fz=Math.cos(cy),rx=-Math.cos(cy),rz=Math.sin(cy);
-  const mag=Math.min(1,Math.hypot(ix,iy));let dx=fx*iy+rx*ix,dz=fz*iy+rz*ix;
+  const mag=Math.min(1,Math.hypot(ix,iy));let dx=fx*iy+rx*ix,dz=fz*iy+rz*ix;const dl=Math.hypot(dx,dz)||1;dx/=dl;dz/=dl;
   const run=(S.keys.ShiftLeft||S.keys.ShiftRight||S.run||(S.joy.on&&mag>.85))?1:0;
-  const target=mag*(run?8.2:5);const tvx=mag>0?dx/(Math.hypot(dx,dz)||1)*target:0,tvz=mag>0?dz/(Math.hypot(dx,dz)||1)*target:0;
-  const ac=P.grounded?28:8;const k=1-Math.exp(-ac*dt*.35);
-  P.vx+=(tvx-P.vx)*Math.min(1,ac*dt*.25);P.vz+=(tvz-P.vz)*Math.min(1,ac*dt*.25);
-  if((S.keys.Space||S.jump)&&P.grounded){P.vy=7.6;P.grounded=false;S.jump=false;emitDust(P.x,P.y,P.z,6)}
-  S.jump=false;
-  P.vy-=20*dt;P.x+=P.vx*dt;P.z+=P.vz*dt;P.y+=P.vy*dt;
-  const g=G(P.x,P.z);if(P.y<=g){if(!P.grounded&&P.vy<-6)emitDust(P.x,g,P.z,8);P.y=g;P.vy=0;P.grounded=true}else if(P.y>g+.15)P.grounded=false;
-  // colisiones
+  let slopeK=1;if(mag>.05){const ds=.7;slopeK=clamp(1-(G(P.x+dx*ds,P.z+dz*ds)-G(P.x,P.z))/ds*.45,.62,1.15)}   // cuestas: más lento al subir
+  const target=mag>.05?mag*(run?6.8:3.9)*slopeK:0,g0=P.grounded;
+  let ax=dx*target-P.vx,az=dz*target-P.vz;const al=Math.hypot(ax,az),mx=(g0?(target>0?18:16):(target>0?7:3))*dt;   // aceleración constante
+  if(al>mx){ax*=mx/al;az*=mx/al}P.vx+=ax;P.vz+=az;
+  // salto: margen al borde, salto anticipado y altura variable
+  P.coy=g0?.11:Math.max(0,(P.coy||0)-dt);
+  if(S.jump||(S.keys.Space&&!P.spaceHeld))P.buf=.13;S.jump=false;P.spaceHeld=!!S.keys.Space;P.buf=Math.max(0,(P.buf||0)-dt);
+  if(P.buf>0&&P.coy>0){P.vy=7.4;P.grounded=false;P.coy=0;P.buf=0;P.jumping=true;P.land=0;emitDust(P.x,P.y,P.z,6);AU.step()}
+  if(P.jumping&&P.vy>0&&P.vy<6.2&&!(S.keys.Space||S.jumpHeld))P.vy-=55*dt;
+  P.vy-=(P.vy>0?20:30)*dt;
+  const px=P.x,pz=P.z;P.x+=P.vx*dt;P.z+=P.vz*dt;P.y+=P.vy*dt;
+  const g=G(P.x,P.z);
+  if(P.y<=g+.001){if(!g0&&P.vy<-4){P.land=clamp((-P.vy-4)/9,.15,1);emitDust(P.x,g,P.z,4+(P.land*8|0));AU.step();vib(15)}P.y=g;P.vy=0;P.grounded=true;P.jumping=false}
+  else if(g0&&P.vy<=0&&P.y-g<.42){P.y=g;P.vy=0;P.grounded=true}            // en bajadas se pega al suelo
+  else P.grounded=false;
   const c=collideAll(P.x,P.z,P.r,P.y);P.x=c.x;P.z=c.z;
-  // pasillo del camino
+  if(c.hit){const vn=P.vx*c.nx+P.vz*c.nz;if(vn<0){P.vx-=vn*c.nx;P.vz-=vn*c.nz}}   // se desliza por la pared
   const np=nearPath(P.x,P.z);if(np.d>15){const p=pathAt(np.s),ox=P.x-p.x,oz=P.z-p.z,l=Math.hypot(ox,oz);P.x=p.x+ox/l*15;P.z=p.z+oz/l*15}
   P.s=np.s;
-  const sp=Math.hypot(P.vx,P.vz);P.speed=sp;
-  if(sp>.3){const ty=Math.atan2(P.vx,P.vz);let d=ty-P.yaw;while(d>Math.PI)d-=TAU;while(d<-Math.PI)d+=TAU;P.yaw+=d*Math.min(1,dt*12)}
-  if(P.grounded&&sp>.5){const pr=P.walk;P.walk+=dt*sp*1.45;if(Math.floor(P.walk/Math.PI)!==Math.floor(pr/Math.PI)){AU.step();emitDust(P.x,P.y,P.z,2)}}
-  else if(sp<=.5)P.walk*=.9;
-  P.run=clamp((sp-4.5)/3.5,0,1);
+  const real=Math.hypot(P.x-px,P.z-pz)/Math.max(dt,1e-3);P.speed+=(real-P.speed)*(1-Math.exp(-dt*14));if(P.speed<.05)P.speed=0;
+  const vs=Math.hypot(P.vx,P.vz);P.acc=(P.acc||0)+(((vs-(P.vsPrev||0))/Math.max(dt,1e-3))-(P.acc||0))*(1-Math.exp(-dt*8));P.vsPrev=vs;
+  if(vs>.3){const ty=Math.atan2(P.vx,P.vz);let d=ty-P.yaw;while(d>Math.PI)d-=TAU;while(d<-Math.PI)d+=TAU;P.yaw+=d*Math.min(1,dt*(P.grounded?13:5))}
+  gait(dt);
 }
 function emitDust(x,y,z,n){for(let i=0;i<n;i++)emit(x+(Math.random()-.5)*.4,y+.05,z+(Math.random()-.5)*.4,(Math.random()-.5)*1.2,Math.random()*.9,(Math.random()-.5)*1.2,.55+Math.random()*.4,.35,.78,.68,.5,.35,-1.2,2.5,1)}
 
@@ -1153,7 +1188,7 @@ function updateCamera(dt){
    if(S.mode==='ending'){ex=mx+sx*5;ey=Hs(mx,mz)+2.4;ez=mz+sz*5}
    const land=innerWidth>innerHeight*1.15;c.shiftT=S.mode==='ending'?0:(land?0:.34);c.shiftXT=S.mode==='ending'?0:(land?.30:0)}
   else{
-   c.shiftT=0;c.shiftXT=0;const d=c.dist,cp=Math.cos(c.pitch),sp=Math.sin(c.pitch);
+   c.fov+=((.95+.07*(P.run||0))-c.fov)*Math.min(1,dt*4);c.shiftT=0;c.shiftXT=0;const d=c.dist,cp=Math.cos(c.pitch),sp=Math.sin(c.pitch);
    tx=P.x;ty=P.y+1.5;tz=P.z;
    ex=P.x-Math.sin(c.yaw)*cp*d;ey=P.y+1.5+sp*d;ez=P.z-Math.cos(c.yaw)*cp*d;
    const gh=Hs(ex,ez)+.6;if(ey<gh)ey=gh;
@@ -1192,7 +1227,7 @@ function sceneSetup(dt){
   for(const k in DY)DY[k].clear();
   const t=S.t;
   // jugador
-  drawHuman(P.x,P.y,P.z,P.yaw,{yo:1,scarf:hex('#ffd36b'),shirt:hex('#2d63c8'),sleeve:hex('#2d63c8'),pants:hex('#2b3550'),hair:hex('#2b1a10'),pack:1,cross:1,book:1,ph:P.walk,amp:clamp(P.speed/5,0,1.3),run:P.run||0,hop:S.pHop||0,up:P.emote>0&&P.mood>0,slump:P.emote>0&&P.mood<0?1:0,hold:1,skin:hex('#e0ac7e'),headYaw:S.pHead||0});
+  drawHuman(P.x,P.y,P.z,P.yaw,{yo:1,scarf:hex('#ffd36b'),shirt:hex('#2d63c8'),sleeve:hex('#2d63c8'),pants:hex('#2b3550'),hair:hex('#2b1a10'),pack:1,cross:1,book:1,ph:P.walk,spd:P.speed,acc:P.acc||0,fly:P.fly||0,land:P.land||0,vy:P.vy||0,run:P.run||0,hop:S.pHop||0,up:P.emote>0&&P.mood>0,slump:P.emote>0&&P.mood<0?1:0,hold:1,skin:hex('#e0ac7e'),headYaw:S.pHead||0});
   // PNJ
   NPCS.forEach((n,i)=>{const dx=P.x-n.x,dz=P.z-n.z,dist=Math.hypot(dx,dz);if(dist>130)return;
    const look=NPC_LOOK[n.e.id],tgt=Math.atan2(dx,dz);let want=n.psi;
@@ -1510,7 +1545,7 @@ function frame(ts){
    const prog=clamp((P.s||0)/CHAPEL_S,0,1);S.todT=prog;S.tod+=(S.todT-S.tod)*Math.min(1,dt*.6);S.sky=skyAt(S.tod);
    if(S.mode==='play'||S.mode==='dialog'||S.mode==='fb'||S.mode==='fb2'||S.mode==='ending'){
     if(S.mode==='play')updatePlayer(dt);
-    else{P.vx*=.9;P.vz*=.9;if(S.appr&&S.mode!=='ending'){const k=Math.min(1,dt*3.5);P.x+=(S.appr.x-P.x)*k;P.z+=(S.appr.z-P.z)*k;if(Math.hypot(S.appr.x-P.x,S.appr.z-P.z)>.05)P.walk+=dt*6}const g=G(P.x,P.z);P.y=Math.max(P.y+P.vy*dt,g);P.vy=P.y>g?P.vy-20*dt:0}
+    else{P.vx*=.9;P.vz*=.9;if(S.appr&&S.mode!=='ending'){const ax=S.appr.x-P.x,az=S.appr.z-P.z,d=Math.hypot(ax,az),v=Math.min(2.6,d*4),stp=Math.min(d,v*dt);if(d>.02){P.x+=ax/d*stp;P.z+=az/d*stp}P.speed+=(v-P.speed)*Math.min(1,dt*10)}else P.speed+=(0-P.speed)*Math.min(1,dt*10);gait(dt);const g=G(P.x,P.z);P.y=Math.max(P.y+P.vy*dt,g);P.vy=P.y>g?P.vy-20*dt:0}
     S.pHead=0;
     let acc=dt,n=0;const hdt=1/90;
     while(acc>1e-5&&n<4){const s=Math.min(acc,hdt);stepBodies(s,()=>{S.orbs++;AU.chime(1);for(let i=0;i<8;i++)emit(P.x,P.y+1.4,P.z,(Math.random()-.5)*2,Math.random()*2,(Math.random()-.5)*2,.6,.3,1,.9,.5,.9,0,1,1)});stepDebris(s,(d,imp)=>{if(imp>5&&Math.random()<.4)AU.thud()});acc-=s;n++}
@@ -1525,7 +1560,7 @@ function frame(ts){
     if(S.mode==='play')updateObjective();
    }
    if(S.mode==='menu'){ // cámara orbital del menú
-    S.cam.yaw+=dt*.08;P.x=0;P.z=8;P.y=Hs(0,8);const c=S.cam;c.x=P.x-Math.sin(c.yaw+2.6)*9;c.z=P.z-Math.cos(c.yaw+2.6)*9;c.y=P.y+3.2;c.lx=P.x;c.ly=P.y+1.6;c.lz=P.z;c.shift=0;c.shiftX=0;P.speed=0;S.t+=dt;stepChains(dt);updParts(dt,1,0);ambient(dt);S.sky=skyAt(.12+.1*Math.sin(S.t*.05));
+    S.cam.yaw+=dt*.08;P.x=0;P.z=8;P.y=Hs(0,8);const c=S.cam;const R=S.menuR||9;if(S.menuR)c.yaw=P.yaw+Math.PI/2-2.6;c.x=P.x-Math.sin(c.yaw+2.6)*R;c.z=P.z-Math.cos(c.yaw+2.6)*R;c.y=P.y+(S.menuR?1.0:3.2);c.lx=P.x;c.ly=P.y+(S.menuR?.95:1.6);c.lz=P.z;c.shift=0;c.shiftX=0;P.speed=0;S.t+=dt;stepChains(dt);updParts(dt,1,0);ambient(dt);S.sky=skyAt(.12+.1*Math.sin(S.t*.05));
    }
    if(S.mode!=='menu')updateCamera(dt);
    typeTick(dt);
@@ -1548,7 +1583,7 @@ function boot(){
   if(S.classic){document.body.classList.add('classic');S.done=ENC.map(()=>false)}
   titleScreen();$('boot').remove();requestAnimationFrame(frame)}
 addEventListener('load',boot);
-window.__cam={get S(){return S},get P(){return P},ENC,NPCS,pathAt,G,startDialog,pick,afterFb,finishEnc,closeDialog};
+window.__cam={pose(o){S.forzar=o},up:updatePlayer,get S(){return S},get P(){return P},ENC,NPCS,pathAt,G,startDialog,pick,afterFb,finishEnc,closeDialog};
 
 
 </script>
