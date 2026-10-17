@@ -268,6 +268,9 @@ const LUGAR = { corporal: 'altar', caliz: 'altar', patena: 'altar', misal: 'alta
 const DISTRACTORES = ['celular', 'balon', 'refresco', 'gorra'];
 
 /* ---------- Las Misas (niveles) ---------- */
+/* Tiempo para leer: unas 20 letras por segundo. Los relojes del juego se alargan con el texto que hay que leer */
+const lectura = (t) => String(t || '').length * 0.05;                       /* segundos */
+const pausa = (t, min) => Math.max(min, 900 + String(t || '').length * 50); /* milisegundos, para mostrar un mensaje */
 const COLORES = { verde: ['#2e9a48', 'Verde', 'Tiempo ordinario: esperanza y crecimiento.'], morado: ['#6a2aa0', 'Morado', 'Adviento y Cuaresma: conversión y espera.'], blanco: ['#f4efe2', 'Blanco', 'Pascua, Navidad y fiestas del Señor y de María: alegría y pureza.'], rojo: ['#c0262f', 'Rojo', 'Pentecostés y mártires: el fuego del Espíritu y la sangre de los testigos.'] };
 const MISAS = [
   { n: 'Misa del domingo', s: 'Tiempo ordinario', color: 'verde', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'leccionario', 'vinajeras', 'campanilla'], dis: 1, t: 50, tm: 8, gloria: true, aleluya: true },
@@ -489,7 +492,7 @@ $('bandeja').addEventListener('click', (e) => {
     document.querySelector('#casulla').setAttribute('fill', COLORES[c][0]);
     $('a-sub').textContent = COLORES[c][2];
     $('bandeja').querySelectorAll('button').forEach((x) => { x.disabled = true; });
-    setTimeout(faseAltar, 1500);
+    setTimeout(faseAltar, pausa(COLORES[c][2], 1500));
   } else { b.style.opacity = '.3'; b.disabled = true; $('a-sub').textContent = 'Ese no es. Piensa en el tiempo litúrgico: ' + M.s + '.'; fallar(); }
 });
 let tAltar = 0, faltan = 0;
@@ -522,13 +525,13 @@ function faseAltar() {
   const items = barajar(M.obj.concat(barajar(DISTRACTORES).slice(0, M.dis)));
   faltan = M.obj.length;
   $('bandeja').innerHTML = items.map((k, i) => `<div class="obj" data-obj="${k}" style="--d:${i * 40}ms">${svg(k)}<span>${NOMBRE[k]}</span></div>`).join('');
-  tAltar = M.t;
+  tAltar = M.t + lectura('Arrastra cada objeto a su lugar. ¡Lo que no va, déjalo en la bandeja!');
   const ini = performance.now();
   clearInterval(timer);
   timer = setInterval(() => {
     const k = 1 - (performance.now() - ini) / 1000 / tAltar;
     $('a-reloj').style.transform = 'scaleX(' + Math.max(0, k).toFixed(3) + ')';
-    if (k <= 0) { clearInterval(timer); if (fallar()) return; aviso('¡Se acabó el tiempo! La Misa empieza igual.'); setTimeout(faseMisa, 900); }
+    if (k <= 0) { clearInterval(timer); if (fallar()) return; aviso('¡Se acabó el tiempo! La Misa empieza igual.'); setTimeout(faseMisa, pausa('¡Se acabó el tiempo! La Misa empieza igual.', 900)); }
   }, 100);
 }
 // Arrastrar objetos con el dedo
@@ -703,7 +706,8 @@ function siguienteMomento() {
   respondido = false;
   // Progreso por secciones
   for (let s = 0; s < 4; s++) { const tot = momentos.filter((x) => x.sec === s).length, hechos = momentos.slice(0, iMom).filter((x) => x.sec === s).length; $('sec' + s).style.transform = 'scaleX(' + (hechos / tot).toFixed(2) + ')'; }
-  tLim = (m.pregunta ? M.tm + 3 : M.tm);
+  /* El reloj cuenta también el tiempo de leer la escena y las respuestas */
+  tLim = (m.pregunta ? M.tm + 3 : M.tm + 1) + lectura(m.n + ' ' + m.que);
   $('momento').innerHTML = `<div class="seccion">${SECCIONES[m.sec]} <span class="postura" id="postura"></span></div><h2>${esc(m.n)}</h2><div class="que">${esc(m.que)}</div><div class="barra-mom"><svg class="anillo" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="6"/><circle id="anillo" cx="32" cy="32" r="27" fill="none" stroke="#ffd25a" stroke-width="6" stroke-linecap="round" stroke-dasharray="169.6" transform="rotate(-90 32 32)"/></svg><div class="pide">${m.pregunta ? 'Elige la respuesta' : '¿Qué haces ahora?'}</div><button type="button" class="ayuda" id="b-ayuda" ${ayudas > 0 ? '' : 'disabled'}>Ayuda del padre (${ayudas})</button></div>`;
   poseCura(m); acolitoLleva(null);
   if (imprevistos.has(iMom)) setTimeout(imprevistoVela, 700);
@@ -721,7 +725,7 @@ function siguienteMomento() {
     const t = (performance.now() - tIni) / 1000, k = Math.max(0, 1 - t / tLim);
     const a = $('anillo'); if (a) { a.style.strokeDashoffset = (169.6 * (1 - k)).toFixed(1); a.style.stroke = k < 0.3 ? '#ff6a3a' : '#ffd25a'; }
     if (k < 0.35 && Math.floor(t) !== ultimoSeg) { ultimoSeg = Math.floor(t); SND.tic(); }
-    if (k <= 0 && !respondido) { respondido = true; clearInterval(timer); $('momento').querySelector('.pide').textContent = '¡Tarde! ' + (m.pregunta ? 'Era: ' + m.pregunta[m.bien] : 'Tocaba: ' + NOMBRE[m.accion]); if (!fallar()) setTimeout(() => { iMom++; siguienteMomento(); }, 1600); }
+    if (k <= 0 && !respondido) { respondido = true; clearInterval(timer); $('momento').querySelector('.pide').textContent = '¡Tarde! ' + (m.pregunta ? 'Era: ' + m.pregunta[m.bien] : 'Tocaba: ' + NOMBRE[m.accion]); if (!fallar()) setTimeout(() => { iMom++; siguienteMomento(); }, pausa('¡Tarde! ' + (m.pregunta ? 'Era: ' + m.pregunta[m.bien] : 'Tocaba: ' + NOMBRE[m.accion]), 1600)); }
   }, 60);
 }
 // Ayuda del padre: quita dos opciones equivocadas
@@ -748,12 +752,12 @@ $('opciones').addEventListener('click', (e) => {
     acolitoLleva(m.accion);
     if (m.accion === 'campanilla') SND.campanilla(); else if (m.accion === 'cantar') SND.canto(m.n); else if (m.accion === 'rezar') SND.organo(); else if (m.accion === 'paz') SND.paz(); else if (m.accion === 'incensario') SND.incienso(); else SND.bien(racha);
     if (m.consagra) { const d = document.createElement('div'); d.className = 'consagra'; document.body.appendChild(d); setTimeout(() => d.remove(), 2500); $('momento').querySelector('.pide').textContent = '«Esto es mi Cuerpo… Esta es mi Sangre.» Adoramos a Jesús en silencio.'; }
-    setTimeout(() => { iMom++; siguienteMomento(); }, m.consagra ? 2800 : m.accion === 'cantar' ? 1700 : 1100);
+    setTimeout(() => { iMom++; siguienteMomento(); }, m.consagra ? pausa('«Esto es mi Cuerpo… Esta es mi Sangre.» Adoramos a Jesús en silencio.', 2800) : m.accion === 'cantar' ? 1700 : 1100);
   } else {
     b.classList.add('mal');
     $('momento').querySelector('.pide').textContent = m.pregunta ? 'No. ' + m.pregunta[m.bien] + '.' : 'No. Ahora tocaba: ' + NOMBRE[m.accion] + '.';
     const opc = document.querySelector(m.pregunta ? `[data-r="${m.bien}"]` : `[data-a="${m.accion}"]`); if (opc) opc.classList.add('bien');
-    if (!fallar()) setTimeout(() => { iMom++; siguienteMomento(); }, 1700);
+    if (!fallar()) setTimeout(() => { iMom++; siguienteMomento(); }, pausa(m.pregunta ? 'No. ' + m.pregunta[m.bien] + '.' : 'No. Ahora tocaba: ' + NOMBRE[m.accion] + '.', 1700));
   }
 });
 
@@ -767,7 +771,7 @@ function faseOrdenar() {
   $('presb').classList.remove('consagra', 'envio');
   $('momento').innerHTML = `<div class="seccion">Ronda final</div><h2>Ordena la Misa</h2><div class="que">Toca los momentos en el orden en que suceden en la Misa. ¡Rápido!</div><div class="barra-mom"><svg class="anillo" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="6"/><circle id="anillo" cx="32" cy="32" r="27" fill="none" stroke="#ffd25a" stroke-width="6" stroke-linecap="round" stroke-dasharray="169.6" transform="rotate(-90 32 32)"/></svg></div>`;
   $('opciones').innerHTML = '<div class="ordenar">' + barajar(elegidos).map((n, k) => `<button type="button" data-ord="${esc(n)}" style="--d:${k * 50}ms"><span class="num">?</span>${esc(n)}</button>`).join('') + '</div>';
-  const lim = 6 + elegidos.length * 2.6, ini = performance.now();
+  const lim = 6 + elegidos.length * 2.6 + lectura('Toca los momentos en el orden en que suceden en la Misa. ¡Rápido!'), ini = performance.now();
   const fin = (ok) => { clearInterval(timer); $('opciones').querySelectorAll('button').forEach((x) => { x.disabled = true; }); if (ok) { SND.coro(); sumar(150, $('momento')); } setTimeout(faseMision, 1400); };
   timer = setInterval(() => { const k = Math.max(0, 1 - (performance.now() - ini) / 1000 / lim); const a = $('anillo'); if (a) a.style.strokeDashoffset = (169.6 * (1 - k)).toFixed(1); if (k <= 0) { mostrarFlota('¡Se acabó el tiempo!'); fin(false); } }, 80);
   $('opciones').onclick = (e) => {
@@ -797,7 +801,7 @@ $('opciones').addEventListener('click', (e) => {
   if (ok) { b.classList.add('bien'); racha++; SND.bien(racha); sumar(60, b); }
   else { b.classList.add('mal'); document.querySelector(`[data-mis="${m.b}"]`).classList.add('bien'); racha = 0; SND.mal(); }
   $('momento').querySelector('.pide').innerHTML = `«${esc(m.cita[0])}» <small style="display:block;opacity:.8">${esc(m.cita[1])}</small>`;
-  setTimeout(() => { iMis++; siguienteMision(); }, 2400);
+  setTimeout(() => { iMis++; siguienteMision(); }, pausa(m.cita[0] + ' ' + m.cita[1], 2400));
 });
 
 /* ---------- Final ---------- */
