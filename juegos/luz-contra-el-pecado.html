@@ -165,6 +165,7 @@
 </div>
 <div class="pantalla" id="fin" hidden><div class="tarjeta" id="fin-tarjeta"></div></div>
 
+<script src="lib/sonido.js"></script>
 <script type="module">
 import * as THREE from './lib/three.module.min.js';
 /* =====================================================================
@@ -232,55 +233,43 @@ function guardar() {
   try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', juego: 'doom', total: S.puntos }, location.origin); } catch (e) { /* fuera de la app */ }
 }
 
-/* ---------- Sonido sintetizado ---------- */
-let AC = null, ruidoBuf = null;
-function ac() {
-  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
-  if (AC.state === 'suspended') AC.resume();
-  return AC;
+/* ---------- Sonido: motor JUMA con eco de capilla, sonido 3D y música coral ---------- */
+const JS = window.JumaSonido;
+JS.musicaPermitida = () => estado === 'jugando';
+JS.eco(0.32);
+function ac() { const a = JS.ctx(); if (a) JS.musica('oscuro'); return a; }
+function volDist(x, y) { return clamp(1.2 - Math.hypot(x - J.x, y - J.y) / 12, 0.12, 1); }
+// Sonido 3D: suena a la izquierda o a la derecha según dónde esté el enemigo
+function panDe(x, y) { const dx = x - J.x, dy = y - J.y, d = Math.hypot(dx, dy) || 1; return clamp((dx * -Math.sin(J.a) + dy * Math.cos(J.a)) / d, -0.85, 0.85); }
+const VOZ = { pereza: 62, soberbia: 150, envidia: 230, ira: 85, avaricia: 120, tentador: 48 };
+// Voz demoníaca: sierra grave con aspereza y formantes que se cierran
+function vozDemonio(f, dur, vol, pan) {
+  JS.osc({ f, f2: f * 0.62, dur, vol, tipo: 'sawtooth', coro: [-30, 0, 27], filtro: { tipo: 'bandpass', f: 700, f2: 260, q: 3 }, vib: [23, 60], pan, eco: 0.45 });
+  JS.ruido({ dur: dur * 0.9, vol: vol * 0.6, f: 500, f2: 180, tipo: 'bandpass', q: 2, pan, eco: 0.4 });
 }
-function tono(f, dur, tipo, vol, ret, hasta) {
-  const a = ac(); if (!a) return;
-  const t0 = a.currentTime + (ret || 0);
-  const o = a.createOscillator(), g = a.createGain();
-  o.type = tipo || 'triangle'; o.frequency.setValueAtTime(f, t0);
-  if (hasta) o.frequency.exponentialRampToValueAtTime(hasta, t0 + dur);
-  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol || 0.1, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + dur + 0.05);
-}
-function ruido(dur, vol, frec, tipoF, ret, hasta) {
-  const a = ac(); if (!a) return;
-  if (!ruidoBuf) { ruidoBuf = a.createBuffer(1, a.sampleRate, a.sampleRate); const d = ruidoBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
-  const t0 = a.currentTime + (ret || 0);
-  const s = a.createBufferSource(); s.buffer = ruidoBuf;
-  const f = a.createBiquadFilter(); f.type = tipoF || 'lowpass'; f.frequency.setValueAtTime(frec, t0);
-  if (hasta) f.frequency.exponentialRampToValueAtTime(hasta, t0 + dur);
-  const g = a.createGain(); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  s.connect(f); f.connect(g); g.connect(a.destination); s.start(t0, Math.random() * 0.4); s.stop(t0 + dur + 0.05);
-}
-function volDist(x, y) { return clamp(1.2 - Math.hypot(x - J.x, y - J.y) / 12, 0.15, 1); }
 const SND = {
-  hisopo() { ruido(0.25, 0.16, 2600, 'bandpass', 0, 900); tono(1400, 0.2, 'sine', 0.05, 0, 700); },
-  rosario() { tono(1700 + rnd() * 300, 0.07, 'triangle', 0.05); ruido(0.05, 0.05, 5000, 'highpass'); },
-  cruz() { tono(520, 0.6, 'sawtooth', 0.05, 0, 1600); tono(1046, 0.5, 'sine', 0.08); ruido(0.4, 0.08, 3000, 'bandpass'); },
-  incensario() { ruido(0.45, 0.18, 600, 'lowpass', 0, 2000); tono(300, 0.3, 'triangle', 0.06, 0, 160); },
-  explosion() { ruido(0.8, 0.35, 900, 'lowpass', 0, 120); tono(90, 0.6, 'sine', 0.2, 0, 40); },
-  mano() { tono(700, 0.12, 'sine', 0.05, 0, 350); },
-  impacto() { tono(900, 0.1, 'triangle', 0.08, 0, 300); },
-  disparoEnemigo(x, y) { const v = volDist(x, y); tono(180, 0.25, 'sawtooth', 0.05 * v, 0, 90); },
-  gruñido(x, y, tipo) { const v = volDist(x, y); const f = { pereza: 70, soberbia: 160, envidia: 260, ira: 90, avaricia: 130, tentador: 55 }[tipo] || 100; tono(f, 0.5, 'sawtooth', 0.07 * v, 0, f * 0.6); ruido(0.4, 0.06 * v, 400); },
-  dolor(x, y) { const v = volDist(x, y); tono(240, 0.15, 'square', 0.04 * v, 0, 140); },
-  dano() { tono(110, 0.3, 'square', 0.09, 0, 60); ruido(0.2, 0.1, 600); },
-  recoger() { tono(880, 0.1, 'triangle', 0.1); tono(1320, 0.18, 'triangle', 0.1, 0.07); },
-  arma() { [523, 784, 1046].forEach((f, i) => tono(f, 0.3, 'triangle', 0.1, i * 0.08)); },
-  puerta() { ruido(0.6, 0.12, 300, 'lowpass', 0, 900); tono(80, 0.5, 'sawtooth', 0.03, 0, 60); },
-  cerrada() { tono(200, 0.15, 'square', 0.06); tono(150, 0.2, 'square', 0.06, 0.12); },
-  muerte(x, y) { const v = volDist(x, y); tono(520, 0.5, 'sine', 0.1 * v, 0, 90); ruido(0.5, 0.08 * v, 1500, 'bandpass', 0, 200); },
-  nivel() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tono(f, 0.5, 'triangle', 0.13, i * 0.13)); },
-  derrota() { [392, 311, 261, 196].forEach((f, i) => tono(f, 0.4, 'triangle', 0.11, i * 0.2)); },
-  cambio() { tono(400, 0.06, 'square', 0.04); tono(600, 0.06, 'square', 0.04, 0.05); }
+  hisopo() { JS.E.soplo(0.35, 0.22, 3200, 900); for (let i = 0; i < 7; i++) JS.campana(1800 + Math.random() * 2400, 0.12, 0.025, { ret: 0.08 + Math.random() * 0.25, razon: 1.5, indice: 0.4, eco: 0.3 }); },
+  rosario() { for (let i = 0; i < 3; i++) JS.E.clic(0.7, { ret: i * 0.018 }); JS.osc({ f: 2400 + rnd() * 400, f2: 900, dur: 0.12, vol: 0.05, tipo: 'sine', eco: 0.3 }); },
+  cruz() { JS.coro([523.25, 659.25, 783.99, 1046.5], 1.1, 0.16, { at: 0.04 }); JS.campana(1046.5, 1.4, 0.08, { eco: 0.6 }); JS.osc({ f: 110, f2: 55, dur: 0.6, vol: 0.25, eco: 0.4 }); JS.E.soplo(0.6, 0.12, 900, 5000); },
+  incensario() { for (let i = 0; i < 4; i++) JS.E.clic(0.6, { ret: i * 0.03 }); JS.E.soplo(0.5, 0.18, 400, 1800); JS.campana(1318.5, 0.5, 0.04, { razon: 2.4, indice: 1 }); },
+  explosion() { JS.vibrar(70); JS.E.golpe(1.6); JS.ruido({ dur: 1.4, vol: 0.28, f: 3000, f2: 110, tipo: 'lowpass', eco: 0.6 }); JS.coro([392, 493.88, 587.33], 1.2, 0.07, { at: 0.08 }); },
+  mano() { JS.E.soplo(0.15, 0.08, 800, 1800); },
+  impacto() { JS.ruido({ dur: 0.08, vol: 0.15, f: 2200, tipo: 'bandpass', q: 1.5, eco: 0.3 }); JS.osc({ f: 700, f2: 250, dur: 0.1, vol: 0.06, tipo: 'triangle', eco: 0.3 }); },
+  disparoEnemigo(x, y) { const v = volDist(x, y), pan = panDe(x, y); JS.osc({ f: 160, f2: 60, dur: 0.35, vol: 0.09 * v, tipo: 'sawtooth', filtro: { f: 900, q: 2 }, pan, eco: 0.4 }); JS.E.soplo(0.4, 0.12 * v, 300, 1500, { pan }); },
+  gruñido(x, y, tipo) { const v = volDist(x, y); vozDemonio(VOZ[tipo] || 100, tipo === 'tentador' ? 1.4 : 0.8, 0.12 * v, panDe(x, y)); },
+  dolor(x, y) { const v = volDist(x, y); vozDemonio((VOZ.ira) * 1.8, 0.25, 0.08 * v, panDe(x, y)); },
+  dano() { JS.vibrar(50); JS.E.golpe(0.8); JS.osc({ f: 60, f2: 45, dur: 0.5, vol: 0.2, eco: 0.1 }); JS.osc({ f: 60, f2: 45, dur: 0.4, vol: 0.15, ret: 0.28, eco: 0.1 }); },
+  recoger() { JS.campana(1568, 0.7, 0.09, { razon: 2, indice: 0.8 }); JS.campana(2093, 0.8, 0.07, { ret: 0.08, razon: 2, indice: 0.8 }); },
+  arma() { JS.organo([261.63, 329.63, 392], 0.9, 0.12); JS.E.magia(0.5); },
+  puerta() { JS.ruido({ dur: 1.1, vol: 0.2, f: 180, f2: 500, tipo: 'lowpass', q: 4, eco: 0.5 }); JS.osc({ f: 70, f2: 52, dur: 1.0, vol: 0.12, tipo: 'sawtooth', filtro: { f: 220 }, vib: [9, 40], eco: 0.5 }); JS.E.golpe(0.7, { ret: 1.0 }); },
+  cerrada() { JS.E.bonk(1); JS.E.clic(1, { ret: 0.08 }); },
+  muerte(x, y) { const v = volDist(x, y), pan = panDe(x, y); vozDemonio(110, 0.7, 0.1 * v, pan); JS.coro([523.25, 783.99, 1046.5], 1.6, 0.08 * v, { ret: 0.35, at: 0.3, pan }); JS.E.soplo(1, 0.12 * v, 3000, 400, { pan }); },
+  nivel() { JS.organo([261.63, 329.63, 392, 523.25], 2.4, 0.2); JS.coro([523.25, 659.25, 783.99], 2.4, 0.12, { at: 0.4 }); [1046.5, 1318.5, 1568].forEach((f, i) => JS.campana(f, 2, 0.06, { ret: 0.3 + i * 0.25, eco: 0.8 })); },
+  derrota() { JS.organo([196, 233.08, 293.66], 2.2, 0.16); JS.timbal(65, { vol: 0.45 }); },
+  cambio() { JS.E.clic(1); JS.E.soplo(0.25, 0.08, 600, 1500, { ret: 0.04 }); },
+  pisada() { JS.E.paso(0.45, { eco: 0.5 }); }
 };
-
+window.__SND = SND;
 /* =====================================================================
    Arte: texturas y figuras dibujadas en lienzo y pasadas a píxeles
    ===================================================================== */
@@ -1164,7 +1153,7 @@ function superPoder() {
   }
   J.vida = Math.min(100, J.vida + 10);
   const fl = $('destello'); fl.classList.add('on'); setTimeout(() => fl.classList.remove('on'), 90);
-  [880, 1174, 1568].forEach((f, i) => tono(f, 0.5, 'triangle', 0.13, i * 0.06));
+  JS.coro([880, 1174.66, 1568], 1.2, 0.12, { at: 0.08 }); JS.E.magia(0.7);
   aviso('¡Bendición mayor!');
   actualizarHud();
 }
@@ -1387,6 +1376,7 @@ function actualizar(dt) {
   if (Math.abs(J.x - ax) < Math.abs(J.vx * dt) * 0.5) J.vx *= 0.3;
   if (Math.abs(J.y - ay) < Math.abs(J.vy * dt) * 0.5) J.vy *= 0.3;
   J.paso += dt * Math.hypot(J.vx, J.vy) * 2.9;
+  if (Math.floor(J.paso / Math.PI) !== J.pasoN) { J.pasoN = Math.floor(J.paso / Math.PI); if (Math.hypot(J.vx, J.vy) > 0.5) SND.pisada(); }
   J.roll += (-lado * 0.03 - J.roll) * Math.min(1, dt * 6);
   J.kick *= Math.exp(-dt * 8); J.sacudida = Math.max(0, J.sacudida - dt * 1.6);
   J.cool = Math.max(0, J.cool - dt);

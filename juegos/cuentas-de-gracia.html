@@ -130,6 +130,7 @@
 </div>
 <div class="fondo" id="fondo"><div class="hoja" id="hoja"></div></div>
 
+<script src="lib/sonido.js"></script>
 <script>
 'use strict';
 const $ = (id) => document.getElementById(id);
@@ -182,19 +183,25 @@ function tono(f, dur, tipo, vol, ret, hasta) {
   g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol || 0.12, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + dur + 0.05);
 }
+const JS = window.JumaSonido;
+JS.permitido = () => sonidoOn;
+JS.musicaPermitida = () => sonidoOn && jugando;
+JS.eco(0.2);
+const PENTA = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24, 26];
 const SND = {
-  cambio() { tono(560, 0.09, 'triangle', 0.08); },
-  limpiar(n) { const f = 523.25 * Math.pow(1.122, Math.min(n, 10)); tono(f, 0.16, 'triangle', 0.11); tono(f * 1.5, 0.2, 'sine', 0.05, 0.04); },
-  mal() { tono(180, 0.18, 'sawtooth', 0.05); },
-  especial() { [784, 988, 1318].forEach((f, i) => tono(f, 0.25, 'triangle', 0.09, i * 0.05)); },
-  linea() { tono(1200, 0.3, 'sawtooth', 0.04, 0, 300); tono(900, 0.3, 'sine', 0.06); },
-  bomba() { tono(120, 0.4, 'sine', 0.18, 0, 50); tono(400, 0.25, 'square', 0.04, 0, 100); },
-  paloma() { [1046, 1318, 1568, 2093].forEach((f, i) => tono(f, 0.4, 'sine', 0.08, i * 0.06)); },
-  roca() { tono(220, 0.12, 'square', 0.06, 0, 120); },
-  campana() { [1568, 2093].forEach((f, i) => tono(f, 0.8, 'sine', 0.1, i * 0.12)); },
-  martillo() { tono(150, 0.15, 'square', 0.1, 0, 60); },
-  victoria() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tono(f, 0.45, 'triangle', 0.14, i * 0.12)); },
-  derrota() { [392, 311, 261].forEach((f, i) => tono(f, 0.35, 'triangle', 0.12, i * 0.18)); }
+  cambio() { JS.E.soplo(0.14, 0.1, 900, 2600); JS.E.clic(0.5); },
+  // Cada cascada sube la escala de marimba
+  limpiar(n) { const b = 72 + PENTA[Math.min(n, PENTA.length - 1)]; JS.marimba(JS.m2f(b), 0.5, 0.14); JS.marimba(JS.m2f(b + 7), 0.4, 0.06, { ret: 0.04 }); JS.E.soplo(0.12, 0.05, 3000, 6000); },
+  mal() { JS.E.bonk(1); },
+  especial() { [72, 76, 79, 84, 88].forEach((n, i) => JS.arpa(JS.m2f(n), 0.8, 0.08, { ret: i * 0.04, eco: 0.4 })); JS.campana(2093, 0.9, 0.05, { ret: 0.2 }); },
+  linea() { JS.E.soplo(0.35, 0.18, 800, 7000); JS.osc({ f: 600, f2: 2400, dur: 0.3, vol: 0.06, tipo: 'sawtooth', filtro: { f: 3000, q: 4 }, eco: 0.3 }); JS.E.magia(0.4); },
+  bomba() { JS.vibrar(45); JS.E.golpe(1.1); JS.ruido({ dur: 0.8, vol: 0.16, f: 2500, f2: 150, tipo: 'lowpass', eco: 0.5 }); JS.E.vidrio(0.4); },
+  paloma() { JS.vibrar([30, 40, 30]); JS.coro([523.25, 659.25, 783.99, 1046.5], 1.8, 0.14, { at: 0.15 }); JS.E.magia(1); JS.E.soplo(0.8, 0.1, 400, 2400); },
+  roca() { JS.ruido({ dur: 0.18, vol: 0.2, f: 900, tipo: 'bandpass', q: 1.2, eco: 0.2 }); JS.E.clic(1.2); },
+  campana() { JS.campana(784, 3, 0.16, { razon: 2.4, indice: 2.6, eco: 0.7 }); JS.campana(1568, 2, 0.06, { ret: 0.02, eco: 0.7 }); },
+  martillo() { JS.E.golpe(0.9); JS.ruido({ dur: 0.2, vol: 0.18, f: 1300, tipo: 'bandpass', ret: 0.03 }); },
+  victoria() { JS.E.fanfarria(); JS.coro([523.25, 659.25, 783.99], 2.2, 0.1, { ret: 0.35, at: 0.3 }); },
+  derrota() { [67, 63, 60, 55].forEach((n, i) => JS.marimba(JS.m2f(n), 0.9, 0.12, { ret: i * 0.22 })); JS.colchon([196, 233.08, 293.66], 2, 0.08); }
 };
 function pintarSonido() {
   $('btn-sonido').innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="#fff"/>' + (sonidoOn ? '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>') + '</svg>';
@@ -406,6 +413,7 @@ function ajustarLienzo() {
 addEventListener('resize', () => { if (cfg) ajustarLienzo(); });
 
 function iniciarNivel(n) {
+  if (JS.ctx()) JS.musica('dulce');
   cfg = nivelCfg(n); R = cfg.R; C = cfg.C;
   on = mascara(cfg);
   sombra = Array.from({ length: R }, () => Array(C).fill(0));

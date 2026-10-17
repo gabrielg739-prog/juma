@@ -189,6 +189,7 @@
 </div>
 <div class="fondo" id="fondo"><div class="hoja" id="hoja"></div></div>
 
+<script src="lib/sonido.js"></script>
 <script>
 'use strict';
 const $ = (id) => document.getElementById(id);
@@ -255,16 +256,21 @@ function tono(f, dur, tipo, vol, ret) {
   g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol || 0.13, t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + dur + 0.03);
 }
+const JS = window.JumaSonido;
+JS.permitido = () => sonidoOn;
+JS.musicaPermitida = () => sonidoOn && jugando;
+JS.eco(0.25);
 const SND = {
-  voltear() { tono(700, 0.08, 'triangle', 0.08); },
-  acierto(r) { const k = Math.pow(1.06, Math.min(r, 8)); [523.25, 659.25, 783.99].forEach((f, i) => tono(f * k, 0.3, 'triangle', 0.13, i * 0.07)); },
-  dorada() { [784, 988, 1318, 1568].forEach((f, i) => tono(f, 0.4, 'sine', 0.11, i * 0.07)); },
-  fallo() { tono(200, 0.22, 'sawtooth', 0.06); },
-  mezcla() { [600, 450, 700, 500].forEach((f, i) => tono(f, 0.12, 'square', 0.04, i * 0.06)); },
-  ronda() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tono(f, 0.45, 'triangle', 0.14, i * 0.12)); },
-  fin() { [392, 523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tono(f, 1.1, 'sine', 0.11, i * 0.14)); },
-  tic() { tono(1200, 0.04, 'square', 0.03); },
-  reparto(n) { for (let i = 0; i < n; i++) tono(900 + Math.random() * 300, 0.04, 'triangle', 0.035, i * 0.055); }
+  voltear() { JS.E.carta(1); },
+  // Arpa que sube un tono con cada acierto seguido
+  acierto(r) { const b = 67 + Math.min(r, 8) * 2; [0, 4, 7, 12].forEach((n, i) => JS.arpa(JS.m2f(b + n), 1, 0.1, { ret: i * 0.06, eco: 0.45 })); },
+  dorada() { JS.vibrar([20, 30, 20]); [84, 88, 91, 96, 100].forEach((n, i) => JS.campana(JS.m2f(n), 1.4, 0.06, { ret: i * 0.07, razon: 2, indice: 0.8, eco: 0.6 })); JS.coro([523.25, 659.25, 783.99], 1.6, 0.1, { at: 0.2 }); },
+  fallo() { JS.E.bonk(0.8); },
+  mezcla() { for (let i = 0; i < 6; i++) JS.E.carta(0.6, { ret: i * 0.06 }); },
+  ronda() { JS.E.fanfarria(); },
+  fin() { JS.organo([261.63, 329.63, 392, 523.25], 2.6, 0.18); JS.coro([523.25, 659.25, 783.99, 1046.5], 2.6, 0.12, { at: 0.5 }); },
+  tic() { JS.E.tictac(false); },
+  reparto(n) { for (let i = 0; i < n; i++) JS.E.carta(0.5, { ret: i * 0.055, pan: (Math.random() - 0.5) * 0.8 }); }
 };
 function pintarSonido() { $('btn-sonido').innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="#fff"/>' + (sonidoOn ? '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>') + '</svg>'; }
 $('btn-sonido').onclick = () => { sonidoOn = !sonidoOn; try { localStorage.setItem('juma-memoria-sonido', sonidoOn ? '1' : '0'); } catch (e) { /* nada */ } pintarSonido(); if (sonidoOn) SND.acierto(0); };
@@ -290,7 +296,7 @@ function frenteHtml(c) {
   return '<div class="cara frente txt"><span class="cruz">✚</span><b>' + esc(e.nombre) + '</b><i>' + esc(e.dato.split(/[.:]/)[0]) + '.</i></div>';
 }
 function iniciarNivel(n) {
-  nivel = n; DIF = DIFS[S.dificultad];
+  nivel = n; DIF = DIFS[S.dificultad]; if (JS.ctx()) JS.musica('calma');
   const cfg = cfgN();
   // Primero santos y signos que aún no se conocen, luego el resto
   const elegidos = barajar(ELEMENTOS).slice(0, cfg.pares);
@@ -468,7 +474,7 @@ function finNivel() {
 }
 function perderTiempo() {
   jugando = false; clearInterval(reloj); bloqueado = true;
-  tono(300, 0.5, 'sawtooth', 0.06);
+  JS.E.bonk(1); JS.colchon([196, 233.08], 1.6, 0.08);
   abrirHoja('<h3>Se acabó el tiempo</h3><p>Encontraste <b>' + encontrados + '</b> de <b>' + cfgN().pares + '</b> parejas.</p><p class="sub2">Las cartas doradas dan 8 segundos más. ¡Inténtalo otra vez!</p>' +
     '<button class="boton" type="button" data-accion="reintentar">REINTENTAR</button><button class="boton sec" type="button" data-accion="mapa">Ver niveles</button>');
 }
