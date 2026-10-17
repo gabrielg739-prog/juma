@@ -31,12 +31,13 @@ export function controlIA(k, karts, P, dt) {
   /* Velocidad segura: la curva más cerrada de los próximos metros marca el límite */
   let curv = 0;
   for (const d of [30, 70, 120, 180, 250]) curv = Math.max(curv, P.curv[(k.idx + Math.round(d / paso)) % P.N]);
-  let meta = Math.min(VMAX * 1.02, Math.sqrt(150 / Math.max(curv, 0.0004)) * (0.95 + 0.05 * k.agarre));
+  const vel = k.dif ? k.dif.vel : 1;
+  let meta = Math.min(VMAX * 1.02 * vel, Math.sqrt(150 / Math.max(curv, 0.0004)) * (0.95 + 0.05 * k.agarre));
   if (Math.abs(dif) > 0.9) meta *= 0.85;
 
   /* Arranque con el retardo de cada personaje y pequeñas distracciones de vez en cuando */
   if (k.pausaIA > 0) k.pausaIA -= dt;
-  else if (Math.random() < dt * 0.15) k.pausaIA = 0.35;
+  else if (Math.random() < dt * 0.15 * (k.dif ? k.dif.errores : 1)) k.pausaIA = 0.35;
   const arranco = tiempoCarrera() > (k.retardo || 0);
   const acel = arranco && k.pausaIA <= 0 && v < meta + 10;
   const freno = v > meta + 60;
@@ -49,7 +50,7 @@ export function controlIA(k, karts, P, dt) {
 export function decidirUso(k, karts, dt) {
   if (!k.item) return false;
   k.tiempoItem = (k.tiempoItem || 0) + dt;
-  if (k.tiempoItem < 1 + (k.retardo || 1) * 0.6) return false;
+  if (k.tiempoItem < (1 + (k.retardo || 1) * 0.6) * (k.dif ? k.dif.reaccion : 1)) return false;
   const detras = (d) => karts.some((o) => o !== k && o.dist < k.dist && k.dist - o.dist < d);
   const delante = karts.some((o) => o !== k && o.dist > k.dist && o.dist - k.dist < 300);
   const cerca = karts.some((o) => o !== k && Math.abs(o.dist - k.dist) < 280);

@@ -27,6 +27,19 @@ export class Camara {
 
   ajustarAspecto(a) { this.cam.aspect = a; this.cam.updateProjectionMatrix(); }
 
+  /* Desplaza la imagen (sin mover la cámara) para que un punto del mundo caiga en la fracción f del ancho.
+     Sirve para que el personaje de la vitrina quede a la derecha del panel del menú. f nulo: vuelve a lo normal */
+  encuadrar(punto, f) {
+    const c = this.cam, W = innerWidth, H = innerHeight;
+    /* Antes de medir hay que quitar el desplazamiento del fotograma anterior, o la imagen oscila */
+    if (c.view && c.view.enabled) c.clearViewOffset();
+    if (f == null) return;
+    c.updateMatrixWorld();
+    const v = new THREE.Vector3(punto.x, punto.y, punto.z).project(c);
+    const x = (v.x + 1) / 2 * W;
+    c.setViewOffset(W, H, x - f * W, 0, W, H);
+  }
+
   /* Colocación directa, sin suavizar */
   fijar(p, m) { this.p = { ...p }; this.m = { ...m }; }
 

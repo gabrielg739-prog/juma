@@ -1,4 +1,4 @@
-/* Carrera de la fe · datos del juego: pistas, personajes, objetos y reglas */
+/* Carrera de la fe · datos del juego: pistas, copas, personajes con habilidad, karts, dificultades, objetos y reglas */
 
 export const VUELTAS = 3;
 export const PUNTOS_POS = [30, 24, 20, 16, 12, 8];
@@ -37,14 +37,45 @@ export const PISTAS = [
     cielo: ['#06072a', '#2e1a66'], niebla: '#2e1a66', sol: '#9fd8ff', hierba: '#0f1b3d', arena: '#1d2a5a', borde: ['#55f2ff', '#ff5bd1'], luzAmb: 0.7 },
 ];
 
-/* Personajes: el jugador y cinco rivales. peso/acel/agarre cambian un poco cómo se manejan. */
+/* Copas: tres pistas cada una, se juegan en orden */
+export const CUPAS = [
+  { nombre: 'Copa de la Esperanza', desc: 'Campos, desierto y misión', pistas: [0, 1, 2] },
+  { nombre: 'Copa de la Luz', desc: 'Montañas, catacumbas y noche', pistas: [3, 4, 5] },
+];
+
+/* Clases: qué tan rápidos son los rivales, cuánto tardan en reaccionar y cuántos errores cometen */
+export const DIFICULTADES = [
+  { nombre: 'Fácil', texto: 'Los rivales van más despacio y se equivocan más.', vel: 0.93, reaccion: 1.35, errores: 1.8 },
+  { nombre: 'Normal', texto: 'Una carrera pareja, con rivales que también usan objetos.', vel: 1.0, reaccion: 1.0, errores: 1.0 },
+  { nombre: 'Difícil', texto: 'Rivales rápidos que usan muy bien sus objetos.', vel: 1.05, reaccion: 0.8, errores: 0.5 },
+];
+
+/* Personajes (ocho). vel, acel y agarre cambian cómo se maneja; habil es su habilidad propia. */
 export const PERSONAJES = [
-  { nombre: 'Tú', color: '#ffffff', borde: '#2b1a3f', humano: true, peso: 1.0, acel: 1.0, agarre: 1.0 },
-  { nombre: 'Lucía', color: '#3a8fe0', borde: '#123a6e', peso: 1.0, acel: 1.05, agarre: 1.0 },
-  { nombre: 'Pedro', color: '#3fb860', borde: '#14502a', peso: 0.9, acel: 1.1, agarre: 0.95 },
-  { nombre: 'Miguel', color: '#e04a4a', borde: '#6e1a1a', peso: 1.1, acel: 0.95, agarre: 1.05 },
-  { nombre: 'Ana', color: '#a86ae0', borde: '#44205e', peso: 0.95, acel: 1.05, agarre: 1.0 },
-  { nombre: 'Padre Tomás', color: '#ffb838', borde: '#6a4206', peso: 1.2, acel: 0.9, agarre: 1.1 },
+  { nombre: 'Lucía', color: '#3a8fe0', borde: '#123a6e', vel: 1.0, acel: 1.05, agarre: 1.0, habil: 'salida',
+    habilNombre: 'Salida de luz', habilTexto: 'Arranca con un empujón de turbo.' },
+  { nombre: 'Pedro', color: '#3fb860', borde: '#14502a', vel: 0.99, acel: 1.1, agarre: 0.95, habil: 'cajas',
+    habilNombre: 'Buen pescador', habilTexto: 'Sus cajas de gracia traen un objeto mejor.' },
+  { nombre: 'Miguel', color: '#e04a4a', borde: '#6e1a1a', vel: 1.0, acel: 0.95, agarre: 1.15, habil: 'agarre',
+    habilNombre: 'Pie firme', habilTexto: 'Se agarra mejor en las curvas.' },
+  { nombre: 'Ana', color: '#a86ae0', borde: '#44205e', vel: 1.0, acel: 1.0, agarre: 1.0, habil: 'escudo',
+    habilNombre: 'Oración constante', habilTexto: 'Su rosario la protege más tiempo.' },
+  { nombre: 'Padre Tomás', color: '#ffb838', borde: '#6a4206', vel: 0.98, acel: 0.92, agarre: 1.1, habil: 'bendicion',
+    habilNombre: 'Bendición', habilTexto: 'Los golpes le duran menos.' },
+  { nombre: 'Tobías', color: '#4fd1c5', borde: '#14524c', vel: 1.05, acel: 1.02, agarre: 0.98, habil: 'veloz',
+    habilNombre: 'Chispa veloz', habilTexto: 'Es el más rápido en las rectas.' },
+  { nombre: 'Rosa', color: '#ff7eb6', borde: '#7a1e4a', vel: 1.0, acel: 1.0, agarre: 1.0, habil: 'aura',
+    habilNombre: 'Aura de paz', habilTexto: 'Frena un poco a los karts que van cerca.' },
+  { nombre: 'Hermana Clara', color: '#f4f0e6', borde: '#5a5044', vel: 0.97, acel: 1.0, agarre: 1.05, habil: 'campanas',
+    habilNombre: 'Campanas', habilTexto: 'Su campanilla llega más lejos.' },
+];
+
+/* Karts (cuatro). Los valores son multiplicadores: 1 = normal. */
+export const KARTS = [
+  { nombre: 'Carroza de la fe', tipo: 'carroza', desc: 'Equilibrada, para empezar', vel: 1.0, acel: 1.0, peso: 1.0, giro: 1.0, derrape: 1.0 },
+  { nombre: 'Bicicleta ligera', tipo: 'bici', desc: 'Gira rápido y acelera', vel: 0.97, acel: 1.1, peso: 0.85, giro: 1.18, derrape: 1.0 },
+  { nombre: 'Carreta fuerte', tipo: 'carreta', desc: 'Pesada: nadie la empuja', vel: 1.05, acel: 0.92, peso: 1.3, giro: 0.86, derrape: 0.95 },
+  { nombre: 'Triciclo de misión', tipo: 'triciclo', desc: 'Derrapa y sube el turbo rápido', vel: 0.99, acel: 1.04, peso: 0.95, giro: 1.08, derrape: 1.25 },
 ];
 
 /* Objetos (las cajas de gracia dan uno según el puesto) */

@@ -1,7 +1,7 @@
 {
- "version": "a62d8bf23731",
+ "version": "ae31abce1bdd",
  "recursos": "juma-recursos-v1",
- "tamano": 52091018,
+ "tamano": 52116944,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -741,12 +741,12 @@
   {
    "ruta": "index.html",
    "tamano": 147037,
-   "hash": "d4cba8002369"
+   "hash": "765d2f3279cb"
   },
   {
    "ruta": "js/app.js",
-   "tamano": 488759,
-   "hash": "fe033e77a14d"
+   "tamano": 488780,
+   "hash": "77f40af2fed3"
   },
   {
    "ruta": "js/fe.js",
@@ -780,13 +780,13 @@
   },
   {
    "ruta": "juegos/carrera/camara.js",
-   "tamano": 2081,
-   "hash": "8c5ed2b82073"
+   "tamano": 2755,
+   "hash": "a8945e160982"
   },
   {
    "ruta": "juegos/carrera/datos.js",
-   "tamano": 4678,
-   "hash": "00afd345e989"
+   "tamano": 7164,
+   "hash": "98ec6f0bfe06"
   },
   {
    "ruta": "juegos/carrera/decor.js",
@@ -795,38 +795,38 @@
   },
   {
    "ruta": "juegos/carrera/escena.js",
-   "tamano": 12252,
-   "hash": "0ced11baa1f3"
+   "tamano": 12259,
+   "hash": "c59261ac1126"
   },
   {
    "ruta": "juegos/carrera/fisica.js",
-   "tamano": 6896,
-   "hash": "e668a313171e"
+   "tamano": 7892,
+   "hash": "d58cdf6f294e"
   },
   {
    "ruta": "juegos/carrera/hud.js",
-   "tamano": 3948,
-   "hash": "9da9e5b880ed"
+   "tamano": 4275,
+   "hash": "ca8e27b1b26d"
   },
   {
    "ruta": "juegos/carrera/ia.js",
-   "tamano": 3093,
-   "hash": "5d0797f247c6"
+   "tamano": 3199,
+   "hash": "e696562c4640"
   },
   {
    "ruta": "juegos/carrera/karts.js",
-   "tamano": 7409,
-   "hash": "20a4d2ebf064"
+   "tamano": 11268,
+   "hash": "976681db2816"
   },
   {
    "ruta": "juegos/carrera/main.js",
-   "tamano": 20908,
-   "hash": "eba93b757117"
+   "tamano": 31955,
+   "hash": "aafe16e7ad9f"
   },
   {
    "ruta": "juegos/carrera/objetos.js",
-   "tamano": 7821,
-   "hash": "d471d7e637aa"
+   "tamano": 8300,
+   "hash": "7dcc806710cb"
   },
   {
    "ruta": "juegos/carrera/particulas.js",
@@ -849,9 +849,14 @@
    "hash": "1251e454b112"
   },
   {
+   "ruta": "juegos/carrera/vitrina.js",
+   "tamano": 2334,
+   "hash": "6e8a60b39c49"
+  },
+  {
    "ruta": "juegos/carrera-de-la-fe.html",
-   "tamano": 13467,
-   "hash": "3ca51277192f"
+   "tamano": 17057,
+   "hash": "7ac8025a2e27"
   },
   {
    "ruta": "juegos/cuadros/cap1-consolata.jpg",

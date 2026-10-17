@@ -1,4 +1,4 @@
-/* Carrera de la fe · HUD: marcador, mapa, objeto, barra de derrape, cuenta atrás, avisos y paneles */
+/* Carrera de la fe · HUD al estilo de MK8: objeto arriba a la izquierda, mapa arriba a la derecha, posición y monedas abajo, derrape en el centro; cuenta atrás, avisos y paneles */
 import { OBJETOS } from './datos.js';
 
 const $ = (id) => document.getElementById(id);
@@ -15,16 +15,18 @@ export class Hud {
     this.fondo = document.createElement('canvas');
     this.fondo.width = this.mapaEl.width; this.fondo.height = this.mapaEl.height;
     this.mapaP = null; this.mapaT = null;
-    this.avisoT = 0; this.cuentaT = 0;
+    this.avisoT = 0;
   }
 
   mostrar(v) { $('hud').hidden = !v; }
   tactil(v) { $('controles').hidden = !v; }
 
-  puesto(n, total) { $('puesto').textContent = n; $('puestoTotal').textContent = `/${total}`; }
+  puesto(n, total) { $('puesto').textContent = n; $('puestoTotal').textContent = `de ${total}`; }
   vuelta(n, total) { $('vuelta').textContent = `${n}/${total}`; }
+  monedas(n) { $('monedas').textContent = n; }
   tiempo(t) { $('tiempo').textContent = formato(t); }
 
+  /* Caja de objeto: muestra el icono cuando hay uno guardado */
   item(tipo) {
     const c = $('cajaItem');
     if (tipo) { c.textContent = OBJETOS[tipo].icono; c.title = OBJETOS[tipo].nombre; c.classList.add('lleno'); }
@@ -79,7 +81,7 @@ export class Hud {
         x0 = Math.min(x0, P.xs[i]); x1 = Math.max(x1, P.xs[i]);
         y0 = Math.min(y0, P.ys[i]); y1 = Math.max(y1, P.ys[i]);
       }
-      const s = Math.min((W - 18) / (x1 - x0), (H - 18) / (y1 - y0));
+      const s = Math.min((W - 22) / (x1 - x0), (H - 22) / (y1 - y0));
       const ox = (W - (x1 - x0) * s) / 2, oy = (H - (y1 - y0) * s) / 2;
       this.mapaT = { x0, y0, s, ox, oy };
       const f = this.fondo.getContext('2d');
@@ -91,18 +93,20 @@ export class Hud {
         const px = (P.xs[j] - x0) * s + ox, py = (P.ys[j] - y0) * s + oy;
         if (i) f.lineTo(px, py); else f.moveTo(px, py);
       }
-      f.strokeStyle = 'rgba(255,255,255,.9)'; f.lineWidth = 10; f.stroke();
-      f.strokeStyle = 'rgba(43,26,63,.7)'; f.lineWidth = 6; f.stroke();
+      f.strokeStyle = 'rgba(255,255,255,.92)'; f.lineWidth = 12; f.stroke();
+      f.strokeStyle = 'rgba(43,26,63,.75)'; f.lineWidth = 7; f.stroke();
     }
     const t = this.mapaT, g = this.mapaG;
     g.clearRect(0, 0, W, H);
     g.drawImage(this.fondo, 0, 0);
-    for (const k of karts) {
+    /* Los rivales van primero; el jugador encima, con borde dorado */
+    const orden = [...karts].sort((a, b) => (a.humano ? 1 : 0) - (b.humano ? 1 : 0));
+    for (const k of orden) {
       const px = (k.x - t.x0) * t.s + t.ox, py = (k.y - t.y0) * t.s + t.oy;
       g.beginPath();
-      g.arc(px, py, k.humano ? 6.5 : 4.5, 0, Math.PI * 2);
+      g.arc(px, py, k.humano ? 8 : 6, 0, Math.PI * 2);
       g.fillStyle = k.color; g.fill();
-      g.lineWidth = k.humano ? 2.5 : 1.5;
+      g.lineWidth = k.humano ? 3 : 2;
       g.strokeStyle = k.humano ? '#ffd25a' : k.borde;
       g.stroke();
     }
