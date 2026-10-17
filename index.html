@@ -1105,6 +1105,17 @@ body{background:var(--paper);overflow-x:clip}
 .chat-bubble.mine{border-radius:18px 18px 6px 18px}
 .chat-send-btn{border-radius:12px}
 
+/* ---------- puntos misioneros (barra del perfil) ---------- */
+.mis-card{width:100%;margin:6px 0 14px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,#F4F8FF,#EAF1FF);border:1.5px solid #C7DCFF;text-align:left;box-sizing:border-box}
+.mis-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.mis-nivel{font-size:15px;color:#0C2D74;font-weight:900}
+.mis-pts{font-size:13px;color:#64748B;font-weight:700}
+.mis-pts b{font-size:20px;color:#061536;font-weight:900;font-variant-numeric:tabular-nums}
+.mis-bar{margin:10px 0 6px;height:12px;border-radius:99px;background:#DDE7FA;overflow:hidden}
+.mis-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#2452C8,#F5C518);transition:width .6s ease-out}
+.mis-card small{font-size:12px;color:#64748B;font-weight:600}
+@media (prefers-reduced-motion:reduce){.mis-bar i{transition:none}}
+
 /* ---------- perfil ---------- */
 .p-cover{background:linear-gradient(135deg,var(--cloth),var(--navy))}
 .p-tabs{background:transparent;padding:0;gap:6px;overflow-x:auto;scrollbar-width:none}
@@ -1787,8 +1798,8 @@ body.is-guest .solo-miembros { display: none !important; }
 <div id="modal-root"></div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=110"></script>
-<script type="module" src="js/offline.js?v=110"></script>
+<script type="module" src="js/app.js?v=111"></script>
+<script type="module" src="js/offline.js?v=111"></script>
 <script type="module" src="js/fe.js?v=65"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 {
- "version": "bcca223c586e",
+ "version": "1a5faaf08713",
  "recursos": "juma-recursos-v1",
- "tamano": 52244733,
+ "tamano": 52251799,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -740,13 +740,13 @@
   },
   {
    "ruta": "index.html",
-   "tamano": 147070,
-   "hash": "d03c6c44d00f"
+   "tamano": 147991,
+   "hash": "4c75ea91e3d1"
   },
   {
    "ruta": "js/app.js",
-   "tamano": 489781,
-   "hash": "d0cec821013a"
+   "tamano": 491281,
+   "hash": "1533a5dfb06f"
   },
   {
    "ruta": "js/fe.js",
@@ -757,6 +757,11 @@
    "ruta": "js/firebase-config.js",
    "tamano": 716,
    "hash": "cb1880aaed72"
+  },
+  {
+   "ruta": "js/misioneros.js",
+   "tamano": 4645,
+   "hash": "73e7b59f9915"
   },
   {
    "ruta": "js/offline.js",

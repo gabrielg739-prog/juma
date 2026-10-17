@@ -1,4 +1,5 @@
 /* JUMA Duaca · sitio independiente. Sin framework. Firebase solo si lo configuras en js/firebase-config.js */
+import * as misioneros from './misioneros.js';
 const CFG = globalThis.JUMA_FIREBASE || {};
 const FB_ON = !!CFG.apiKey && !/REEMPLAZA/i.test(CFG.apiKey);
 const ADMIN = String(CFG.adminEmail || 'jumaduaca@gmail.com').toLowerCase();
@@ -3401,6 +3402,7 @@ function abrirLibro(id) {
 }
 function cerrarLibro() {
   const r = $('#lib-reader'); if (r) r.remove();
+  misioneros.terminarSesion();
   document.documentElement.style.overflow = '';
 }
 document.addEventListener('click', (e) => {
@@ -3483,6 +3485,7 @@ function abrirJuego(url) {
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
   r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=110" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
+  misioneros.iniciarSesion(url.replace(/^juegos\//, '').replace(/\.html$/, ''));
   document.documentElement.style.overflow = 'hidden';
 }
 document.addEventListener('click', (e) => {
@@ -3493,13 +3496,32 @@ window.addEventListener('message', (e) => {
   if (e.origin !== location.origin || !e.data) return;
   if (e.data.tipo === 'juma-cerrar') { cerrarLibro(); return; }
   if (e.data.tipo !== 'juma-puntos') return;
-  /* Cada juego guarda su propio total; el perfil muestra la suma de todos */
-  let mapa = {};
-  try { mapa = JSON.parse(localStorage.getItem('juma-puntos-juegos') || '{}') || {}; } catch (x) { mapa = {}; }
-  mapa[String(e.data.juego || 'palabras').slice(0, 20)] = Math.max(0, Number(e.data.total) || 0);
-  try { localStorage.setItem('juma-puntos-juegos', JSON.stringify(mapa)); } catch (x) {}
-  guardarPuntosMisioneros(Object.values(mapa).reduce((a, b) => a + (Number(b) || 0), 0));
+  /* Cada juego envía su total; el módulo de puntos misioneros lo convierte en bonificación */
+  misioneros.partida(e.data.juego, e.data.total);
 });
+/* La barra del perfil se repinta sola al cambiar el tiempo o una partida; los puntos suben a la nube */
+misioneros.alCambiar(() => { actualizarBarraMisionera(); guardarPuntosMisioneros(misioneros.puntos()); });
+function barraMisionerHtml() {
+  const e = misioneros.estado();
+  return `<section class="mis-card" aria-label="Puntos misioneros">
+    <div class="mis-top"><b class="mis-nivel" id="mis-nivel">${esc(e.nivel.nombre)}</b><span class="mis-pts"><b id="mis-pts">${e.pts.toLocaleString('es-VE')}</b> pts</span></div>
+    <div class="mis-bar" role="progressbar" aria-label="Avance al siguiente nivel" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(e.nivel.progreso * 100)}"><i id="mis-fill" style="width:${(e.nivel.progreso * 100).toFixed(1)}%"></i></div>
+    <small id="mis-next">${textoMisionero(e)}</small>
+  </section>`;
+}
+function textoMisionero(e) {
+  const h = `${e.horas.toFixed(1)} h jugadas`;
+  return e.nivel.siguiente ? `Faltan ${e.nivel.faltan.toLocaleString('es-VE')} pts para ${e.nivel.siguiente.nombre} · ${h}` : `Nivel máximo alcanzado · ${h}`;
+}
+function actualizarBarraMisionera() {
+  const fill = document.getElementById('mis-fill'); if (!fill) return;
+  const e = misioneros.estado();
+  document.getElementById('mis-pts').textContent = e.pts.toLocaleString('es-VE');
+  document.getElementById('mis-nivel').textContent = e.nivel.nombre;
+  fill.style.width = (e.nivel.progreso * 100).toFixed(1) + '%';
+  fill.parentElement.setAttribute('aria-valuenow', String(Math.round(e.nivel.progreso * 100)));
+  document.getElementById('mis-next').textContent = textoMisionero(e);
+}
 let ultimoEnvioPuntos = -1;
 function guardarPuntosMisioneros(total) {
   if (!currentUser || !fb.setDoc || !fb.db) return;
@@ -4364,6 +4386,7 @@ function authModalHtml() {
           <!-- Nombre y Rol -->
           <h2 id="au-t" class="p-name">${esc(nombre)}</h2>
           <div class="p-role-badge">${esc(badgeTxt)}</div>
+          ${barraMisionerHtml()}
           <small style="color:#64748B;font-size:12.5px;font-weight:600;margin-bottom:8px">${perfilEnNube ? 'Miembro activo de la comunidad parroquial' : 'Sesión iniciada · ' + esc(email)}</small>
           ${!perfilEnNube && !trueMaster ? `<div style="width:100%;margin:4px 0 12px;padding:12px 14px;border-radius:12px;background:#FFF8E1;border:1.5px solid #F5C518;color:#5C4300;font-size:13.5px;text-align:left">
             <b style="display:flex;align-items:center;gap:6px;margin-bottom:4px">${ic('edit')}Aún no hay una planilla en esta cuenta</b>
@@ -5132,6 +5155,7 @@ let handlePromise = null;
 let handledUid = undefined;
 function handleUser(u, force = false) {
   const uid = u ? u.uid : null;
+  misioneros.usuario(uid);
   if (!force && handlePromise && handledUid === uid) return handlePromise;
   handledUid = uid;
   const seq = ++handleSeq;
