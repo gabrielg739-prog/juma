@@ -3413,37 +3413,42 @@ function renderJuegosView() {
     <p class="body" style="max-width:56ch;margin:10px 0 28px">Juega, aprende de la fe y de la misión, y suma puntos misioneros que aparecen en tu perfil.</p>
     <div class="lib-grid">
       <article class="lib-card">
-        <div class="lib-cover" style="--bk:#6A3A10"><b>Sacristán</b></div>
-        <div class="lib-info"><h2>Sacristán</h2><small>La Misa y la misión · ¡Nuevo!</small><p>Elige el color litúrgico, prepara el altar y sirve en cada momento de la Misa en una iglesia en 3D, mientras ves al sacerdote celebrar. Incluye la Misa de hoy según el calendario litúrgico, rangos de monaguillo a maestro de ceremonias y la misión al salir.</p>
+        <div class="lib-cover con-img" style="--bk:#1F4FB0;background-image:url(juegos/portadas/camino.jpg)" role="img" aria-label="Portada de Camino del misionero"><b>Camino del misionero</b></div>
+        <div class="lib-info"><h2>Camino del misionero</h2><small>Aventura en 3D · ¡Nuevo!</small><p>Recorre un pueblo en 3D y conversa con ocho personas: un anciano viudo, una madre preocupada, un biólogo, un joven, una hermana de otra iglesia y más. Tus respuestas abren el camino: aprende a evangelizar escuchando, acompañando y anunciando a Jesús.</p>
+        <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/camino-del-misionero.html">${ic('gamepad')}Jugar</button></div>
+      </article>
+      <article class="lib-card">
+        <div class="lib-cover con-img" style="--bk:#6A3A10;background-image:url(juegos/portadas/sacristan.jpg)" role="img" aria-label="Portada de Sacristán"><b>Sacristán</b></div>
+        <div class="lib-info"><h2>Sacristán</h2><small>La Misa y la misión</small><p>Elige el color litúrgico, prepara el altar y sirve en cada momento de la Misa en una iglesia en 3D, mientras ves al sacerdote celebrar. Incluye la Misa de hoy según el calendario litúrgico, rangos de monaguillo a maestro de ceremonias y la misión al salir.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/sacristan.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
-        <div class="lib-cover" style="--bk:#5A2A8E"><b>Bloques de fe</b></div>
+        <div class="lib-cover con-img" style="--bk:#5A2A8E;background-image:url(juegos/portadas/bloques.jpg)" role="img" aria-label="Portada de Bloques de fe"><b>Bloques de fe</b></div>
         <div class="lib-info"><h2>Bloques de fe</h2><small>Bloques · ¡Nuevo!</small><p>Encaja las piezas, borra filas y columnas y descubre un versículo palabra por palabra. Sube de rango, compra mejoras y desbloquea estilos.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/bloques-de-fe.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
-        <div class="lib-cover" style="--bk:#0A235C"><b>Palabras JUMA</b></div>
+        <div class="lib-cover con-img" style="--bk:#0A235C;background-image:url(juegos/portadas/palabras.jpg)" role="img" aria-label="Portada de Palabras JUMA"><b>Palabras JUMA</b></div>
         <div class="lib-info"><h2>Palabras JUMA</h2><small>Crucigrama y rueda de letras</small><p>Forma palabras del manual y de la fe, completa los crucigramas y arma los cuadros de cada capítulo.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/palabras-juma.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
-        <div class="lib-cover" style="--bk:#4A2A6E"><b>Memoria de santos</b></div>
+        <div class="lib-cover con-img" style="--bk:#4A2A6E;background-image:url(juegos/portadas/memoria.jpg)" role="img" aria-label="Portada de Memoria de santos"><b>Memoria de santos</b></div>
         <div class="lib-info"><h2>Memoria de santos</h2><small>Juego de memoria · 15 niveles</small><p>Une santos y signos de la fe con su nombre, en tres dificultades, y aprende algo nuevo en cada pareja.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/memoria-santos.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
-        <div class="lib-cover" style="--bk:#7A2E5C"><b>Cuentas de gracia</b></div>
+        <div class="lib-cover con-img" style="--bk:#7A2E5C;background-image:url(juegos/portadas/cuentas.jpg)" role="img" aria-label="Portada de Cuentas de gracia"><b>Cuentas de gracia</b></div>
         <div class="lib-info"><h2>Cuentas de gracia</h2><small>Tres en línea · símbolos de la fe</small><p>Une la Virgen, el Sagrado Corazón, la Biblia, el cáliz y las manos que oran; crea rayos de luz, bendiciones y la paloma del Espíritu en 40 niveles.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/cuentas-de-gracia.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
-        <div class="lib-cover" style="--bk:#2A1640"><b>Luz contra el pecado</b></div>
+        <div class="lib-cover con-img" style="--bk:#2A1640;background-image:url(juegos/portadas/luz.jpg)" role="img" aria-label="Portada de Luz contra el pecado"><b>Luz contra el pecado</b></div>
         <div class="lib-info"><h2>Luz contra el pecado</h2><small>Acción en primera persona · San José Allamano</small><p>Siete lugares oscuros, cuatro armas de la fe y seis pecados que vencer, hasta llegar al Tentador.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/luz-contra-el-pecado.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
-        <div class="lib-cover" style="--bk:#3B2A5E"><b>Huyendo del pecado</b></div>
+        <div class="lib-cover con-img" style="--bk:#3B2A5E;background-image:url(juegos/portadas/huyendo.jpg)" role="img" aria-label="Portada de Huyendo del pecado"><b>Huyendo del pecado</b></div>
         <div class="lib-info"><h2>Huyendo del pecado</h2><small>Carrera sin fin · San José Allamano</small><p>Corre por el camino, esquiva las sombras del pecado, recoge monedas de gracia y usa el escudo de la fe, el imán y el agua bendita.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/huyendo-del-pecado.html">${ic('gamepad')}Jugar</button></div>
       </article>
@@ -3457,7 +3462,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=91" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=92" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }

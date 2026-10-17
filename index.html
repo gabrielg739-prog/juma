@@ -1037,6 +1037,7 @@ body{background:var(--paper);overflow-x:clip}
 .lib-card{display:flex;gap:16px;padding:16px;border-radius:20px;background:#fff;border:1.5px solid var(--line);box-shadow:0 14px 36px -22px rgba(6,21,54,.35)}
 .lib-cover{flex:0 0 96px;height:136px;border-radius:6px 12px 12px 6px;background:linear-gradient(135deg,var(--bk,#0A235C),#061536);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px;text-align:center;box-shadow:inset 6px 0 0 rgba(255,255,255,.14),0 8px 18px -8px rgba(6,21,54,.6)}
 .lib-cover img{width:40px;height:40px;object-fit:contain}.lib-cover b{font-size:10.5px;line-height:1.2;text-transform:uppercase;letter-spacing:.03em}
+.lib-cover.con-img{flex:0 0 108px;height:153px;padding:0;gap:0;justify-content:flex-end;background:var(--bk,#0A235C) center/cover no-repeat;overflow:hidden;position:relative}.lib-cover.con-img::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,12,34,0) 52%,rgba(5,12,34,.9));pointer-events:none}.lib-cover.con-img b{position:relative;z-index:1;width:100%;padding:0 7px 9px;font-size:11px;text-shadow:0 1px 6px rgba(0,0,0,.7)}
 .lib-cover-empty{background:var(--mist);color:var(--royal);box-shadow:none}.lib-cover-empty .ic{width:34px;height:34px}
 .lib-info{display:flex;flex-direction:column;gap:6px;min-width:0}.lib-info h2{margin:0;font-size:18px;line-height:1.2}.lib-info small{color:var(--royal);font-weight:700}.lib-info p{margin:0 0 6px;font-size:14px;line-height:1.5;color:var(--ink)}
 .lib-info .btn{align-self:flex-start;margin-top:auto}.lib-soon{opacity:.7;border-style:dashed}
@@ -1785,7 +1786,7 @@ body.is-guest .solo-miembros { display: none !important; }
 <div id="modal-root"></div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=91"></script>
+<script type="module" src="js/app.js?v=92"></script>
 <script type="module" src="js/fe.js?v=65"></script>
 </body>
 </html>
