@@ -3462,7 +3462,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=93" allow="fullscreen"></iframe>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=94" allow="fullscreen"></iframe>`;
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }

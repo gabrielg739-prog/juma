@@ -200,8 +200,8 @@ const NIVELES = [
   { pares: 11, cols: 6, dorada: true, mezcla: true }, { pares: 11, cols: 6, dorada: true, reloj: true }, { pares: 12, cols: 6, dorada: true, mezcla: true }, { pares: 12, cols: 6, dorada: true, reloj: true, mezcla: true }, { pares: 12, cols: 6, dorada: true, reloj: true, mezcla: true }
 ];
 const DIFS = {
-  facil: { n: 'Fácil', d: 'Cartas iguales y vistazo inicial', vistazo: 2600, iguales: true, tiempo: 0, mezcla: false },
-  normal: { n: 'Normal', d: 'Imagen con su nombre', vistazo: 0, iguales: false, tiempo: 0, mezcla: false },
+  facil: { n: 'Fácil', d: 'Vistazo inicial para memorizar', vistazo: 2600, iguales: true, tiempo: 0, mezcla: false },
+  normal: { n: 'Normal', d: 'Encuentra cada pareja de imágenes', vistazo: 0, iguales: false, tiempo: 0, mezcla: false },
   dificil: { n: 'Difícil', d: 'Contra reloj y cartas que se mueven', vistazo: 0, iguales: false, tiempo: 1, mezcla: true }
 };
 const SANTOS = [
@@ -291,10 +291,9 @@ function pintarPts() { $('t-pts').textContent = S.puntos.toLocaleString('es'); }
 
 function frenteHtml(c) {
   const e = c.e;
-  const rotulo = DIF.iguales ? '<span class="rotulo">' + esc(e.nombre) + '</span>' : '';
-  if (c.vista === 'img') return '<div class="cara frente"><img src="' + e.img + '" alt="' + esc(e.nombre) + '" loading="lazy">' + rotulo + '</div>';
-  if (c.vista === 'icono') return '<div class="cara frente icono" style="background:radial-gradient(circle at 50% 32%,' + e.color[0] + ' 0%,' + e.color[1] + ' 78%,#140820 130%)"><svg viewBox="0 0 64 80">' + DEFS + '<g transform="translate(0,' + (DIF.iguales ? 2 : 6) + ')">' + e.svg + '</g></svg>' + rotulo + '</div>';
-  return '<div class="cara frente txt"><span class="cruz">✚</span><b>' + esc(e.nombre) + '</b><i>' + esc(e.dato.split(/[.:]/)[0]) + '.</i></div>';
+  if (c.vista === 'img') return '<div class="cara frente"><img src="' + e.img + '" alt="" loading="lazy"></div>';
+  if (c.vista === 'icono') return '<div class="cara frente icono" style="background:radial-gradient(circle at 50% 32%,' + e.color[0] + ' 0%,' + e.color[1] + ' 78%,#140820 130%)"><svg viewBox="0 0 64 80">' + DEFS + '<g transform="translate(0,' + (DIF.iguales ? 2 : 6) + ')">' + e.svg + '</g></svg></div>';
+  return '';
 }
 function iniciarNivel(n) {
   nivel = n; DIF = DIFS[S.dificultad]; if (JS.ctx()) JS.musica('calma');
@@ -305,7 +304,7 @@ function iniciarNivel(n) {
   const doradaId = cfg.dorada ? elegidos[Math.floor(Math.random() * elegidos.length)].id : null;
   elegidos.forEach((e) => {
     const vistaA = e.tipo === 'santo' ? 'img' : 'icono';
-    const vistaB = DIF.iguales ? vistaA : 'txt';
+    const vistaB = vistaA; // ambas cartas de la pareja muestran la misma imagen
     mazo.push({ par: e.id, e, vista: vistaA, hecha: false, volteada: false, dorada: e.id === doradaId });
     mazo.push({ par: e.id, e, vista: vistaB, hecha: false, volteada: false, dorada: e.id === doradaId });
   });
