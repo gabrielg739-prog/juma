@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2A1640">
+<title>Cuentas de gracia · JUMA</title>
+<style>
+  :root { --glass: rgba(26,14,38,.66); --glass-2: rgba(26,14,38,.84); --borde: rgba(255,255,255,.22); --gold: #FFD25A; --gold-2: #C98F12; --verde: #52B23A; --verde-2: #2E7D20; --plum-2: #2A1640; --cream: #FFF3D6; --ink: #2B1A3F; --muted: #7A6A8C; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body { font-family: "Trebuchet MS", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #fff; min-height: 100%; overflow-x: hidden; background: #1a1020; }
+  .bg { position: fixed; inset: 0; z-index: 0; background: #1a1020 center / cover no-repeat url(fondos/f5.jpg); }
+  .bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(48,20,60,.6) 0%, rgba(30,12,40,.72) 55%, rgba(18,6,28,.92) 100%); }
+  button { font: inherit; cursor: pointer; border: 0; color: inherit; }
+  button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  svg { display: block; }
+  .app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; padding: calc(env(safe-area-inset-top,0px) + 12px) 14px calc(env(safe-area-inset-bottom,0px) + 16px); display: flex; flex-direction: column; gap: 12px; }
+  .top { display: flex; align-items: center; gap: 8px; }
+  .redondo { width: 46px; height: 46px; border-radius: 50%; background: var(--glass-2); border: 2px solid var(--borde); display: grid; place-items: center; flex: 0 0 auto; }
+  .redondo:active { transform: scale(.94); }
+  .espacio { flex: 1; }
+  .pill { height: 40px; padding: 0 14px; border-radius: 999px; background: var(--glass-2); border: 2px solid var(--borde); display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: 15px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pill.gold { color: var(--gold); }
+  .titulo { text-align: center; margin: 14px 0 0; font-family: Georgia, "Times New Roman", serif; line-height: 1; text-shadow: 0 3px 12px rgba(0,0,0,.6); }
+  .titulo .a { display: block; font-size: 38px; }
+  .titulo .b { display: block; font-size: 17px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin-top: 8px; }
+  .sub { text-align: center; font-size: 15px; line-height: 1.4; text-shadow: 0 2px 6px rgba(0,0,0,.7); margin: 4px 8px 0; }
+  .btn-grande { width: 100%; height: 62px; border-radius: 999px; font-size: 22px; font-weight: 900; background: linear-gradient(180deg, #62C943, #3A9A22); box-shadow: 0 6px 0 var(--verde-2), 0 14px 24px rgba(0,0,0,.35); color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
+  .btn-grande:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--verde-2); }
+  .como { background: var(--glass); border: 2px solid var(--borde); border-radius: 20px; padding: 12px 14px; font-size: 14.5px; line-height: 1.45; }
+  .como b { color: var(--gold); }
+  .centro { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 16px; }
+  .mapa { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .nivel { position: relative; aspect-ratio: 1; border-radius: 18px; background: var(--glass-2); border: 2px solid var(--borde); display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; box-shadow: 0 4px 0 rgba(0,0,0,.3); }
+  .nivel small { font-size: 11px; color: var(--gold); letter-spacing: .05em; }
+  .nivel.bloq { opacity: .45; }
+  .nivel.listo { background: linear-gradient(180deg, #62C943, #3A9A22); border-color: #fff; }
+  .nivel.actual { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255,210,90,.5), 0 4px 0 rgba(0,0,0,.3); }
+  .marcador { display: flex; gap: 8px; flex-wrap: wrap; }
+  .marcador .pill { height: 36px; font-size: 14px; padding: 0 12px; }
+  .meta { height: 16px; border-radius: 999px; background: rgba(20,10,28,.7); border: 2px solid rgba(255,255,255,.35); overflow: hidden; }
+  .meta i { display: block; height: 100%; width: 0; background: linear-gradient(180deg, #FFE48A, #E8A910); transition: width .4s ease; }
+  .tablero { position: relative; display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; padding: 8px; background: rgba(20,8,32,.6); border: 2px solid rgba(255,255,255,.2); border-radius: 18px; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .celda { aspect-ratio: 1; border-radius: 12px; background: rgba(255,255,255,.07); display: grid; place-items: center; }
+  .ficha { width: 88%; height: 88%; border-radius: 12px; display: grid; place-items: center; box-shadow: inset 0 -4px 0 rgba(0,0,0,.25), 0 3px 6px rgba(0,0,0,.35); transition: transform .18s ease; }
+  .ficha svg { width: 70%; height: 70%; }
+  .ficha.sel { transform: scale(1.12); outline: 3px solid #fff; outline-offset: 1px; }
+  .ficha.quitar { animation: pop .22s ease forwards; }
+  .ficha.caer { animation: caer .35s cubic-bezier(.23,1,.32,1); }
+  .ficha.mal { animation: sacude .32s; }
+  @keyframes pop { to { transform: scale(0); opacity: 0; } }
+  @keyframes caer { from { transform: translateY(-60%); opacity: .3; } }
+  @keyframes sacude { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  .ayuda { font-size: 13.5px; text-align: center; text-shadow: 0 2px 6px rgba(0,0,0,.7); min-height: 20px; font-weight: 700; }
+  .fondo { position: fixed; inset: 0; background: rgba(12,4,20,.72); display: none; align-items: flex-end; justify-content: center; padding: 14px; z-index: 30; }
+  .fondo.on { display: flex; }
+  .hoja { width: 100%; max-width: 440px; max-height: 90vh; overflow: auto; background: linear-gradient(180deg, #FFF8E8, #F8EBD0); color: var(--ink); border-radius: 28px; padding: 22px 18px 18px; box-shadow: 0 -10px 40px rgba(0,0,0,.45); text-align: center; animation: sube .35s cubic-bezier(.23,1,.32,1); }
+  @keyframes sube { from { transform: translateY(40px); opacity: 0; } }
+  .hoja h3 { font-family: Georgia, serif; margin: 0 0 4px; font-size: 28px; color: var(--plum-2); }
+  .hoja p { margin: 6px 0; font-size: 15px; line-height: 1.45; }
+  .estrellas { font-size: 36px; letter-spacing: 6px; color: var(--gold-2); margin: 6px 0; }
+  .versiculo { font-style: italic; background: #fff; border: 2px dashed #E4C56A; border-radius: 16px; padding: 12px; margin: 12px 0; font-size: 15px; line-height: 1.45; }
+  .versiculo small { display: block; font-style: normal; font-weight: 800; color: var(--muted); margin-top: 6px; font-size: 12.5px; }
+  .boton { width: 100%; height: 56px; border-radius: 999px; background: linear-gradient(180deg, #62C943, #3A9A22); color: #fff; font-weight: 900; font-size: 18px; box-shadow: 0 5px 0 var(--verde-2); margin-top: 12px; }
+  .boton.sec { background: #fff; color: var(--plum-2); box-shadow: 0 5px 0 #D8CDE6; border: 2px solid #D8CDE6; }
+  .boton:active { transform: translateY(3px); }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<div class="app">
+  <header class="top">
+    <button class="redondo" id="btn-cerrar" type="button" aria-label="Cerrar juego">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="espacio"></div>
+    <button class="redondo" id="btn-sonido" type="button" aria-label="Sonido"></button>
+    <div class="pill gold" id="p-pts" title="Puntos misioneros">★ <span id="t-pts">0</span></div>
+  </header>
+
+  <!-- INICIO -->
+  <section id="vista-inicio" class="centro">
+    <h1 class="titulo"><span class="a">Cuentas de gracia</span><span class="b">Caney crush · JUMA</span></h1>
+    <p class="sub">Une tres o más símbolos iguales para limpiar el tablero y llegar a la meta antes de quedarte sin movimientos.</p>
+    <div class="como">
+      <p>• Toca una pieza y luego una vecina para cambiarlas, o arrástrala.</p>
+      <p>• Solo se cambian si forman una fila de <b>3 o más</b>.</p>
+      <p>• Las combinaciones en cadena dan más puntos.</p>
+      <p>• Ganas <b>★ puntos misioneros</b> por cada nivel, según las estrellas.</p>
+    </div>
+    <button class="btn-grande" id="btn-mapa" type="button">JUGAR</button>
+  </section>
+
+  <!-- MAPA DE NIVELES -->
+  <section id="vista-mapa" style="display:none;flex-direction:column;gap:12px">
+    <h2 class="titulo" style="font-size:26px"><span class="a" style="font-size:26px">Niveles</span></h2>
+    <div class="mapa" id="mapa"></div>
+    <button class="btn2" id="btn-volver-inicio" type="button" style="height:50px;border-radius:999px;background:var(--glass-2);border:2px solid var(--borde);font-weight:800;font-size:16px;color:#fff">Volver</button>
+  </section>
+
+  <!-- JUEGO -->
+  <section id="vista-juego" style="display:none;flex-direction:column;gap:10px">
+    <div class="marcador">
+      <span class="pill" id="g-nivel">Nivel 1</span>
+      <span class="pill" id="g-mov">Movimientos 20</span>
+      <span class="pill gold" id="g-pts">0 / 300</span>
+    </div>
+    <div class="meta"><i id="g-barra"></i></div>
+    <div class="tablero" id="tablero"></div>
+    <div class="ayuda" id="ayuda"></div>
+  </section>
+</div>
+
+<div class="fondo" id="fondo"><div class="hoja" id="hoja"></div></div>
+
+<script>
+const CLAVE = 'juma-cuentas-v1';
+const COLS = 8, FILAS = 8;
+const VERSOS = [
+  'Dios es amor, y quien permanece en el amor permanece en Dios.|1 Juan 4, 16',
+  'Vosotros sois la luz del mundo.|Mateo 5, 14',
+  'Todo lo puedo en Aquel que me fortalece.|Filipenses 4, 13',
+  'El Señor es mi pastor, nada me falta.|Salmo 23, 1',
+  'Amaos unos a otros como yo os he amado.|Juan 13, 34',
+  'No basta hacer el bien, hay que hacerlo bien.|José Allamano'
+];
+
+// Símbolos de la fe (dibujados en SVG, sin imágenes externas)
+const SIMBOLOS = [
+  { c: '#FFD25A', svg: '<path d="M20 4v32M8 14h24" stroke="#4A2F00" stroke-width="5" stroke-linecap="round" fill="none"/>' },
+  { c: '#FF6B86', svg: '<path d="M20 34L7 21a7 7 0 0 1 13-9 7 7 0 0 1 13 9z" fill="#fff"/>' },
+  { c: '#8FD6FF', svg: '<path d="M20 4l4.7 10.5L36 16l-8.2 7.6L30 36l-10-5.8L10 36l2.2-12.4L4 16l11.3-1.5z" fill="#fff"/>' },
+  { c: '#FFB86B', svg: '<rect x="15" y="16" width="10" height="20" rx="2" fill="#fff"/><path d="M20 4c3 5 4 8 0 11-4-3-3-6 0-11z" fill="#fff"/>' },
+  { c: '#9BE38A', svg: '<rect x="8" y="6" width="24" height="28" rx="3" fill="#fff"/><path d="M20 6v28" stroke="#2E7D20" stroke-width="3"/>' },
+  { c: '#C79BFF', svg: '<path d="M6 30l4-16 10 8 10-8 4 16z" fill="#fff"/><rect x="6" y="31" width="28" height="4" rx="2" fill="#fff"/>' }
+];
+
+// ---------- Guardado ----------
+let S = { puntos: 0, nivelMax: 1, estrellas: {} };
+try { const d = JSON.parse(localStorage.getItem(CLAVE) || 'null'); if (d) S = Object.assign(S, d); } catch (e) {}
+function guardar() {
+  try { localStorage.setItem(CLAVE, JSON.stringify(S)); } catch (e) {}
+  try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', juego: 'caney', total: S.puntos }, location.origin); } catch (e) {}
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+// ---------- Niveles ----------
+function configNivel(n) {
+  return {
+    meta: 300 + n * 120,
+    movs: Math.max(14, 24 - Math.floor(n / 3)),
+    tipos: n <= 5 ? 4 : (n <= 12 ? 5 : 6)
+  };
+}
+const TOTAL_NIVELES = 20;
+
+// ---------- Sonidos ----------
+let AC = null, sonidoOn = true;
+try { sonidoOn = localStorage.getItem('juma-cuentas-sonido') !== '0'; } catch (e) {}
+function ac() {
+  if (!sonidoOn) return null;
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  if (AC.state === 'suspended') AC.resume();
+  return AC;
+}
+function tono(f, dur, tipo, vol, retardo) {
+  const a = ac(); if (!a) return;
+  const t0 = a.currentTime + (retardo || 0);
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = tipo || 'triangle'; o.frequency.setValueAtTime(f, t0);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol || 0.14, t0 + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + dur + 0.03);
+}
+const SND = {
+  cambio() { tono(560, 0.1, 'triangle', 0.1); },
+  limpiar(n) { tono(523.25 * Math.pow(1.122, Math.min(n, 8)), 0.16, 'triangle', 0.13); },
+  mal() { tono(180, 0.2, 'sawtooth', 0.06); },
+  victoria() { [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tono(f, 0.45, 'triangle', 0.15, i * 0.12)); },
+  derrota() { [392, 311, 261].forEach((f, i) => tono(f, 0.35, 'triangle', 0.13, i * 0.18)); }
+};
+function pintarSonido() {
+  document.getElementById('btn-sonido').innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="#fff"/>' + (sonidoOn ? '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M17 9l5 6M22 9l-5 6"/>') + '</svg>';
+}
+document.getElementById('btn-sonido').onclick = () => {
+  sonidoOn = !sonidoOn;
+  try { localStorage.setItem('juma-cuentas-sonido', sonidoOn ? '1' : '0'); } catch (e) {}
+  pintarSonido(); if (sonidoOn) SND.cambio();
+};
+pintarSonido();
+
+// ---------- Tablero ----------
+let tab = [], nivel = 1, cfg = null, puntosNivel = 0, movs = 0, ocupado = false, sel = null, combo = 0;
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const rnd = (n) => Math.floor(Math.random() * n);
+
+function celdasIguales(b, r, c, t) { return b[r][c] === t; }
+function buscarCoincidencias(b) {
+  const m = new Set();
+  for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) {
+    const t = b[r][c]; if (t < 0) continue;
+    if (c + 2 < COLS && b[r][c + 1] === t && b[r][c + 2] === t) { m.add(r + ',' + c); m.add(r + ',' + (c + 1)); m.add(r + ',' + (c + 2)); }
+    if (r + 2 < FILAS && b[r + 1][c] === t && b[r + 2][c] === t) { m.add(r + ',' + c); m.add((r + 1) + ',' + c); m.add((r + 2) + ',' + c); }
+  }
+  return m;
+}
+function tableroInicial(tipos) {
+  const b = Array.from({ length: FILAS }, () => Array(COLS).fill(-1));
+  for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) {
+    const prohibidos = [];
+    if (c >= 2 && b[r][c - 1] === b[r][c - 2]) prohibidos.push(b[r][c - 1]);
+    if (r >= 2 && b[r - 1][c] === b[r - 2][c]) prohibidos.push(b[r - 1][c]);
+    let t; do { t = rnd(tipos); } while (prohibidos.includes(t));
+    b[r][c] = t;
+  }
+  return b;
+}
+function iniciarNivel(n) {
+  nivel = n; cfg = configNivel(n);
+  tab = tableroInicial(cfg.tipos);
+  puntosNivel = 0; movs = cfg.movs; ocupado = false; sel = null; combo = 0;
+  document.getElementById('g-nivel').textContent = 'Nivel ' + n;
+  mostrarVista('juego');
+  pintar();
+  ayuda('Une 3 o más iguales');
+}
+function pintar(marcadas, nuevas) {
+  const el = document.getElementById('tablero');
+  let h = '';
+  for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) {
+    const t = tab[r][c], k = r + ',' + c;
+    let cls = 'ficha';
+    if (sel && sel.r === r && sel.c === c) cls += ' sel';
+    if (marcadas && marcadas.has(k)) cls += ' quitar';
+    if (nuevas && nuevas.has(k)) cls += ' caer';
+    h += '<div class="celda"><div class="' + cls + '" data-r="' + r + '" data-c="' + c + '" style="background:' + (t >= 0 ? 'linear-gradient(180deg,' + SIMBOLOS[t].c + ',' + SIMBOLOS[t].c + 'CC)' : 'transparent') + '">' +
+      (t >= 0 ? '<svg viewBox="0 0 40 40">' + SIMBOLOS[t].svg + '</svg>' : '') + '</div></div>';
+  }
+  el.innerHTML = h;
+  document.getElementById('g-mov').textContent = 'Movimientos ' + movs;
+  document.getElementById('g-pts').textContent = puntosNivel + ' / ' + cfg.meta;
+  document.getElementById('g-barra').style.width = Math.min(100, Math.round(puntosNivel / cfg.meta * 100)) + '%';
+}
+function ayuda(t) { document.getElementById('ayuda').textContent = t || ''; }
+
+function adyacentes(a, b) { return Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1; }
+function intercambiar(a, b) { const t = tab[a.r][a.c]; tab[a.r][a.c] = tab[b.r][b.c]; tab[b.r][b.c] = t; }
+
+async function intentarCambio(a, b) {
+  if (ocupado) return;
+  intercambiar(a, b);
+  if (buscarCoincidencias(tab).size === 0) {
+    intercambiar(a, b);
+    SND.mal();
+    const el = document.querySelector('.ficha[data-r="' + a.r + '"][data-c="' + a.c + '"]');
+    if (el) el.classList.add('mal');
+    await wait(260);
+    sel = null; pintar();
+    return;
+  }
+  ocupado = true; sel = null;
+  movs--; combo = 0;
+  SND.cambio();
+  pintar();
+  await resolver();
+  ocupado = false;
+  comprobarFin();
+}
+
+async function resolver() {
+  while (true) {
+    const m = buscarCoincidencias(tab);
+    if (m.size === 0) break;
+    combo++;
+    const n = m.size;
+    SND.limpiar(combo);
+    pintar(m);
+    await wait(230);
+    puntosNivel += n * 10 * combo;
+    m.forEach((k) => { const [r, c] = k.split(',').map(Number); tab[r][c] = -1; });
+    // Caen las fichas y se rellenan los huecos desde arriba
+    const nuevas = new Set();
+    for (let c = 0; c < COLS; c++) {
+      let escribe = FILAS - 1;
+      for (let r = FILAS - 1; r >= 0; r--) if (tab[r][c] >= 0) { tab[escribe][c] = tab[r][c]; escribe--; }
+      for (let r = escribe; r >= 0; r--) { tab[r][c] = rnd(cfg.tipos); nuevas.add(r + ',' + c); }
+    }
+    pintar(null, nuevas);
+    await wait(280);
+  }
+  guardar();
+}
+
+function comprobarFin() {
+  if (puntosNivel >= cfg.meta) { finNivel(true); return; }
+  if (movs <= 0) { finNivel(false); }
+}
+
+function estrellasDe(p) {
+  if (p >= cfg.meta * 2) return 3;
+  if (p >= cfg.meta * 1.5) return 2;
+  return 1;
+}
+function finNivel(gano) {
+  if (gano) {
+    const est = estrellasDe(puntosNivel);
+    const previo = S.estrellas[nivel] || 0;
+    S.estrellas[nivel] = Math.max(previo, est);
+    const bono = 20 + est * 10;
+    S.puntos += bono;
+    if (nivel + 1 > S.nivelMax && nivel < TOTAL_NIVELES) S.nivelMax = nivel + 1;
+    guardar(); pintarPts();
+    SND.victoria();
+    const v = VERSOS[(nivel - 1) % VERSOS.length].split('|');
+    abrirHoja('<h3>¡Nivel ' + nivel + ' superado!</h3><p class="estrellas">' + '★'.repeat(est) + '<span style="opacity:.25">' + '★'.repeat(3 - est) + '</span></p>' +
+      '<p>+' + bono + ' ★ puntos misioneros</p>' +
+      '<div class="versiculo">“' + esc(v[0]) + '”<small>' + esc(v[1]) + '</small></div>' +
+      (nivel < TOTAL_NIVELES ? '<button class="boton" type="button" data-accion="siguiente">NIVEL ' + (nivel + 1) + '</button>' : '') +
+      '<button class="boton sec" type="button" data-accion="mapa">Ver niveles</button>');
+  } else {
+    guardar();
+    SND.derrota();
+    abrirHoja('<h3>Sin movimientos</h3><p>Llegaste a <b>' + puntosNivel + '</b> de <b>' + cfg.meta + '</b>.</p><p>Revisa las combinaciones y vuelve a intentarlo.</p>' +
+      '<button class="boton" type="button" data-accion="reintentar">REINTENTAR</button><button class="boton sec" type="button" data-accion="mapa">Ver niveles</button>');
+  }
+}
+
+// ---------- Entrada: toque o arrastre ----------
+const tabEl = document.getElementById('tablero');
+let inicio = null;
+function celdaDe(e) {
+  const rect = tabEl.getBoundingClientRect();
+  const pad = 8;
+  const x = e.clientX - rect.left - pad, y = e.clientY - rect.top - pad;
+  const w = (rect.width - pad * 2) / COLS, h = (rect.height - pad * 2) / FILAS;
+  const c = Math.floor(x / w), r = Math.floor(y / h);
+  if (r < 0 || c < 0 || r >= FILAS || c >= COLS) return null;
+  return { r, c };
+}
+tabEl.addEventListener('pointerdown', (e) => {
+  if (ocupado) return;
+  const p = celdaDe(e); if (!p) return;
+  inicio = { r: p.r, c: p.c, x: e.clientX, y: e.clientY, arrastrado: false };
+  try { tabEl.setPointerCapture(e.pointerId); } catch (x) {}
+});
+tabEl.addEventListener('pointermove', (e) => {
+  if (!inicio || inicio.arrastrado || ocupado) return;
+  const dx = e.clientX - inicio.x, dy = e.clientY - inicio.y;
+  if (Math.abs(dx) < 16 && Math.abs(dy) < 16) return;
+  inicio.arrastrado = true;
+  let dest = { r: inicio.r, c: inicio.c };
+  if (Math.abs(dx) > Math.abs(dy)) dest.c += dx > 0 ? 1 : -1; else dest.r += dy > 0 ? 1 : -1;
+  if (dest.r < 0 || dest.c < 0 || dest.r >= FILAS || dest.c >= COLS) { inicio = null; return; }
+  sel = null;
+  const origen = { r: inicio.r, c: inicio.c };
+  inicio = null;
+  intentarCambio(origen, dest);
+});
+tabEl.addEventListener('pointerup', (e) => {
+  if (!inicio) return;
+  const toque = inicio; inicio = null;
+  if (toque.arrastrado || ocupado) return;
+  const p = { r: toque.r, c: toque.c };
+  if (!sel) { sel = p; pintar(); return; }
+  if (sel.r === p.r && sel.c === p.c) { sel = null; pintar(); return; }
+  if (adyacentes(sel, p)) { const origen = sel; intentarCambio(origen, p); return; }
+  sel = p; pintar();
+});
+
+// ---------- Vistas y ventanas ----------
+function mostrarVista(v) {
+  document.getElementById('vista-inicio').style.display = v === 'inicio' ? 'flex' : 'none';
+  document.getElementById('vista-mapa').style.display = v === 'mapa' ? 'flex' : 'none';
+  document.getElementById('vista-juego').style.display = v === 'juego' ? 'flex' : 'none';
+  document.body.classList.toggle('en-juego', v === 'juego');
+  window.scrollTo(0, 0);
+}
+function pintarPts() { document.getElementById('t-pts').textContent = S.puntos.toLocaleString('es-VE'); }
+function pintarMapa() {
+  let h = '';
+  for (let n = 1; n <= TOTAL_NIVELES; n++) {
+    const bloq = n > S.nivelMax;
+    const est = S.estrellas[n] || 0;
+    const cls = 'nivel' + (bloq ? ' bloq' : '') + (est ? ' listo' : '') + (n === S.nivelMax ? ' actual' : '');
+    h += '<button type="button" class="' + cls + '" data-nivel="' + n + '"' + (bloq ? ' disabled' : '') + '>' + n +
+      '<small>' + (est ? '★'.repeat(est) : (bloq ? '' : '·')) + '</small></button>';
+  }
+  document.getElementById('mapa').innerHTML = h;
+}
+function abrirHoja(html) { document.getElementById('hoja').innerHTML = html; document.getElementById('fondo').classList.add('on'); }
+function cerrarHoja() { document.getElementById('fondo').classList.remove('on'); }
+
+document.getElementById('btn-mapa').onclick = () => { pintarMapa(); mostrarVista('mapa'); };
+document.getElementById('btn-volver-inicio').onclick = () => { mostrarVista('inicio'); };
+document.getElementById('mapa').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-nivel]'); if (!b || b.disabled) return;
+  iniciarNivel(Number(b.dataset.nivel));
+});
+document.getElementById('btn-cerrar').onclick = () => {
+  if (window.parent && window.parent !== window) { try { window.parent.postMessage({ tipo: 'juma-cerrar' }, location.origin); } catch (e) {} }
+  else { cerrarHoja(); mostrarVista('inicio'); }
+};
+document.getElementById('fondo').addEventListener('click', (e) => {
+  if (e.target.id === 'fondo') return;
+  const b = e.target.closest('[data-accion]'); if (!b) return;
+  const a = b.dataset.accion;
+  cerrarHoja();
+  if (a === 'siguiente') iniciarNivel(nivel + 1);
+  else if (a === 'reintentar') iniciarNivel(nivel);
+  else if (a === 'mapa') { pintarMapa(); mostrarVista('mapa'); }
+});
+
+pintarPts();
+mostrarVista('inicio');
+</script>
+</body>
+</html>
