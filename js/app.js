@@ -4449,7 +4449,23 @@ function renderDmMembersList(myUid, myEmail) {
     </div>`;
   }
   const porDm = chatUnreadCounts().porDm;
-  return filtered.map((m) => {
+  // Orden: primero quien te escribió sin leer, luego quien escribió más recientemente, y el resto por nombre
+  const ultimoPorDm = {};
+  (chatMessages || []).forEach((msg) => {
+    if (!msg || canalDe(msg) !== 'dm') return;
+    const kk = dmKeyDe(msg);
+    const tt = msgTime(msg);
+    if (tt > (ultimoPorDm[kk] || 0)) ultimoPorDm[kk] = tt;
+  });
+  const ordenados = filtered.slice().sort((a, b) => {
+    const ka = dmKeyCon(a.uid), kb = dmKeyCon(b.uid);
+    const na = (porDm[ka] || 0) > 0 ? 1 : 0, nb = (porDm[kb] || 0) > 0 ? 1 : 0;
+    if (na !== nb) return nb - na;
+    const ta = ultimoPorDm[ka] || 0, tb = ultimoPorDm[kb] || 0;
+    if (ta !== tb) return tb - ta;
+    return String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es');
+  });
+  return ordenados.map((m) => {
     const k = dmKeyCon(m.uid);
     const lastMsg = chatMessages.slice().reverse().find((msg) => canalDe(msg) === 'dm' && dmKeyDe(msg) === k);
     const unreadFromThis = porDm[k] || 0;
