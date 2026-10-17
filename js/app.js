@@ -1135,7 +1135,10 @@ function openModal(html, onKey) {
   /* Al cerrar, el foco vuelve al botón que abrió la primera ventana */
   if (!modalRoot.firstChild && document.activeElement && !modalRoot.contains(document.activeElement)) focoAntesModal = document.activeElement;
   modalRoot.innerHTML = html; lock(true); modalKey = onKey || null;
-  setTimeout(() => { const f = modalRoot.querySelector('input,textarea'); if (f) f.focus(); }, 260);
+  /* La ventana empieza arriba: el enfoque automático no debe bajarla (sin preventScroll el perfil se abría cortado) */
+  const arriba = () => modalRoot.querySelectorAll('.sheet').forEach((s) => { s.scrollTop = 0; });
+  arriba();
+  setTimeout(() => { const f = modalRoot.querySelector('input,textarea'); if (f) f.focus({ preventScroll: true }); arriba(); }, 260);
 }
 function closeModal() {
   if (modalKey === 'force-photo') return;
