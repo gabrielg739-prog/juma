@@ -2374,8 +2374,30 @@ async function saveRegistration() {
       cloudSaved = false;
     }
   }
+  if (currentUser) {
+    /* handleUser (lanzado al crear la cuenta) puede borrar el perfil recién guardado: se espera y se restaura */
+    try { await handlePromise; } catch (e) {}
+    if (!myProfile) { myProfile = local; guardarPerfilLocal(); }
+    if (cloudSaved) perfilEnNube = true;
+    try { if (cloudSaved) localStorage.removeItem('juma-pendiente-' + currentUser.uid); else localStorage.setItem('juma-pendiente-' + currentUser.uid, '1'); } catch (e) {}
+  }
   updateAuthUI();
   return cloudSaved;
+}
+/* Si la planilla se llenó sin internet (o falló el envío), se sube sola cuando haya conexión */
+async function subirPerfilPendiente(u) {
+  if (!u || perfilEnNube || !fb || !fb.db) return;
+  let pend = false; try { pend = localStorage.getItem('juma-pendiente-' + u.uid) === '1'; } catch (e) {}
+  const loc = leerPerfilLocal(u.uid);
+  if (!pend || !loc) return;
+  try {
+    const datos = Object.assign({}, loc, { id: u.uid, uid: u.uid, correo: String(u.email || loc.correo || '').trim().toLowerCase(), creado: fb.serverTimestamp() });
+    datos.rol = ['visitante', 'colaborador'].includes(loc.rol) ? loc.rol : 'participante';
+    await withTimeout(fb.setDoc(fb.doc(fb.db, 'inscripciones', u.uid), datos, { merge: true }), 6000);
+    perfilEnNube = true; myProfile = Object.assign({}, loc, { id: u.uid });
+    localStorage.removeItem('juma-pendiente-' + u.uid);
+    upsertMiembro(); iniciarEscuchasDeMiembro();
+  } catch (e) {}
 }
 
 /* Busca una planilla ya cargada (solo coordinadores tienen la lista completa) o la copia propia. */
@@ -3400,6 +3422,7 @@ function abrirLibro(id) {
   document.body.appendChild(r);
   document.documentElement.style.overflow = 'hidden';
 }
+window.addEventListener('online', () => { if (currentUser && !perfilEnNube) subirPerfilPendiente(currentUser); });
 window.addEventListener('popstate', () => { if ($('#lib-reader')) cerrarLibro(true); });
 function cerrarLibro(porAtras) {
   const r = $('#lib-reader'); if (r) r.remove();
@@ -3486,7 +3509,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=114" allow="fullscreen"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=115" allow="fullscreen"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
   document.body.appendChild(r);
   /* Botón Atrás del teléfono: cierra el juego en vez de salir de la app */
   try { history.pushState({ jumaJuego: 1 }, ''); } catch (e) {}
@@ -4243,7 +4266,6 @@ function renderProfileTabContent(tab, rec, user, d, email, misAsistencias, proxE
   if (tab === 'carnet' && isParticipant) {
     return `
       <div style="text-align:left;animation:fadeInView .2s ease">
-        ${qrCardHtml(rec || { uid: user && user.uid, correo: email, nombre: rec && rec.nombre, datos: d })}
         <div style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;color:#475569;margin-bottom:12px;background:#F8FAFC;padding:10px 14px;border-radius:12px;border:1px solid var(--line)">
           <span style="color:var(--royal);display:inline-flex;margin-top:1px" aria-hidden="true">${ic('idcard')}</span><span><b>Tu Carnet Oficial JUMA</b> con QR de asistencia integrado y mockup realista con la franela misionera. Puedes rotarlo o descargarlo en alta definición.</span>
         </div>
@@ -4404,9 +4426,10 @@ function authModalHtml() {
             Llénala una sola vez para activar tu carnet, el chat y el directorio de JUMA.
             <div style="margin-top:8px"><button type="button" class="btn btn-blue btn-sm" data-go-register style="min-height:34px;padding:0 14px;font-size:13px">Llenar mi planilla</button></div>
           </div>` : ''}
+          ${currentUser ? `<div style="width:100%">${qrCardHtml(myProfile || { uid: currentUser.uid, correo: email, nombre, datos: d })}</div>` : ''}
           ${currentUser && !currentUser.emailVerified ? `<div style="width:100%;margin:4px 0 12px;padding:12px 14px;border-radius:12px;background:#E8F1FF;border:1.5px solid #C7DCFF;color:#0C2D74;font-size:13.5px;text-align:left">
-            <b style="display:flex;align-items:center;gap:6px;margin-bottom:4px">${ic('mail')}Verifica tu correo</b>
-            Abre el enlace que te enviamos a <b>${esc(email)}</b>. Los permisos de coordinación y la recuperación de planillas antiguas necesitan un correo verificado.
+            <b style="display:flex;align-items:center;gap:6px;margin-bottom:4px">${ic('mail')}Verificar tu correo (opcional)</b>
+            Puedes usar la app sin verificarlo. Si quieres, abre el enlace que te enviamos a <b>${esc(email)}</b>: solo hace falta para permisos de coordinación y para recuperar planillas antiguas.
             <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="btn btn-soft btn-sm" data-verify-email style="min-height:34px;padding:0 12px;font-size:12.5px">Reenviar enlace</button><button type="button" class="btn btn-soft btn-sm" data-reload-user style="min-height:34px;padding:0 12px;font-size:12.5px">Ya lo verifiqué</button></div>
           </div>` : ''}
 
@@ -5211,6 +5234,8 @@ function handleUser(u, force = false) {
     if (seq !== handleSeq) return;
     await loadUserProfile(u);
     if (seq !== handleSeq) return;
+    await subirPerfilPendiente(u);
+    if (seq !== handleSeq) return;
     if (!fb || !fb.db) { updateAuthUI(); return; } /* sesión guardada sin Firebase (sin internet) */
     if (!privRole) { await cargarRolAntiguo(u); if (seq !== handleSeq) return; }
     updateAuthUI();
@@ -5365,7 +5390,7 @@ modalRoot.addEventListener('click', async (e) => {
       if (fb.au.sendEmailVerification) fb.au.sendEmailVerification(cred.user).catch(() => {});
       await handleUser(cred.user);
       authBusy = false;
-      authOk = 'Cuenta creada. Te enviamos un enlace a ' + em + ' para verificar tu correo: al verificarlo, la app busca tu planilla anterior.';
+      authOk = 'Cuenta creada. Ya puedes usar la app. Si quieres, verifica tu correo más tarde con el enlace que enviamos a ' + em + ' (es opcional).';
       repaintAuth();
     } catch (x) {
       authBusy = false;
