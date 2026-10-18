@@ -734,6 +734,28 @@ for (const b of document.querySelectorAll('[data-tecla]')) {
   for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, () => { tactil[v] = false; });
 }
 
+/* Joystick izquierdo: solo gira a la izquierda o a la derecha */
+(() => {
+  const joy = $('joy'), pal = $('joyPalanca'); if (!joy) return;
+  let id = null;
+  const mover = (e) => {
+    const r = joy.getBoundingClientRect(), tope = r.width / 2 - r.height * 0.3;
+    const dx = Math.max(-tope, Math.min(tope, e.clientX - (r.left + r.width / 2)));
+    const v = dx / tope;
+    pal.style.transform = `translateX(${dx}px)`;
+    tactil.izq = v < -0.28; tactil.der = v > 0.28;
+    joy.setAttribute('aria-valuenow', v.toFixed(2));
+  };
+  const soltar = (e) => {
+    if (e.pointerId !== id) return; id = null;
+    joy.classList.remove('activo'); pal.style.transform = 'translateX(0)';
+    tactil.izq = false; tactil.der = false; joy.setAttribute('aria-valuenow', '0');
+  };
+  joy.addEventListener('pointerdown', (e) => { if (id !== null) return; e.preventDefault(); id = e.pointerId; try { joy.setPointerCapture(id); } catch (x) {} joy.classList.add('activo'); mover(e); });
+  joy.addEventListener('pointermove', (e) => { if (e.pointerId === id) mover(e); });
+  joy.addEventListener('pointerup', soltar); joy.addEventListener('pointercancel', soltar);
+})();
+
 addEventListener('resize', () => { ajustarTamano(); revisarOrientacion(); });
 addEventListener('orientationchange', revisarOrientacion);
 addEventListener('pointerdown', () => {

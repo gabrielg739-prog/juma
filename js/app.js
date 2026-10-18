@@ -142,7 +142,15 @@ function renderAll() {
 }
 function renderAviso() {
   const el = $('#aviso'); const t = String(cfg.aviso || '').trim();
-  el.textContent = t; el.classList.toggle('hide', !t);
+  /* La persona puede cerrar el aviso; vuelve a salir solo si cambia el texto */
+  let cerrado = ''; try { cerrado = localStorage.getItem('juma-aviso-cerrado') || ''; } catch (e) {}
+  const oculto = !t || cerrado === t;
+  el.replaceChildren();
+  const tx = document.createElement('span'); tx.textContent = t; el.appendChild(tx);
+  const x = document.createElement('button'); x.type = 'button'; x.className = 'aviso-x'; x.setAttribute('aria-label', 'Cerrar aviso'); x.textContent = '✕';
+  x.addEventListener('click', () => { try { localStorage.setItem('juma-aviso-cerrado', t); } catch (e) {} el.classList.add('hide'); });
+  el.appendChild(x);
+  el.classList.toggle('hide', oculto);
 }
 function hora() { return cfg.hora || 'Hora por confirmar'; }
 function lugar() { const l = cfg.lugar; return l ? l + (/duaca/i.test(l) ? '' : ', Duaca') : 'Lugar por confirmar, Duaca'; }
@@ -3428,6 +3436,7 @@ function cerrarLibro(porAtras) {
   const r = $('#lib-reader'); if (r) r.remove();
   if (!porAtras && r && history.state && history.state.jumaJuego) { try { history.back(); } catch (e) {} }
   misioneros.terminarSesion();
+  guardarPuntosMisioneros(misioneros.puntos(), true);
   document.documentElement.style.overflow = '';
 }
 document.addEventListener('click', (e) => {
@@ -3509,7 +3518,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=115" allow="fullscreen"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=116" allow="fullscreen"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
   document.body.appendChild(r);
   /* Botón Atrás del teléfono: cierra el juego en vez de salir de la app */
   try { history.pushState({ jumaJuego: 1 }, ''); } catch (e) {}
@@ -3556,13 +3565,34 @@ function actualizarBarraMisionera() {
   fill.parentElement.setAttribute('aria-valuenow', String(Math.round(e.nivel.progreso * 100)));
   document.getElementById('mis-next').textContent = textoMisionero(e);
 }
-let ultimoEnvioPuntos = -1;
-function guardarPuntosMisioneros(total) {
-  if (!currentUser || !fb.setDoc || !fb.db) return;
+let ultimoEnvioPuntos = -1, ultimoIntentoPuntos = 0;
+const CLAVE_PEND = (uid) => 'juma-mis-pend-' + uid;
+/* Los puntos siempre quedan guardados en el teléfono (js/misioneros.js). Aquí se envían a la nube:
+   sin internet, o si falla, quedan pendientes y se reintentan solos (al volver internet, al abrir la app o al cerrar un juego). */
+function guardarPuntosMisioneros(total, forzar) {
+  if (!currentUser) return;
+  const uid = currentUser.uid;
+  try { localStorage.setItem(CLAVE_PEND(uid), String(total)); } catch (e) {}
+  if (!fb || !fb.setDoc || !fb.db || navigator.onLine === false) return;
   if (total === ultimoEnvioPuntos) return;
-  ultimoEnvioPuntos = total;
-  fb.setDoc(fb.doc(fb.db, 'miembros', currentUser.uid), { puntosMisioneros: total, puntosActualizado: fb.serverTimestamp() }, { merge: true }).catch(() => {});
+  const ahora = Date.now();
+  if (!forzar && ahora - ultimoIntentoPuntos < 20000) return;
+  ultimoIntentoPuntos = ahora; ultimoEnvioPuntos = total;
+  fb.setDoc(fb.doc(fb.db, 'miembros', uid), { puntosMisioneros: total, puntosActualizado: fb.serverTimestamp() }, { merge: true })
+    .then(() => { try { if (localStorage.getItem(CLAVE_PEND(uid)) === String(total)) localStorage.removeItem(CLAVE_PEND(uid)); } catch (e) {} })
+    .catch(() => { ultimoEnvioPuntos = -1; });
 }
+/* Al tener sesión y conexión: sube lo pendiente y toma de la nube el máximo ya guardado */
+async function sincronizarPuntos() {
+  if (!currentUser || !fb || !fb.db || navigator.onLine === false) return;
+  try {
+    const snap = await withTimeout(fb.getDoc(fb.doc(fb.db, 'miembros', currentUser.uid)), 6000);
+    if (snap.exists()) misioneros.fijarPiso(snap.data().puntosMisioneros);
+  } catch (e) { /* sin permiso o sin conexión: se intenta otra vez después */ }
+  guardarPuntosMisioneros(misioneros.puntos(), true);
+}
+window.addEventListener('online', () => { sincronizarPuntos(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) guardarPuntosMisioneros(misioneros.puntos(), true); });
 
 /* ===================== Amigos: todos los registrados con nombre y foto ===================== */
 function openFriendsModal() {
@@ -5236,6 +5266,7 @@ function handleUser(u, force = false) {
     if (seq !== handleSeq) return;
     await subirPerfilPendiente(u);
     if (seq !== handleSeq) return;
+    sincronizarPuntos();
     if (!fb || !fb.db) { updateAuthUI(); return; } /* sesión guardada sin Firebase (sin internet) */
     if (!privRole) { await cargarRolAntiguo(u); if (seq !== handleSeq) return; }
     updateAuthUI();
@@ -5348,6 +5379,7 @@ modalRoot.addEventListener('click', async (e) => {
       sessionStorage.removeItem('juma-ed');
       if (uidSalida) localStorage.removeItem('juma-perfil-' + uidSalida);
       localStorage.setItem('juma-is-logged-out', '1');
+      localStorage.removeItem('juma-ultimo-usuario');
     } catch (x) {}
     await handleUser(null);
     closeModal();
@@ -8128,5 +8160,7 @@ async function loadContenido() {
   setTimeout(() => checkBirthdayCelebration(), 750);
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
   loadContenido();
+  /* La cuenta ya usada en este teléfono se carga al instante (sin esperar a Firebase ni a internet) */
+  usarSesionGuardada();
   initFirebase();
 })();

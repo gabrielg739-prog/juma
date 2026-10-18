@@ -98,7 +98,7 @@ caret-color:var(--royal);accent-color:var(--royal);
 
 /* ===== cabecera: la vara de la que cuelga todo ===== */
 .topbar{position:sticky;top:0;z-index:100;background:#fff;color:var(--ink)}
-.aviso{background:var(--royal);color:#fff;text-align:center;padding:10px 16px;font-size:15px;font-weight:700;line-height:1.4}
+.aviso{position:relative;background:var(--royal);color:#fff;text-align:center;padding:10px 44px 10px 16px;font-size:15px;font-weight:700;line-height:1.4}
 .topbar-in{max-width:1320px;margin:0 auto;padding:14px clamp(16px,3vw,32px) 12px;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .brand{position:relative;display:flex;align-items:center;gap:14px;min-height:56px;color:var(--ink);text-decoration:none}
 .brand-logo{flex:0 0 auto;width:70px;height:58px;object-fit:contain;display:block}
@@ -1190,6 +1190,8 @@ body{background:var(--paper);overflow-x:clip}
 @media (min-width:1024px){
 #root{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);grid-template-rows:auto auto 1fr auto;grid-template-areas:"aviso aviso" "top top" "side main" "side foot"}
 #root>.aviso{grid-area:aviso}
+.aviso-x{position:absolute;top:6px;right:8px;width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,.22);color:#fff;font-size:16px;font-weight:800;cursor:pointer}
+.aviso-x:active{background:rgba(255,255,255,.4)}
 #root>.topbar{grid-area:top}
 #root>.sidebar{grid-area:side;display:flex;position:sticky;top:var(--top-h);align-self:start;height:calc(100dvh - var(--top-h))}
 #root>.main{grid-area:main}
@@ -1800,8 +1802,8 @@ body.is-guest .solo-miembros { display: none !important; }
 <div id="modal-root"></div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=115"></script>
-<script type="module" src="js/offline.js?v=115"></script>
+<script type="module" src="js/app.js?v=116"></script>
+<script type="module" src="js/offline.js?v=116"></script>
 <script type="module" src="js/fe.js?v=65"></script>
 </body>
 </html>
