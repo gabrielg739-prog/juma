@@ -156,6 +156,11 @@
   }
   .ctl:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--oro-2), 0 3px 6px rgba(0, 0, 0, .25); background: #fff8d8; }
   .cruz .ctl { border-radius: 14px; font-size: calc(var(--s) * .42); }
+  .joy { pointer-events: auto; touch-action: none; position: relative; width: calc(var(--s) * 3); height: calc(var(--s) * 1.5); margin-bottom: calc(var(--s) * .5); border-radius: 999px; background: rgba(31, 15, 51, .6); border: 3px solid var(--oro-2); box-shadow: inset 0 3px 10px rgba(0, 0, 0, .35); }
+  .joy-flecha { position: absolute; top: 50%; transform: translateY(-50%); color: rgba(255, 255, 255, .55); font-size: calc(var(--s) * .4); font-weight: 900; }
+  .joy-flecha.i { left: calc(var(--s) * .22); } .joy-flecha.d { right: calc(var(--s) * .22); }
+  .joy-palanca { position: absolute; top: 50%; left: 50%; width: calc(var(--s) * 1.15); height: calc(var(--s) * 1.15); margin: calc(var(--s) * -.575) 0 0 calc(var(--s) * -.575); border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff8d8, #f0b43c 70%); border: 3px solid var(--oro-2); box-shadow: 0 4px 0 var(--oro-2), 0 6px 12px rgba(0, 0, 0, .3); pointer-events: none; transform: translateX(0); }
+  .joy.activo .joy-palanca { transition: none; } .joy:not(.activo) .joy-palanca { transition: transform .12s ease-out; }
   .cruz-i { grid-column: 1; grid-row: 2; }
   .cruz-d { grid-column: 3; grid-row: 2; }
   .cruz .pad:nth-child(1) { grid-column: 2; grid-row: 1; }
@@ -228,10 +233,9 @@
   <div class="aviso" id="aviso" hidden></div>
 
   <div class="controles" id="controles" hidden>
-    <div class="cruz" aria-label="Cruceta para girar">
-      <span class="pad"></span><span class="pad"></span><span class="pad"></span>
-      <button type="button" class="ctl cruz-i" data-tecla="izq" aria-label="Girar a la izquierda">◀</button>
-      <button type="button" class="ctl cruz-d" data-tecla="der" aria-label="Girar a la derecha">▶</button>
+    <div class="joy" id="joy" aria-label="Joystick para girar a izquierda y derecha" role="slider" aria-valuemin="-1" aria-valuemax="1" aria-valuenow="0">
+      <span class="joy-flecha i" aria-hidden="true">◀</span><span class="joy-flecha d" aria-hidden="true">▶</span>
+      <span class="joy-palanca" id="joyPalanca"></span>
     </div>
     <div class="botones" aria-label="Botones de acción">
       <button type="button" class="ctl bt-x" data-tecla="objeto" aria-label="Usar objeto">X</button>

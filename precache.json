@@ -1,7 +1,7 @@
 {
- "version": "6e32d3459c08",
+ "version": "5c793db99fff",
  "recursos": "juma-recursos-v1",
- "tamano": 52256094,
+ "tamano": 52261321,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -740,13 +740,13 @@
   },
   {
    "ruta": "index.html",
-   "tamano": 148398,
-   "hash": "de55a5297304"
+   "tamano": 148661,
+   "hash": "6d9d09f4648b"
   },
   {
    "ruta": "js/app.js",
-   "tamano": 494971,
-   "hash": "c4e081654eb8"
+   "tamano": 497344,
+   "hash": "04cae16c4bee"
   },
   {
    "ruta": "js/fe.js",
@@ -760,8 +760,8 @@
   },
   {
    "ruta": "js/misioneros.js",
-   "tamano": 4645,
-   "hash": "73e7b59f9915"
+   "tamano": 5019,
+   "hash": "64fcd21e75e6"
   },
   {
    "ruta": "js/offline.js",
@@ -830,8 +830,8 @@
   },
   {
    "ruta": "juegos/carrera/main.js",
-   "tamano": 32153,
-   "hash": "068a60ca2558"
+   "tamano": 33304,
+   "hash": "ca1be641915d"
   },
   {
    "ruta": "juegos/carrera/objetos.js",
@@ -865,8 +865,8 @@
   },
   {
    "ruta": "juegos/carrera-de-la-fe.html",
-   "tamano": 17057,
-   "hash": "7ac8025a2e27"
+   "tamano": 18123,
+   "hash": "2026d47dd3b6"
   },
   {
    "ruta": "juegos/cuadros/cap1-consolata.jpg",

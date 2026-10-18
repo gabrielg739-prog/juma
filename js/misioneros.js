@@ -32,14 +32,14 @@ export const JUEGOS = {
 
 const CLAVE = 'juma-mis-v1';
 let uid = null;
-let datos = { seg: 0, bonus: 0, max: {} };
+let datos = { seg: 0, bonus: 0, max: {}, piso: 0 };
 let sesion = null, tic = null, ultimoGuardado = 0;
 const escuchas = [];
 
 function leerTodo() { try { return JSON.parse(localStorage.getItem(CLAVE) || '{}') || {}; } catch (e) { return {}; } }
 function cargar() {
   const d = uid ? leerTodo()[uid] : null;
-  return { seg: Number(d && d.seg) || 0, bonus: Number(d && d.bonus) || 0, max: (d && d.max) || {} };
+  return { seg: Number(d && d.seg) || 0, bonus: Number(d && d.bonus) || 0, max: (d && d.max) || {}, piso: Number(d && d.piso) || 0 };
 }
 function guardarLocal() {
   if (!uid) return;
@@ -52,7 +52,14 @@ function emitir() { for (const fn of escuchas) { try { fn(); } catch (e) { /* un
 /* Puntos totales: el tiempo ya jugado más la sesión en curso */
 export function puntos() {
   const seg = datos.seg + (sesion ? sesion.seg : 0);
-  return Math.floor(seg * PUNTOS_POR_HORA / 3600) + datos.bonus;
+  /* «piso» = lo que ya estaba guardado en la nube (por si se juega desde otro teléfono): nunca se baja */
+  return Math.max(datos.piso, Math.floor(seg * PUNTOS_POR_HORA / 3600) + datos.bonus);
+}
+
+/* Fija el mínimo de puntos con el valor guardado en la nube */
+export function fijarPiso(n) {
+  n = Math.floor(Number(n) || 0);
+  if (n > datos.piso) { datos.piso = n; guardarLocal(); emitir(); }
 }
 
 /* Nivel actual, siguiente nivel y avance (0 a 1) */
