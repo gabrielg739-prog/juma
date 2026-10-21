@@ -120,6 +120,59 @@
   #miedo.on { animation: miedo 1.1s ease-out; }
   @keyframes miedo { 0% { opacity: 1; } 15% { opacity: .5; } 25% { opacity: .9; } 100% { opacity: 0; } }
   #fe { background: radial-gradient(ellipse at center, rgba(255,220,120,0) 45%, rgba(255,210,90,.45) 85%, rgba(255,240,180,.8) 100%); opacity: 0; transition: opacity .15s; }
+  #rosa { background: radial-gradient(ellipse at 42% 78%, rgba(255, 232, 160, .38), rgba(255, 200, 80, 0) 55%); opacity: 0; }
+  #tinieblas { background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 12%, rgba(0, 0, 0, .94) 62%); opacity: 0; transition: opacity .5s; }
+  .barras { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 86px); transform: translateX(-50%); display: flex; gap: 14px; }
+  .barra small { display: block; font: 800 9px system-ui, sans-serif; letter-spacing: .08em; color: #ffe9b0; text-shadow: 0 1px 2px #000; margin: 0 0 2px 2px; }
+  .barra > div { width: 120px; height: 9px; border-radius: 5px; background: rgba(0, 0, 0, .6); border: 1px solid rgba(255, 230, 160, .45); overflow: hidden; }
+  .barra i { display: block; height: 100%; transform-origin: left; transition: transform .1s; }
+  .barra.fe i { background: linear-gradient(90deg, #fff1b8, #ffb020); }
+  .barra.al i { background: linear-gradient(90deg, #c8f4ff, #3f9cff); }
+  .barra.fe.baja i { animation: latido .5s infinite; }
+  .bt.hab.ros { width: 74px; height: 74px; font-size: 10px; background: conic-gradient(rgba(0,0,0,.55) var(--cd, 0deg), transparent 0), radial-gradient(circle at 50% 35%, #fffbe6, #e0b040 75%); }
+  .bt.hab.ros.on { box-shadow: 0 0 22px 6px rgba(255, 220, 120, .8); }
+  #encanto { background: radial-gradient(ellipse at center, rgba(255, 60, 160, 0) 30%, rgba(255, 40, 140, .45) 100%); opacity: 0; }
+  /* ---- Controles táctiles: arco de botones alrededor de BENDECIR ---- */
+  .botones { position: absolute; right: calc(env(safe-area-inset-right, 0px) + 12px); bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); width: 236px; height: 236px; display: none; pointer-events: none; }
+  .botones.on { display: block; }
+  .botones .bt { position: absolute; pointer-events: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0; touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+  .botones .bt i { font-style: normal; font-size: 20px; line-height: 1; margin-bottom: 2px; }
+  .botones .bt.fuego { right: 0; bottom: 0; width: 96px; height: 96px; font-size: 12px; }
+  .botones .bt.fuego i { font-size: 28px; }
+  .botones .bt.ros { right: 108px; bottom: 4px; width: 74px; height: 74px; font-size: 10px; }
+  .botones .bt.ros i { font-size: 24px; }
+  #b-empujar { right: 92px; bottom: 92px; width: 60px; height: 60px; font-size: 9px; }
+  #b-esquivar { right: 18px; bottom: 110px; width: 60px; height: 60px; font-size: 9px; }
+  #b-fe { right: 176px; bottom: 82px; width: 54px; height: 54px; font-size: 9px; }
+  .botones .bt.super { right: 154px; bottom: 150px; width: 54px; height: 54px; font-size: 9px; }
+  .botones .bt.arma { right: 76px; bottom: 170px; width: 54px; height: 54px; font-size: 9px; }
+  .joy-guia { position: absolute; left: calc(env(safe-area-inset-left, 0px) + 18px); bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); width: 110px; height: 110px; border-radius: 50%; border: 2px dashed rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .05); display: none; place-items: center; text-align: center; font: 700 11px system-ui, sans-serif; color: rgba(255, 255, 255, .7); pointer-events: none; }
+  .mira-guia { position: absolute; right: 26px; bottom: 262px; font: 700 11px system-ui, sans-serif; color: rgba(255, 255, 255, .6); text-shadow: 0 1px 3px #000; display: none; pointer-events: none; }
+  body.tactil .hud.on .joy-guia.on, body.tactil .hud.on .mira-guia.on { display: grid; }
+  .joy.corre { border-color: rgba(120, 200, 255, .9); box-shadow: 0 0 18px rgba(80, 170, 255, .6); }
+  .joy.corre::after { content: "CORRIENDO"; position: absolute; left: 50%; top: -18px; transform: translateX(-50%); font: 800 10px system-ui, sans-serif; color: #bfe6ff; text-shadow: 0 1px 3px #000; }
+  /* En el teléfono el panel va arriba para dejar libres los pulgares */
+  body.tactil .estado { top: calc(env(safe-area-inset-top, 0px) + 6px); bottom: auto; transform: translateX(-50%) scale(.74); transform-origin: top center; }
+  body.tactil .barras { top: calc(env(safe-area-inset-top, 0px) + 62px); bottom: auto; }
+  body.tactil .barra > div { width: 92px; }
+  body.tactil .arriba { font-size: 12px; line-height: 1.3; }
+  body.tactil .arriba .nombre-nivel { font-size: 12px; }
+  body.tactil .mini { width: 84px; height: 84px; top: calc(env(safe-area-inset-top, 0px) + 62px); }
+  @media (max-width: 640px) {
+    body.tactil .arriba { top: calc(env(safe-area-inset-top, 0px) + 92px); }
+    body.tactil .mini { top: calc(env(safe-area-inset-top, 0px) + 92px); }
+    body.tactil .estado { transform: translateX(-50%) scale(.66); }
+  }
+  @media (max-height: 420px) { .botones { transform: scale(.82); transform-origin: bottom right; } .joy-guia { width: 100px; height: 100px; } .mira-guia { bottom: auto; top: 56%; right: 230px; } }
+  /* ---- Computadora: ayuda de teclas y aviso para capturar el ratón ---- */
+  .teclas { position: absolute; left: 12px; top: calc(env(safe-area-inset-top, 0px) + 78px); max-width: min(34vw, 300px); font: 600 11px/1.7 system-ui, sans-serif; color: rgba(255, 245, 225, .82); text-shadow: 0 1px 3px #000; background: rgba(10, 6, 20, .5); border-radius: 10px; padding: 6px 10px; pointer-events: none; }
+  .teclas kbd { font: 800 10px system-ui, sans-serif; padding: 1px 5px; border-radius: 4px; background: rgba(255, 230, 160, .18); border: 1px solid rgba(255, 230, 160, .45); color: #ffe9b0; }
+  .teclas.oculta, body.tactil .teclas { display: none; }
+  .clic-captura { position: absolute; left: 50%; top: 58%; transform: translateX(-50%); padding: 10px 18px; border-radius: 999px; background: rgba(10, 6, 20, .75); border: 2px solid rgba(255, 210, 90, .6); font: 800 15px system-ui, sans-serif; color: #ffe9b0; display: none; pointer-events: none; animation: latido 1.4s infinite; }
+  .clic-captura.on { display: block; }
+  body.tactil .clic-captura { display: none !important; }
+  .ajustes { display: flex; align-items: center; gap: 10px; justify-content: center; font: 700 13px system-ui, sans-serif; margin: 6px 0 2px; }
+  .ajustes input[type=range] { width: 160px; accent-color: #ffc94a; }
   .x-salir { position: absolute; z-index: 30; top: calc(env(safe-area-inset-top, 0px) + 12px); left: calc(env(safe-area-inset-left, 0px) + 12px); width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: rgba(10, 6, 20, .6); border: 2px solid rgba(255, 255, 255, .22); pointer-events: auto; cursor: pointer; padding: 0; }
   .x-salir:active { transform: scale(.92); }
 </style>
@@ -131,6 +184,9 @@
 <div class="capa" id="vineta"></div>
 <div class="capa" id="miedo"></div>
 <div class="capa" id="fe"></div>
+<div class="capa" id="rosa"></div>
+<div class="capa" id="tinieblas"></div>
+<div class="capa" id="encanto"></div>
 
 <div class="hud" id="hud">
   <div class="arriba">
@@ -138,16 +194,26 @@
     <div>Pecados <b id="h-enem">0</b> · ★ <b id="h-pts">0</b></div>
     <div>Súper <b id="h-poder">0/3</b></div>
   </div>
-  <div class="jefe" id="jefe" hidden><span>El Tentador</span><div class="b"><i id="jefe-b"></i></div></div>
+  <div class="jefe" id="jefe" hidden><span>Lucifer, el Tentador</span><div class="b"><i id="jefe-b"></i></div></div>
   <button class="pausa-btn" id="b-pausa" type="button" aria-label="Pausa">II</button>
   <canvas class="mini" id="mini" width="224" height="224"></canvas>
   <div class="mira" id="mira" aria-hidden="true"></div>
   <div class="joy" id="joy"><i id="joy-k"></i></div>
+  <div class="joy-guia" id="joy-guia" aria-hidden="true"><span>Toca y arrastra<br>para moverte</span></div>
+  <div class="mira-guia" id="mira-guia" aria-hidden="true">Arrastra para mirar · toca para bendecir</div>
+  <div class="teclas" id="teclas-pc"><b>Controles</b> <kbd>WASD</kbd> mover · <kbd>Ratón</kbd> mirar · <kbd>Clic</kbd> bendecir · <kbd>Clic der.</kbd>/<kbd>G</kbd> rosario · <kbd>Shift</kbd> correr · <kbd>E</kbd> esquivar · <kbd>F</kbd> escudo · <kbd>V</kbd> empujar · <kbd>R</kbd> súper · <kbd>1-4</kbd> armas · <kbd>Esc</kbd> pausa · <kbd>H</kbd> ocultar</div>
+  <div class="clic-captura" id="clic-captura">Haz clic para jugar</div>
   <div class="botones" id="botones">
-    <div class="fila-b"><button class="bt hab" id="b-fe" type="button">ESCUDO</button><button class="bt hab" id="b-esquivar" type="button">ESQUIVAR</button></div>
-    <div class="fila-b"><button class="bt super" id="b-super" type="button">SÚPER</button><button class="bt arma" id="b-arma" type="button">ARMA</button></div>
-    <button class="bt fuego" id="b-fuego" type="button">BENDECIR</button>
+    <button class="bt fuego" id="b-fuego" type="button"><i>✦</i>BENDECIR</button>
+    <button class="bt hab ros" id="b-rosario" type="button"><i>✝</i>ROSARIO</button>
+    <button class="bt hab" id="b-empujar" type="button"><i>✋</i>EMPUJAR</button>
+    <button class="bt hab" id="b-esquivar" type="button"><i>»</i>ESQUIVAR</button>
+    <button class="bt hab" id="b-fe" type="button"><i>◈</i>ESCUDO</button>
+    <button class="bt super" id="b-super" type="button"><i>☀</i>SÚPER</button>
+    <button class="bt arma" id="b-arma" type="button"><i>⟳</i>ARMA</button>
+    <button class="bt hab" id="b-correr" type="button" hidden>CORRER</button>
   </div>
+  <div class="barras"><div class="barra fe"><small>FE</small><div><i id="h-fe"></i></div></div><div class="barra al"><small>ALIENTO</small><div><i id="h-al"></i></div></div></div>
   <div class="estado">
     <div class="celda"><small>SALUD</small><b id="h-vida">100</b></div>
     <div class="celda"><small>ESCAPULARIO</small><b id="h-arm">0</b></div>
@@ -163,7 +229,7 @@
   <div class="tarjeta">
     <div class="retrato-grande"><img src="cuadros/cap2-allamano.jpg" alt=""></div>
     <h1>Luz contra el pecado</h1>
-    <p class="pequeno">San José Allamano baja a siete lugares oscuros. Con el hisopo, el rosario, la cruz y el incensario vence a los pecados capitales y abre el Sagrario.</p>
+    <p class="pequeno">San José Allamano baja a catorce lugares oscuros. Con el hisopo, el rosario, la cruz y el incensario vence a los demonios de los pecados capitales y abre el Sagrario.</p>
     <div class="titulo-sec">Dificultad</div>
     <div class="dific" id="m-dific"></div>
     <div class="titulo-sec">Nivel</div>
@@ -171,14 +237,20 @@
     <button class="boton" id="b-jugar" type="button">COMENZAR</button>
     <div class="titulo-sec">Dones del Espíritu</div>
     <div class="dones" id="m-dones"></div>
-    <div class="titulo-sec">Los pecados</div>
+    <div class="titulo-sec">Los siete demonios y su príncipe</div>
     <div class="bestiario" id="m-bestiario"></div>
-    <div class="lista">
+    <div class="titulo-sec">Ajustes</div>
+    <div class="ajustes"><label for="m-sens">Sensibilidad de la mirada</label><input type="range" id="m-sens" min="0.4" max="2" step="0.1"><span id="m-sens-v"></span></div>
+    <div class="titulo-sec">Cómo se juega</div>
+    <div class="lista" id="m-controles"></div>
+    <div class="lista" hidden>
       <p>• <b>Mover:</b> WASD o flechas · en el celular, el círculo de la izquierda.</p>
       <p>• <b>Mirar:</b> el ratón, o arrastra en la mitad derecha.</p>
       <p>• <b>Bendecir:</b> clic, Espacio o el botón BENDECIR.</p>
       <p>• <b>Armas:</b> teclas 1 a 4, Q o la rueda del ratón, o el botón ARMA.</p>
-      <p>• <b>Súper:</b> tecla R tras vencer 3 pecados.</p>
+      <p>• <b>Súper:</b> tecla R tras vencer 3 demonios.</p>
+      <p>• <b>Alzar el rosario:</b> mantén G o el botón derecho del ratón. Los demonios gritan y huyen… pero no siempre: depende de tu <b>fe</b>, de la distancia y del demonio. Si resiste, se enfurece. Alzarlo gasta fe.</p>
+      <p>• <b>Correr:</b> Mayúscula izquierda (gasta aliento) · <b>Empujar:</b> V · <b>Esquivar:</b> E · <b>Escudo:</b> F.</p>
       <p>• Las puertas se abren al acercarte. La puerta dorada del Sagrario necesita la <b>llave dorada</b>.</p>
     </div>
     <p class="pequeno" id="m-mejor"></p>
@@ -191,6 +263,7 @@
   <div class="tarjeta">
     <h2>Pausa</h2>
     <div class="stats" id="pausa-stats"></div>
+    <div class="lista" id="pausa-controles" style="text-align:left"></div>
     <button class="boton" id="b-seguir" type="button">SEGUIR</button>
     <button class="boton sec" id="b-salir" type="button">Volver al menú</button>
   </div>
@@ -200,6 +273,8 @@
 <script src="lib/sonido.js"></script>
 <script type="module">
 import * as THREE from './lib/three.module.min.js';
+import { iniciarDemonios, crearDemonio, prepararDemonio } from './lib/demonios3d.js';
+iniciarDemonios(THREE);
 /* =====================================================================
    Luz contra el pecado · motor 3D con muros en relieve, luces que se
    mueven, física de proyectiles y partículas, cuatro armas y seis pecados.
@@ -225,15 +300,32 @@ const NIVELES = [
   { nombre: 'El mercado de la avaricia', tema: 'mercado', tam: 33, salas: 11, enemigos: { pereza: 2, envidia: 3, ira: 2, avaricia: 4 }, arma: 'cruz', frase: 'Primero santos, después misioneros.' },
   { nombre: 'Las cavernas del orgullo', tema: 'caverna', tam: 35, salas: 12, enemigos: { soberbia: 5, envidia: 4, ira: 4, avaricia: 3 }, arma: 'incensario', frase: 'El Señor quiere que seamos fuego que enciende otros fuegos.' },
   { nombre: 'El abismo', tema: 'abismo', tam: 37, salas: 13, enemigos: { pereza: 3, soberbia: 4, envidia: 6, ira: 5, avaricia: 4 }, frase: 'Con la Consolata todo se vence.' },
-  { nombre: 'El Tentador', tema: 'abismo', tam: 31, salas: 7, enemigos: { envidia: 3, ira: 3, soberbia: 2 }, jefe: true, frase: 'No tengáis miedo: la gracia de Dios es más fuerte.' }
+  { nombre: 'El palacio de Asmodeo', tema: 'palacio', tam: 33, salas: 11, enemigos: { lujuria: 4, soberbia: 2, envidia: 3 }, frase: 'Bienaventurados los limpios de corazón, porque ellos verán a Dios.', autor: 'Mateo 5, 8' },
+  { nombre: 'El banquete de Belcebú', tema: 'banquete', tam: 35, salas: 12, enemigos: { gula: 4, pereza: 3, avaricia: 2 }, frase: 'No solo de pan vive el hombre.', autor: 'Mateo 4, 4' },
+  { nombre: 'Las criptas del olvido', tema: 'catacumba', tam: 37, salas: 13, enemigos: { pereza: 3, envidia: 5, lujuria: 2, gula: 2 }, frase: 'Velad y orad para no caer en la tentación.', autor: 'Mateo 26, 41' },
+  { nombre: 'La ciudad de los siete pecados', tema: 'mercado', tam: 39, salas: 14, enemigos: { soberbia: 2, avaricia: 2, lujuria: 2, ira: 2, gula: 2, envidia: 2, pereza: 2 }, frase: 'Amarás a tu prójimo como a ti mismo.', autor: 'Mateo 22, 39' },
+  { nombre: 'El volcán de la ira', tema: 'volcan', tam: 39, salas: 14, enemigos: { ira: 6, soberbia: 3, gula: 3 }, frase: 'Bienaventurados los mansos, porque ellos heredarán la tierra.', autor: 'Mateo 5, 5' },
+  { nombre: 'El laberinto de los espejos', tema: 'palacio', tam: 41, salas: 15, enemigos: { lujuria: 5, envidia: 5, soberbia: 3 }, frase: 'Yo soy la luz del mundo.', autor: 'Juan 8, 12' },
+  { nombre: 'Las puertas del infierno', tema: 'abismo', tam: 41, salas: 15, enemigos: { soberbia: 3, avaricia: 3, lujuria: 3, ira: 3, gula: 3, envidia: 3, pereza: 3 }, frase: 'El poder del infierno no prevalecerá.', autor: 'Mateo 16, 18' },
+  { nombre: 'El Tentador', tema: 'abismo', tam: 33, salas: 8, enemigos: { envidia: 3, ira: 2, soberbia: 2, lujuria: 2, gula: 2 }, jefe: true, frase: 'No tengáis miedo: la gracia de Dios es más fuerte.' }
 ];
 const TIPOS = {
-  pereza: { nombre: 'Pereza', vida: 9, vel: 0.8, dano: 17, ataque: 'cuerpo', alcance: 1.05, espera: 0.55, cad: 1.4, pts: 3, alto: 0.95, radio: 0.42, desc: 'Un cadáver encadenado. Cerca de ella te mueves lento y escupe babas que te frenan.' },
-  soberbia: { nombre: 'Soberbia', vida: 6.5, vel: 1.35, dano: 12, ataque: 'triple', alcance: 9, espera: 0.45, cad: 2.0, pts: 4, alto: 1.15, radio: 0.32, desc: 'Lanza tres rayos y desaparece en humo para aparecer a tu lado.' },
-  envidia: { nombre: 'Envidia', vida: 4, vel: 2.8, dano: 9, ataque: 'cuerpo', alcance: 0.95, espera: 0.25, cad: 0.75, pts: 3, alto: 0.8, radio: 0.3, desc: 'Corre en cuatro patas, en zigzag, y salta sobre ti desde lejos.' },
-  ira: { nombre: 'Ira', vida: 13, vel: 1.5, dano: 25, ataque: 'embestida', alcance: 6.5, espera: 0.6, cad: 3.0, pts: 6, alto: 1.15, radio: 0.4, desc: 'Embiste, golpea el suelo con temblores y se enfurece cuando está herida.' },
-  avaricia: { nombre: 'Avaricia', vida: 7.5, vel: 1.15, dano: 10, ataque: 'monedas', alcance: 10, espera: 0.5, cad: 2.3, pts: 5, alto: 1.05, radio: 0.34, flota: 0.18, desc: 'Monedas que te persiguen; si se acerca, te roba munición y huye.' },
-  tentador: { nombre: 'El Tentador', vida: 200, vel: 1.25, dano: 16, ataque: 'jefe', alcance: 14, espera: 0.7, cad: 1.5, pts: 60, alto: 1.95, radio: 0.75, desc: 'La serpiente antigua. Herido, se enfurece y se teletransporta.' }
+  pereza: { nombre: 'Belfegor', pecado: 'Pereza', vida: 10, vel: 0.85, dano: 17, ataque: 'cuerpo', alcance: 1.0, espera: 0.55, cad: 1.4, pts: 3, alto: 0.95, radio: 0.36, rosario: 0.85,
+    poderes: ['Zarpazo con cadenas', 'Baba que te frena', 'Sopor: te adormece y te vuelve lento'], desc: 'Demonio de la pereza: un gigante hinchado y encadenado que arrastra los brazos.' },
+  soberbia: { nombre: 'Luzbel', pecado: 'Soberbia', vida: 6.5, vel: 1.35, dano: 12, ataque: 'triple', alcance: 9, espera: 0.45, cad: 2.0, pts: 4, alto: 1.1, radio: 0.3, rosario: 0.5,
+    poderes: ['Tres rayos de orgullo', 'Desaparece en humo y reaparece a tu lado', 'Corona de espinas: ocho púas en círculo'], desc: 'Demonio de la soberbia: alto, con máscara de porcelana, corona de espinas y aureola negra.' },
+  envidia: { nombre: 'Leviatán', pecado: 'Envidia', vida: 4.5, vel: 2.8, dano: 9, ataque: 'cuerpo', alcance: 0.95, espera: 0.25, cad: 0.75, pts: 3, alto: 0.62, radio: 0.3, rosario: 0.7,
+    poderes: ['Zarpazo veloz', 'Salto desde lejos', 'Sombra: se vuelve casi invisible'], desc: 'Demonio de la envidia: escamoso, corre a cuatro patas en zigzag.' },
+  ira: { nombre: 'Abadón', pecado: 'Ira', vida: 13, vel: 1.5, dano: 25, ataque: 'embestida', alcance: 6.5, espera: 0.6, cad: 3.0, pts: 6, alto: 1.12, radio: 0.4, rosario: 0.45,
+    poderes: ['Embestida', 'Temblor que te lanza lejos', 'Lluvia de fuego'], desc: 'Demonio de la ira: coloso de roca con grietas de lava. Herido, se enfurece.' },
+  lujuria: { nombre: 'Asmodeo', pecado: 'Lujuria', vida: 6, vel: 1.5, dano: 11, ataque: 'besos', alcance: 8, espera: 0.45, cad: 2.1, pts: 5, alto: 1.08, radio: 0.3, rosario: 0.6,
+    poderes: ['Besos venenosos que te persiguen', 'Encanto: te arrastra hacia él', 'Espejismo: crea copias falsas de sí mismo'], desc: 'Demonio de la lujuria: esbelto y carmesí, con melena negra, joyas de oro y dos cabezas más, de toro y de carnero.' },
+  gula: { nombre: 'Belcebú', pecado: 'Gula', vida: 14, vel: 0.95, dano: 20, ataque: 'cuerpo', alcance: 1.05, espera: 0.5, cad: 1.6, pts: 6, alto: 1.0, radio: 0.4, rosario: 0.55,
+    poderes: ['Mordisco voraz', 'Enjambre de moscas que te persigue', 'Vómito ácido en abanico'], desc: 'El señor de las moscas: obeso, con cabeza de insecto y una boca en la barriga. Devora los objetos del suelo para curarse.' },
+  avaricia: { nombre: 'Mammón', pecado: 'Avaricia', vida: 7.5, vel: 1.15, dano: 10, ataque: 'monedas', alcance: 10, espera: 0.5, cad: 2.3, pts: 5, alto: 1.0, radio: 0.32, flota: 0.12, rosario: 0.65,
+    poderes: ['Monedas que te persiguen', 'Te roba munición y huye', 'Codicia: te roba la vida para curarse'], desc: 'Demonio de la avaricia: espectro momificado con máscara de oro.' },
+  tentador: { nombre: 'Lucifer, el Tentador', pecado: 'Príncipe de los demonios', vida: 200, vel: 1.25, dano: 16, ataque: 'jefe', alcance: 14, espera: 0.7, cad: 1.5, pts: 60, alto: 1.2, radio: 0.55, rosario: 0.22,
+    poderes: ['Abanico de fuego', 'Llama a otros demonios', 'Tinieblas: apaga todas las luces'], desc: 'El príncipe de los demonios: alas, cuernos de carnero y cola. Herido, se enfurece y se teletransporta.' }
 };
 const ARMAS = [
   { id: 'hisopo', nombre: 'HISOPO', mun: 'agua', cad: 0.5 },
@@ -253,7 +345,7 @@ const VERSOS = [
 ];
 
 /* ---------- Guardado ---------- */
-let S = { puntos: 0, mejorNivel: 0, dificultad: 'misionero' };
+let S = { puntos: 0, mejorNivel: 0, dificultad: 'misionero', sens: 1 };
 try {
   const d = JSON.parse(localStorage.getItem(CLAVE) || 'null') || JSON.parse(localStorage.getItem('juma-luz-v1') || 'null');
   if (d) S = Object.assign(S, d);
@@ -273,7 +365,7 @@ function ac() { const a = JS.ctx(); if (a) JS.musica('oscuro'); return a; }
 function volDist(x, y) { return clamp(1.2 - Math.hypot(x - J.x, y - J.y) / 12, 0.12, 1); }
 // Sonido 3D: suena a la izquierda o a la derecha según dónde esté el enemigo
 function panDe(x, y) { const dx = x - J.x, dy = y - J.y, d = Math.hypot(dx, dy) || 1; return clamp((dx * -Math.sin(J.a) + dy * Math.cos(J.a)) / d, -0.85, 0.85); }
-const VOZ = { pereza: 62, soberbia: 150, envidia: 230, ira: 85, avaricia: 120, tentador: 48 };
+const VOZ = { pereza: 62, soberbia: 150, envidia: 230, ira: 85, avaricia: 120, lujuria: 190, gula: 70, tentador: 48 };
 // Voz demoníaca: sierra grave con aspereza y formantes que se cierran
 function vozDemonio(f, dur, vol, pan) {
   JS.osc({ f, f2: f * 0.62, dur, vol, tipo: 'sawtooth', coro: [-30, 0, 27], filtro: { tipo: 'bandpass', f: 700, f2: 260, q: 3 }, vib: [23, 60], pan, eco: 0.45 });
@@ -485,6 +577,9 @@ const TEMAS = {
   monasterio: { muro: M.ladrillo, muro2: M.cruz, salaPiso: 0, pasilloPiso: 1, techo: 0, amb: [0.12, 0.1, 0.1], niebla: [12, 7, 9], dens: 0.075, vitral: true },
   mercado: { muro: M.madera, muro2: M.ladrillo, salaPiso: 4, pasilloPiso: 1, techo: 0, amb: [0.14, 0.11, 0.08], niebla: [12, 9, 6], dens: 0.07, vitral: false },
   caverna: { muro: M.roca, muro2: M.musgo, salaPiso: 2, pasilloPiso: 2, techo: 2, amb: [0.12, 0.07, 0.08], niebla: [10, 4, 8], dens: 0.085, vitral: false },
+  palacio: { muro: M.ladrillo, muro2: M.piedra, salaPiso: 0, pasilloPiso: 4, techo: 0, amb: [0.15, 0.08, 0.12], niebla: [16, 5, 14], dens: 0.075, vitral: true },
+  banquete: { muro: M.madera, muro2: M.musgo, salaPiso: 4, pasilloPiso: 1, techo: 0, amb: [0.14, 0.13, 0.06], niebla: [12, 12, 4], dens: 0.08, vitral: false },
+  volcan: { muro: M.roca, muro2: M.infierno, salaPiso: 3, pasilloPiso: 3, techo: 2, amb: [0.2, 0.07, 0.04], niebla: [22, 6, 2], dens: 0.085, vitral: false },
   abismo: { muro: M.roca, muro2: M.infierno, salaPiso: 3, pasilloPiso: 2, techo: 2, amb: [0.16, 0.06, 0.07], niebla: [16, 3, 6], dens: 0.08, vitral: false }
 };
 
@@ -862,8 +957,12 @@ SPR.p = {
   azul: bola([[0, '#ffffff'], [0.4, 'rgba(140,210,255,.8)'], [1, 'rgba(60,140,255,0)']], 10),
   sombra: bola([[0, '#f0b0ff'], [0.35, 'rgba(140,40,180,.85)'], [1, 'rgba(60,0,80,0)']], 10),
   rojo: bola([[0, '#ffe0a0'], [0.35, 'rgba(255,90,30,.9)'], [1, 'rgba(160,0,0,0)']], 10),
-  verde: bola([[0, '#f0ffd0'], [0.35, 'rgba(140,230,80,.85)'], [1, 'rgba(30,90,20,0)']], 10)
+  verde: bola([[0, '#f0ffd0'], [0.35, 'rgba(140,230,80,.85)'], [1, 'rgba(30,90,20,0)']], 10),
+  rosa: bola([[0, '#ffffff'], [0.35, 'rgba(255,110,190,.9)'], [1, 'rgba(160,0,90,0)']], 10)
 };
+SPR.beso = bola([[0, '#fff0f8'], [0.3, 'rgba(255,90,170,.95)'], [1, 'rgba(150,0,80,0)']]);
+SPR.mosca = bola([[0, '#202010'], [0.4, 'rgba(30,30,10,.9)'], [1, 'rgba(0,0,0,0)']], 9);
+SPR.acido = bola([[0, '#f8ffd0'], [0.3, 'rgba(170,230,40,.95)'], [1, 'rgba(60,110,0,0)']]);
 const PICKUP = {
   hostia: { spr: SPR.hostia, alto: 0.32, z: 0.08 }, caliz: { spr: SPR.caliz, alto: 0.38, z: 0 }, escapulario: { spr: SPR.escapulario, alto: 0.34, z: 0.04 },
   agua: { spr: SPR.agua, alto: 0.34, z: 0 }, cuentas: { spr: SPR.cuentas, alto: 0.3, z: 0 }, vela: { spr: SPR.vela, alto: 0.34, z: 0 }, incienso: { spr: SPR.incienso, alto: 0.32, z: 0 },
@@ -988,6 +1087,62 @@ function pasillo(ax, ay, bx, by, prohibida) {
   while (k !== ay * T + ax) { carvar(k % T, (k - (k % T)) / T, piso); ruta[k] = 1; k = prev[k]; }
   return true;
 }
+/* Laberinto: llena la roca entre las salas con pasillos estrechos, callejones sin salida y atajos */
+let labG = new Uint8Array(1), callejones = [];
+function laberinto(altar, ex, ey) {
+  const piso = TEMA.pasilloPiso;
+  labG = new Uint8Array(T * T); callejones = [];
+  const lab = labG;
+  const cerca = (x, y, m) => salas.some((q) => x >= q.x - m && y >= q.y - m && x < q.x + q.w + m && y < q.y + q.h + m);
+  const veto = (x, y) => (x >= altar.x - 2 && y >= altar.y - 2 && x < altar.x + altar.w + 2 && y < altar.y + altar.h + 2) || Math.abs(x - ex) + Math.abs(y - ey) < 3;
+  const ajeno = (i) => mapa[i] === 0 && !lab[i];
+  const nodo = (x, y) => {
+    if (x < 1 || y < 1 || x >= T - 1 || y >= T - 1 || lab[y * T + x] || mapa[y * T + x] === 0 || cerca(x, y, 1) || veto(x, y)) return false;
+    for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) if (ajeno((y + j) * T + x + i)) return false;
+    return true;
+  };
+  const abrir = (x, y) => { const i = y * T + x; mapa[i] = 0; suelos[i] = piso; lab[i] = 1; };
+  const comps = [];
+  for (let y0 = 1; y0 < T - 1; y0 += 2) for (let x0 = 1; x0 < T - 1; x0 += 2) {
+    if (!nodo(x0, y0)) continue;
+    const celdas = [[x0, y0]]; abrir(x0, y0);
+    const pila = [[x0, y0]];
+    while (pila.length) {
+      const [x, y] = pila[pila.length - 1];
+      const op = barajar([[2, 0], [-2, 0], [0, 2], [0, -2]]).filter(([dx, dy]) => nodo(x + dx, y + dy) && !cerca(x + dx / 2, y + dy / 2, 1) && !veto(x + dx / 2, y + dy / 2) && mapa[(y + dy / 2) * T + x + dx / 2] !== 0);
+      if (!op.length) { pila.pop(); continue; }
+      const [dx, dy] = op[0];
+      abrir(x + dx / 2, y + dy / 2); abrir(x + dx, y + dy);
+      celdas.push([x + dx / 2, y + dy / 2], [x + dx, y + dy]); pila.push([x + dx, y + dy]);
+    }
+    comps.push(celdas);
+  }
+  const cerrar = (celdas) => { for (const [x, y] of celdas) { const i = y * T + x; mapa[i] = TEMA.muro; lab[i] = 0; } };
+  for (const celdas of comps) {
+    if (celdas.length < 7) { cerrar(celdas); continue; }
+    const mio = new Set(celdas.map(([x, y]) => y * T + x));
+    // Entradas: muros con laberinto de un lado y pasillo o sala del otro
+    const cand = [];
+    for (const [x, y] of celdas) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const wx = x + dx, wy = y + dy, ox = x + dx * 2, oy = y + dy * 2;
+      if (wx < 1 || wy < 1 || wx >= T - 1 || wy >= T - 1 || !enMapa(ox, oy)) continue;
+      if (mapa[wy * T + wx] === 0 || veto(wx, wy) || veto(ox, oy)) continue;
+      if (mapa[oy * T + ox] === 0 && !mio.has(oy * T + ox) && !lab[oy * T + ox]) cand.push([wx, wy]);
+    }
+    if (!cand.length) { cerrar(celdas); continue; }
+    barajar(cand).slice(0, 2 + (celdas.length > 40 ? 1 : 0)).forEach(([x, y]) => abrir(x, y));
+    // Algunos atajos para que no todo sea un árbol
+    for (const [x, y] of celdas) {
+      const vec = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => mapa[(y + dy) * T + x + dx] === 0).length;
+      if (vec !== 1) continue;
+      if (rnd() < 0.3) {
+        const op = barajar([[1, 0], [-1, 0], [0, 1], [0, -1]]).find(([dx, dy]) => mapa[(y + dy) * T + x + dx] !== 0 && enMapa(x + dx * 2, y + dy * 2) && lab[(y + dy * 2) * T + x + dx * 2] && !veto(x + dx, y + dy) && x + dx > 0 && y + dy > 0 && x + dx < T - 1 && y + dy < T - 1);
+        if (op) { abrir(x + op[0], y + op[1]); continue; }
+      }
+      callejones.push([x, y]);
+    }
+  }
+}
 function generarNivel(n) {
   cfgNivel = NIVELES[n]; TEMA = TEMAS[cfgNivel.tema];
   T = cfgNivel.tam;
@@ -1034,6 +1189,7 @@ function generarNivel(n) {
   carvar(ex, ey, TEMA.pasilloPiso); carvar(ex + sx, ey + sy, TEMA.pasilloPiso);
   pasillo(ex + sx, ey + sy, cerca.cx, cerca.cy, altar);
   const puertaAltar = ey * T + ex;
+  laberinto(altar, ex, ey);
   // Puertas entre salas y pasillos
   const muro = (x, y) => !enMapa(x, y) || (mapa[y * T + x] !== 0 && mapa[y * T + x] < M.PUERTA);
   const libreC = (x, y) => enMapa(x, y) && mapa[y * T + x] === 0;
@@ -1065,7 +1221,7 @@ function generarNivel(n) {
   for (let y = 1; y < T - 1; y++) for (let x = 1; x < T - 1; x++) {
     const i = y * T + x;
     if (mapa[i] === 0 || mapa[i] >= M.PUERTA || mapa[i] === M.columna) continue;
-    const vec = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([ddx, ddy]) => libreC(x + ddx, y + ddy) && enSala(x + ddx, y + ddy) >= 0);
+    const vec = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([ddx, ddy]) => libreC(x + ddx, y + ddy) && (enSala(x + ddx, y + ddy) >= 0 || (labG[(y + ddy) * T + x + ddx] && rnd() < 0.3)));
     if (!vec.length) continue;
     const r = rnd();
     if (r < 0.09) {
@@ -1098,6 +1254,8 @@ function generarNivel(n) {
   if (armasNivel.includes('incensario')) pool.push('incienso');
   const nObj = Math.round((otras.length * 1.6 + n) * DIF.ayudas);
   for (let k = 0; k < nObj; k++) poner(otras[1 + (k % (otras.length - 1))] || otras[0], k % 9 === 8 ? 'caliz' : elegir(pool));
+  // Premios escondidos al fondo de los callejones del laberinto
+  barajar(callejones).slice(0, 2 + (n >> 1)).forEach(([x, y]) => pickups.push({ tipo: elegir(['hostia', 'agua', 'escapulario', 'caliz']), x: x + 0.5, y: y + 0.5, ya: false }));
   // Decoración: candelabros que dan luz, bancos y vasijas
   for (const s of salas) {
     if (s === inicio && rnd() < 0.5) continue;
@@ -1232,7 +1390,7 @@ function nuevoJugador(x, y, n) {
     x, y, a: 0, vida: 100, escudo: 0, paso: 0, cool: 0, retro: 0, destello: 0, cambio: 0, armaSig: null,
     arma: armas[armas.length - 1], armas,
     mun: { agua: Math.round(40 * DIF.ayudas), cuentas: armas.includes('rosario') ? 80 : 0, luz: armas.includes('cruz') ? 10 : 0, incienso: armas.includes('incensario') ? 6 : 0 },
-    lento: 0, haz: 0, hazX: 0, hazY: 0, hazZ: 0.5, pitch: 0, vx: 0, vy: 0, kick: 0, roll: 0, sacudida: 0
+    lento: 0, fe: 100, aliento: 100, alzaK: 0, empCD: 0, haz: 0, hazX: 0, hazY: 0, hazZ: 0.5, pitch: 0, vx: 0, vy: 0, kick: 0, roll: 0, sacudida: 0
   };
 }
 function armaDef(id) { return ARMAS.find((a) => a.id === id); }
@@ -1247,7 +1405,7 @@ function siguienteArma(dir) {
 }
 function ruidoDisparo() { for (const e of enemigos) if (e.estado === 'dormido' && flujo && flujo[(e.y | 0) * T + (e.x | 0)] >= 0 && flujo[(e.y | 0) * T + (e.x | 0)] < 9) despertar(e); }
 function disparar() {
-  if (estado !== 'jugando' || J.cool > 0 || J.cambio > 0) return;
+  if (estado !== 'jugando' || J.cool > 0 || J.cambio > 0 || J.alzaK > 0.3) return;
   const def = armaDef(J.arma);
   const cp = Math.cos(J.pitch), sp = Math.sin(J.pitch);
   const z0 = OJO - 0.12;
@@ -1301,7 +1459,72 @@ function sinMunicion() {
   const orden = ['incensario', 'cruz', 'rosario', 'hisopo'];
   for (const id of orden) if (J.armas.includes(id) && (id === 'hisopo' || J.mun[armaDef(id).mun] > 0)) { cambiarArma(id); break; }
 }
-let pedirEsquivar = false, pedirFe = false;
+let pedirEsquivar = false, pedirFe = false, alzarRaton = false, alzarTactil = false, correrTactil = false;
+let oscuridadT = 0, soporT = 0, luzMundo = 1, avisoRos = -10;
+/* Alzar el rosario (como en las noches de terror): los demonios gritan y huyen,
+   pero no siempre: depende de la fe, la distancia, el demonio y su furia */
+function actualizarRosario(dt) {
+  const quiere = (teclas.KeyG || alzarRaton || alzarTactil) && J.cambio <= 0 && !(J.feAgotada > 0);
+  J.alzado = quiere && J.fe > 0;
+  J.alzaK += ((J.alzado ? 1 : 0) - J.alzaK) * Math.min(1, dt * 10);
+  J.feAgotada = Math.max(0, (J.feAgotada || 0) - dt);
+  if (J.alzado) {
+    J.fe = Math.max(0, J.fe - 18 * dt);
+    if (J.fe <= 0) { J.feAgotada = 2.5; aviso('Tu fe se agotó: baja el rosario y ora'); }
+  } else J.fe = Math.min(100, J.fe + (J.feAgotada > 0 ? 4 : 9) * dt);
+  if (J.alzaK > 0.7) { J.rosT = (J.rosT || 0) - dt; if (J.rosT <= 0) { J.rosT = 0.4; rosarioEspanta(); } }
+  $('rosa').style.opacity = (J.alzaK * (0.55 + Math.sin(tiempoJuego * 6) * 0.15) * (0.4 + J.fe / 160)).toFixed(2);
+  const b = $('b-rosario'); if (b) b.classList.toggle('on', J.alzaK > 0.5);
+}
+function rosarioEspanta() {
+  for (const e of enemigos) {
+    if (e.muerto || e.estado === 'dormido' || e.estado === 'repelido' || (e.resisteT || 0) > 0) continue;
+    const dx = e.x - J.x, dy = e.y - J.y, d = Math.hypot(dx, dy);
+    if (d > 6.5) continue;
+    let da = Math.atan2(dy, dx) - J.a; da = Math.atan2(Math.sin(da), Math.cos(da));
+    if (Math.abs(da) > 0.62 || !visible(J.x, J.y, e.x, e.y)) continue;
+    const cfg = TIPOS[e.tipo];
+    let pr = cfg.rosario * (0.35 + 0.65 * J.fe / 100) * (d < 2.5 ? 1.15 : d > 5 ? 0.7 : 1) * (e.furia ? 0.55 : 1) * (e.mayor ? 0.7 : 1) * (1 - (e.resiste || 0)) * (oscuridadT > 0 ? 0.8 : 1);
+    if (rnd() < pr) {
+      // Grita, se tapa la cara y huye
+      if (e.ilusion) { deshacerIlusion(e); if (tiempoJuego - avisoRos > 1.2) { avisoRos = tiempoJuego; aviso('¡Era un espejismo!'); } continue; }
+      e.estado = 'repelido'; e.t = 1.8 + rnd() * 1.2; e.especial = null; e.invisT = 0; e.drenT = 0;
+      e.resiste = Math.min(0.6, (e.resiste || 0) + 0.14);
+      e.vida -= 0.6 * DON.poder; e.flash = 0.12;
+      if (e.vida <= 0) { matarEnemigo(e); continue; }
+      SND.grito(e.x, e.y, e.tipo);
+      explotar(e.x, e.y, 'oro', 14, cfg.alto * 0.7);
+      if (!e.yaRepelido) { e.yaRepelido = true; aviso('¡' + cfg.nombre + ' huye del rosario!'); }
+      J.fe = Math.max(0, J.fe - 6);
+    } else {
+      // Resiste: ruge, se burla y se enfurece un momento
+      e.resisteT = 2.6; e.rugido = 1; e.enojoT = 2.5;
+      SND.gruñido(e.x, e.y, e.tipo);
+      if (tiempoJuego - avisoRos > 1.2) { avisoRos = tiempoJuego; aviso(cfg.nombre + ' resiste tu fe'); }
+      J.sacudida = Math.max(J.sacudida, 0.25);
+    }
+  }
+}
+/* Empujón: golpe corto con el hombro que aparta a los demonios que están encima */
+function empujar() {
+  if (estado !== 'jugando' || (J.empCD || 0) > 0) return;
+  J.empCD = 1.3; J.retro = 1; J.kick += 0.05; SND.mano();
+  let alguno = false;
+  for (const e of enemigos) {
+    if (e.muerto) continue;
+    const dx = e.x - J.x, dy = e.y - J.y, d = Math.hypot(dx, dy);
+    if (d > TIPOS[e.tipo].radio + 1.1) continue;
+    let da = Math.atan2(dy, dx) - J.a; da = Math.atan2(Math.sin(da), Math.cos(da));
+    if (Math.abs(da) > 0.9) continue;
+    herir(e, 2.2);
+    const l = d || 1, f = e.tipo === 'tentador' ? 2 : 7;
+    e.kx = (e.kx || 0) + dx / l * f; e.ky = (e.ky || 0) + dy / l * f;
+    if (!e.muerto && e.tipo !== 'tentador') { e.estado = 'dolor'; e.t = 0.55; }
+    explotar(e.x, e.y, 'oro', 10, 0.6); alguno = true;
+  }
+  if (alguno) { J.sacudida = Math.max(J.sacudida, 0.2); SND.bloqueo(); JS.vibrar(30); }
+  actualizarBotones();
+}
 function esquivar(avance, lado) {
   if (J.esqCD > 0 || estado !== 'jugando') return;
   const ca = Math.cos(J.a), sa = Math.sin(J.a);
@@ -1319,7 +1542,7 @@ function escudoFe() {
 }
 function actualizarBotones() {
   const pinta = (id, cd, max) => { const b = $(id); if (!b) return; b.style.setProperty('--cd', cd > 0 ? (cd / max * 360).toFixed(0) + 'deg' : '0deg'); b.classList.toggle('espera', cd > 0); };
-  pinta('b-esquivar', J.esqCD, 2.2); pinta('b-fe', J.feCD, 12);
+  pinta('b-esquivar', J.esqCD, 2.2); pinta('b-fe', J.feCD, 12); pinta('b-empujar', J.empCD, 1.3);
 }
 function superPoder() {
   if (estado !== 'jugando' || poder < 3) return;
@@ -1356,7 +1579,7 @@ function danoJugador(d, ox, oy) {
 }
 function despertar(e) {
   if (e.estado !== 'dormido') return;
-  e.estado = 'caza'; SND.gruñido(e.x, e.y, e.tipo);
+  e.estado = 'caza'; e.rugido = 0.9; SND.gruñido(e.x, e.y, e.tipo);
   const d = Math.hypot(e.x - J.x, e.y - J.y);
   if ((d < 5.5 || e.mayor) && tiempoJuego - ultimoSusto > 6) { ultimoSusto = tiempoJuego; susto(e); }
 }
@@ -1366,7 +1589,7 @@ function susto(e) {
   SND.grito(e.x, e.y, e.tipo);
   const v = $('miedo'); v.classList.remove('on'); void v.offsetWidth; v.classList.add('on');
   J.sacudida = Math.max(J.sacudida, 0.45);
-  if (e.mayor) aviso('¡Un pecado mayor: ' + TIPOS[e.tipo].nombre + '!');
+  if (e.mayor) aviso('¡Un demonio mayor: ' + TIPOS[e.tipo].nombre + '!');
   JS.vibrar([30, 40, 60]);
 }
 /* Dones del Espíritu: con más puntos misioneros, el misionero se vuelve más fuerte */
@@ -1382,8 +1605,11 @@ function donesDe(pts) { const t = DONES.filter((d) => pts >= d.p); const has = (
 let DON = donesDe(0);
 function herir(e, d, sinPuntos) {
   if (e.muerto) return;
+  e.invisT = 0;
   d *= DON.poder;
-  e.vida -= d; e.flash = 0.12;
+  e.vida -= d; e.flash = 0.12; e.golpeT = 0.25;
+  explotar(e.x, e.y, 'rojo', e.tipo === 'tentador' ? 5 : 8, 0.55);
+  if (d > 4) { const l = Math.hypot(e.x - J.x, e.y - J.y) || 1; e.kx = (e.kx || 0) + (e.x - J.x) / l * 1.5; e.ky = (e.ky || 0) + (e.y - J.y) / l * 1.5; }
   if (e.tipo === 'soberbia' && e.vida > 0 && rnd() < 0.3 && e.cool2 < 2) { e.cool2 = 3; setTimeout(() => { if (!e.muerto) teletransportar(e, 3, 6); }, 120); }
   stats.aciertos++;
   marcarAcierto();
@@ -1395,13 +1621,20 @@ let aciertoT = 0;
 function marcarAcierto() { aciertoT = 0.12; }
 let ultimaVirtud = -10;
 const VIRTUDES = {
-  pereza: 'La diligencia vence a la pereza',
-  soberbia: 'La humildad vence a la soberbia',
-  envidia: 'La caridad vence a la envidia',
-  ira: 'La mansedumbre vence a la ira',
-  avaricia: 'La generosidad vence a la avaricia'
+  pereza: 'Belfegor cae: la diligencia vence a la pereza',
+  soberbia: 'Luzbel cae: la humildad vence a la soberbia',
+  envidia: 'Leviatán cae: la caridad vence a la envidia',
+  ira: 'Abadón cae: la mansedumbre vence a la ira',
+  avaricia: 'Mammón cae: la generosidad vence a la avaricia',
+  lujuria: 'Asmodeo cae: la castidad vence a la lujuria',
+  gula: 'Belcebú cae: la templanza vence a la gula'
 };
+function deshacerIlusion(e) {
+  e.muerto = true; e.muerteT = 1.1; e.estado = 'muerto';
+  explotar(e.x, e.y, 'rosa', 18, 0.6); SND.teletransporte(e.x, e.y);
+}
 function matarEnemigo(e, sinPoder) {
+  if (e.ilusion) { deshacerIlusion(e); return; }
   e.muerto = true; e.muerteT = 0; e.estado = 'muerto';
   if (!sinPoder) poder = Math.min(3, poder + 1);
   const pts = Math.round(TIPOS[e.tipo].pts * DIF.pts * (e.mayor ? 2.5 : 1));
@@ -1409,14 +1642,16 @@ function matarEnemigo(e, sinPoder) {
   explotar(e.x, e.y, 'oro', e.tipo === 'tentador' ? 80 : 26, 0.45);
   explotar(e.x, e.y, 'azul', e.tipo === 'tentador' ? 40 : 12, 0.6);
   SND.muerte(e.x, e.y);
+  destellos.push({ x: e.x, y: e.y, t: 0.6, max: 0.6, r: 1, g: 0.45, b: 0.15, rad: 4.5, int: e.tipo === 'tentador' ? 5 : 3 });
+  J.sacudida = Math.max(J.sacudida, e.tipo === 'tentador' ? 0.9 : 0.15);
   sinPecados--;
   // Cada pecado vencido recuerda la virtud que lo derrota
   if (e.tipo !== 'tentador' && sinPecados > 0 && tiempoJuego - ultimaVirtud > 3) { ultimaVirtud = tiempoJuego; aviso(VIRTUDES[e.tipo]); }
   if (e.robado) { const def = armaDef(J.arma); aviso('Recuperaste la munición robada'); for (const k in J.mun) if (J.mun[k] !== undefined && def.mun === k) J.mun[k] += e.robado; }
   if (e.mayor) pickups.push({ tipo: 'caliz', x: e.x, y: e.y, ya: false });
   if (rnd() < 0.3 * DIF.ayudas && e.tipo !== 'tentador') pickups.push({ tipo: elegir(['hostia', 'agua', J.armas.includes('rosario') ? 'cuentas' : 'agua']), x: e.x, y: e.y, ya: false });
-  if (e.tipo === 'tentador') { aviso('¡Cristo vence! El Tentador fue derrotado'); for (const o of enemigos) if (!o.muerto) matarEnemigo(o, true); $('jefe').hidden = true; }
-  else if (sinPecados <= 0) aviso('¡Todos los pecados vencidos! Ve al Sagrario');
+  if (e.tipo === 'tentador') { aviso('¡Cristo vence! Lucifer fue derrotado'); for (const o of enemigos) if (!o.muerto) matarEnemigo(o, true); $('jefe').hidden = true; }
+  else if (sinPecados <= 0) aviso('¡Todos los demonios vencidos! Ve al Sagrario');
   else if (sinPecados <= Math.ceil(totalPecados * 0.2)) for (const o of enemigos) if (!o.muerto) despertar(o);
   actualizarHud();
 }
@@ -1472,6 +1707,52 @@ function habilidad(e, k, cfg, d, ang) {
     e.huyeT = 2.2; SND.robo(e.x, e.y); actualizarHud();
   } else if (k === 'teletransporte') {
     teletransportar(e, 3, 6);
+  } else if (k === 'sopor') {
+    // Belfegor exhala un sopor verde que adormece
+    for (let q = 0; q < 34; q++) { const a = rnd() * 6.28, r = rnd() * 0.5; particulas.push({ x: e.x + Math.cos(a) * r, y: e.y + Math.sin(a) * r, z: 0.5 + rnd() * 0.4, vx: Math.cos(a) * 2.4, vy: Math.sin(a) * 2.4, vz: 0.1, g: 0, vida: 1.2, max: 1.2, spr: SPR.p.verde || SPR.p.blanca, tam: 0.12 }); }
+    if (d < 5.5 && visible(e.x, e.y, J.x, J.y) && !(J.feT > 0)) { J.lento = Math.max(J.lento, 3); soporT = 3; aviso('Belfegor te llena de sopor…'); }
+    SND.baba(e.x, e.y);
+  } else if (k === 'sombra') {
+    // Leviatán se funde con la oscuridad
+    e.invisT = 4; explotar(e.x, e.y, 'sombra', 16, 0.4); SND.teletransporte(e.x, e.y);
+  } else if (k === 'meteoros') {
+    // Abadón arroja tres bolas de fuego que caen en arco y estallan
+    for (let q = 0; q < 3; q++) lanzarProyectil(e, ang + (q - 1) * 0.22, Math.max(1.5, d / 1.6) * (0.85 + rnd() * 0.3), SPR.fuego, cfg.dano * 0.8, { g: 4.5, vz: 3.2, tam: 0.24, estalla: 1.5, vida: 4, luz: [1, 0.5, 0.15, 2.5] });
+    SND.disparoEnemigo(e.x, e.y);
+  } else if (k === 'espinas') {
+    // Luzbel dispara su corona de espinas en todas direcciones
+    for (let q = 0; q < 8; q++) lanzarProyectil(e, q / 8 * Math.PI * 2 + rnd() * 0.1, 4.2 * v, SPR.oscuro, cfg.dano * 0.7, { tam: 0.12, luz: [0.8, 0.3, 1, 2] });
+    SND.disparoEnemigo(e.x, e.y);
+  } else if (k === 'drenar') {
+    e.estado = 'drenando'; e.t = 1.8; aviso('¡Mammón te roba la vida!'); SND.robo(e.x, e.y);
+    return;
+  } else if (k === 'tinieblas') {
+    // Lucifer apaga todas las luces: solo queda la del rosario
+    oscuridadT = 5.5; J.sacudida = Math.max(J.sacudida, 0.5); aviso('Lucifer apaga la luz… alza el rosario');
+  } else if (k === 'encanto') {
+    // Asmodeo te hechiza y te arrastra hacia él
+    if (d < 7.5 && visible(e.x, e.y, J.x, J.y) && !(J.feT > 0)) { J.encantoT = 1.7; J.encantoDe = e; aviso('Asmodeo te hechiza… ¡alza el rosario!'); }
+    explotar(e.x, e.y, 'rosa', 22, 0.7); SND.grito(e.x, e.y, 'lujuria');
+  } else if (k === 'ilusiones') {
+    // Espejismo: dos copias falsas que se deshacen al tocarlas
+    const vivas = enemigos.filter((o) => o.ilusion && !o.muerto).length;
+    for (let q = 0; q < 2 && vivas + q < 4; q++) {
+      for (let intento = 0; intento < 10; intento++) {
+        const a = rnd() * 6.28, x = e.x + Math.cos(a) * 1.4, y = e.y + Math.sin(a) * 1.4;
+        if (!puedeEn(x, y, 0.3, null)) continue;
+        const n = crearEnemigo('lujuria', x, y); n.ilusion = true; n.vida = n.vidaMax = 0.5; n.ilusionT = 9; n.mayor = false; n.mult = 0.3; n.estado = 'caza'; n.cool2 = 999;
+        enemigos.push(n); explotar(x, y, 'rosa', 16, 0.6); break;
+      }
+    }
+    SND.teletransporte(e.x, e.y); aviso('¡Asmodeo se multiplica!');
+  } else if (k === 'enjambre') {
+    // Belcebú suelta un enjambre de moscas que te persigue
+    for (let q = 0; q < 7; q++) lanzarProyectil(e, ang + (rnd() - 0.5) * 1.4, (2.2 + rnd()) * v, SPR.mosca, cfg.dano * 0.3, { guia: 2.4, vida: 5, tam: 0.07, luz: [0.5, 0.6, 0.2, 1] });
+    SND.baba(e.x, e.y);
+  } else if (k === 'vomito') {
+    // Vómito ácido en abanico que te frena
+    for (let q = 0; q < 7; q++) lanzarProyectil(e, ang + (q - 3) * 0.12, 5 * v, SPR.acido, cfg.dano * 0.45, { lento: 1.4, tam: 0.15, luz: [0.5, 1, 0.2, 2] });
+    SND.baba(e.x, e.y);
   }
   e.estado = 'caza';
 }
@@ -1494,6 +1775,9 @@ function ejecutarAtaque(e, cfg, d, ang) {
     if (d < cfg.alcance + 0.25 && visible(e.x, e.y, J.x, J.y)) danoJugador(cfg.dano, e.x, e.y);
   } else if (cfg.ataque === 'triple') {
     for (const da of [-0.22, 0, 0.22]) lanzarProyectil(e, ang + da, 5.2 * v, SPR.oscuro, cfg.dano, { luz: [1, 0.3, 0.9, 2] });
+    SND.disparoEnemigo(e.x, e.y);
+  } else if (cfg.ataque === 'besos') {
+    for (const da of [-0.18, 0, 0.18]) lanzarProyectil(e, ang + da, 3.3 * v, SPR.beso, cfg.dano * (e.ilusion ? 0.3 : 1), { guia: 1.3, vida: 4.5, tam: 0.13, luz: [1, 0.35, 0.7, 2] });
     SND.disparoEnemigo(e.x, e.y);
   } else if (cfg.ataque === 'monedas') {
     for (const da of [-0.12, 0.12]) lanzarProyectil(e, ang + da, 3.6 * v, SPR.moneda, cfg.dano, { guia: 1.6, vida: 5, tam: 0.15, luz: [1, 0.8, 0.2, 1.8] });
@@ -1519,13 +1803,21 @@ function actualizarEnemigos(dt) {
   if (flujoT <= 0 || !flujo) { flujo = distancias(J.x | 0, J.y | 0, false); flujoT = 0.35; }
   for (const e of enemigos) {
     e.flash = Math.max(0, e.flash - dt);
+    if (e.ilusion && !e.muerto) { e.ilusionT -= dt; if (e.ilusionT <= 0) { deshacerIlusion(e); continue; } }
+    // Belcebú devora lo que encuentra en el suelo y se cura
+    if (e.tipo === 'gula' && !e.muerto && e.estado !== 'dormido') for (const q of pickups) if (!q.ya && q.tipo !== 'llave' && Math.hypot(q.x - e.x, q.y - e.y) < 0.7) { q.ya = true; e.vida = Math.min(e.vidaMax, e.vida + 3); explotar(q.x, q.y, 'verde', 14, 0.4); SND.baba(e.x, e.y); if (tiempoJuego - avisoRos > 2) { avisoRos = tiempoJuego; aviso('Belcebú devora lo que encuentra'); } }
+    e.golpeT = Math.max(0, (e.golpeT || 0) - dt); e.rugido = Math.max(0, (e.rugido || 0) - dt);
     if (e.muerto) { e.muerteT += dt; continue; }
     const cfg = TIPOS[e.tipo];
     if (e.kx || e.ky) { const pesado = e.tipo === 'tentador' ? 0.15 : 1; mover(e, e.kx * dt * pesado, e.ky * dt * pesado, cfg.radio * 0.7); const fr = Math.exp(-dt * 7); e.kx *= fr; e.ky *= fr; if (Math.abs(e.kx) + Math.abs(e.ky) < 0.03) { e.kx = 0; e.ky = 0; } }
-    const vel = cfg.vel * DIF.vel * (e.furia ? 1.35 : 1) * (e.mayor ? 1.1 : 1);
+    e.resisteT = Math.max(0, (e.resisteT || 0) - dt); e.enojoT = Math.max(0, (e.enojoT || 0) - dt); e.invisT = Math.max(0, (e.invisT || 0) - dt); e.resiste = Math.max(0, (e.resiste || 0) - dt * 0.015);
+    const vel = cfg.vel * DIF.vel * (e.furia ? 1.35 : 1) * (e.mayor ? 1.1 : 1) * (e.enojoT > 0 ? 1.25 : 1) * (e.invisT > 0 ? 1.35 : 1);
     const dx = J.x - e.x, dy = J.y - e.y, d = Math.hypot(dx, dy), ang = Math.atan2(dy, dx);
     e.fase += dt * (1 + vel);
     const ve = d < 14 && visible(e.x, e.y, J.x, J.y);
+    // Nunca se meten dentro de la cámara
+    const minD = cfg.radio + 0.34;
+    if (e.estado !== 'dormido' && d < minD && d > 0.001) mover(e, -dx / d * (minD - d), -dy / d * (minD - d), cfg.radio * 0.7);
     if (ve) e.ultimoVisto = tiempoJuego;
     if (e.estado === 'dormido') {
       if (ve && d < 10) despertar(e);
@@ -1537,6 +1829,23 @@ function actualizarEnemigos(dt) {
       }
     }
     if (e.estado === 'dolor') { e.t -= dt; if (e.t <= 0) e.estado = 'caza'; continue; }
+    if (e.estado === 'repelido') {
+      e.t -= dt; const l = d || 1;
+      mover(e, -dx / l * vel * 1.25 * dt, -dy / l * vel * 1.25 * dt, cfg.radio * 0.75);
+      if (e.t <= 0) { e.estado = 'caza'; e.cool = Math.max(e.cool, 0.8); }
+      continue;
+    }
+    if (e.estado === 'drenando') {
+      // Codicia: un hilo de oro le roba la vida al misionero
+      e.t -= dt;
+      if (ve && d < 6.5 && !(J.feT > 0) && !(J.invulT > 0)) {
+        const q = 10 * DIF.dano * dt; J.vida = Math.max(0, J.vida - q); e.vida = Math.min(e.vidaMax, e.vida + q * 0.6); hurtT = Math.max(hurtT, 0.12);
+        if (rnd() < 0.8) particulas.push({ x: J.x + (rnd() - 0.5) * 0.3, y: J.y + (rnd() - 0.5) * 0.3, z: 0.35 + rnd() * 0.3, vx: (e.x - J.x) / 0.6, vy: (e.y - J.y) / 0.6, vz: 0.4, g: 0, vida: 0.6, max: 0.6, spr: SPR.p.oro, tam: 0.05 });
+        if (J.vida <= 0) { perder(); return; }
+      } else e.t = Math.min(e.t, 0.1);
+      if (e.t <= 0) { e.estado = 'caza'; e.cool = Math.max(e.cool, 1); }
+      continue;
+    }
     if (e.estado === 'preparando') {
       e.t -= dt;
       if (e.t <= 0) ejecutarAtaque(e, cfg, d, ang);
@@ -1559,21 +1868,26 @@ function actualizarEnemigos(dt) {
       continue;
     }
     if (ve && e.cool2 <= 0) {
-      let k = null;
-      if (e.tipo === 'pereza' && d > 2.4 && d < 7) k = 'baba';
-      else if (e.tipo === 'envidia' && d > 2 && d < 5.5) k = 'salto';
-      else if (e.tipo === 'ira' && d < 2.6) k = 'temblor';
-      else if (e.tipo === 'avaricia' && d < 1.5) k = 'robo';
-      else if (e.tipo === 'soberbia' && d < 3.5) k = 'teletransporte';
+      // Cada demonio elige entre sus poderes según la distancia
+      const op = [];
+      if (e.tipo === 'pereza') { if (d > 2.4 && d < 7) op.push('baba'); if (d < 4.5) op.push('sopor'); }
+      else if (e.tipo === 'envidia') { if (d > 2 && d < 5.5) op.push('salto'); if (d > 3) op.push('sombra'); }
+      else if (e.tipo === 'ira') { if (d < 2.6) op.push('temblor'); if (d > 3 && d < 9) op.push('meteoros'); }
+      else if (e.tipo === 'avaricia') { if (d < 1.5) op.push('robo'); if (d > 2 && d < 6) op.push('drenar'); }
+      else if (e.tipo === 'soberbia') { if (d < 3.5) op.push('teletransporte'); if (d < 6.5) op.push('espinas'); }
+      else if (e.tipo === 'tentador') { if (!oscuridadT && rnd() < 0.5) op.push('tinieblas'); }
+      else if (e.tipo === 'lujuria' && !e.ilusion) { if (d > 2.5 && d < 7) op.push('encanto'); if (d < 9) op.push('ilusiones'); }
+      else if (e.tipo === 'gula') { if (d < 8) op.push('enjambre'); if (d > 1.5 && d < 5) op.push('vomito'); }
+      const k = op.length ? elegir(op) : null;
       if (k) {
-        e.especial = k; e.estado = 'preparando'; e.t = (k === 'temblor' ? 0.75 : k === 'salto' ? 0.35 : 0.3) / DIF.vel;
-        e.cool2 = ({ baba: 4.5, salto: 3.5, temblor: 5, robo: 6, teletransporte: 4 }[k]) * (e.furia ? 0.65 : 1) * (0.8 + rnd() * 0.4) / DIF.vel;
-        if (k === 'temblor') SND.grito(e.x, e.y, 'ira');
+        e.especial = k; e.estado = 'preparando'; e.t = ({ temblor: 0.75, salto: 0.35, meteoros: 0.7, espinas: 0.6, sopor: 0.8, tinieblas: 1.0, drenar: 0.45, sombra: 0.4, encanto: 0.6, ilusiones: 0.5, enjambre: 0.5, vomito: 0.55 }[k] || 0.3) / DIF.vel;
+        e.cool2 = ({ baba: 4.5, salto: 3.5, temblor: 5, robo: 6, teletransporte: 4, sopor: 9, sombra: 8, meteoros: 6, drenar: 7, espinas: 5, tinieblas: 18, encanto: 7, ilusiones: 12, enjambre: 6, vomito: 5 }[k]) * (e.furia ? 0.65 : 1) * (0.8 + rnd() * 0.4) / DIF.vel;
+        if (k === 'temblor' || k === 'tinieblas' || k === 'sopor') SND.grito(e.x, e.y, e.tipo);
         continue;
       }
     }
     if (e.tipo === 'tentador') {
-      if (!e.furia && e.vida < e.vidaMax * 0.5) { e.furia = true; aviso('¡El Tentador se enfurece! Resiste con fe'); SND.grito(e.x, e.y, 'tentador'); J.sacudida = 0.8; }
+      if (!e.furia && e.vida < e.vidaMax * 0.5) { e.furia = true; aviso('¡Lucifer se enfurece! Resiste con fe'); SND.grito(e.x, e.y, 'tentador'); J.sacudida = 0.8; }
       if (e.furia) { e.tpT = (e.tpT || 6) - dt; if (e.tpT <= 0) { e.tpT = 6 + rnd() * 3; teletransportar(e, 4, 7); } }
       e.invocT -= dt;
       if (e.invocT <= 0 && enemigos.filter((o) => !o.muerto && o.tipo !== 'tentador').length < 5) {
@@ -1582,7 +1896,7 @@ function actualizarEnemigos(dt) {
           const a = rnd() * 6.28, x = e.x + Math.cos(a) * 2, y = e.y + Math.sin(a) * 2;
           if (puedeEn(x, y, 0.3, null)) { const n = crearEnemigo(elegir(['envidia', 'envidia', 'soberbia']), x, y); n.estado = 'caza'; enemigos.push(n); sinPecados++; totalPecados++; explotar(x, y, 'sombra', 20, 0.5); }
         }
-        aviso('¡El Tentador llama a más pecados!');
+        aviso('¡Lucifer llama a más demonios!');
       }
     }
     if (ve && e.cool <= 0 && d < cfg.alcance) {
@@ -1591,7 +1905,7 @@ function actualizarEnemigos(dt) {
     }
     // Movimiento
     let mx = 0, my = 0;
-    const distanciaIdeal = cfg.ataque === 'triple' || cfg.ataque === 'monedas' ? 4.5 : cfg.ataque === 'jefe' ? 5 : 0.8;
+    const distanciaIdeal = cfg.ataque === 'triple' || cfg.ataque === 'monedas' ? 4.5 : cfg.ataque === 'jefe' ? 5 : cfg.radio + 0.5;
     if (ve) {
       const ux = dx / (d || 1), uy = dy / (d || 1);
       if (d > distanciaIdeal) { mx = ux; my = uy; } else if (distanciaIdeal > 1 && d < distanciaIdeal - 1.5) { mx = -ux; my = -uy; }
@@ -1645,18 +1959,34 @@ function actualizar(dt) {
   if (joy.activo) { avance += -joy.dy; lado += joy.dx; }
   const m = Math.hypot(avance, lado); if (m > 1) { avance /= m; lado /= m; }
   J.a += giro * 2.6 * dt;
-  const velMax = 3.4 * DON.vel * (J.lento > 0 ? 0.55 : 1) * (teclas.ShiftLeft ? 1.3 : 1);
+  // Correr gasta aliento; agotado, hay que recuperarlo
+  if (J.encantoT > 0) {
+    J.encantoT -= dt; const o = J.encantoDe;
+    if (!o || o.muerto || o.estado === 'repelido' || J.alzaK > 0.7) J.encantoT = 0;
+    else { const dx = o.x - J.x, dy = o.y - J.y, l = Math.hypot(dx, dy) || 1; if (l > 0.9) { J.vx += dx / l * 9 * dt; J.vy += dy / l * 9 * dt; } }
+  }
+  $('encanto').style.opacity = J.encantoT > 0 ? (0.55 + Math.sin(tiempoJuego * 9) * 0.2).toFixed(2) : '0';
+  // En el teléfono se corre empujando el joystick hasta el borde
+  const corrJoy = joy.activo && Math.hypot(joy.dx, joy.dy) > 0.93;
+  $('joy').classList.toggle('corre', corrJoy && !J.agotado);
+  const quiereCorrer = (teclas.ShiftLeft || correrTactil || corrJoy) && (avance || lado) && !J.agotado;
+  J.aliento = clamp(J.aliento + (quiereCorrer ? -30 : 16) * dt, 0, 100);
+  if (J.aliento <= 0) J.agotado = true; else if (J.aliento > 30) J.agotado = false;
+  const corriendo = quiereCorrer && J.aliento > 0;
+  const velMax = 3.4 * DON.vel * (J.lento > 0 ? 0.55 : 1) * (corriendo ? 1.45 : 1) * (J.alzaK > 0.5 ? 0.75 : 1);
   J.lento = Math.max(0, J.lento - dt);
   const ca = Math.cos(J.a), sa = Math.sin(J.a);
   const tvx = (ca * avance - sa * lado) * velMax, tvy = (sa * avance + ca * lado) * velMax;
   const ka = 1 - Math.exp(-(avance || lado ? 11 : 9) * dt);
   J.vx += (tvx - J.vx) * ka; J.vy += (tvy - J.vy) * ka;
   // Esquivar: un salto rápido hacia donde te mueves
-  J.esqCD = Math.max(0, (J.esqCD || 0) - dt); J.feCD = Math.max(0, (J.feCD || 0) - dt); J.feT = Math.max(0, (J.feT || 0) - dt); J.invulT = Math.max(0, (J.invulT || 0) - dt);
+  J.esqCD = Math.max(0, (J.esqCD || 0) - dt); J.feCD = Math.max(0, (J.feCD || 0) - dt); J.feT = Math.max(0, (J.feT || 0) - dt); J.invulT = Math.max(0, (J.invulT || 0) - dt); J.empCD = Math.max(0, (J.empCD || 0) - dt);
+  oscuridadT = Math.max(0, oscuridadT - dt); soporT = Math.max(0, soporT - dt);
+  actualizarRosario(dt);
   if (J.dashT > 0) { J.dashT -= dt; J.vx = J.dashX * 10; J.vy = J.dashY * 10; if (rnd() < 0.6) particulas.push({ x: J.x, y: J.y, z: 0.3 + rnd() * 0.4, vx: 0, vy: 0, vz: 0.3, g: 0, vida: 0.35, max: 0.35, spr: SPR.p.oro, tam: 0.06 }); }
   if (pedirEsquivar) { pedirEsquivar = false; esquivar(avance, lado); }
   if (pedirFe) { pedirFe = false; escudoFe(); }
-  if ((J.esqCD > 0 || J.feCD > 0) && Math.floor(tiempoJuego * 10) !== Math.floor((tiempoJuego - dt) * 10)) actualizarBotones();
+  if ((J.esqCD > 0 || J.feCD > 0 || J.empCD > 0) && Math.floor(tiempoJuego * 10) !== Math.floor((tiempoJuego - dt) * 10)) actualizarBotones();
   $('fe').style.opacity = J.feT > 0 ? (0.75 + Math.sin(tiempoJuego * 12) * 0.25 * (J.feT < 0.8 ? 1 : 0.3)).toFixed(2) : '0';
   const ax = J.x, ay = J.y;
   mover(J, J.vx * dt, J.vy * dt, 0.22);
@@ -1701,9 +2031,9 @@ function actualizar(dt) {
         }
       } else if (J.feT > 0 && Math.hypot(J.x - b.x, J.y - b.y) < 1.1) {
         // El escudo de la fe devuelve los ataques a quien los lanzó
-        b.mio = true; b.vx = -b.vx * 1.3; b.vy = -b.vy * 1.3; b.vz = 0; b.guia = 0; b.dano = 5; b.vida = 2; b.spr = SPR.p.oro; b.luz = [1, 0.85, 0.4, 2];
+        b.mio = true; b.estalla = 0; b.vx = -b.vx * 1.3; b.vy = -b.vy * 1.3; b.vz = 0; b.guia = 0; b.dano = 5; b.vida = 2; b.spr = SPR.p.oro; b.luz = [1, 0.85, 0.4, 2];
         explotar(b.x, b.y, 'oro', 8, b.z); SND.bloqueo();
-      } else if (Math.hypot(J.x - b.x, J.y - b.y) < 0.32 && b.z < 0.95) { danoJugador(b.dano, b.x, b.y); if (b.lento) J.lento = Math.max(J.lento, b.lento); explotar(b.x, b.y, b.lento ? 'verde' : 'sombra', 14, b.z); quitar = true; }
+      } else if (!b.estalla && Math.hypot(J.x - b.x, J.y - b.y) < 0.32 && b.z < 0.95) { danoJugador(b.dano, b.x, b.y); if (b.lento) J.lento = Math.max(J.lento, b.lento); explotar(b.x, b.y, b.lento ? 'verde' : 'sombra', 14, b.z); quitar = true; }
     }
     if (quitar) {
       if (b.explota) {
@@ -1711,6 +2041,12 @@ function actualizar(dt) {
         if (Math.hypot(J.x - b.x, J.y - b.y) < 4) J.sacudida = Math.max(J.sacudida, 0.6 - Math.hypot(J.x - b.x, J.y - b.y) * 0.12);
         destellos.push({ x: b.x, y: b.y, t: 0.35, max: 0.35, r: 1, g: 0.75, b: 0.4, rad: 4.5, int: 3 });
         for (const e of enemigos) { if (e.muerto) continue; const dd = Math.hypot(e.x - b.x, e.y - b.y); if (dd < b.explota && visible(b.x, b.y, e.x, e.y)) { herir(e, b.dano * (1 - dd / b.explota * 0.6)); const l = dd || 1; e.kx = (e.kx || 0) + (e.x - b.x) / l * 5; e.ky = (e.ky || 0) + (e.y - b.y) / l * 5; } }
+      } else if (b.estalla) {
+        explotar(b.x, b.y, 'rojo', 30, 0.15); explotar(b.x, b.y, 'oro', 10, 0.15); SND.explosion();
+        destellos.push({ x: b.x, y: b.y, t: 0.4, max: 0.4, r: 1, g: 0.4, b: 0.1, rad: 4, int: 3 });
+        const dd = Math.hypot(J.x - b.x, J.y - b.y);
+        if (dd < b.estalla) danoJugador(b.dano * (1 - dd / b.estalla * 0.5), b.x, b.y);
+        if (dd < 4) J.sacudida = Math.max(J.sacudida, 0.4 - dd * 0.08);
       } else if (chocoMuro) explotar(b.x - b.vx * dt, b.y - b.vy * dt, b.mio ? (b.spr === SPR.gota ? 'azul' : 'oro') : 'sombra', 5, clamp(b.z, 0.05, ALTO - 0.05));
       proyectiles.splice(i, 1);
     }
@@ -1930,7 +2266,7 @@ function construir3D() {
     if (d.tipo === 'candelabro') { const sp = new THREE.Sprite(matBrilloLlama); sp.position.set(d.x, 0.98, d.y); sp.scale.setScalar(0.5); grupoNivel.add(sp); llamas.push(sp); }
   }
   mallaSagrario = crearBill(SPR.sagrarioCerrado, 0.95, true); mallaSagrario.position.set(salida.x, 0, salida.y); grupoNivel.add(mallaSagrario);
-  for (const e of enemigos) e.malla = null;
+  for (const e of enemigos) { e.malla = null; e.demonio = null; }
   // Niebla y luz del lugar
   const [nr, ng, nb] = TEMA.niebla;
   const colNiebla = new THREE.Color(nr / 255, ng / 255, nb / 255);
@@ -2000,7 +2336,14 @@ function actualizar3D(dt) {
   camara.rotation.set((J.pitch || 0) + (J.kick || 0), Math.atan2(-Math.cos(J.a), -Math.sin(J.a)), (J.roll || 0) + Math.sin(J.paso) * 0.008 * rapidez);
   if (estado === 'cine') camaraCine(dt);
   linterna.position.copy(camara.position);
-  linterna.intensity = 2.4 + Math.sin(tiempoJuego * 13) * 0.08;
+  luzMundo += ((oscuridadT > 0 ? 0.06 : 1) - luzMundo) * Math.min(1, dt * 4);
+  if (hemi.userData.base == null) hemi.userData.base = hemi.intensity;
+  hemi.intensity = hemi.userData.base * (0.25 + 0.75 * luzMundo);
+  // El rosario alzado ilumina con luz dorada (es la única luz en las tinieblas)
+  const ros = J.alzaK || 0;
+  linterna.intensity = (2.4 + Math.sin(tiempoJuego * 13) * 0.08) * (0.45 + 0.55 * luzMundo) + ros * (1.2 + (1 - luzMundo) * 2);
+  linterna.color.setRGB(1, 0.85 + ros * 0.05, 0.66 - ros * 0.12);
+  $('tinieblas').style.opacity = Math.max((1 - luzMundo) * 0.8, soporT > 0 ? 0.5 : 0).toFixed(2);
   // Luces cercanas (antorchas, candelabros, vitrales) con parpadeo
   poolAsignar -= dt;
   if (poolAsignar <= 0) {
@@ -2014,7 +2357,7 @@ function actualizar3D(dt) {
     const parpadeo = L.b < 0.6 ? 0.85 + Math.sin(tiempoJuego * 11 + i * 3) * 0.08 + Math.sin(tiempoJuego * 23 + i) * 0.06 : 1;
     l.position.set(L.x, ALTO * 0.75, L.y);
     l.color.setRGB(L.r, L.g, L.b);
-    l.intensity = L.int * 3.2 * parpadeo;
+    l.intensity = L.int * 3.2 * parpadeo * luzMundo;
     l.distance = L.rad * 1.3;
   });
   for (const s of llamas) s.scale.setScalar(0.4 + Math.sin(tiempoJuego * 17 + s.position.x * 7) * 0.05);
@@ -2032,26 +2375,18 @@ function actualizar3D(dt) {
     const p = puertas.get(i), k = p.abierta;
     if (p.orient === 'v') m.position.z = p.y + 0.5 + k * 0.96; else m.position.x = p.x + 0.5 + k * 0.96;
   }
-  // Pecados
+  // Demonios 3D con esqueleto animado
   for (const e of enemigos) {
     const cfg = TIPOS[e.tipo];
-    if (!e.malla) { e.malla = crearBill(SPRITE_ENEMIGO[e.tipo].paso[0], cfg.alto, true); grupoNivel.add(e.malla); }
+    if (!e.demonio) { e.demonio = crearDemonio(e.tipo, cfg.alto); e.malla = e.demonio.grupo; grupoNivel.add(e.malla); }
     const m = e.malla;
-    if (e.muerto && e.muerteT > 0.8) { m.visible = false; continue; }
+    if (e.muerto && e.muerteT > 1.6) { m.visible = false; continue; }
+    // Más allá de la niebla no se ve nada: ni se dibuja ni se anima
+    if (estado !== 'cine' && (e.x - J.x) ** 2 + (e.y - J.y) ** 2 > 225) { m.visible = false; continue; }
     m.visible = true;
-    const fr = frameEnemigo(e);
-    const mt = m.material;
-    const tx = texFr(fr); if (mt.map !== tx) { mt.map = tx; mt.emissiveMap = glowFr(fr); }
-    const flota = cfg.flota ? cfg.flota + Math.sin(tiempoJuego * 2 + e.fase) * 0.05 : 0;
-    m.position.set(e.x, flota, e.y);
-    mirarCamara(m);
-    m.rotation.x = e.muerto ? -Math.min(1, e.muerteT / 0.5) * 0.9 : (e.estado === 'dolor' ? -0.12 : 0);
-    const brillo = e.flash > 0 ? 3.2 : 1;
-    mt.color.setScalar(brillo);
-    // Pecado mayor: más grande y con resplandor rojo; furia: late en naranja
-    const escala = e.mayor ? 1.3 : 1; if (m.scale.x !== escala) m.scale.setScalar(escala);
-    if (e.mayor || e.furia) { const p = 0.6 + Math.sin(tiempoJuego * (e.furia ? 12 : 4)) * 0.4; mt.emissive.setRGB(1, 0.35 + 0.3 * (1 - p), 0.25); mt.emissiveIntensity = 1.6 + p * 1.4; }
-    else if (mt.emissiveIntensity !== 1.6) { mt.emissive.setRGB(1, 1, 1); mt.emissiveIntensity = 1.6; }
+    m.position.set(e.x, 0, e.y);
+    const escala = e.mayor ? Math.min(1.3, 1.2 / cfg.alto) : 1; if (m.scale.x !== escala) m.scale.setScalar(escala);
+    e.demonio.actualizar(dt, { x: e.x, y: e.y, jx: J.x, jy: J.y, estado: e.estado, muerto: e.muerto, muerteT: e.muerteT, flash: e.flash, furia: e.furia, mayor: e.mayor, especial: e.especial, ataque: cfg.ataque, t: tiempoJuego, tp: e.t, golpeT: e.golpeT, dashX: e.dashX, dashY: e.dashY, rugido: e.rugido, invis: e.invisT > 0 ? 1 : 0, mira: estado === 'cine' && e === jefe });
   }
   // Objetos
   for (const p of pickups) {
@@ -2189,6 +2524,40 @@ const ARMA3D = {};
   ARMA3D.incensario = g;
   for (const k in ARMA3D) { ARMA3D[k].visible = false; escenaArma.add(ARMA3D[k]); }
 })();
+/* Rosario alzado: crucifijo de oro y cuentas colgando de la mano izquierda */
+const ROSARIO_ALZADO = (() => {
+  const g = new THREE.Group();
+  const cruz = new THREE.Group(); g.add(cruz);
+  cruz.add(new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.12, 0.012), MA.oro));
+  const h = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.016, 0.012), MA.oro); h.position.y = 0.025; cruz.add(h);
+  const cristo = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.05, 0.006), MA.plata); cristo.position.set(0, 0.01, 0.009); cruz.add(cristo);
+  cruz.position.set(0, 0.11, 0);
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: texDe(SPR.p.oro.lienzo), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  halo.position.set(0, 0.13, -0.01); halo.scale.setScalar(0.3); g.add(halo);
+  const cuentas = new THREE.InstancedMesh(new THREE.SphereGeometry(0.008, 10, 8), MA.oro, 40); g.add(cuentas);
+  const mano = mano3D(true, true); mano.rotation.set(0.5, 0, 0); mano.position.set(0, 0.0, 0.03); g.add(mano);
+  g.scale.setScalar(0.85);
+  g.visible = false; escenaArma.add(g);
+  return { g, halo, cuentas, cruz };
+})();
+const _o3 = new THREE.Object3D();
+function animarRosarioAlzado(dt) {
+  const k = J.alzaK || 0, R = ROSARIO_ALZADO;
+  R.g.visible = k > 0.02 && estado === 'jugando';
+  if (!R.g.visible) return;
+  const tiembla = (J.fe < 30 ? 0.006 : 0.0015) * (1 + Math.sin(tiempoJuego * 31));
+  R.g.position.set(-0.06 + Math.sin(tiempoJuego * 23) * tiembla, lerp(-0.55, -0.06, suaveC(k)) + Math.cos(tiempoJuego * 19) * tiembla, -0.38);
+  R.g.rotation.set(0.1, 0.25, -0.1);
+  R.halo.scale.setScalar((0.22 + (J.fe / 100) * 0.25) * (1 + Math.sin(tiempoJuego * 7) * 0.08));
+  R.halo.material.opacity = 0.5 + J.fe / 200;
+  for (let i = 0; i < 40; i++) {
+    const u = i / 39, a = u * Math.PI * 2, sw = Math.sin(tiempoJuego * 2.2) * 0.012;
+    _o3.position.set(Math.sin(a) * 0.04 + sw * Math.sin(u * Math.PI), 0.06 - (1 - Math.cos(a)) * 0.075, 0.005 + Math.cos(a) * 0.012);
+    _o3.updateMatrix(); R.cuentas.setMatrixAt(i, _o3.matrix);
+  }
+  R.cuentas.instanceMatrix.needsUpdate = true;
+}
+const lerp = (a, b, k) => a + (b - a) * k;
 /* Gotas y humo junto al arma */
 const gotasArma = [];
 for (let i = 0; i < 40; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: texDe(SPR.gota.lienzo), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); s.visible = false; escenaArma.add(s); gotasArma.push({ s, v: new THREE.Vector3(), vida: 0 }); }
@@ -2216,7 +2585,7 @@ function animarArma(dt) {
   const cambio = J.cambio > 0 ? (J.cambio > 0.16 ? (0.32 - J.cambio) / 0.16 : J.cambio / 0.16) : 0;
   const b = g.userData.base, r = g.userData.rot;
   const respira = Math.sin(tiempoJuego * 1.8) * 0.003;
-  g.position.set(b.x + bobX + swayX, b.y - bobY + swayY - cambio * 0.32 + respira, b.z + J.retro * 0.06);
+  g.position.set(b.x + bobX + swayX + (J.alzaK || 0) * 0.06, b.y - bobY + swayY - cambio * 0.32 + respira - (J.alzaK || 0) * 0.22, b.z + J.retro * 0.06);
   g.rotation.set(r.x + J.retro * 0.35, r.y + swayX * 2, r.z + bobX * 3);
   luzArmaDisparo.intensity = J.destello > 0 ? 4 : (J.haz > 0 ? 3 : 0);
   if (actual === 'rosario') {
@@ -2266,6 +2635,8 @@ function setTxt(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textC
 function actualizarHud() {
   if (!J) return;
   setTxt('h-vida', String(Math.ceil(J.vida)));
+  $('h-fe').style.transform = `scaleX(${(J.fe / 100).toFixed(3)})`; $('h-al').style.transform = `scaleX(${(J.aliento / 100).toFixed(3)})`;
+  $('h-fe').parentNode.parentNode.classList.toggle('baja', J.fe < 25);
   $('h-vida').classList.toggle('bajo', J.vida < 30);
   setTxt('h-arm', String(Math.ceil(J.escudo)));
   setTxt('h-nivel', (nivel + 1) + '. ' + cfgNivel.nombre);
@@ -2295,6 +2666,7 @@ function bucle(t) {
   else if (estado === 'menu') { J.a += dt * 0.15; tiempoJuego += dt; }
   actualizar3D(dt);
   animarArma(dt);
+  if (J) animarRosarioAlzado(dt);
   renderer.clear();
   renderer.render(escena3, camara);
   if (estado === 'jugando') { renderer.clearDepth(); renderer.render(escenaArma, camArma); }
@@ -2317,6 +2689,7 @@ function bucle(t) {
 function esTactil() { return matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0; }
 function prepararNivel(n, conservar) {
   nivel = n;
+  for (const t of Object.keys(NIVELES[n].enemigos).concat(NIVELES[n].jefe ? ['tentador'] : [])) prepararDemonio(t);
   const inicio = generarNivel(n);
   const viejo = conservar && J ? J : null;
   DON = donesDe(S.puntos);
@@ -2335,8 +2708,8 @@ function mostrarIntro(n) {
   const c = NIVELES[n];
   $('intro-tarjeta').innerHTML =
     `<p class="pequeno">Nivel ${n + 1} de ${NIVELES.length} · ${DIF.nombre}</p><h1>${c.nombre}</h1>` +
-    `<p>«${c.frase}»<br><span class="pequeno">San José Allamano</span></p>` +
-    `<div class="lista"><p>• Vence a <b>${sinPecados}</b> pecados.</p>${c.jefe ? '<p>• Derrota al <b>Tentador</b>: lanza fuego y llama a otros pecados.</p>' : '<p>• Busca la <b>llave dorada</b> y abre la puerta del Sagrario.</p>'}${c.arma ? `<p>• En este lugar hay un arma nueva escondida.</p>` : ''}</div>` +
+    `<p>«${c.frase}»<br><span class="pequeno">${c.autor || 'San José Allamano'}</span></p>` +
+    `<div class="lista"><p>• Vence a <b>${sinPecados}</b> demonios.</p>${c.jefe ? '<p>• Derrota a <b>Lucifer</b>: lanza fuego y llama a otros demonios.</p>' : '<p>• Busca la <b>llave dorada</b> y abre la puerta del Sagrario.</p>'}${c.arma ? `<p>• En este lugar hay un arma nueva escondida.</p>` : ''}</div>` +
     `<button class="boton" type="button" id="b-entrar">ENTRAR</button>`;
   $('intro').hidden = false;
   $('b-entrar').onclick = () => { $('intro').hidden = true; jugar(); };
@@ -2355,17 +2728,26 @@ function camaraCine(dt) {
     const k = t / 3, a = cine.a0 + k * 1.6;
     camara.position.set(salida.x + Math.cos(a) * r, 0.35 + k * 0.55, salida.y + Math.sin(a) * r);
     camara.lookAt(salida.x, 0.42, salida.y);
-    if (!cine.t1) { cine.t1 = true; caja.innerHTML = '<small>Tu meta</small>El Sagrario' + (cfgNivel.jefe ? '<span>Vence al Tentador</span>' : '<span>Encuentra la llave dorada y vence a los pecados</span>'); caja.className = 'cine-txt on'; }
+    if (!cine.t1) { cine.t1 = true; caja.innerHTML = '<small>Tu meta</small>El Sagrario' + (cfgNivel.jefe ? '<span>Vence a Lucifer</span>' : '<span>Encuentra la llave dorada y vence a los demonios</span>'); caja.className = 'cine-txt on'; }
+  } else if (t < 3 + cine.off) {
+    // Toma del jefe: Lucifer despierta y ruge frente a la cámara
+    const tj = t - 3, h = TIPOS.tentador.alto;
+    if (cine.ang === undefined) { let mejor = 0, md = -1; for (let q = 0; q < 24; q++) { const a = q / 24 * Math.PI * 2; const r = rayo(jefe.x, jefe.y, Math.sin(a), Math.cos(a), false); if (r.dist > md) { md = r.dist; mejor = a; } } cine.ang = mejor; cine.dist = clamp(md - 0.4, 1.9, 3.6); }
+    const k = suaveC(Math.min(1, tj / 2.2)), d = cine.dist * (1.2 - 0.2 * k), a = cine.ang + Math.sin(tj * 0.8) * 0.12;
+    camara.position.set(jefe.x + Math.sin(a) * d, h * 0.35 + k * h * 0.42, jefe.y + Math.cos(a) * d);
+    camara.lookAt(jefe.x, h * (0.45 + 0.35 * k), jefe.y);
+    if (!cine.rug && tj > 1.3) { cine.rug = true; jefe.rugido = 1; SND.grito(jefe.x, jefe.y, 'tentador'); J.sacudida = 0.8; $('miedo').classList.remove('on'); void $('miedo').offsetWidth; $('miedo').classList.add('on'); }
+    if (!cine.t0) { cine.t0 = true; caja.innerHTML = '<small>El príncipe de los demonios</small>Lucifer<span>«Resistid al diablo y huirá de vosotros» · Santiago 4, 7</span>'; caja.className = 'cine-txt on'; }
   } else {
     // Toma 2: desde lo alto de la sala de inicio hasta los ojos del misionero
-    const k = suaveC(Math.min(1, (t - 3) / 2.4));
+    const k = suaveC(Math.min(1, (t - 3 - cine.off) / 2.4));
     const atras = 2.2 * (1 - k);
     _v.set(J.x - Math.cos(J.a) * atras, OJO + (ALTO - 0.12 - OJO) * (1 - k), J.y - Math.sin(J.a) * atras);
     camara.position.copy(_v);
     camara.rotation.set(-0.55 * (1 - k), Math.atan2(-Math.cos(J.a), -Math.sin(J.a)), 0);
     if (!cine.t2) { cine.t2 = true; caja.innerHTML = '<small>Nivel ' + (nivel + 1) + '</small>' + cfgNivel.nombre + '<span>«La luz brilla en las tinieblas» · Juan 1, 5</span>'; caja.className = 'cine-txt on'; }
   }
-  if (t >= 5.4) terminarCine();
+  if (t >= 5.4 + cine.off) terminarCine();
 }
 const suaveC = (k) => k * k * (3 - 2 * k);
 function terminarCine() {
@@ -2375,13 +2757,15 @@ function terminarCine() {
   $('botones').classList.toggle('on', esTactil());
   estado = 'jugando';
   aviso(cfgNivel.nombre);
+  if (tactil) { $('joy-guia').classList.add('on'); $('mira-guia').classList.add('on'); }
+  setTimeout(() => $('teclas-pc').classList.add('oculta'), 12000); $('teclas-pc').classList.remove('oculta');
 }
 function jugar() {
   $('menu').hidden = true; $('fin').hidden = true; $('pausa').hidden = true; $('intro').hidden = true;
   ac();
   for (const k in hudCache) delete hudCache[k];
   actualizarHud();
-  cine = { t: 0, a0: rnd() * 6.28 }; estado = 'cine';
+  cine = { t: 0, a0: rnd() * 6.28, off: cfgNivel.jefe && jefe ? 4 : 0 }; estado = 'cine';
   $('cine').classList.add('on');
   SND.arma();
   return;
@@ -2401,8 +2785,9 @@ function empezar(n, conservar) {
   $('hud').classList.remove('on');
   mostrarIntro(n);
 }
+const SIN_PAUSA = /[?&]prueba(=|&|$)/.test(location.search); // para pruebas automáticas
 function pausar() {
-  if (estado !== 'jugando') return;
+  if (estado !== 'jugando' || SIN_PAUSA) return;
   estado = 'pausa'; fuego = false; mouseDown = false;
   for (const k in teclas) teclas[k] = false;
   $('pausa-stats').innerHTML = `<div>Nivel <b>${nivel + 1}</b></div><div>Pecados <b>${sinPecados}</b></div><div>Tiempo <b>${fmtT(stats.tiempo)}</b></div><div>Puntos <b>${stats.puntos}</b></div>`;
@@ -2432,7 +2817,7 @@ function nivelSuperado() {
   $('fin-tarjeta').innerHTML =
     '<div class="retrato-grande" style="width:96px;height:96px"><img src="cuadros/cap2-allamano.jpg" alt=""></div>' +
     `<h1>${ultimo ? '¡La luz venció!' : '¡Nivel superado!'}</h1>` +
-    `<p>${ultimo ? 'El Tentador fue vencido y todos los Sagrarios brillan de nuevo.' : 'Los pecados fueron vencidos y el Sagrario quedó abierto.'}</p>` +
+    `<p>${ultimo ? 'Lucifer fue vencido y todos los Sagrarios brillan de nuevo.' : 'Los demonios fueron vencidos y el Sagrario quedó abierto.'}</p>` +
     `<div class="stats"><div>Tiempo <b>${fmtT(stats.tiempo)}</b></div><div>Precisión <b>${precision}%</b></div><div>Daño recibido <b>${Math.round(stats.danoRecibido)}</b></div><div>Puntos <b>+${stats.puntos}</b></div></div>` +
     `<p>★ Total: ${S.puntos} puntos misioneros</p>` +
     `<div class="lista" style="text-align:center"><p>«${v[0]}»<br><span class="pequeno">${v[1]}</span></p></div>` +
@@ -2450,7 +2835,7 @@ function perder() {
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch (e) { /* nada */ }
   const n = nivel;
   $('fin-tarjeta').innerHTML =
-    `<h1>Te venció el pecado</h1><p>Pero la gracia de Dios no se acaba. Vuelve a levantarte.</p>` +
+    `<h1>Te vencieron los demonios</h1><p>Pero la gracia de Dios no se acaba. Vuelve a levantarte.</p>` +
     `<div class="stats"><div>Nivel <b>${n + 1}</b></div><div>Pecados vencidos <b>${totalPecados - sinPecados}/${totalPecados}</b></div></div>` +
     `<p class="pequeno">★ ${S.puntos} puntos misioneros</p>` +
     '<button class="boton" type="button" id="b-reintentar">REINTENTAR EL NIVEL</button><button class="boton sec" type="button" id="b-menu3">Volver al menú</button>';
@@ -2459,7 +2844,17 @@ function perder() {
   $('b-reintentar').onclick = () => empezar(n, false);
   $('b-menu3').onclick = volverMenu;
 }
+const CONTROLES = {
+  tactil: ['<b>Mover:</b> toca y arrastra en la mitad izquierda. Empuja hasta el borde para <b>correr</b>.', '<b>Mirar:</b> arrastra en la mitad derecha. Un toque rápido <b>bendice</b>.', '<b>BENDECIR</b> (botón grande) dispara el arma; <b>ARMA</b> la cambia.', '<b>ROSARIO:</b> mantenlo para alzarlo. Los demonios gritan y huyen… no siempre: depende de tu <b>fe</b>.', '<b>EMPUJAR</b> aparta al demonio que tienes encima; <b>ESQUIVAR</b> da un salto rápido; <b>ESCUDO</b> te protege y devuelve ataques.', '<b>SÚPER</b> se carga venciendo 3 demonios.'],
+  pc: ['<b>Mover:</b> W A S D o flechas · <b>Correr:</b> Mayúscula izquierda (gasta aliento).', '<b>Mirar:</b> el ratón (haz clic en el juego para capturarlo) · <b>Bendecir:</b> clic izquierdo o Espacio.', '<b>Rosario:</b> mantén el clic derecho o G. Los demonios gritan y huyen… no siempre: depende de tu <b>fe</b>.', '<b>E</b> esquivar · <b>F</b> escudo · <b>V</b> empujar · <b>R</b> súper · <b>1-4</b>, <b>Q</b> o la rueda: armas.', '<b>Esc</b> o <b>P</b> pausa · <b>H</b> muestra u oculta la ayuda de teclas.']
+};
+function pintarControles() {
+  const lista = (tactil ? CONTROLES.tactil : CONTROLES.pc).concat(['Las puertas se abren al acercarte. La puerta dorada del Sagrario necesita la <b>llave dorada</b>.']).map((t) => '<p>• ' + t + '</p>').join('');
+  $('m-controles').innerHTML = lista; $('pausa-controles').innerHTML = lista;
+}
 function pintarMenu() {
+  pintarControles();
+  $('m-sens').value = S.sens || 1; $('m-sens-v').textContent = '×' + Number(S.sens || 1).toFixed(1);
   dificultadElegida = S.dificultad;
   nivelElegido = Math.min(nivelElegido, S.mejorNivel, NIVELES.length - 1);
   $('m-dific').innerHTML = Object.entries(DIFICULTADES).map(([k, d]) => `<button type="button" data-dif="${k}" aria-pressed="${k === S.dificultad}">${d.nombre}<small>${d.desc}</small></button>`).join('');
@@ -2469,17 +2864,45 @@ function pintarMenu() {
   $('m-dones').innerHTML = `<p class="pequeno">Con tus puntos misioneros recibes dones que te hacen más fuerte.</p><div class="dones-lista">${DONES.map((d) => `<span class="${S.puntos >= d.p ? 'ya' : ''}" title="${d.d}">${S.puntos >= d.p ? '✦' : '○'} ${d.n}<small>${S.puntos >= d.p ? d.d : '★ ' + d.p}</small></span>`).join('')}</div>` + (sig ? `<div class="barra-don"><i style="width:${Math.min(100, S.puntos / sig.p * 100).toFixed(1)}%"></i></div><p class="pequeno">Faltan ${sig.p - S.puntos} ★ para ${sig.n}</p>` : '<p class="pequeno">¡Tienes todos los dones!</p>');
   $('b-jugar').textContent = nivelElegido === 0 ? 'COMENZAR' : `COMENZAR EN EL NIVEL ${nivelElegido + 1}`;
 }
+/* Retrato 3D de cada demonio para el bestiario */
+let rVista = null;
+function vistaDemonio(tipo) {
+  if (!rVista) {
+    const cvv = document.createElement('canvas'); cvv.width = cvv.height = 256;
+    const r = new THREE.WebGLRenderer({ canvas: cvv, alpha: true, antialias: true, preserveDrawingBuffer: true });
+    r.setSize(256, 256, false); r.setClearColor(0x000000, 0);
+    const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffe0c0, 0x201018, 1.7));
+    const l1 = new THREE.DirectionalLight(0xffb070, 2.4); l1.position.set(1.5, 2, 2.5); sc.add(l1);
+    const l2 = new THREE.DirectionalLight(0x6070ff, 1.2); l2.position.set(-2, 1, -1.5); sc.add(l2);
+    rVista = { r, sc, cam: new THREE.PerspectiveCamera(30, 1, 0.1, 20), cache: {} };
+  }
+  if (!rVista.cache[tipo]) {
+    const d = crearDemonio(tipo, 1); const { r, sc, cam } = rVista;
+    sc.add(d.grupo);
+    d.actualizar(0.016, { x: 0, y: 0, jx: 0, jy: 5, estado: 'caza', muerto: false, muerteT: 0, flash: 0, furia: false, mayor: false, t: 1, tp: 0.5 });
+    d.grupo.rotation.y = -0.45; d.grupo.updateMatrixWorld(true);
+    // Encuadre automático: todo el demonio dentro del retrato, sin cortes
+    const caja = new THREE.Box3().setFromObject(d.grupo), c = caja.getCenter(new THREE.Vector3()), t = caja.getSize(new THREE.Vector3());
+    const dist = Math.max(t.y, t.x) / 2 / Math.tan(THREE.MathUtils.degToRad(15)) * 1.12;
+    cam.position.set(c.x, c.y + t.y * 0.05, c.z + dist); cam.lookAt(c);
+    r.render(sc, cam);
+    const c2 = document.createElement('canvas'); c2.width = c2.height = 256; c2.getContext('2d').drawImage(r.domElement, 0, 0);
+    rVista.cache[tipo] = c2; sc.remove(d.grupo); d.liberar();
+  }
+  return rVista.cache[tipo];
+}
 function pintarBestiario() {
   const cont = $('m-bestiario');
   cont.innerHTML = '';
-  for (const tipo of ['pereza', 'soberbia', 'envidia', 'ira', 'avaricia', 'tentador']) {
+  const ORDEN = ['soberbia', 'avaricia', 'lujuria', 'ira', 'gula', 'envidia', 'pereza', 'tentador'];
+  for (const tipo of ORDEN) {
     const d = document.createElement('div');
     const c = document.createElement('canvas'); c.width = 128; c.height = 128;
     const g = c.getContext('2d');
-    const fr = SPRITE_ENEMIGO[tipo].paso[0];
-    g.drawImage(fr.lienzo, 0, 0, 128, 128); g.globalCompositeOperation = 'lighter'; g.drawImage(fr.lienzoGlow, 0, 0, 128, 128);
+    setTimeout(() => { try { g.drawImage(vistaDemonio(tipo), 0, 0, 128, 128); } catch (x) { /* sin 3D */ } }, 120 + ORDEN.indexOf(tipo) * 160);
     d.appendChild(c);
-    const tx = document.createElement('div'); tx.innerHTML = `<b>${TIPOS[tipo].nombre}</b><br><span class="pequeno">${TIPOS[tipo].desc}</span>`;
+    const T0 = TIPOS[tipo], ros = T0.rosario > 0.75 ? 'casi siempre' : T0.rosario > 0.55 ? 'a menudo' : T0.rosario > 0.35 ? 'a veces' : 'rara vez';
+    const tx = document.createElement('div'); tx.innerHTML = `<b>${T0.nombre}</b> <span class="pequeno">· ${T0.pecado}</span><br><span class="pequeno">${T0.desc}</span><br><span class="pequeno">⚔ ${T0.poderes.join(' · ')}</span><br><span class="pequeno">✝ El rosario lo espanta ${ros}.</span>`;
     d.appendChild(tx); cont.appendChild(d);
   }
 }
@@ -2496,16 +2919,17 @@ addEventListener('keydown', (e) => {
     if (e.code === 'KeyQ') siguienteArma(1);
     if (e.code === 'KeyE' || e.code === 'ShiftRight') pedirEsquivar = true;
     if (e.code === 'KeyF') pedirFe = true;
+    if (e.code === 'KeyV') empujar();
   }
   if (e.code === 'Escape' || e.code === 'KeyP') { if (estado === 'jugando') pausar(); else if (estado === 'pausa') seguir(); }
 });
 addEventListener('keyup', (e) => { teclas[e.code] = false; if (e.code === 'Space') fuego = false; });
-addEventListener('blur', () => { for (const k in teclas) teclas[k] = false; fuego = false; mouseDown = false; pausar(); });
+addEventListener('blur', () => { for (const k in teclas) teclas[k] = false; fuego = false; mouseDown = false; alzarRaton = false; pausar(); });
 addEventListener('wheel', (e) => { if (estado === 'jugando') siguienteArma(e.deltaY > 0 ? 1 : -1); }, { passive: true });
 cv.addEventListener('pointerdown', (e) => {
   if (estado !== 'jugando') return;
   if (e.pointerType === 'mouse') {
-    mouseDown = true;
+    if (e.button !== 2) mouseDown = true;
     if (document.pointerLockElement !== cv) { try { cv.requestPointerLock(); } catch (x) { /* sin bloqueo */ } }
     return;
   }
@@ -2520,22 +2944,22 @@ cv.addEventListener('pointerdown', (e) => {
   try { cv.setPointerCapture(e.pointerId); } catch (x) { /* nada */ }
 });
 cv.addEventListener('pointermove', (e) => {
-  if (e.pointerType === 'mouse') { if (document.pointerLockElement === cv && estado === 'jugando') { J.a += e.movementX * 0.0026; J.pitch = clamp(J.pitch - e.movementY * 0.0024, -0.75, 0.75); } return; }
+  if (e.pointerType === 'mouse') { if (document.pointerLockElement === cv && estado === 'jugando') { J.a += e.movementX * 0.0026 * (S.sens || 1); J.pitch = clamp(J.pitch - e.movementY * 0.0024 * (S.sens || 1), -0.75, 0.75); } return; }
   if (joy.activo && e.pointerId === joy.id) {
     let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy;
     const d = Math.hypot(dx, dy), max = 50;
     if (d > max) { dx = dx / d * max; dy = dy / d * max; }
-    joy.dx = dx / max; joy.dy = dy / max;
+    joy.dx = dx / max; joy.dy = dy / max; $('joy-guia').classList.remove('on');
     $('joy-k').style.transform = `translate(${dx}px,${dy}px)`;
   }
   if (mirada.id === e.pointerId) {
     const dx = e.clientX - mirada.x, dy = e.clientY - mirada.y;
     mirada.x = e.clientX; mirada.y = e.clientY; mirada.movido += Math.abs(dx) + Math.abs(dy);
-    if (estado === 'jugando') { J.a += dx * 0.0062; J.pitch = clamp(J.pitch - dy * 0.005, -0.75, 0.75); }
+    if (estado === 'jugando') { J.a += dx * 0.0062 * (S.sens || 1); J.pitch = clamp(J.pitch - dy * 0.005 * (S.sens || 1), -0.75, 0.75); $('mira-guia').classList.remove('on'); }
   }
 });
 function soltar(e) {
-  if (e.pointerType === 'mouse') { mouseDown = false; return; }
+  if (e.pointerType === 'mouse') { if (e.button !== 2) mouseDown = false; return; }
   if (joy.activo && e.pointerId === joy.id) { joy = { activo: false, id: -1, ox: 0, oy: 0, dx: 0, dy: 0 }; $('joy').classList.remove('on'); $('joy-k').style.transform = ''; }
   if (mirada.id === e.pointerId) {
     if (mirada.movido < 8 && performance.now() - mirada.t < 260) disparar();
@@ -2549,12 +2973,28 @@ bf.addEventListener('pointerdown', (e) => { e.stopPropagation(); fuego = true; t
 bf.addEventListener('pointerup', (e) => { e.stopPropagation(); fuego = false; });
 bf.addEventListener('pointercancel', () => { fuego = false; });
 $('b-arma').addEventListener('click', () => siguienteArma(1));
+// Botón derecho del ratón: alzar el rosario
+cv.addEventListener('contextmenu', (e) => e.preventDefault());
+cv.addEventListener('mousedown', (e) => { if (e.button === 2) alzarRaton = true; });
+addEventListener('mouseup', (e) => { if (e.button === 2) alzarRaton = false; });
+for (const [id, on, off] of [['b-rosario', () => { alzarTactil = true; }, () => { alzarTactil = false; }], ['b-correr', () => { correrTactil = true; }, () => { correrTactil = false; }]]) {
+  const b = $(id);
+  b.addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); on(); try { b.setPointerCapture(e.pointerId); } catch (x) { /* nada */ } });
+  b.addEventListener('pointerup', (e) => { e.stopPropagation(); off(); });
+  b.addEventListener('pointercancel', off);
+}
+$('b-empujar').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); empujar(); });
 $('b-super').addEventListener('click', superPoder);
 for (const [id, fn] of [['b-esquivar', () => { pedirEsquivar = true; }], ['b-fe', () => { pedirFe = true; }]]) $(id).addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); fn(); });
 $('b-pausa').addEventListener('click', pausar);
 $('b-seguir').addEventListener('click', seguir);
 $('b-salir').addEventListener('click', volverMenu);
 $('b-jugar').addEventListener('click', () => empezar(nivelElegido, false));
+$('m-sens').addEventListener('input', (e) => { S.sens = Number(e.target.value); $('m-sens-v').textContent = '×' + S.sens.toFixed(1); guardar(); });
+document.body.classList.toggle('tactil', tactil);
+// Ayuda de teclas (H) y aviso para capturar el ratón en la computadora
+addEventListener('keydown', (e) => { if (e.code === 'KeyH' && !e.repeat) $('teclas-pc').classList.toggle('oculta'); });
+setInterval(() => { $('clic-captura').classList.toggle('on', estado === 'jugando' && !tactil && document.pointerLockElement !== cv && !SIN_PAUSA); }, 250);
 $('m-dific').addEventListener('click', (e) => { const b = e.target.closest('[data-dif]'); if (!b) return; S.dificultad = b.dataset.dif; guardar(); pintarMenu(); });
 $('m-niveles').addEventListener('click', (e) => { const b = e.target.closest('[data-niv]'); if (!b || b.disabled) return; nivelElegido = Number(b.dataset.niv); pintarMenu(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) pausar(); });
@@ -2566,7 +3006,7 @@ estado = 'menu';
 pintarMenu();
 pintarBestiario();
 requestAnimationFrame(bucle);
-window.__luz = { sprites: SPRITE_ENEMIGO, prueba(n) { const ini = generarNivel(n); const v = new Uint8Array(T * T), cola = [ini.cy * T + ini.cx]; v[cola[0]] = 1; const bloq = (i) => { const x = i % T + 0.5, y = ((i / T) | 0) + 0.5; return decor.some((d) => d.solido && Math.hypot(d.x - x, d.y - y) < d.solido + 0.25); }; while (cola.length) { const i = cola.pop(); for (const j of [i + 1, i - 1, i + T, i - T]) { if (v[j]) continue; const c = mapa[j]; if (c !== 0 && c !== M.PUERTA && c !== M.PUERTA_ORO) continue; if (bloq(j)) continue; v[j] = 1; cola.push(j); } } const ok = (x, y) => v[(y | 0) * T + (x | 0)]; return { salida: !!ok(salida.x, salida.y), objetos: pickups.every((p) => ok(p.x, p.y)), decor: decor.length }; }, get J() { return J; }, get enemigos() { return enemigos; }, crear: crearEnemigo, cambiarArma, disparar, empezar, jugar, get estado() { return estado; } };
+window.__luz = { sprites: SPRITE_ENEMIGO, prueba(n) { const ini = generarNivel(n); const v = new Uint8Array(T * T), cola = [ini.cy * T + ini.cx]; v[cola[0]] = 1; const bloq = (i) => { const x = i % T + 0.5, y = ((i / T) | 0) + 0.5; return decor.some((d) => d.solido && Math.hypot(d.x - x, d.y - y) < d.solido + 0.25); }; while (cola.length) { const i = cola.pop(); for (const j of [i + 1, i - 1, i + T, i - T]) { if (v[j]) continue; const c = mapa[j]; if (c !== 0 && c !== M.PUERTA && c !== M.PUERTA_ORO) continue; if (bloq(j)) continue; v[j] = 1; cola.push(j); } } const ok = (x, y) => v[(y | 0) * T + (x | 0)]; return { salida: !!ok(salida.x, salida.y), objetos: pickups.every((p) => ok(p.x, p.y)), decor: decor.length }; }, get J() { return J; }, get mapa() { return mapa; }, get T() { return T; }, get labG() { return labG; }, get enemigos() { return enemigos; }, crear: crearEnemigo, cambiarArma, disparar, empezar, jugar, get estado() { return estado; } };
 
 document.querySelectorAll('.x-salir').forEach(b => b.addEventListener('click', () => { try { window.parent.postMessage({ tipo: 'juma-cerrar' }, location.origin); } catch (e) { /* fuera de la app */ } }));
 </script>

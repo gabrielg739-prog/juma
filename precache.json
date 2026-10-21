@@ -1,7 +1,7 @@
 {
- "version": "5c793db99fff",
+ "version": "fec476de2b38",
  "recursos": "juma-recursos-v1",
- "tamano": 52261321,
+ "tamano": 52357177,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -929,6 +929,11 @@
    "hash": "b3728691f6d6"
   },
   {
+   "ruta": "juegos/lib/demonios3d.js",
+   "tamano": 56922,
+   "hash": "9c63f17d7a46"
+  },
+  {
    "ruta": "juegos/lib/presbiterio3d.js",
    "tamano": 36454,
    "hash": "3f7ec7d8ba4d"
@@ -945,8 +950,8 @@
   },
   {
    "ruta": "juegos/luz-contra-el-pecado.html",
-   "tamano": 179453,
-   "hash": "a4ad6fe7ba70"
+   "tamano": 218387,
+   "hash": "4e5136f5413c"
   },
   {
    "ruta": "juegos/memoria-santos.html",
