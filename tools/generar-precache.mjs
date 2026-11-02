@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
 const EXTENSIONES = new Set(['.html', '.js', '.mjs', '.json', '.webmanifest', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif', '.ico',
-  '.mp4', '.webm', '.mp3', '.pdf', '.epub', '.woff', '.woff2', '.ttf']);
+  '.mp4', '.webm', '.mp3', '.wav', '.pdf', '.epub', '.woff', '.woff2', '.ttf']);
 const CARPETAS_EXCLUIDAS = new Set(['tools', 'node_modules']);
 /* Archivos de la raíz que no son parte de la página */
 const ARCHIVOS_EXCLUIDOS = new Set(['sw.js', 'firebase-messaging-sw.js', 'firebase.json', 'firestore.indexes.json',

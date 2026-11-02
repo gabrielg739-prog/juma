@@ -1,7 +1,7 @@
 {
- "version": "fec476de2b38",
+ "version": "28088fe0cc96",
  "recursos": "juma-recursos-v1",
- "tamano": 52357177,
+ "tamano": 55411295,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -741,12 +741,12 @@
   {
    "ruta": "index.html",
    "tamano": 148661,
-   "hash": "6d9d09f4648b"
+   "hash": "18b2a49229c0"
   },
   {
    "ruta": "js/app.js",
-   "tamano": 497344,
-   "hash": "04cae16c4bee"
+   "tamano": 498135,
+   "hash": "805f83e0199d"
   },
   {
    "ruta": "js/fe.js",
@@ -760,8 +760,8 @@
   },
   {
    "ruta": "js/misioneros.js",
-   "tamano": 5019,
-   "hash": "64fcd21e75e6"
+   "tamano": 5080,
+   "hash": "9f0105ee825e"
   },
   {
    "ruta": "js/offline.js",
@@ -924,6 +924,56 @@
    "hash": "b324752ef48e"
   },
   {
+   "ruta": "juegos/gran-premio/curb_rumble_loop-C-qxKOhJ.wav",
+   "tamano": 345070,
+   "hash": "5d36a7206bf0"
+  },
+  {
+   "ruta": "juegos/gran-premio/engine_sputter_burst_1-B236LsOi.wav",
+   "tamano": 149984,
+   "hash": "4e8fbf761d67"
+  },
+  {
+   "ruta": "juegos/gran-premio/engine_sputter_burst_2-CIZ4iU-x.wav",
+   "tamano": 149984,
+   "hash": "b67ba2c00799"
+  },
+  {
+   "ruta": "juegos/gran-premio/engine_sputter_burst_3-CmNjKgqQ.wav",
+   "tamano": 145574,
+   "hash": "e4ea2f6f453c"
+  },
+  {
+   "ruta": "juegos/gran-premio/index-DB2rrQhM.js",
+   "tamano": 884133,
+   "hash": "386a6adf44b7"
+  },
+  {
+   "ruta": "juegos/gran-premio/kart_cruise_mid_loop-E9gzRWlQ.wav",
+   "tamano": 300400,
+   "hash": "da86a817a8e8"
+  },
+  {
+   "ruta": "juegos/gran-premio/kart_idle_loop-BFTIa2QF.wav",
+   "tamano": 326858,
+   "hash": "4b54f5835195"
+  },
+  {
+   "ruta": "juegos/gran-premio/kart_tire_drift_loop-CYYrZNQh.wav",
+   "tamano": 342476,
+   "hash": "7d28dc0c8cd4"
+  },
+  {
+   "ruta": "juegos/gran-premio/track_spline-CaHHjEgR.json",
+   "tamano": 319816,
+   "hash": "e0145bb76182"
+  },
+  {
+   "ruta": "juegos/gran-premio-de-la-fe.html",
+   "tamano": 50720,
+   "hash": "87a03b3a3323"
+  },
+  {
    "ruta": "juegos/huyendo-del-pecado.html",
    "tamano": 150736,
    "hash": "b3728691f6d6"
@@ -987,6 +1037,11 @@
    "ruta": "juegos/portadas/cuentas.jpg",
    "tamano": 62287,
    "hash": "0fff26cac3b3"
+  },
+  {
+   "ruta": "juegos/portadas/granpremio.jpg",
+   "tamano": 38251,
+   "hash": "24e964bd9e17"
   },
   {
    "ruta": "juegos/portadas/huyendo.jpg",
@@ -1108,6 +1163,7 @@
   "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
   "https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap",
   "https://commons.wikimedia.org/wiki/Special:FilePath/",
+  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Orbitron:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Cinzel:wght@600;700;900&display=swap",
   "https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap"
  ]
 }

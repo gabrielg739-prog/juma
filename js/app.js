@@ -3453,6 +3453,11 @@ function renderJuegosView() {
     <p class="body" style="max-width:56ch;margin:10px 0 28px">Juega, aprende de la fe y de la misión, y suma puntos misioneros que aparecen en tu perfil.</p>
     <div class="lib-grid">
       <article class="lib-card">
+        <div class="lib-cover con-img" style="--bk:#3A1F5A;background-image:url(juegos/portadas/granpremio.jpg)" role="img" aria-label="Portada de Gran Premio de la Fe"><b>Gran Premio de la Fe</b></div>
+        <div class="lib-info"><h2>Gran Premio de la Fe</h2><small>Carreras en 3D · coches y motos · 4 mundos · ¡Nuevo!</small><p>Corre en kart, papamóvil, furgoneta misionera o moto por el escritorio del catequista, el pesebre de Belén, el altar de la capilla y la gruta de Lourdes. Gana las tres copas y llévate el Cáliz de Oro. Se juega en el teléfono y en la computadora.</p>
+        <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/gran-premio-de-la-fe.html">${ic('gamepad')}Jugar</button></div>
+      </article>
+      <article class="lib-card">
         <div class="lib-cover con-img" style="--bk:#1F4FB0;background-image:url(juegos/portadas/camino.jpg)" role="img" aria-label="Portada de Camino del misionero"><b>Camino del misionero</b></div>
         <div class="lib-info"><h2>Camino del misionero</h2><small>Aventura en 3D · ¡Nuevo!</small><p>Recorre un pueblo en 3D y conversa con ocho personas: un anciano viudo, una madre preocupada, un biólogo, un joven, una hermana de otra iglesia y más. Tus respuestas abren el camino: aprende a evangelizar escuchando, acompañando y anunciando a Jesús.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/camino-del-misionero.html">${ic('gamepad')}Jugar</button></div>
@@ -3518,7 +3523,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=116" allow="fullscreen"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=117" allow="fullscreen"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
   document.body.appendChild(r);
   /* Botón Atrás del teléfono: cierra el juego en vez de salir de la app */
   try { history.pushState({ jumaJuego: 1 }, ''); } catch (e) {}

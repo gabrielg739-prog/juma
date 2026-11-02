@@ -21,6 +21,7 @@ export const NIVELES = [
 /* Juegos que dan bonificación. «tope» limita lo que suma un solo aviso del juego. */
 export const JUEGOS = {
   kart: { nombre: 'Carrera de la fe', tope: 300 },
+  granpremio: { nombre: 'Gran Premio de la Fe', tope: 300 },
   angel: { nombre: 'Ángel que vuela', tope: 150 },
   huir: { nombre: 'Huyendo del pecado', tope: 200 },
   bloques: { nombre: 'Bloques de fe', tope: 200 },
