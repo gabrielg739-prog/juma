@@ -3489,7 +3489,7 @@ function renderJuegosView() {
       </article>
       <article class="lib-card">
         <div class="lib-cover con-img" style="--bk:#3B2A5E;background-image:url(juegos/portadas/huyendo.jpg)" role="img" aria-label="Portada de Huyendo del pecado"><b>Huyendo del pecado</b></div>
-        <div class="lib-info"><h2>Huyendo del pecado</h2><small>Carrera sin fin · San José Allamano</small><p>Corre por el camino, esquiva las sombras del pecado, recoge monedas de gracia y usa el escudo de la fe, el imán y el agua bendita.</p>
+        <div class="lib-info"><h2>Huyendo del pecado</h2><small>Carrera sin fin · 5 corredores · ¡Nuevo!</small><p>Corre con San José Allamano, la Beata Leonella Sgorbati, San José Cafasso o la Beata Irene Stefani: esquiva las sombras del pecado, recoge monedas de gracia y usa el escudo de la fe, el imán y el agua bendita.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/huyendo-del-pecado.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
@@ -3518,7 +3518,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=118" allow="fullscreen; camera"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=119" allow="fullscreen; camera"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
   document.body.appendChild(r);
   /* Botón Atrás del teléfono: cierra el juego en vez de salir de la app */
   try { history.pushState({ jumaJuego: 1 }, ''); } catch (e) {}
