@@ -1,7 +1,7 @@
 {
- "version": "2de8311ca654",
+ "version": "d15dbe3b22a1",
  "recursos": "juma-recursos-v1",
- "tamano": 56680159,
+ "tamano": 56523432,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -741,12 +741,12 @@
   {
    "ruta": "index.html",
    "tamano": 148661,
-   "hash": "752040085121"
+   "hash": "21f7a0a08fa7"
   },
   {
    "ruta": "js/app.js",
    "tamano": 497684,
-   "hash": "72491c984cb5"
+   "hash": "587f0ba06e1c"
   },
   {
    "ruta": "js/fe.js",
@@ -895,8 +895,8 @@
   },
   {
    "ruta": "juegos/huyendo-del-pecado.html",
-   "tamano": 164660,
-   "hash": "1150a4f46a76"
+   "tamano": 167584,
+   "hash": "6f6c07bb6a00"
   },
   {
    "ruta": "juegos/lib/demonios3d.js",
@@ -917,6 +917,11 @@
    "ruta": "juegos/lib/sala.js",
    "tamano": 19239,
    "hash": "77905fa43553"
+  },
+  {
+   "ruta": "juegos/lib/santos3d.js",
+   "tamano": 22806,
+   "hash": "e94fb3f9dc6c"
   },
   {
    "ruta": "juegos/lib/sonido.js",
@@ -949,11 +954,6 @@
    "hash": "f3a0d151ae9a"
   },
   {
-   "ruta": "juegos/personajes/allamano-arriba.png",
-   "tamano": 40723,
-   "hash": "aa591404ae35"
-  },
-  {
    "ruta": "juegos/personajes/allamano-derecha.png",
    "tamano": 33986,
    "hash": "86f3693dc099"
@@ -982,11 +982,6 @@
    "ruta": "juegos/personajes/cafasso-accion.png",
    "tamano": 37095,
    "hash": "84e7e71e1197"
-  },
-  {
-   "ruta": "juegos/personajes/cafasso-arriba.png",
-   "tamano": 51657,
-   "hash": "94fad2cba765"
   },
   {
    "ruta": "juegos/personajes/cafasso-derecha.png",
@@ -1019,11 +1014,6 @@
    "hash": "c3be72e08d5f"
   },
   {
-   "ruta": "juegos/personajes/irene-arriba.png",
-   "tamano": 43998,
-   "hash": "f54e7e9d5e5f"
-  },
-  {
    "ruta": "juegos/personajes/irene-derecha.png",
    "tamano": 35760,
    "hash": "e107ffe7cf3d"
@@ -1052,11 +1042,6 @@
    "ruta": "juegos/personajes/leonella-accion.png",
    "tamano": 43331,
    "hash": "6504bc94ba4d"
-  },
-  {
-   "ruta": "juegos/personajes/leonella-arriba.png",
-   "tamano": 46079,
-   "hash": "86968608b7dd"
   },
   {
    "ruta": "juegos/personajes/leonella-derecha.png",
