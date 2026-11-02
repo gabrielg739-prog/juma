@@ -257,6 +257,36 @@ service cloud.firestore {
       allow update, delete: if isCoord();
     }
 
+    // ---------- Juego conectado: salas para jugar con amigos en la misma wifi ----------
+    // Solo sirven para que dos teléfonos se encuentren (se dejan su «tarjeta de presentación» y
+    // luego juegan directo entre ellos). Las salas son de un juego, duran unos minutos y se borran solas.
+    // Nadie puede listar las salas: hay que saber el código de 4 letras.
+    match /salasJuego/{codigo} {
+      allow get: if true;
+      allow create: if codigo.matches('^[A-Z0-9]{4}$')
+        && request.resource.data.keys().hasOnly(['juego', 'creado'])
+        && request.resource.data.juego in ['granpremio', 'luz']
+        && request.resource.data.creado is timestamp;
+      allow delete: if true;
+
+      match /pedidos/{pid} {
+        allow get, list: if true;
+        allow create: if pid.matches('^[a-z0-9]{8,16}$')
+          && request.resource.data.keys().hasOnly(['oferta', 'nombre', 'creado'])
+          && request.resource.data.oferta is string
+          && request.resource.data.oferta.size() < 12000
+          && request.resource.data.nombre is string
+          && request.resource.data.nombre.size() <= 24
+          && request.resource.data.creado is timestamp;
+        // El anfitrión responde una sola vez
+        allow update: if !('respuesta' in resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['respuesta'])
+          && request.resource.data.respuesta is string
+          && request.resource.data.respuesta.size() < 12000;
+        allow delete: if true;
+      }
+    }
+
     // Todo lo demás (por ejemplo tokens antiguos o site/push_estado) queda cerrado para la app.
   }
 }

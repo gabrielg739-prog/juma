@@ -175,6 +175,84 @@
   .ajustes input[type=range] { width: 160px; accent-color: #ffc94a; }
   .x-salir { position: absolute; z-index: 30; top: calc(env(safe-area-inset-top, 0px) + 12px); left: calc(env(safe-area-inset-left, 0px) + 12px); width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: rgba(10, 6, 20, .6); border: 2px solid rgba(255, 255, 255, .22); pointer-events: auto; cursor: pointer; padding: 0; }
   .x-salir:active { transform: scale(.92); }
+  /* ---- Botones táctiles colocados por el jugador (ver «Controles») ---- */
+  .botones { left: 0; top: 0; right: 0; bottom: 0; width: auto; height: auto; transform: none !important; --op: .92; }
+  .botones .bt { opacity: var(--op); }
+  .botones .bt.super { opacity: calc(var(--op) * .45); }
+  .botones .bt.super.listo { opacity: var(--op); }
+  .joy { width: 130px; height: 130px; }
+  .joy i { width: 43%; height: 43%; margin: 0; left: 28.5%; top: 28.5%; }
+  .joy.fijo { display: block; opacity: .75; }
+  body.en-juma .arriba { top: calc(env(safe-area-inset-top, 0px) + 54px); }
+  body.en-juma .teclas { top: calc(env(safe-area-inset-top, 0px) + 122px); }
+  /* ---- Teléfono en horizontal: todo en los bordes, el centro libre para ver ---- */
+  @media (orientation: landscape) {
+    body.tactil .estado { top: calc(env(safe-area-inset-top, 0px) + 4px); transform: translateX(-50%) scale(.6); }
+    body.tactil .barras { top: calc(env(safe-area-inset-top, 0px) + 50px); gap: 10px; }
+    body.tactil .barra > div { width: 78px; }
+    body.tactil .arriba { top: calc(env(safe-area-inset-top, 0px) + 8px); left: calc(env(safe-area-inset-left, 0px) + 12px); font-size: 11.5px; }
+    body.tactil.en-juma .arriba { top: calc(env(safe-area-inset-top, 0px) + 50px); }
+    body.tactil .mini { width: 74px; height: 74px; top: calc(env(safe-area-inset-top, 0px) + 62px); right: calc(env(safe-area-inset-right, 0px) + 12px); }
+    body.tactil .pausa-btn { right: calc(env(safe-area-inset-right, 0px) + 12px); }
+    body.tactil .jefe { top: calc(env(safe-area-inset-top, 0px) + 96px); }
+  }
+  /* ---- Menú: en horizontal, dos columnas para no tener que bajar tanto ---- */
+  .tarjeta-menu { max-width: 440px; }
+  .fila-botones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .fila-botones .boton { font-size: 15px; min-height: 48px; }
+  .niveles .parte { grid-column: 1 / -1; font: 800 11px system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; opacity: .7; text-align: left; margin-top: 4px; }
+  @media (orientation: landscape) and (max-height: 620px), (min-width: 980px) {
+    .tarjeta-menu { max-width: min(940px, 96vw); text-align: left; }
+    .menu-cols { display: grid; grid-template-columns: 1.05fr 1fr; gap: 18px; align-items: start; }
+    .menu-cols h1 { text-align: center; }
+    .niveles { grid-template-columns: repeat(10, 1fr); }
+    .niveles button { font-size: 13px; border-radius: 8px; }
+  }
+  @media (orientation: landscape) and (max-height: 500px) {
+    .tarjeta { padding: 12px 14px; }
+    .tarjeta h1 { font-size: 24px; margin: 2px 0; }
+    .tarjeta-menu .retrato-grande { display: none; }
+    .tarjeta .boton { min-height: 44px; margin-top: 8px; font-size: 16px; }
+  }
+  /* ---- Juego conectado ---- */
+  .mp-lista { position: absolute; left: calc(env(safe-area-inset-left, 0px) + 12px); top: calc(env(safe-area-inset-top, 0px) + 74px); font: 700 12px system-ui, sans-serif; text-shadow: 0 1px 3px #000; line-height: 1.5; pointer-events: none; }
+  body.en-juma .mp-lista { top: calc(env(safe-area-inset-top, 0px) + 118px); }
+  .mp-lista i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+  .mp-lista em { font-style: normal; opacity: .8; margin-left: 4px; }
+  .mp-lista .caido { opacity: .5; text-decoration: line-through; }
+  @media (orientation: landscape) { body.tactil .mp-lista { top: calc(env(safe-area-inset-top, 0px) + 58px); } body.tactil.en-juma .mp-lista { top: calc(env(safe-area-inset-top, 0px) + 100px); } }
+  @media (max-width: 640px) and (orientation: portrait) { body.tactil .mp-lista { top: calc(env(safe-area-inset-top, 0px) + 150px); } }
+  .caido-txt { position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%); z-index: 15; text-align: center; pointer-events: none; text-shadow: 0 2px 10px #000; }
+  .caido-txt b { display: block; font-size: 30px; color: #ffb3b3; }
+  .caido-txt span { display: block; font: 700 15px system-ui, sans-serif; margin-top: 6px; }
+  .nota-mp { font-size: 13px; opacity: .85; margin: 8px 0; }
+  .opc-mp label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0; font-weight: 700; font-size: 14px; }
+  .opc-mp select { padding: 8px; border-radius: 10px; background: #1d1030; color: #fff; border: 2px solid rgba(255, 210, 90, .5); font: inherit; max-width: 62%; }
+  /* ---- Editor de controles ---- */
+  .editor { background: rgba(4, 2, 8, .35); backdrop-filter: none; pointer-events: none; align-items: flex-start; z-index: 24; }
+  .editor-panel { pointer-events: auto; position: relative; width: min(440px, 96vw); max-height: min(70vh, 520px); overflow: auto; margin-top: calc(env(safe-area-inset-top, 0px) + 6px); padding: 10px 12px 12px; border-radius: 18px; background: linear-gradient(180deg, rgba(40, 20, 60, .97), rgba(16, 7, 28, .98)); border: 2px solid rgba(255, 210, 90, .55); box-shadow: 0 12px 30px rgba(0, 0, 0, .55); font: 600 13px system-ui, sans-serif; }
+  .editor-panel.plegado #ed-cuerpo, .editor-panel.plegado .editor-pie, .editor-panel.plegado .pestanas { display: none; }
+  .editor-cab { display: flex; align-items: center; gap: 8px; }
+  .editor-cab b { font: 900 16px Georgia, serif; color: var(--oro); flex: 1; }
+  .editor-cab button { border: 0; border-radius: 10px; padding: 7px 11px; background: rgba(255, 255, 255, .1); color: #fff; font: 800 12px system-ui, sans-serif; }
+  .pestanas { display: flex; gap: 4px; }
+  .pestanas button[aria-pressed="true"] { background: var(--oro); color: #3a2400; }
+  .ed-fila { display: flex; align-items: center; gap: 10px; margin: 7px 0; }
+  .ed-fila label { flex: 1; }
+  .ed-fila input[type=range] { width: 46%; accent-color: #ffc94a; }
+  .ed-fila input[type=checkbox] { width: 22px; height: 22px; accent-color: #ffc94a; }
+  .ed-fila output { width: 40px; text-align: right; color: var(--oro); }
+  .ed-nota { font-size: 12px; opacity: .8; margin: 6px 0; }
+  .ed-tecla { min-width: 92px; padding: 7px 10px; border-radius: 10px; border: 2px solid rgba(255, 230, 160, .45); background: rgba(255, 230, 160, .12); color: #ffe9b0; font: 800 12px system-ui, sans-serif; }
+  .ed-tecla.escucha { background: var(--oro); color: #3a2400; animation: latido 1s infinite; }
+  .editor-pie { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; }
+  .editor-pie .boton { min-height: 44px; font-size: 15px; margin-top: 8px; }
+  body.editando .hud { z-index: 22; }
+  body.editando .botones .bt { outline: 2px dashed rgba(255, 255, 255, .55); outline-offset: 3px; cursor: grab; }
+  body.editando .botones .bt.elegido { outline: 3px solid var(--oro); }
+  body.editando .joy.fijo { outline: 2px dashed rgba(255, 255, 255, .55); outline-offset: 4px; pointer-events: auto; cursor: grab; }
+  body.editando .joy.fijo.elegido { outline: 3px solid var(--oro); }
+  body.editando .botones .bt.super { opacity: var(--op); }
 </style>
 </head>
 <body>
@@ -221,26 +299,32 @@
     <div class="celda"><small id="h-arma">HISOPO</small><b id="h-mun">40</b><div class="armas" id="h-armas"></div></div>
     <div class="llave" id="h-llave" title="Llave dorada">🔑</div>
   </div>
+  <div class="mp-lista" id="mp-lista" hidden></div>
   <div class="capa" id="destello"></div>
 </div>
+<div class="caido-txt" id="caido" hidden><b>Caíste</b><span id="caido-t">Vuelves a levantarte en 7 s</span></div>
 
 <div class="pantalla" id="menu">
   <button class="x-salir" type="button" aria-label="Salir del juego"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  <div class="tarjeta">
+  <div class="tarjeta tarjeta-menu">
+   <div class="menu-cols">
+   <div class="menu-col">
     <div class="retrato-grande"><img src="cuadros/cap2-allamano.jpg" alt=""></div>
     <h1>Luz contra el pecado</h1>
-    <p class="pequeno">San José Allamano baja a catorce lugares oscuros. Con el hisopo, el rosario, la cruz y el incensario vence a los demonios de los pecados capitales y abre el Sagrario.</p>
+    <p class="pequeno">San José Allamano baja a veintinueve lugares oscuros. Con el hisopo, el rosario, la cruz y el incensario vence a los demonios de los pecados capitales y abre el Sagrario.</p>
     <div class="titulo-sec">Dificultad</div>
     <div class="dific" id="m-dific"></div>
     <div class="titulo-sec">Nivel</div>
     <div class="niveles" id="m-niveles"></div>
     <button class="boton" id="b-jugar" type="button">COMENZAR</button>
+    <div class="fila-botones"><button class="boton sec" id="b-controles" type="button">⚙ CONTROLES</button><button class="boton sec" id="b-amigos" type="button">👥 CON AMIGOS</button></div>
+    <p class="pequeno" id="m-mejor"></p>
+   </div>
+   <div class="menu-col">
     <div class="titulo-sec">Dones del Espíritu</div>
     <div class="dones" id="m-dones"></div>
     <div class="titulo-sec">Los siete demonios y su príncipe</div>
     <div class="bestiario" id="m-bestiario"></div>
-    <div class="titulo-sec">Ajustes</div>
-    <div class="ajustes"><label for="m-sens">Sensibilidad de la mirada</label><input type="range" id="m-sens" min="0.4" max="2" step="0.1"><span id="m-sens-v"></span></div>
     <div class="titulo-sec">Cómo se juega</div>
     <div class="lista" id="m-controles"></div>
     <div class="lista" hidden>
@@ -253,7 +337,15 @@
       <p>• <b>Correr:</b> Mayúscula izquierda (gasta aliento) · <b>Empujar:</b> V · <b>Esquivar:</b> E · <b>Escudo:</b> F.</p>
       <p>• Las puertas se abren al acercarte. La puerta dorada del Sagrario necesita la <b>llave dorada</b>.</p>
     </div>
-    <p class="pequeno" id="m-mejor"></p>
+   </div>
+   </div>
+  </div>
+</div>
+<div class="pantalla editor" id="editor" hidden>
+  <div class="editor-panel" id="editor-panel">
+    <div class="editor-cab"><b>Controles</b><div class="pestanas"><button type="button" data-pest="tactil">Táctil</button><button type="button" data-pest="teclado">Teclado</button></div><button type="button" id="ed-plegar" aria-label="Plegar el panel">▴</button></div>
+    <div id="ed-cuerpo"></div>
+    <div class="editor-pie"><button class="boton sec" id="ed-restablecer" type="button">Restablecer</button><button class="boton" id="ed-listo" type="button">LISTO</button></div>
   </div>
 </div>
 
@@ -265,6 +357,7 @@
     <div class="stats" id="pausa-stats"></div>
     <div class="lista" id="pausa-controles" style="text-align:left"></div>
     <button class="boton" id="b-seguir" type="button">SEGUIR</button>
+    <button class="boton sec" id="b-controles2" type="button">⚙ Controles</button>
     <button class="boton sec" id="b-salir" type="button">Volver al menú</button>
   </div>
 </div>
@@ -274,13 +367,20 @@
 <script type="module">
 import * as THREE from './lib/three.module.min.js';
 import { iniciarDemonios, crearDemonio, prepararDemonio } from './lib/demonios3d.js';
+import { abrirSala } from './lib/sala.js';
 iniciarDemonios(THREE);
 /* =====================================================================
    Luz contra el pecado · motor 3D con muros en relieve, luces que se
    mueven, física de proyectiles y partículas, cuatro armas y seis pecados.
    ===================================================================== */
 const $ = (id) => document.getElementById(id);
-const rnd = Math.random;
+let azarActual = Math.random;
+const rnd = () => azarActual();
+/* Azar con semilla: todos los jugadores generan exactamente el mismo lugar */
+function azarConSemilla(semilla) {
+  let a = semilla >>> 0;
+  return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
 const ri = (n) => Math.floor(rnd() * n);
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const elegir = (a) => a[ri(a.length)];
@@ -307,7 +407,23 @@ const NIVELES = [
   { nombre: 'El volcán de la ira', tema: 'volcan', tam: 39, salas: 14, enemigos: { ira: 6, soberbia: 3, gula: 3 }, frase: 'Bienaventurados los mansos, porque ellos heredarán la tierra.', autor: 'Mateo 5, 5' },
   { nombre: 'El laberinto de los espejos', tema: 'palacio', tam: 41, salas: 15, enemigos: { lujuria: 5, envidia: 5, soberbia: 3 }, frase: 'Yo soy la luz del mundo.', autor: 'Juan 8, 12' },
   { nombre: 'Las puertas del infierno', tema: 'abismo', tam: 41, salas: 15, enemigos: { soberbia: 3, avaricia: 3, lujuria: 3, ira: 3, gula: 3, envidia: 3, pereza: 3 }, frase: 'El poder del infierno no prevalecerá.', autor: 'Mateo 16, 18' },
-  { nombre: 'El Tentador', tema: 'abismo', tam: 33, salas: 8, enemigos: { envidia: 3, ira: 2, soberbia: 2, lujuria: 2, gula: 2 }, jefe: true, frase: 'No tengáis miedo: la gracia de Dios es más fuerte.' }
+  { nombre: 'El Tentador', tema: 'abismo', tam: 33, salas: 8, enemigos: { envidia: 3, ira: 2, soberbia: 2, lujuria: 2, gula: 2 }, jefe: true, frase: 'No tengáis miedo: la gracia de Dios es más fuerte.' },
+  // Segunda parte: Lucifer huyó herido y sus demonios se esconden en nuevos lugares
+  { nombre: 'La montaña helada', tema: 'hielo', tam: 37, salas: 13, enemigos: { envidia: 4, pereza: 4, soberbia: 3 }, frase: 'Mi gracia te basta.', autor: '2 Corintios 12, 9', parte: 2 },
+  { nombre: 'El desierto de la tentación', tema: 'desierto', tam: 39, salas: 14, enemigos: { gula: 3, avaricia: 3, soberbia: 3, envidia: 3 }, frase: 'No tentarás al Señor, tu Dios.', autor: 'Mateo 4, 7' },
+  { nombre: 'La torre de Babel', tema: 'torre', tam: 39, salas: 14, enemigos: { soberbia: 6, envidia: 4, ira: 2 }, frase: 'El que se humilla será enaltecido.', autor: 'Lucas 14, 11' },
+  { nombre: 'El pantano de la tibieza', tema: 'pantano', tam: 41, salas: 15, enemigos: { pereza: 6, gula: 3, lujuria: 2 }, frase: 'Levántate, toma tu camilla y anda.', autor: 'Juan 5, 8' },
+  { nombre: 'La cueva del tesoro', tema: 'tesoro', tam: 41, salas: 15, enemigos: { avaricia: 6, envidia: 3, gula: 2 }, frase: 'Donde está tu tesoro, allí estará tu corazón.', autor: 'Mateo 6, 21' },
+  { nombre: 'La catedral profanada', tema: 'catedral', tam: 43, salas: 16, enemigos: { soberbia: 3, lujuria: 3, ira: 3, envidia: 3 }, frase: 'Mi casa será casa de oración.', autor: 'Mateo 21, 13' },
+  { nombre: 'Las minas de la codicia', tema: 'caverna', tam: 43, salas: 16, enemigos: { avaricia: 4, ira: 4, gula: 3 }, frase: 'Nadie puede servir a dos señores.', autor: 'Mateo 6, 24' },
+  { nombre: 'El jardín de las vanidades', tema: 'palacio', tam: 43, salas: 16, enemigos: { lujuria: 5, gula: 3, pereza: 3 }, frase: 'Vuestro cuerpo es templo del Espíritu Santo.', autor: '1 Corintios 6, 19' },
+  { nombre: 'El coliseo de los mártires', tema: 'coliseo', tam: 43, salas: 16, enemigos: { ira: 5, soberbia: 3, envidia: 4 }, frase: 'La sangre de los mártires es semilla de cristianos.', autor: 'Tertuliano' },
+  { nombre: 'El lago helado', tema: 'hielo', tam: 45, salas: 17, enemigos: { envidia: 5, soberbia: 4, pereza: 3, avaricia: 2 }, frase: 'El que persevere hasta el fin, ese se salvará.', autor: 'Mateo 24, 13' },
+  { nombre: 'El laberinto de la duda', tema: 'monasterio', tam: 45, salas: 17, enemigos: { soberbia: 3, lujuria: 3, envidia: 4, ira: 3 }, frase: 'Dichosos los que crean sin haber visto.', autor: 'Juan 20, 29' },
+  { nombre: 'El horno de Babilonia', tema: 'volcan', tam: 45, salas: 17, enemigos: { ira: 6, gula: 4, soberbia: 3 }, frase: 'Fuego y calor, bendecid al Señor.', autor: 'Daniel 3, 66' },
+  { nombre: 'Las catacumbas de Roma', tema: 'catacumba', tam: 45, salas: 17, enemigos: { pereza: 3, envidia: 4, lujuria: 3, avaricia: 3, gula: 2 }, frase: 'Sé fiel hasta la muerte y te daré la corona de la vida.', autor: 'Apocalipsis 2, 10' },
+  { nombre: 'El abismo sin fondo', tema: 'abismo', tam: 47, salas: 18, enemigos: { soberbia: 3, avaricia: 3, lujuria: 3, ira: 3, gula: 3, envidia: 3, pereza: 3 }, frase: 'Aunque camine por cañadas oscuras, nada temo, porque tú vas conmigo.', autor: 'Salmo 23, 4' },
+  { nombre: 'La batalla final', tema: 'abismo', tam: 35, salas: 9, enemigos: { envidia: 3, ira: 3, soberbia: 3, lujuria: 2, gula: 2 }, jefe: true, final: true, frase: 'Miguel y sus ángeles combatieron contra el dragón, y el dragón no prevaleció.', autor: 'Apocalipsis 12, 7-8' }
 ];
 const TIPOS = {
   pereza: { nombre: 'Belfegor', pecado: 'Pereza', vida: 10, vel: 0.85, dano: 17, ataque: 'cuerpo', alcance: 1.0, espera: 0.55, cad: 1.4, pts: 3, alto: 0.95, radio: 0.36, rosario: 0.85,
@@ -345,13 +461,40 @@ const VERSOS = [
 ];
 
 /* ---------- Guardado ---------- */
-let S = { puntos: 0, mejorNivel: 0, dificultad: 'misionero', sens: 1 };
+/* Controles: tamaño, transparencia y lugar de cada botón; teclas de la computadora */
+const CONTROLES_DEF = () => ({ escala: 1, opacidad: 0.92, zurdo: false, joyFijo: false, joyEscala: 1, correr: false, tocarBendice: true, invertirY: false, horizontal: true, pos: { h: {}, v: {} }, tam: {} });
+const ACCIONES = [
+  ['adelante', 'Avanzar', ['KeyW', 'ArrowUp']], ['atras', 'Retroceder', ['KeyS', 'ArrowDown']],
+  ['izquierda', 'Paso a la izquierda', ['KeyA']], ['derecha', 'Paso a la derecha', ['KeyD']],
+  ['girarIzq', 'Girar a la izquierda', ['ArrowLeft']], ['girarDer', 'Girar a la derecha', ['ArrowRight']],
+  ['bendecir', 'Bendecir (disparar)', ['Space']], ['rosario', 'Alzar el rosario', ['KeyG']],
+  ['correr', 'Correr', ['ShiftLeft']], ['esquivar', 'Esquivar', ['KeyE', 'ShiftRight']],
+  ['escudo', 'Escudo de la fe', ['KeyF']], ['empujar', 'Empujar', ['KeyV']],
+  ['super', 'Súper', ['KeyR']], ['arma', 'Cambiar de arma', ['KeyQ']], ['pausa', 'Pausa', ['Escape', 'KeyP']]
+];
+let S = { puntos: 0, mejorNivel: 0, dificultad: 'misionero', sens: 1, controles: null, teclas: null };
 try {
   const d = JSON.parse(localStorage.getItem(CLAVE) || 'null') || JSON.parse(localStorage.getItem('juma-luz-v1') || 'null');
   if (d) S = Object.assign(S, d);
   if (!DIFICULTADES[S.dificultad]) S.dificultad = 'misionero';
   S.mejorNivel = clamp(Number(S.mejorNivel) || 0, 0, NIVELES.length);
 } catch (e) { /* sin datos */ }
+S.controles = Object.assign(CONTROLES_DEF(), S.controles && typeof S.controles === 'object' ? S.controles : {});
+if (!S.controles.pos || typeof S.controles.pos !== 'object') S.controles.pos = { h: {}, v: {} };
+S.controles.pos.h = S.controles.pos.h || {}; S.controles.pos.v = S.controles.pos.v || {};
+S.controles.tam = S.controles.tam || {};
+S.teclas = S.teclas && typeof S.teclas === 'object' ? S.teclas : {};
+const teclasDe = (acc) => S.teclas[acc] || ACCIONES.find((a) => a[0] === acc)[2];
+const esTecla = (acc, code) => teclasDe(acc).includes(code);
+function nombreTecla(c) {
+  const N = { Space: 'Espacio', ShiftLeft: 'Mayús izq.', ShiftRight: 'Mayús der.', ControlLeft: 'Ctrl izq.', ControlRight: 'Ctrl der.', AltLeft: 'Alt', AltRight: 'Alt der.', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', Escape: 'Esc', Enter: 'Intro', Tab: 'Tab', Backspace: 'Borrar', CapsLock: 'Bloq Mayús' };
+  if (N[c]) return N[c];
+  if (/^Key[A-Z]$/.test(c)) return c.slice(3);
+  if (/^Digit\d$/.test(c)) return c.slice(5);
+  if (/^Numpad/.test(c)) return 'Num ' + c.slice(6);
+  return c;
+}
+const teclasTxt = (acc) => teclasDe(acc).map(nombreTecla).join(' / ') || '—';
 function guardar() {
   try { localStorage.setItem(CLAVE, JSON.stringify(S)); } catch (e) { /* lleno o bloqueado */ }
   try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: 'juma-puntos', juego: 'doom', total: S.puntos }, location.origin); } catch (e) { /* fuera de la app */ }
@@ -580,7 +723,15 @@ const TEMAS = {
   palacio: { muro: M.ladrillo, muro2: M.piedra, salaPiso: 0, pasilloPiso: 4, techo: 0, amb: [0.15, 0.08, 0.12], niebla: [16, 5, 14], dens: 0.075, vitral: true },
   banquete: { muro: M.madera, muro2: M.musgo, salaPiso: 4, pasilloPiso: 1, techo: 0, amb: [0.14, 0.13, 0.06], niebla: [12, 12, 4], dens: 0.08, vitral: false },
   volcan: { muro: M.roca, muro2: M.infierno, salaPiso: 3, pasilloPiso: 3, techo: 2, amb: [0.2, 0.07, 0.04], niebla: [22, 6, 2], dens: 0.085, vitral: false },
-  abismo: { muro: M.roca, muro2: M.infierno, salaPiso: 3, pasilloPiso: 2, techo: 2, amb: [0.16, 0.06, 0.07], niebla: [16, 3, 6], dens: 0.08, vitral: false }
+  abismo: { muro: M.roca, muro2: M.infierno, salaPiso: 3, pasilloPiso: 2, techo: 2, amb: [0.16, 0.06, 0.07], niebla: [16, 3, 6], dens: 0.08, vitral: false },
+  // Segunda parte
+  hielo: { muro: M.piedra, muro2: M.roca, salaPiso: 3, pasilloPiso: 2, techo: 2, amb: [0.09, 0.12, 0.17], niebla: [9, 15, 24], dens: 0.08, vitral: false },
+  desierto: { muro: M.ladrillo, muro2: M.roca, salaPiso: 1, pasilloPiso: 1, techo: 0, amb: [0.17, 0.13, 0.07], niebla: [24, 16, 8], dens: 0.07, vitral: false },
+  torre: { muro: M.ladrillo, muro2: M.piedra, salaPiso: 0, pasilloPiso: 4, techo: 1, amb: [0.14, 0.1, 0.13], niebla: [14, 8, 16], dens: 0.075, vitral: true },
+  pantano: { muro: M.musgo, muro2: M.madera, salaPiso: 1, pasilloPiso: 1, techo: 2, amb: [0.08, 0.13, 0.07], niebla: [6, 14, 6], dens: 0.095, vitral: false },
+  tesoro: { muro: M.roca, muro2: M.ladrillo, salaPiso: 3, pasilloPiso: 2, techo: 2, amb: [0.17, 0.13, 0.05], niebla: [18, 13, 3], dens: 0.08, vitral: false },
+  catedral: { muro: M.piedra, muro2: M.cruz, salaPiso: 3, pasilloPiso: 0, techo: 1, amb: [0.12, 0.1, 0.14], niebla: [10, 6, 16], dens: 0.075, vitral: true },
+  coliseo: { muro: M.piedra, muro2: M.ladrillo, salaPiso: 1, pasilloPiso: 2, techo: 1, amb: [0.15, 0.11, 0.08], niebla: [16, 10, 6], dens: 0.075, vitral: false }
 };
 
 /* ---------- Figuras de los pecados (estilo de terror) ---------- */
@@ -1003,7 +1154,7 @@ function ajustar() {
   camara.fov = W / H < 1 ? 80 : 68; camArma.fov = W / H < 1 ? 64 : 52;
   camara.updateProjectionMatrix(); camArma.updateProjectionMatrix();
 }
-addEventListener('resize', ajustar);
+addEventListener('resize', () => { ajustar(); if (typeof aplicarControles === 'function') aplicarControles(); });
 ajustar();
 
 let estado = 'menu';
@@ -1016,9 +1167,12 @@ let tiempoJuego = 0, hurtT = 0, curaT = 0, avisoCerradaT = 0, poder = 0;
 let stats = null, dificultadElegida = S.dificultad, nivelElegido = 0;
 let LUCES = [];
 const teclas = {};
+const pulsada = (acc) => teclasDe(acc).some((c) => teclas[c]);
 let joy = { activo: false, id: -1, ox: 0, oy: 0, dx: 0, dy: 0 };
 let mirada = { id: -1, x: 0, y: 0, t: 0, movido: 0 };
 let fuego = false, mouseDown = false;
+/* Juego conectado: MP = { red, sala, otros: Map(id → jugador remoto) }. El anfitrión mueve a los demonios. */
+let MP = null, autorGolpe = null, fxRed = false, menuMP = false;
 
 /* =====================================================================
    Generación de niveles: salas, pasillos, puertas, luces
@@ -1293,14 +1447,15 @@ function generarNivel(n) {
 function armasDisponibles(n) { const a = ['hisopo']; for (let k = 0; k <= n; k++) if (NIVELES[k].arma && k < n) a.push(NIVELES[k].arma); return a; }
 function crearEnemigo(tipo, x, y) {
   const t = TIPOS[tipo];
-  const mayor = tipo !== 'tentador' && rnd() < 0.07 + nivel * 0.035;
-  const vida = t.vida * DIF.vida * (mayor ? 2.3 : 1);
+  const mayor = tipo !== 'tentador' && rnd() < Math.min(0.42, 0.07 + nivel * 0.03);
+  const vida = t.vida * DIF.vida * (mayor ? 2.3 : 1) * (tipo === 'tentador' && cfgNivel.final ? 1.6 : 1);
   return { tipo, x, y, vida, vidaMax: vida, mayor, mult: mayor ? 1.4 : 1, cool2: 2 + rnd() * 3, furia: false, huyeT: 0, estado: 'dormido', t: 0, cool: 0.6 + rnd() * 1.2, flash: 0, muerteT: 0, fase: rnd() * 10, dirA: rnd() * 6.28, dirT: 0, ataqueT: 0, dashX: 0, dashY: 0, dashT: 0, zig: rnd() * 6.28, fasesJefe: 0, invocT: 8, ultimoVisto: 0 };
 }
-function distancias(ox, oy, conPuertaOro) {
+function distancias(ox, oy, conPuertaOro, otras) {
   const d = new Int16Array(T * T).fill(-1);
   const cola = new Int32Array(T * T); let ini = 0, fin = 0;
   cola[fin++] = oy * T + ox; d[oy * T + ox] = 0;
+  if (otras) for (const [x, y] of otras) { const i = (y | 0) * T + (x | 0); if (i >= 0 && i < T * T && d[i] < 0) { d[i] = 0; cola[fin++] = i; } }
   while (ini < fin) {
     const i = cola[ini++];
     for (const j of [i + 1, i - 1, i + T, i - T]) {
@@ -1405,53 +1560,72 @@ function siguienteArma(dir) {
 }
 function ruidoDisparo() { for (const e of enemigos) if (e.estado === 'dormido' && flujo && flujo[(e.y | 0) * T + (e.x | 0)] >= 0 && flujo[(e.y | 0) * T + (e.x | 0)] < 9) despertar(e); }
 function disparar() {
-  if (estado !== 'jugando' || J.cool > 0 || J.cambio > 0 || J.alzaK > 0.3) return;
+  if (estado !== 'jugando' || J.cool > 0 || J.cambio > 0 || J.alzaK > 0.3 || J.caido || menuMP) return;
   const def = armaDef(J.arma);
-  const cp = Math.cos(J.pitch), sp = Math.sin(J.pitch);
-  const z0 = OJO - 0.12;
   stats.disparos++;
-  const bala = (a, pz, vel, extra) => proyectiles.push(Object.assign({ x: J.x + Math.cos(a) * 0.3, y: J.y + Math.sin(a) * 0.3, z: z0, vx: Math.cos(a) * cp * vel, vy: Math.sin(a) * cp * vel, vz: pz * vel, mio: true }, extra));
+  let con = true;
   if (J.arma === 'hisopo') {
-    const con = J.mun.agua > 0;
+    con = J.mun.agua > 0;
     if (con) J.mun.agua--;
-    const n = con ? 6 : 2;
-    for (let k = 0; k < n; k++) {
-      const a = J.a + (rnd() - 0.5) * 0.17;
-      bala(a, sp + 0.05 + (rnd() - 0.5) * 0.08, 12 + rnd() * 3, { g: 5, vida: con ? 0.8 : 0.35, dano: 1, spr: SPR.gota, tam: 0.09, luz: [0.3, 0.55, 1.0, 1.6] });
-    }
     rociar(14, 0xcfe8ff);
     J.cool = con ? def.cad : 0.7; J.kick += 0.02; SND.hisopo();
   } else if (J.arma === 'rosario') {
     if (J.mun.cuentas <= 0) return sinMunicion();
     J.mun.cuentas--;
-    bala(J.a + (rnd() - 0.5) * 0.04, sp + (rnd() - 0.5) * 0.03, 20, { g: 0, vida: 1.1, dano: 0.75, spr: SPR.cuenta, tam: 0.08, luz: [1.0, 0.75, 0.3, 1.6] });
     J.cool = def.cad; J.kick += 0.008; SND.rosario();
   } else if (J.arma === 'cruz') {
     if (J.mun.luz <= 0) return sinMunicion();
     J.mun.luz--;
-    const dx = Math.cos(J.a) * cp, dy = Math.sin(J.a) * cp;
-    let d = 0, x = J.x, y = J.y, z = OJO; const golpeados = new Set();
-    while (d < 18) {
-      d += 0.06; x = J.x + dx * d; y = J.y + dy * d; z = OJO + sp * d;
-      if (solidoCelda(x, y) || z < 0 || z > ALTO) break;
-      for (const e of enemigos) {
-        if (e.muerto || golpeados.has(e)) continue;
-        const c = TIPOS[e.tipo], ez = c.flota || 0;
-        if (Math.hypot(e.x - x, e.y - y) < c.radio + 0.08 && z > ez - 0.05 && z < ez + c.alto + 0.05) { golpeados.add(e); herir(e, 5); e.kx = (e.kx || 0) + dx * 2.2; e.ky = (e.ky || 0) + dy * 2.2; }
-      }
-    }
-    J.haz = 0.22; J.hazX = x; J.hazY = y; J.hazZ = z;
-    for (let k = 0; k < 18; k++) particulas.push({ x, y, z, vx: (rnd() - 0.5) * 3, vy: (rnd() - 0.5) * 3, vz: rnd() * 2.5, g: 7, vida: 0.4 + rnd() * 0.4, max: 0.8, spr: elegir([SPR.p.oro, SPR.p.blanca]), tam: 0.05 + rnd() * 0.04 });
     J.cool = def.cad; J.kick += 0.06; J.sacudida = Math.max(J.sacudida, 0.15); SND.cruz();
   } else if (J.arma === 'incensario') {
     if (J.mun.incienso <= 0) return sinMunicion();
     J.mun.incienso--;
-    bala(J.a, sp + 0.28, 7.2, { g: 9, rebota: true, vida: 1.7, dano: 7, explota: 2.4, spr: SPR.humo, tam: 0.2, luz: [1.0, 0.7, 0.35, 2.2] });
     J.cool = def.cad; J.kick += 0.05; SND.incensario();
   }
+  const o = { arma: J.arma, x: +J.x.toFixed(3), y: +J.y.toFixed(3), a: +J.a.toFixed(4), p: +J.pitch.toFixed(4), con };
+  // En el juego conectado solo el anfitrión decide los golpes: los demás ven sus disparos al instante, sin daño
+  const fin = crearDisparo(o, { cosmetico: !!(MP && !MP.anfitrion), de: MP ? MP.miId : null });
+  if (fin) { J.haz = 0.22; J.hazX = fin.x; J.hazY = fin.y; J.hazZ = fin.z; }
+  if (MP) MP.red.enviar(Object.assign({ t: 'disp' }, o));
   J.retro = 1; J.destello = 0.08;
   ruidoDisparo();
   actualizarHud();
+}
+/* Crea las gotas, cuentas, rayo o incienso de un disparo hecho desde «o» (de este jugador o de otro) */
+function crearDisparo(o, op) {
+  const cp = Math.cos(o.p), sp = Math.sin(o.p), z0 = OJO - 0.12;
+  const base = { cosmetico: !!op.cosmetico, de: op.de ?? null };
+  const bala = (a, pz, vel, extra) => proyectiles.push(Object.assign({ x: o.x + Math.cos(a) * 0.3, y: o.y + Math.sin(a) * 0.3, z: z0, vx: Math.cos(a) * cp * vel, vy: Math.sin(a) * cp * vel, vz: pz * vel, mio: true }, base, extra));
+  if (o.arma === 'hisopo') {
+    const n = o.con ? 6 : 2;
+    for (let k = 0; k < n; k++) {
+      const a = o.a + (rnd() - 0.5) * 0.17;
+      bala(a, sp + 0.05 + (rnd() - 0.5) * 0.08, 12 + rnd() * 3, { g: 5, vida: o.con ? 0.8 : 0.35, dano: 1, spr: SPR.gota, tam: 0.09, luz: [0.3, 0.55, 1.0, 1.6] });
+    }
+  } else if (o.arma === 'rosario') {
+    bala(o.a + (rnd() - 0.5) * 0.04, sp + (rnd() - 0.5) * 0.03, 20, { g: 0, vida: 1.1, dano: 0.75, spr: SPR.cuenta, tam: 0.08, luz: [1.0, 0.75, 0.3, 1.6] });
+  } else if (o.arma === 'cruz') {
+    const dx = Math.cos(o.a) * cp, dy = Math.sin(o.a) * cp;
+    let d = 0, x = o.x, y = o.y, z = OJO; const golpeados = new Set();
+    while (d < 18) {
+      d += 0.06; x = o.x + dx * d; y = o.y + dy * d; z = OJO + sp * d;
+      if (solidoCelda(x, y) || z < 0 || z > ALTO) break;
+      for (const e of enemigos) {
+        if (e.muerto || golpeados.has(e)) continue;
+        const c = TIPOS[e.tipo], ez = c.flota || 0;
+        if (Math.hypot(e.x - x, e.y - y) < c.radio + 0.08 && z > ez - 0.05 && z < ez + c.alto + 0.05) {
+          golpeados.add(e);
+          if (!op.cosmetico) { autorGolpe = base.de; herir(e, 5); autorGolpe = null; e.kx = (e.kx || 0) + dx * 2.2; e.ky = (e.ky || 0) + dy * 2.2; }
+          else explotar(e.x, e.y, 'oro', 6, 0.55);
+        }
+      }
+    }
+    for (let k = 0; k < 18; k++) particulas.push({ x, y, z, vx: (rnd() - 0.5) * 3, vy: (rnd() - 0.5) * 3, vz: rnd() * 2.5, g: 7, vida: 0.4 + rnd() * 0.4, max: 0.8, spr: elegir([SPR.p.oro, SPR.p.blanca]), tam: 0.05 + rnd() * 0.04 });
+    return { x, y, z };
+  } else if (o.arma === 'incensario') {
+    bala(o.a, sp + 0.28, 7.2, { g: 9, rebota: true, vida: 1.7, dano: 7, explota: 2.4, spr: SPR.humo, tam: 0.2, luz: [1.0, 0.7, 0.35, 2.2] });
+  }
+  return null;
 }
 function sinMunicion() {
   aviso('Sin munición');
@@ -1464,7 +1638,7 @@ let oscuridadT = 0, soporT = 0, luzMundo = 1, avisoRos = -10;
 /* Alzar el rosario (como en las noches de terror): los demonios gritan y huyen,
    pero no siempre: depende de la fe, la distancia, el demonio y su furia */
 function actualizarRosario(dt) {
-  const quiere = (teclas.KeyG || alzarRaton || alzarTactil) && J.cambio <= 0 && !(J.feAgotada > 0);
+  const quiere = (pulsada('rosario') || alzarRaton || alzarTactil) && J.cambio <= 0 && !(J.feAgotada > 0);
   J.alzado = quiere && J.fe > 0;
   J.alzaK += ((J.alzado ? 1 : 0) - J.alzaK) * Math.min(1, dt * 10);
   J.feAgotada = Math.max(0, (J.feAgotada || 0) - dt);
@@ -1472,7 +1646,7 @@ function actualizarRosario(dt) {
     J.fe = Math.max(0, J.fe - 18 * dt);
     if (J.fe <= 0) { J.feAgotada = 2.5; aviso('Tu fe se agotó: baja el rosario y ora'); }
   } else J.fe = Math.min(100, J.fe + (J.feAgotada > 0 ? 4 : 9) * dt);
-  if (J.alzaK > 0.7) { J.rosT = (J.rosT || 0) - dt; if (J.rosT <= 0) { J.rosT = 0.4; rosarioEspanta(); } }
+  if (J.alzaK > 0.7) { J.rosT = (J.rosT || 0) - dt; if (J.rosT <= 0) { J.rosT = 0.4; if (!MP || MP.anfitrion) { fxRed = !!MP; rosarioEspanta(); fxRed = false; } } }
   $('rosa').style.opacity = (J.alzaK * (0.55 + Math.sin(tiempoJuego * 6) * 0.15) * (0.4 + J.fe / 160)).toFixed(2);
   const b = $('b-rosario'); if (b) b.classList.toggle('on', J.alzaK > 0.5);
 }
@@ -1487,43 +1661,47 @@ function rosarioEspanta() {
     let pr = cfg.rosario * (0.35 + 0.65 * J.fe / 100) * (d < 2.5 ? 1.15 : d > 5 ? 0.7 : 1) * (e.furia ? 0.55 : 1) * (e.mayor ? 0.7 : 1) * (1 - (e.resiste || 0)) * (oscuridadT > 0 ? 0.8 : 1);
     if (rnd() < pr) {
       // Grita, se tapa la cara y huye
-      if (e.ilusion) { deshacerIlusion(e); if (tiempoJuego - avisoRos > 1.2) { avisoRos = tiempoJuego; aviso('¡Era un espejismo!'); } continue; }
+      if (e.ilusion) { deshacerIlusion(e); if (tiempoJuego - avisoRos > 1.2) { avisoRos = tiempoJuego; avisoJ('¡Era un espejismo!'); } continue; }
       e.estado = 'repelido'; e.t = 1.8 + rnd() * 1.2; e.especial = null; e.invisT = 0; e.drenT = 0;
       e.resiste = Math.min(0.6, (e.resiste || 0) + 0.14);
       e.vida -= 0.6 * DON.poder; e.flash = 0.12;
-      if (e.vida <= 0) { matarEnemigo(e); continue; }
+      if (e.vida <= 0) { autorGolpe = J.remoto ? J.id : null; matarEnemigo(e); autorGolpe = null; continue; }
       SND.grito(e.x, e.y, e.tipo);
       explotar(e.x, e.y, 'oro', 14, cfg.alto * 0.7);
-      if (!e.yaRepelido) { e.yaRepelido = true; aviso('¡' + cfg.nombre + ' huye del rosario!'); }
+      if (!e.yaRepelido) { e.yaRepelido = true; avisoJ('¡' + cfg.nombre + ' huye del rosario!'); }
       J.fe = Math.max(0, J.fe - 6);
     } else {
       // Resiste: ruge, se burla y se enfurece un momento
       e.resisteT = 2.6; e.rugido = 1; e.enojoT = 2.5;
       SND.gruñido(e.x, e.y, e.tipo);
-      if (tiempoJuego - avisoRos > 1.2) { avisoRos = tiempoJuego; aviso(cfg.nombre + ' resiste tu fe'); }
+      if (tiempoJuego - avisoRos > 1.2) { avisoRos = tiempoJuego; avisoJ(cfg.nombre + ' resiste tu fe'); }
       J.sacudida = Math.max(J.sacudida, 0.25);
     }
   }
 }
 /* Empujón: golpe corto con el hombro que aparta a los demonios que están encima */
 function empujar() {
-  if (estado !== 'jugando' || (J.empCD || 0) > 0) return;
+  if (estado !== 'jugando' || (J.empCD || 0) > 0 || J.caido || menuMP) return;
   J.empCD = 1.3; J.retro = 1; J.kick += 0.05; SND.mano();
+  if (MP && !MP.anfitrion) MP.red.enviar({ t: 'acc', k: 'empujar', x: J.x, y: J.y, a: J.a }, { a: MP.red.ID_ANFITRION });
+  else { fxRed = !!MP; const alguno = empujarEnemigos(J); fxRed = false; if (alguno) { J.sacudida = Math.max(J.sacudida, 0.2); SND.bloqueo(); JS.vibrar(30); } }
+  actualizarBotones();
+}
+function empujarEnemigos(q) {
   let alguno = false;
   for (const e of enemigos) {
     if (e.muerto) continue;
-    const dx = e.x - J.x, dy = e.y - J.y, d = Math.hypot(dx, dy);
+    const dx = e.x - q.x, dy = e.y - q.y, d = Math.hypot(dx, dy);
     if (d > TIPOS[e.tipo].radio + 1.1) continue;
-    let da = Math.atan2(dy, dx) - J.a; da = Math.atan2(Math.sin(da), Math.cos(da));
+    let da = Math.atan2(dy, dx) - q.a; da = Math.atan2(Math.sin(da), Math.cos(da));
     if (Math.abs(da) > 0.9) continue;
-    herir(e, 2.2);
+    autorGolpe = q.remoto ? q.id : null; herir(e, 2.2); autorGolpe = null;
     const l = d || 1, f = e.tipo === 'tentador' ? 2 : 7;
     e.kx = (e.kx || 0) + dx / l * f; e.ky = (e.ky || 0) + dy / l * f;
     if (!e.muerto && e.tipo !== 'tentador') { e.estado = 'dolor'; e.t = 0.55; }
     explotar(e.x, e.y, 'oro', 10, 0.6); alguno = true;
   }
-  if (alguno) { J.sacudida = Math.max(J.sacudida, 0.2); SND.bloqueo(); JS.vibrar(30); }
-  actualizarBotones();
+  return alguno;
 }
 function esquivar(avance, lado) {
   if (J.esqCD > 0 || estado !== 'jugando') return;
@@ -1540,30 +1718,47 @@ function escudoFe() {
   explotar(J.x, J.y, 'oro', 30, 0.5);
   SND.escudoFe(); aviso('Escudo de la fe'); actualizarBotones();
 }
-function actualizarBotones() {
-  const pinta = (id, cd, max) => { const b = $(id); if (!b) return; b.style.setProperty('--cd', cd > 0 ? (cd / max * 360).toFixed(0) + 'deg' : '0deg'); b.classList.toggle('espera', cd > 0); };
-  pinta('b-esquivar', J.esqCD, 2.2); pinta('b-fe', J.feCD, 12); pinta('b-empujar', J.empCD, 1.3);
+const cdPintado = {};
+function actualizarBotones(forzar) {
+  if (!J) return;
+  if (forzar) for (const k in cdPintado) delete cdPintado[k];
+  // Se repinta en cada cuadro, pero solo se toca el botón cuando cambia (de 5 en 5 grados)
+  const pinta = (id, cd, max) => {
+    const g = cd > 0 ? Math.max(5, Math.ceil(clamp(cd / max, 0, 1) * 72) * 5) : 0;
+    if (cdPintado[id] === g) return;
+    cdPintado[id] = g;
+    const b = $(id); if (!b) return;
+    b.style.setProperty('--cd', g + 'deg'); b.classList.toggle('espera', g > 0);
+  };
+  pinta('b-esquivar', J.esqCD || 0, 2.2); pinta('b-fe', J.feCD || 0, 12); pinta('b-empujar', J.empCD || 0, 1.3);
+  // El rosario muestra cuánto falta para poder alzarlo de nuevo cuando la fe se agota
+  pinta('b-rosario', J.feAgotada || 0, 2.5);
 }
 function superPoder() {
-  if (estado !== 'jugando' || poder < 3) return;
+  if (estado !== 'jugando' || poder < 3 || J.caido || menuMP) return;
   poder = 0;
-  const R = 5;
   for (let k = 0; k < 60; k++) { const a = (k / 60) * Math.PI * 2; particulas.push({ x: J.x, y: J.y, z: 0.4, vx: Math.cos(a) * 6, vy: Math.sin(a) * 6, vz: 1, g: 0, vida: 0.9, max: 0.9, spr: SPR.p.oro, tam: 0.13 }); }
   J.sacudida = 0.4;
-  proyectiles = proyectiles.filter((b) => b.mio || Math.hypot(b.x - J.x, b.y - J.y) >= R);
-  for (const e of enemigos) {
-    if (e.muerto || Math.hypot(e.x - J.x, e.y - J.y) > R || !visible(J.x, J.y, e.x, e.y)) continue;
-    herir(e, e.tipo === 'tentador' ? 15 : 8, true);
-    if (!e.muerto) { e.estado = 'dolor'; e.t = 1.2; }
-  }
+  if (MP && !MP.anfitrion) { MP.red.enviar({ t: 'acc', k: 'super', x: J.x, y: J.y, a: J.a }, { a: MP.red.ID_ANFITRION }); proyectiles = proyectiles.filter((b) => b.mio || Math.hypot(b.x - J.x, b.y - J.y) >= 5); }
+  else superEnemigos(J);
   J.vida = Math.min(DON.vida, J.vida + 10);
   const fl = $('destello'); fl.classList.add('on'); setTimeout(() => fl.classList.remove('on'), 90);
   JS.coro([880, 1174.66, 1568], 1.2, 0.12, { at: 0.08 }); JS.E.magia(0.7);
   aviso('¡Bendición mayor!');
   actualizarHud();
 }
+function superEnemigos(q) {
+  const R = 5;
+  proyectiles = proyectiles.filter((b) => b.mio || Math.hypot(b.x - q.x, b.y - q.y) >= R);
+  for (const e of enemigos) {
+    if (e.muerto || Math.hypot(e.x - q.x, e.y - q.y) > R || !visible(q.x, q.y, e.x, e.y)) continue;
+    autorGolpe = q.remoto ? q.id : null; herir(e, e.tipo === 'tentador' ? 15 : 8, true); autorGolpe = null;
+    if (!e.muerto) { e.estado = 'dolor'; e.t = 1.2; }
+  }
+}
 function danoJugador(d, ox, oy) {
-  if (estado !== 'jugando') return;
+  if (J.remoto) { if (MP && J.vivo) MP.red.enviar({ t: 'golpe', d, ox, oy }, { a: J.id }); return; }
+  if (estado !== 'jugando' || J.caido) return;
   // Escudo de la fe: no entra ningún daño; esquivar da un instante de protección
   if (J.feT > 0) { explotar(ox != null ? (ox + J.x) / 2 : J.x, oy != null ? (oy + J.y) / 2 : J.y, 'oro', 10, 0.6); SND.bloqueo(); return; }
   if (J.invulT > 0) return;
@@ -1574,7 +1769,7 @@ function danoJugador(d, ox, oy) {
   hurtT = 0.4; SND.dano();
   if (ox !== undefined) { const dx = J.x - ox, dy = J.y - oy, l = Math.hypot(dx, dy) || 1; J.vx += dx / l * 3; J.vy += dy / l * 3; }
   J.sacudida = Math.max(J.sacudida, 0.35); J.kick -= 0.04;
-  if (J.vida <= 0) perder();
+  if (J.vida <= 0) caer();
   actualizarHud();
 }
 function despertar(e) {
@@ -1586,6 +1781,7 @@ function despertar(e) {
 /* Susto: grito, pantalla roja y sacudida cuando un pecado te descubre de cerca */
 let ultimoSusto = -10;
 function susto(e) {
+  if (J.remoto) { if (MP) MP.red.enviar({ t: 'susto', e: enemigos.indexOf(e) }, { a: J.id }); SND.grito(e.x, e.y, e.tipo); return; }
   SND.grito(e.x, e.y, e.tipo);
   const v = $('miedo'); v.classList.remove('on'); void v.offsetWidth; v.classList.add('on');
   J.sacudida = Math.max(J.sacudida, 0.45);
@@ -1611,8 +1807,7 @@ function herir(e, d, sinPuntos) {
   explotar(e.x, e.y, 'rojo', e.tipo === 'tentador' ? 5 : 8, 0.55);
   if (d > 4) { const l = Math.hypot(e.x - J.x, e.y - J.y) || 1; e.kx = (e.kx || 0) + (e.x - J.x) / l * 1.5; e.ky = (e.ky || 0) + (e.y - J.y) / l * 1.5; }
   if (e.tipo === 'soberbia' && e.vida > 0 && rnd() < 0.3 && e.cool2 < 2) { e.cool2 = 3; setTimeout(() => { if (!e.muerto) teletransportar(e, 3, 6); }, 120); }
-  stats.aciertos++;
-  marcarAcierto();
+  if (!MP || !autorGolpe || autorGolpe === MP.miId) { stats.aciertos++; marcarAcierto(); }
   despertar(e);
   if (e.vida <= 0) { matarEnemigo(e, sinPuntos); return; }
   if (e.tipo !== 'tentador' && rnd() < 0.35 && e.estado !== 'embestida') { e.estado = 'dolor'; e.t = 0.22; SND.dolor(e.x, e.y); }
@@ -1636,9 +1831,9 @@ function deshacerIlusion(e) {
 function matarEnemigo(e, sinPoder) {
   if (e.ilusion) { deshacerIlusion(e); return; }
   e.muerto = true; e.muerteT = 0; e.estado = 'muerto';
-  if (!sinPoder) poder = Math.min(3, poder + 1);
   const pts = Math.round(TIPOS[e.tipo].pts * DIF.pts * (e.mayor ? 2.5 : 1));
-  stats.puntos += pts; S.puntos += pts; guardar();
+  if (MP && autorGolpe && autorGolpe !== MP.miId) MP.red.enviar({ t: 'mato', pts, poder: !sinPoder }, { a: autorGolpe });
+  else { if (!sinPoder) poder = Math.min(3, poder + 1); stats.puntos += pts; S.puntos += pts; guardar(); }
   explotar(e.x, e.y, 'oro', e.tipo === 'tentador' ? 80 : 26, 0.45);
   explotar(e.x, e.y, 'azul', e.tipo === 'tentador' ? 40 : 12, 0.6);
   SND.muerte(e.x, e.y);
@@ -1646,16 +1841,17 @@ function matarEnemigo(e, sinPoder) {
   J.sacudida = Math.max(J.sacudida, e.tipo === 'tentador' ? 0.9 : 0.15);
   sinPecados--;
   // Cada pecado vencido recuerda la virtud que lo derrota
-  if (e.tipo !== 'tentador' && sinPecados > 0 && tiempoJuego - ultimaVirtud > 3) { ultimaVirtud = tiempoJuego; aviso(VIRTUDES[e.tipo]); }
-  if (e.robado) { const def = armaDef(J.arma); aviso('Recuperaste la munición robada'); for (const k in J.mun) if (J.mun[k] !== undefined && def.mun === k) J.mun[k] += e.robado; }
-  if (e.mayor) pickups.push({ tipo: 'caliz', x: e.x, y: e.y, ya: false });
-  if (rnd() < 0.3 * DIF.ayudas && e.tipo !== 'tentador') pickups.push({ tipo: elegir(['hostia', 'agua', J.armas.includes('rosario') ? 'cuentas' : 'agua']), x: e.x, y: e.y, ya: false });
-  if (e.tipo === 'tentador') { aviso('¡Cristo vence! Lucifer fue derrotado'); for (const o of enemigos) if (!o.muerto) matarEnemigo(o, true); $('jefe').hidden = true; }
-  else if (sinPecados <= 0) aviso('¡Todos los demonios vencidos! Ve al Sagrario');
+  if (e.tipo !== 'tentador' && sinPecados > 0 && tiempoJuego - ultimaVirtud > 3) { ultimaVirtud = tiempoJuego; avisoTodos(VIRTUDES[e.tipo]); }
+  if (e.robado && !(MP && autorGolpe && autorGolpe !== MP.miId)) { const def = armaDef(J.arma); aviso('Recuperaste la munición robada'); for (const k in J.mun) if (J.mun[k] !== undefined && def.mun === k) J.mun[k] += e.robado; }
+  if (e.mayor) agregarPickup({ tipo: 'caliz', x: e.x, y: e.y, ya: false });
+  if (rnd() < 0.3 * DIF.ayudas && e.tipo !== 'tentador') agregarPickup({ tipo: elegir(['hostia', 'agua', J.armas.includes('rosario') ? 'cuentas' : 'agua']), x: e.x, y: e.y, ya: false });
+  if (e.tipo === 'tentador') { avisoTodos('¡Cristo vence! Lucifer fue derrotado'); for (const o of enemigos) if (!o.muerto) matarEnemigo(o, true); $('jefe').hidden = true; }
+  else if (sinPecados <= 0) avisoTodos('¡Todos los demonios vencidos! Ve al Sagrario');
   else if (sinPecados <= Math.ceil(totalPecados * 0.2)) for (const o of enemigos) if (!o.muerto) despertar(o);
   actualizarHud();
 }
 function explotar(x, y, color, n, altura) {
+  if (fxRed && MP && MP.anfitrion) MP.red.enviar({ t: 'fx', x: +x.toFixed(2), y: +y.toFixed(2), c: color, n, h: altura });
   const spr = SPR.p[color] || SPR.p.blanca;
   for (let k = 0; k < n; k++) {
     const a = rnd() * Math.PI * 2, v = 0.6 + rnd() * 2;
@@ -1677,8 +1873,9 @@ function lanzarProyectil(e, ang, vel, spr, dano, extra) {
   const dx = Math.cos(ang), dy = Math.sin(ang);
   const c = TIPOS[e.tipo], z0 = e.tipo === 'tentador' ? 1.0 : (c.flota || 0) + c.alto * 0.6;
   const d = Math.max(0.6, Math.hypot(J.x - e.x, J.y - e.y));
-  const p = Object.assign({ x: e.x + dx * 0.4, y: e.y + dy * 0.4, z: z0, vz: (OJO - 0.1 - z0) * vel / d, vx: dx * vel, vy: dy * vel, vida: 4, dano, mio: false, spr, tam: 0.14, luz: [1, 0.3, 0.6, 2] }, extra || {});
+  const p = Object.assign({ x: e.x + dx * 0.4, y: e.y + dy * 0.4, z: z0, vz: (OJO - 0.1 - z0) * vel / d, vx: dx * vel, vy: dy * vel, vida: 4, dano, mio: false, spr, tam: 0.14, luz: [1, 0.3, 0.6, 2], obj: J.id || null }, extra || {});
   proyectiles.push(p);
+  if (MP && MP.anfitrion) MP.red.enviar({ t: 'p', b: proyectilARed(p) });
 }
 /* Habilidades especiales de cada pecado */
 function habilidad(e, k, cfg, d, ang) {
@@ -1696,21 +1893,20 @@ function habilidad(e, k, cfg, d, ang) {
     // Ira golpea el suelo: onda expansiva
     for (let q = 0; q < 40; q++) { const a = (q / 40) * Math.PI * 2; particulas.push({ x: e.x, y: e.y, z: 0.05, vx: Math.cos(a) * 5, vy: Math.sin(a) * 5, vz: 0.6, g: 2, vida: 0.6, max: 0.6, spr: SPR.p.rojo, tam: 0.1 }); }
     explotar(e.x, e.y, 'rojo', 20, 0.1);
-    if (d < 2.8) { danoJugador(cfg.dano * 0.8, e.x, e.y); const l = d || 1; J.vx += (J.x - e.x) / l * 6; J.vy += (J.y - e.y) / l * 6; }
+    if (d < 2.8) { danoJugador(cfg.dano * 0.8, e.x, e.y); const l = d || 1; impulsoJugador((J.x - e.x) / l * 6, (J.y - e.y) / l * 6); }
     J.sacudida = Math.max(J.sacudida, d < 6 ? 0.7 : 0.3);
     SND.temblor(e.x, e.y);
   } else if (k === 'robo') {
     // Avaricia te roba munición del arma que llevas y huye
-    const def = armaDef(J.arma);
-    if (def.mun && J.mun[def.mun] > 0) { const q = Math.ceil(J.mun[def.mun] * 0.3); J.mun[def.mun] -= q; e.robado = (e.robado || 0) + q; aviso('¡La avaricia te robó ' + q + ' de munición!'); }
-    else danoJugador(cfg.dano, e.x, e.y);
+    if (J.remoto) { if (MP) MP.red.enviar({ t: 'robo', d: cfg.dano, ox: e.x, oy: e.y }, { a: J.id }); }
+    else { const q = sufrirRobo(cfg.dano, e.x, e.y); if (q) e.robado = (e.robado || 0) + q; }
     e.huyeT = 2.2; SND.robo(e.x, e.y); actualizarHud();
   } else if (k === 'teletransporte') {
     teletransportar(e, 3, 6);
   } else if (k === 'sopor') {
     // Belfegor exhala un sopor verde que adormece
     for (let q = 0; q < 34; q++) { const a = rnd() * 6.28, r = rnd() * 0.5; particulas.push({ x: e.x + Math.cos(a) * r, y: e.y + Math.sin(a) * r, z: 0.5 + rnd() * 0.4, vx: Math.cos(a) * 2.4, vy: Math.sin(a) * 2.4, vz: 0.1, g: 0, vida: 1.2, max: 1.2, spr: SPR.p.verde || SPR.p.blanca, tam: 0.12 }); }
-    if (d < 5.5 && visible(e.x, e.y, J.x, J.y) && !(J.feT > 0)) { J.lento = Math.max(J.lento, 3); soporT = 3; aviso('Belfegor te llena de sopor…'); }
+    if (d < 5.5 && visible(e.x, e.y, J.x, J.y) && !(J.feT > 0)) { if (J.remoto) { if (MP) MP.red.enviar({ t: 'sopor' }, { a: J.id }); } else { J.lento = Math.max(J.lento, 3); soporT = 3; aviso('Belfegor te llena de sopor…'); } }
     SND.baba(e.x, e.y);
   } else if (k === 'sombra') {
     // Leviatán se funde con la oscuridad
@@ -1724,14 +1920,15 @@ function habilidad(e, k, cfg, d, ang) {
     for (let q = 0; q < 8; q++) lanzarProyectil(e, q / 8 * Math.PI * 2 + rnd() * 0.1, 4.2 * v, SPR.oscuro, cfg.dano * 0.7, { tam: 0.12, luz: [0.8, 0.3, 1, 2] });
     SND.disparoEnemigo(e.x, e.y);
   } else if (k === 'drenar') {
-    e.estado = 'drenando'; e.t = 1.8; aviso('¡Mammón te roba la vida!'); SND.robo(e.x, e.y);
+    e.estado = 'drenando'; e.t = 1.8; avisoJ('¡Mammón te roba la vida!'); SND.robo(e.x, e.y);
     return;
   } else if (k === 'tinieblas') {
     // Lucifer apaga todas las luces: solo queda la del rosario
-    oscuridadT = 5.5; J.sacudida = Math.max(J.sacudida, 0.5); aviso('Lucifer apaga la luz… alza el rosario');
+    oscuridadT = 5.5; J.sacudida = Math.max(J.sacudida, 0.5); avisoTodos('Lucifer apaga la luz… alza el rosario');
+    if (MP && MP.anfitrion) MP.red.enviar({ t: 'tinieblas' });
   } else if (k === 'encanto') {
     // Asmodeo te hechiza y te arrastra hacia él
-    if (d < 7.5 && visible(e.x, e.y, J.x, J.y) && !(J.feT > 0)) { J.encantoT = 1.7; J.encantoDe = e; aviso('Asmodeo te hechiza… ¡alza el rosario!'); }
+    if (d < 7.5 && visible(e.x, e.y, J.x, J.y) && !(J.feT > 0)) { if (J.remoto) { if (MP) MP.red.enviar({ t: 'encanto', e: enemigos.indexOf(e) }, { a: J.id }); } else { J.encantoT = 1.7; J.encantoDe = e; aviso('Asmodeo te hechiza… ¡alza el rosario!'); } }
     explotar(e.x, e.y, 'rosa', 22, 0.7); SND.grito(e.x, e.y, 'lujuria');
   } else if (k === 'ilusiones') {
     // Espejismo: dos copias falsas que se deshacen al tocarlas
@@ -1741,10 +1938,10 @@ function habilidad(e, k, cfg, d, ang) {
         const a = rnd() * 6.28, x = e.x + Math.cos(a) * 1.4, y = e.y + Math.sin(a) * 1.4;
         if (!puedeEn(x, y, 0.3, null)) continue;
         const n = crearEnemigo('lujuria', x, y); n.ilusion = true; n.vida = n.vidaMax = 0.5; n.ilusionT = 9; n.mayor = false; n.mult = 0.3; n.estado = 'caza'; n.cool2 = 999;
-        enemigos.push(n); explotar(x, y, 'rosa', 16, 0.6); break;
+        agregarEnemigo(n); explotar(x, y, 'rosa', 16, 0.6); break;
       }
     }
-    SND.teletransporte(e.x, e.y); aviso('¡Asmodeo se multiplica!');
+    SND.teletransporte(e.x, e.y); avisoTodos('¡Asmodeo se multiplica!');
   } else if (k === 'enjambre') {
     // Belcebú suelta un enjambre de moscas que te persigue
     for (let q = 0; q < 7; q++) lanzarProyectil(e, ang + (rnd() - 0.5) * 1.4, (2.2 + rnd()) * v, SPR.mosca, cfg.dano * 0.3, { guia: 2.4, vida: 5, tam: 0.07, luz: [0.5, 0.6, 0.2, 1] });
@@ -1758,6 +1955,7 @@ function habilidad(e, k, cfg, d, ang) {
 }
 // Desaparece en humo y reaparece en otro lugar cerca de ti
 function teletransportar(e, dmin, dmax) {
+  if (MP && !MP.anfitrion) return false;
   for (let intento = 0; intento < 20; intento++) {
     const a = rnd() * 6.28, r = dmin + rnd() * (dmax - dmin), x = J.x + Math.cos(a) * r, y = J.y + Math.sin(a) * r;
     if (!puedeEn(x, y, TIPOS[e.tipo].radio * 0.7, e) || !visible(x, y, J.x, J.y)) continue;
@@ -1800,12 +1998,20 @@ function ejecutarAtaque(e, cfg, d, ang) {
 }
 function actualizarEnemigos(dt) {
   flujoT -= dt;
-  if (flujoT <= 0 || !flujo) { flujo = distancias(J.x | 0, J.y | 0, false); flujoT = 0.35; }
+  if (flujoT <= 0 || !flujo) {
+    const otros = MP ? Array.from(MP.otros.values()).filter((q) => q.vivo).map((q) => [q.x, q.y]) : null;
+    const yo = J.caido && otros && otros.length ? otros[0] : [J.x, J.y];
+    flujo = distancias(yo[0] | 0, yo[1] | 0, false, otros); flujoT = 0.35;
+  }
+  const Jlocal = J;
+  fxRed = !!(MP && MP.anfitrion);
   for (const e of enemigos) {
+   if (MP) J = objetivoDe(e, dt);
+   try {
     e.flash = Math.max(0, e.flash - dt);
     if (e.ilusion && !e.muerto) { e.ilusionT -= dt; if (e.ilusionT <= 0) { deshacerIlusion(e); continue; } }
     // Belcebú devora lo que encuentra en el suelo y se cura
-    if (e.tipo === 'gula' && !e.muerto && e.estado !== 'dormido') for (const q of pickups) if (!q.ya && q.tipo !== 'llave' && Math.hypot(q.x - e.x, q.y - e.y) < 0.7) { q.ya = true; e.vida = Math.min(e.vidaMax, e.vida + 3); explotar(q.x, q.y, 'verde', 14, 0.4); SND.baba(e.x, e.y); if (tiempoJuego - avisoRos > 2) { avisoRos = tiempoJuego; aviso('Belcebú devora lo que encuentra'); } }
+    if (e.tipo === 'gula' && !e.muerto && e.estado !== 'dormido') for (const q of pickups) if (!q.ya && q.tipo !== 'llave' && Math.hypot(q.x - e.x, q.y - e.y) < 0.7) { q.ya = true; if (MP) MP.red.enviar({ t: 'P-', i: pickups.indexOf(q) }); e.vida = Math.min(e.vidaMax, e.vida + 3); explotar(q.x, q.y, 'verde', 14, 0.4); SND.baba(e.x, e.y); if (tiempoJuego - avisoRos > 2) { avisoRos = tiempoJuego; avisoTodos('Belcebú devora lo que encuentra'); } }
     e.golpeT = Math.max(0, (e.golpeT || 0) - dt); e.rugido = Math.max(0, (e.rugido || 0) - dt);
     if (e.muerto) { e.muerteT += dt; continue; }
     const cfg = TIPOS[e.tipo];
@@ -1838,10 +2044,13 @@ function actualizarEnemigos(dt) {
     if (e.estado === 'drenando') {
       // Codicia: un hilo de oro le roba la vida al misionero
       e.t -= dt;
-      if (ve && d < 6.5 && !(J.feT > 0) && !(J.invulT > 0)) {
-        const q = 10 * DIF.dano * dt; J.vida = Math.max(0, J.vida - q); e.vida = Math.min(e.vidaMax, e.vida + q * 0.6); hurtT = Math.max(hurtT, 0.12);
+      if (ve && d < 6.5 && !(J.feT > 0) && !(J.invulT > 0) && !J.caido) {
+        const q = 10 * DIF.dano * dt;
+        if (J.remoto) { J.drenAc = (J.drenAc || 0) + q; if (J.drenAc > 1.5 && MP) { MP.red.enviar({ t: 'golpe', d: J.drenAc, suave: 1 }, { a: J.id }); J.drenAc = 0; } }
+        else { J.vida = Math.max(0, J.vida - q); hurtT = Math.max(hurtT, 0.12); }
+        e.vida = Math.min(e.vidaMax, e.vida + q * 0.6);
         if (rnd() < 0.8) particulas.push({ x: J.x + (rnd() - 0.5) * 0.3, y: J.y + (rnd() - 0.5) * 0.3, z: 0.35 + rnd() * 0.3, vx: (e.x - J.x) / 0.6, vy: (e.y - J.y) / 0.6, vz: 0.4, g: 0, vida: 0.6, max: 0.6, spr: SPR.p.oro, tam: 0.05 });
-        if (J.vida <= 0) { perder(); return; }
+        if (!J.remoto && J.vida <= 0) { caer(); continue; }
       } else e.t = Math.min(e.t, 0.1);
       if (e.t <= 0) { e.estado = 'caza'; e.cool = Math.max(e.cool, 1); }
       continue;
@@ -1854,7 +2063,7 @@ function actualizarEnemigos(dt) {
     if (e.estado === 'embestida') {
       e.dashT -= dt;
       const ok = mover(e, e.dashX * (e.dashV || 7) * DIF.vel * dt, e.dashY * (e.dashV || 7) * DIF.vel * dt, cfg.radio * 0.8);
-      if (!e.golpeo && d < cfg.radio + 0.45) { e.golpeo = true; danoJugador(cfg.dano * e.mult, e.x, e.y); mover(J, e.dashX * 0.6, e.dashY * 0.6, 0.22); }
+      if (!e.golpeo && d < cfg.radio + 0.45) { e.golpeo = true; danoJugador(cfg.dano * e.mult, e.x, e.y); empujeJugador(e.dashX * 0.6, e.dashY * 0.6); }
       if (e.dashT <= 0 || !ok) { e.estado = 'dolor'; e.t = ok ? 0.4 : 0.9; e.cool = cfg.cad; if (!ok) explotar(e.x + e.dashX * 0.4, e.y + e.dashY * 0.4, 'rojo', 10, 0.6); }
       continue;
     }
@@ -1887,16 +2096,16 @@ function actualizarEnemigos(dt) {
       }
     }
     if (e.tipo === 'tentador') {
-      if (!e.furia && e.vida < e.vidaMax * 0.5) { e.furia = true; aviso('¡Lucifer se enfurece! Resiste con fe'); SND.grito(e.x, e.y, 'tentador'); J.sacudida = 0.8; }
+      if (!e.furia && e.vida < e.vidaMax * 0.5) { e.furia = true; avisoTodos('¡Lucifer se enfurece! Resiste con fe'); SND.grito(e.x, e.y, 'tentador'); J.sacudida = 0.8; }
       if (e.furia) { e.tpT = (e.tpT || 6) - dt; if (e.tpT <= 0) { e.tpT = 6 + rnd() * 3; teletransportar(e, 4, 7); } }
       e.invocT -= dt;
       if (e.invocT <= 0 && enemigos.filter((o) => !o.muerto && o.tipo !== 'tentador').length < 5) {
         e.invocT = 11 / DIF.vel;
         for (let k = 0; k < 2; k++) {
           const a = rnd() * 6.28, x = e.x + Math.cos(a) * 2, y = e.y + Math.sin(a) * 2;
-          if (puedeEn(x, y, 0.3, null)) { const n = crearEnemigo(elegir(['envidia', 'envidia', 'soberbia']), x, y); n.estado = 'caza'; enemigos.push(n); sinPecados++; totalPecados++; explotar(x, y, 'sombra', 20, 0.5); }
+          if (puedeEn(x, y, 0.3, null)) { const n = crearEnemigo(elegir(['envidia', 'envidia', 'soberbia']), x, y); n.estado = 'caza'; agregarEnemigo(n); sinPecados++; totalPecados++; explotar(x, y, 'sombra', 20, 0.5); }
         }
-        aviso('¡Lucifer llama a más demonios!');
+        avisoTodos('¡Lucifer llama a más demonios!');
       }
     }
     if (ve && e.cool <= 0 && d < cfg.alcance) {
@@ -1926,8 +2135,10 @@ function actualizarEnemigos(dt) {
     }
     const ml = Math.hypot(mx, my);
     if (ml > 0.01) mover(e, mx / ml * vel * dt, my / ml * vel * dt, cfg.radio * 0.75);
-    if (e.tipo === 'pereza' && d < 2.6) J.lento = 0.3;
+    if (e.tipo === 'pereza' && d < 2.6 && !J.remoto) J.lento = 0.3;
+   } finally { J = Jlocal; }
   }
+  fxRed = false;
 }
 
 /* =====================================================================
@@ -1936,13 +2147,13 @@ function actualizarEnemigos(dt) {
 function actualizarPuertas(dt) {
   for (const p of puertas.values()) {
     const cx = p.x + 0.5, cy = p.y + 0.5;
-    let cerca = Math.hypot(J.x - cx, J.y - cy) < 1.6;
+    let cerca = Math.hypot(J.x - cx, J.y - cy) < 1.6 || otroCerca(cx, cy, 1.6);
     if (cerca && p.oro && !llave) {
       cerca = false;
       if (avisoCerradaT <= 0 && Math.hypot(J.x - cx, J.y - cy) < 1.3) { aviso('Necesitas la llave dorada'); SND.cerrada(); avisoCerradaT = 2.5; }
     }
     if (!cerca && !p.oro) for (const e of enemigos) if (!e.muerto && e.estado !== 'dormido' && Math.hypot(e.x - cx, e.y - cy) < 1.4) { cerca = true; break; }
-    const ocupada = Math.hypot(J.x - cx, J.y - cy) < 0.75 || enemigos.some((e) => !e.muerto && Math.hypot(e.x - cx, e.y - cy) < 0.8);
+    const ocupada = Math.hypot(J.x - cx, J.y - cy) < 0.75 || otroCerca(cx, cy, 0.75) || enemigos.some((e) => !e.muerto && Math.hypot(e.x - cx, e.y - cy) < 0.8);
     if (cerca) { if (p.abierta === 0) SND.puerta(); p.abierta = Math.min(1, p.abierta + dt * 1.8); p.t = 0; }
     else { p.t += dt; if (p.t > 3 && !ocupada && p.abierta > 0) p.abierta = Math.max(0, p.abierta - dt * 1.5); }
   }
@@ -1950,13 +2161,14 @@ function actualizarPuertas(dt) {
 function actualizar(dt) {
   tiempoJuego += dt; stats.tiempo += dt;
   let avance = 0, lado = 0, giro = 0;
-  if (teclas.KeyW || teclas.ArrowUp) avance += 1;
-  if (teclas.KeyS || teclas.ArrowDown) avance -= 1;
-  if (teclas.KeyA) lado -= 1;
-  if (teclas.KeyD) lado += 1;
-  if (teclas.ArrowLeft) giro -= 1;
-  if (teclas.ArrowRight) giro += 1;
+  if (pulsada('adelante')) avance += 1;
+  if (pulsada('atras')) avance -= 1;
+  if (pulsada('izquierda')) lado -= 1;
+  if (pulsada('derecha')) lado += 1;
+  if (pulsada('girarIzq')) giro -= 1;
+  if (pulsada('girarDer')) giro += 1;
   if (joy.activo) { avance += -joy.dy; lado += joy.dx; }
+  if (J.caido || menuMP) { avance = 0; lado = 0; giro = 0; }
   const m = Math.hypot(avance, lado); if (m > 1) { avance /= m; lado /= m; }
   J.a += giro * 2.6 * dt;
   // Correr gasta aliento; agotado, hay que recuperarlo
@@ -1969,7 +2181,7 @@ function actualizar(dt) {
   // En el teléfono se corre empujando el joystick hasta el borde
   const corrJoy = joy.activo && Math.hypot(joy.dx, joy.dy) > 0.93;
   $('joy').classList.toggle('corre', corrJoy && !J.agotado);
-  const quiereCorrer = (teclas.ShiftLeft || correrTactil || corrJoy) && (avance || lado) && !J.agotado;
+  const quiereCorrer = (pulsada('correr') || correrTactil || corrJoy) && (avance || lado) && !J.agotado;
   J.aliento = clamp(J.aliento + (quiereCorrer ? -30 : 16) * dt, 0, 100);
   if (J.aliento <= 0) J.agotado = true; else if (J.aliento > 30) J.agotado = false;
   const corriendo = quiereCorrer && J.aliento > 0;
@@ -1986,7 +2198,7 @@ function actualizar(dt) {
   if (J.dashT > 0) { J.dashT -= dt; J.vx = J.dashX * 10; J.vy = J.dashY * 10; if (rnd() < 0.6) particulas.push({ x: J.x, y: J.y, z: 0.3 + rnd() * 0.4, vx: 0, vy: 0, vz: 0.3, g: 0, vida: 0.35, max: 0.35, spr: SPR.p.oro, tam: 0.06 }); }
   if (pedirEsquivar) { pedirEsquivar = false; esquivar(avance, lado); }
   if (pedirFe) { pedirFe = false; escudoFe(); }
-  if ((J.esqCD > 0 || J.feCD > 0 || J.empCD > 0) && Math.floor(tiempoJuego * 10) !== Math.floor((tiempoJuego - dt) * 10)) actualizarBotones();
+  actualizarBotones();
   $('fe').style.opacity = J.feT > 0 ? (0.75 + Math.sin(tiempoJuego * 12) * 0.25 * (J.feT < 0.8 ? 1 : 0.3)).toFixed(2) : '0';
   const ax = J.x, ay = J.y;
   mover(J, J.vx * dt, J.vy * dt, 0.22);
@@ -2003,12 +2215,14 @@ function actualizar(dt) {
   if (J.cambio > 0) { J.cambio -= dt; if (J.cambio <= 0.16 && J.armaSig) { J.arma = J.armaSig; J.armaSig = null; actualizarHud(); } if (J.cambio < 0) J.cambio = 0; }
   if (fuego || mouseDown) disparar();
   hurtT = Math.max(0, hurtT - dt); curaT = Math.max(0, curaT - dt); avisoCerradaT -= dt; aciertoT -= dt;
+  if (MP) pasoRed(dt);
   actualizarPuertas(dt);
-  actualizarEnemigos(dt);
+  if (!MP || MP.anfitrion) actualizarEnemigos(dt); else seguirEnemigos(dt);
   // Proyectiles
   for (let i = proyectiles.length - 1; i >= 0; i--) {
     const b = proyectiles[i];
-    if (b.guia) { const a = Math.atan2(J.y - b.y, J.x - b.x), v = Math.hypot(b.vx, b.vy), ac0 = Math.atan2(b.vy, b.vx); let da = a - ac0; while (da > Math.PI) da -= 6.283; while (da < -Math.PI) da += 6.283; const na = ac0 + clamp(da, -b.guia * dt, b.guia * dt); b.vx = Math.cos(na) * v; b.vy = Math.sin(na) * v; }
+    const meta = b.guia ? jugadorPorId(b.obj) : null;
+    if (b.guia) { const a = Math.atan2(meta.y - b.y, meta.x - b.x), v = Math.hypot(b.vx, b.vy), ac0 = Math.atan2(b.vy, b.vx); let da = a - ac0; while (da > Math.PI) da -= 6.283; while (da < -Math.PI) da += 6.283; const na = ac0 + clamp(da, -b.guia * dt, b.guia * dt); b.vx = Math.cos(na) * v; b.vy = Math.sin(na) * v; }
     b.x += b.vx * dt; b.y += b.vy * dt; b.z += (b.vz || 0) * dt; b.vz = (b.vz || 0) - (b.g || 0) * dt; b.vida -= dt;
     let quitar = b.vida <= 0, chocoMuro = solidoCelda(b.x, b.y) || b.z <= 0.02 || b.z >= ALTO - 0.02;
     if (!chocoMuro) for (const d of decor) if (d.solido && Math.hypot(d.x - b.x, d.y - b.y) < d.solido && b.z < 0.8) { chocoMuro = true; break; }
@@ -2026,26 +2240,36 @@ function actualizar(dt) {
         for (const e of enemigos) {
           if (e.muerto || Math.hypot(e.x - b.x, e.y - b.y) > TIPOS[e.tipo].radio) continue;
           const ez = TIPOS[e.tipo].flota || 0; if (b.z < ez - 0.05 || b.z > ez + TIPOS[e.tipo].alto + 0.05) continue;
-          if (!b.explota) { herir(e, b.dano); e.kx = (e.kx || 0) + b.vx * 0.05; e.ky = (e.ky || 0) + b.vy * 0.05; explotar(b.x, b.y, b.spr === SPR.gota ? 'azul' : 'oro', 6, b.z); SND.impacto(); }
+          if (!b.explota) { if (!b.cosmetico) { autorGolpe = b.de; herir(e, b.dano); autorGolpe = null; e.kx = (e.kx || 0) + b.vx * 0.05; e.ky = (e.ky || 0) + b.vy * 0.05; } else marcarAcierto(); explotar(b.x, b.y, b.spr === SPR.gota ? 'azul' : 'oro', 6, b.z); SND.impacto(); }
           quitar = true; break;
         }
-      } else if (J.feT > 0 && Math.hypot(J.x - b.x, J.y - b.y) < 1.1) {
-        // El escudo de la fe devuelve los ataques a quien los lanzó
-        b.mio = true; b.estalla = 0; b.vx = -b.vx * 1.3; b.vy = -b.vy * 1.3; b.vz = 0; b.guia = 0; b.dano = 5; b.vida = 2; b.spr = SPR.p.oro; b.luz = [1, 0.85, 0.4, 2];
-        explotar(b.x, b.y, 'oro', 8, b.z); SND.bloqueo();
-      } else if (!b.estalla && Math.hypot(J.x - b.x, J.y - b.y) < 0.32 && b.z < 0.95) { danoJugador(b.dano, b.x, b.y); if (b.lento) J.lento = Math.max(J.lento, b.lento); explotar(b.x, b.y, b.lento ? 'verde' : 'sombra', 14, b.z); quitar = true; }
+      } else {
+        // Los ataques alcanzan a cualquier jugador; en los invitados solo se ven (el daño lo manda el anfitrión)
+        for (const q of jugadoresGolpeables()) {
+          if (q.feT > 0 && Math.hypot(q.x - b.x, q.y - b.y) < 1.1) {
+            // El escudo de la fe devuelve los ataques a quien los lanzó
+            b.mio = true; b.de = q.remoto ? q.id : (MP ? MP.miId : null); b.estalla = 0; b.vx = -b.vx * 1.3; b.vy = -b.vy * 1.3; b.vz = 0; b.guia = 0; b.dano = 5; b.vida = 2; b.spr = SPR.p.oro; b.luz = [1, 0.85, 0.4, 2];
+            explotar(b.x, b.y, 'oro', 8, b.z); if (!q.remoto) SND.bloqueo();
+            break;
+          }
+          if (!b.estalla && Math.hypot(q.x - b.x, q.y - b.y) < 0.32 && b.z < 0.95) {
+            if (!b.cosmetico) { const Jl = J; J = q; danoJugador(b.dano, b.x, b.y); if (b.lento) lentoJugador(b.lento); J = Jl; }
+            explotar(b.x, b.y, b.lento ? 'verde' : 'sombra', 14, b.z); quitar = true; break;
+          }
+        }
+      }
     }
     if (quitar) {
       if (b.explota) {
         explotar(b.x, b.y, 'oro', 40, b.z + 0.1); explotar(b.x, b.y, 'blanca', 20, b.z + 0.1); SND.explosion();
         if (Math.hypot(J.x - b.x, J.y - b.y) < 4) J.sacudida = Math.max(J.sacudida, 0.6 - Math.hypot(J.x - b.x, J.y - b.y) * 0.12);
         destellos.push({ x: b.x, y: b.y, t: 0.35, max: 0.35, r: 1, g: 0.75, b: 0.4, rad: 4.5, int: 3 });
-        for (const e of enemigos) { if (e.muerto) continue; const dd = Math.hypot(e.x - b.x, e.y - b.y); if (dd < b.explota && visible(b.x, b.y, e.x, e.y)) { herir(e, b.dano * (1 - dd / b.explota * 0.6)); const l = dd || 1; e.kx = (e.kx || 0) + (e.x - b.x) / l * 5; e.ky = (e.ky || 0) + (e.y - b.y) / l * 5; } }
+        if (!b.cosmetico) for (const e of enemigos) { if (e.muerto) continue; const dd = Math.hypot(e.x - b.x, e.y - b.y); if (dd < b.explota && visible(b.x, b.y, e.x, e.y)) { autorGolpe = b.de; herir(e, b.dano * (1 - dd / b.explota * 0.6)); autorGolpe = null; const l = dd || 1; e.kx = (e.kx || 0) + (e.x - b.x) / l * 5; e.ky = (e.ky || 0) + (e.y - b.y) / l * 5; } }
       } else if (b.estalla) {
         explotar(b.x, b.y, 'rojo', 30, 0.15); explotar(b.x, b.y, 'oro', 10, 0.15); SND.explosion();
         destellos.push({ x: b.x, y: b.y, t: 0.4, max: 0.4, r: 1, g: 0.4, b: 0.1, rad: 4, int: 3 });
+        if (!b.cosmetico) for (const q of jugadoresGolpeables()) { const dq = Math.hypot(q.x - b.x, q.y - b.y); if (dq < b.estalla) { const Jl = J; J = q; danoJugador(b.dano * (1 - dq / b.estalla * 0.5), b.x, b.y); J = Jl; } }
         const dd = Math.hypot(J.x - b.x, J.y - b.y);
-        if (dd < b.estalla) danoJugador(b.dano * (1 - dd / b.estalla * 0.5), b.x, b.y);
         if (dd < 4) J.sacudida = Math.max(J.sacudida, 0.4 - dd * 0.08);
       } else if (chocoMuro) explotar(b.x - b.vx * dt, b.y - b.vy * dt, b.mio ? (b.spr === SPR.gota ? 'azul' : 'oro') : 'sombra', 5, clamp(b.z, 0.05, ALTO - 0.05));
       proyectiles.splice(i, 1);
@@ -2053,8 +2277,8 @@ function actualizar(dt) {
   }
   // Objetos
   for (const p of pickups) {
-    if (p.ya || Math.hypot(J.x - p.x, J.y - p.y) > 0.55) continue;
-    if (recoger(p.tipo)) { p.ya = true; SND.recoger(); explotar(p.x, p.y, 'oro', 12, 0.35); }
+    if (p.ya || J.caido || Math.hypot(J.x - p.x, J.y - p.y) > 0.55) continue;
+    if (recoger(p.tipo)) { p.ya = true; SND.recoger(); explotar(p.x, p.y, 'oro', 12, 0.35); if (MP) MP.red.enviar({ t: 'P-', i: pickups.indexOf(p), tipo: p.tipo, quien: MP.miId }); }
   }
   // Partículas
   for (let i = particulas.length - 1; i >= 0; i--) {
@@ -2066,8 +2290,13 @@ function actualizar(dt) {
     if (p.vida <= 0) particulas.splice(i, 1);
   }
   for (let i = destellos.length - 1; i >= 0; i--) { destellos[i].t -= dt; if (destellos[i].t <= 0) destellos.splice(i, 1); }
-  // Victoria
-  if (sinPecados <= 0 && Math.hypot(J.x - salida.x, J.y - salida.y) < 0.9) nivelSuperado();
+  // Victoria: en el juego conectado basta con que uno llegue al Sagrario
+  if (sinPecados <= 0 && !J.caido && Math.hypot(J.x - salida.x, J.y - salida.y) < 0.9) {
+    if (!MP) nivelSuperado();
+    else if (MP.anfitrion) superadoMP();
+    else if (tiempoJuego - (MP.altarT || -9) > 1) { MP.altarT = tiempoJuego; MP.red.enviar({ t: 'altar' }, { a: MP.red.ID_ANFITRION }); }
+  }
+  if (MP && MP.anfitrion && sinPecados <= 0) for (const q of MP.otros.values()) if (q.vivo && Math.hypot(q.x - salida.x, q.y - salida.y) < 0.9) { superadoMP(); break; }
   actualizarHud();
 }
 let destellos = [];
@@ -2334,6 +2563,7 @@ function actualizar3D(dt) {
   const sac = J.sacudida || 0;
   camara.position.set(J.x + (rnd() - 0.5) * sac * 0.08, OJO + bob + (rnd() - 0.5) * sac * 0.06, J.y + (rnd() - 0.5) * sac * 0.08);
   camara.rotation.set((J.pitch || 0) + (J.kick || 0), Math.atan2(-Math.cos(J.a), -Math.sin(J.a)), (J.roll || 0) + Math.sin(J.paso) * 0.008 * rapidez);
+  if (J.caido && estado === 'jugando') { camara.position.y = 0.16; camara.rotation.z = 0.55; camara.rotation.x = 0.15; }
   if (estado === 'cine') camaraCine(dt);
   linterna.position.copy(camara.position);
   luzMundo += ((oscuridadT > 0 ? 0.06 : 1) - luzMundo) * Math.min(1, dt * 4);
@@ -2421,6 +2651,7 @@ function actualizar3D(dt) {
     haz.scale.set(1, 1, Math.hypot(J.hazX - ox, (J.hazZ || 0.5) - oz, J.hazY - oy));
     haz.material.opacity = J.haz / 0.22; hazAura.material.opacity = 0.45 * J.haz / 0.22;
   } else haz.visible = false;
+  if (MP) actualizarFiguras(dt);
   // Lo que se ve queda en el mapa
   vistoT -= dt;
   if (vistoT <= 0 && estado === 'jugando') {
@@ -2627,6 +2858,7 @@ function dibujarMini() {
   for (const p of pickups) if (p.tipo === 'llave' && !p.ya && visto[(p.y | 0) * T + (p.x | 0)]) { mini.fillStyle = '#ffe080'; mini.beginPath(); mini.arc(p.x * cs, p.y * cs, 4, 0, 7); mini.fill(); }
   const pocos = sinPecados <= 3;
   for (const e of enemigos) if (!e.muerto && (pocos || tiempoJuego - e.ultimoVisto < 1.5)) { mini.fillStyle = '#ff3355'; mini.beginPath(); mini.arc(e.x * cs, e.y * cs, Math.max(2.5, cs * 0.4), 0, Math.PI * 2); mini.fill(); }
+  if (MP) for (const q of MP.otros.values()) if (q.en) { mini.fillStyle = q.color; mini.beginPath(); mini.arc(q.x * cs, q.y * cs, 4, 0, Math.PI * 2); mini.fill(); }
   mini.fillStyle = '#ffffff'; mini.beginPath(); mini.arc(J.x * cs, J.y * cs, 4, 0, Math.PI * 2); mini.fill();
   mini.strokeStyle = '#ffffff'; mini.lineWidth = 2; mini.beginPath(); mini.moveTo(J.x * cs, J.y * cs); mini.lineTo((J.x + Math.cos(J.a) * 1.6) * cs, (J.y + Math.sin(J.a) * 1.6) * cs); mini.stroke();
 }
@@ -2687,10 +2919,12 @@ function bucle(t) {
   }
 }
 function esTactil() { return matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0; }
-function prepararNivel(n, conservar) {
+function prepararNivel(n, conservar, semilla) {
   nivel = n;
   for (const t of Object.keys(NIVELES[n].enemigos).concat(NIVELES[n].jefe ? ['tentador'] : [])) prepararDemonio(t);
-  const inicio = generarNivel(n);
+  let inicio;
+  if (semilla != null) { azarActual = azarConSemilla(semilla); try { inicio = generarNivel(n); } finally { azarActual = Math.random; } }
+  else inicio = generarNivel(n);
   const viejo = conservar && J ? J : null;
   DON = donesDe(S.puntos);
   J = nuevoJugador(inicio.cx + 0.5, inicio.cy + 0.5, n);
@@ -2703,13 +2937,14 @@ function prepararNivel(n, conservar) {
   stats = { tiempo: 0, disparos: 0, aciertos: 0, danoRecibido: 0, puntos: 0 };
   $('jefe').hidden = !jefe;
   construir3D();
+  actualizarBotones(true);
 }
 function mostrarIntro(n) {
   const c = NIVELES[n];
   $('intro-tarjeta').innerHTML =
     `<p class="pequeno">Nivel ${n + 1} de ${NIVELES.length} · ${DIF.nombre}</p><h1>${c.nombre}</h1>` +
     `<p>«${c.frase}»<br><span class="pequeno">${c.autor || 'San José Allamano'}</span></p>` +
-    `<div class="lista"><p>• Vence a <b>${sinPecados}</b> demonios.</p>${c.jefe ? '<p>• Derrota a <b>Lucifer</b>: lanza fuego y llama a otros demonios.</p>' : '<p>• Busca la <b>llave dorada</b> y abre la puerta del Sagrario.</p>'}${c.arma ? `<p>• En este lugar hay un arma nueva escondida.</p>` : ''}</div>` +
+    `<div class="lista">${MP ? `<p>• Juegan juntos: <b>${[MP.red.jugadores.find((j) => j.id === MP.miId)?.nombre || 'Tú'].concat(Array.from(MP.otros.values()).map((q) => q.nombre)).join(', ')}</b>. Si caes, te levantas a los pocos segundos.</p>` : ''}<p>• Vence a <b>${sinPecados}</b> demonios.</p>${c.jefe ? '<p>• Derrota a <b>Lucifer</b>: lanza fuego y llama a otros demonios.</p>' : '<p>• Busca la <b>llave dorada</b> y abre la puerta del Sagrario.</p>'}${c.arma ? `<p>• En este lugar hay un arma nueva escondida.</p>` : ''}</div>` +
     `<button class="boton" type="button" id="b-entrar">ENTRAR</button>`;
   $('intro').hidden = false;
   $('b-entrar').onclick = () => { $('intro').hidden = true; jugar(); };
@@ -2737,7 +2972,7 @@ function camaraCine(dt) {
     camara.position.set(jefe.x + Math.sin(a) * d, h * 0.35 + k * h * 0.42, jefe.y + Math.cos(a) * d);
     camara.lookAt(jefe.x, h * (0.45 + 0.35 * k), jefe.y);
     if (!cine.rug && tj > 1.3) { cine.rug = true; jefe.rugido = 1; SND.grito(jefe.x, jefe.y, 'tentador'); J.sacudida = 0.8; $('miedo').classList.remove('on'); void $('miedo').offsetWidth; $('miedo').classList.add('on'); }
-    if (!cine.t0) { cine.t0 = true; caja.innerHTML = '<small>El príncipe de los demonios</small>Lucifer<span>«Resistid al diablo y huirá de vosotros» · Santiago 4, 7</span>'; caja.className = 'cine-txt on'; }
+    if (!cine.t0) { cine.t0 = true; caja.innerHTML = cfgNivel.final ? '<small>La batalla final</small>Lucifer vuelve<span>«¿Quién como Dios?» · San Miguel Arcángel</span>' : '<small>El príncipe de los demonios</small>Lucifer<span>«Resistid al diablo y huirá de vosotros» · Santiago 4, 7</span>'; caja.className = 'cine-txt on'; }
   } else {
     // Toma 2: desde lo alto de la sala de inicio hasta los ojos del misionero
     const k = suaveC(Math.min(1, (t - 3 - cine.off) / 2.4));
@@ -2755,6 +2990,7 @@ function terminarCine() {
   cine = null; $('cine').classList.remove('on'); $('cine-txt').className = 'cine-txt';
   $('hud').classList.add('on');
   $('botones').classList.toggle('on', esTactil());
+  aplicarControles();
   estado = 'jugando';
   aviso(cfgNivel.nombre);
   if (tactil) { $('joy-guia').classList.add('on'); $('mira-guia').classList.add('on'); }
@@ -2787,18 +3023,22 @@ function empezar(n, conservar) {
 }
 const SIN_PAUSA = /[?&]prueba(=|&|$)/.test(location.search); // para pruebas automáticas
 function pausar() {
-  if (estado !== 'jugando' || SIN_PAUSA) return;
-  estado = 'pausa'; fuego = false; mouseDown = false;
+  if (estado !== 'jugando' || SIN_PAUSA || menuMP) return;
+  fuego = false; mouseDown = false;
+  if (MP) menuMP = true; else estado = 'pausa';
   for (const k in teclas) teclas[k] = false;
-  $('pausa-stats').innerHTML = `<div>Nivel <b>${nivel + 1}</b></div><div>Pecados <b>${sinPecados}</b></div><div>Tiempo <b>${fmtT(stats.tiempo)}</b></div><div>Puntos <b>${stats.puntos}</b></div>`;
+  $('pausa-stats').innerHTML = `<div>Nivel <b>${nivel + 1}</b></div><div>Pecados <b>${sinPecados}</b></div><div>Tiempo <b>${fmtT(stats.tiempo)}</b></div><div>Puntos <b>${stats.puntos}</b></div>` + (MP ? '<p class="nota-mp" style="grid-column:1/-1">Juego con amigos: la partida sigue mientras estás aquí.</p>' : '');
   $('pausa').hidden = false;
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch (e) { /* nada */ }
 }
-function seguir() { if (estado !== 'pausa') return; $('pausa').hidden = true; estado = 'jugando'; }
+function seguir() {
+  if (menuMP) { menuMP = false; $('pausa').hidden = true; actualizarBotones(true); return; }
+  if (estado !== 'pausa') return; $('pausa').hidden = true; estado = 'jugando'; pedirEsquivar = false; pedirFe = false; actualizarBotones(true);
+}
 function fmtT(s) { const m = Math.floor(s / 60), x = Math.floor(s % 60); return m + ':' + String(x).padStart(2, '0'); }
 function volverMenu() {
-  estado = 'menu';
-  $('pausa').hidden = true; $('fin').hidden = true; $('intro').hidden = true;
+  estado = 'menu'; menuMP = false;
+  $('pausa').hidden = true; $('fin').hidden = true; $('intro').hidden = true; $('caido').hidden = true; $('mp-lista').hidden = true;
   $('hud').classList.remove('on');
   $('menu').hidden = false;
   pintarMenu();
@@ -2816,8 +3056,8 @@ function nivelSuperado() {
   const ultimo = nivel + 1 >= NIVELES.length;
   $('fin-tarjeta').innerHTML =
     '<div class="retrato-grande" style="width:96px;height:96px"><img src="cuadros/cap2-allamano.jpg" alt=""></div>' +
-    `<h1>${ultimo ? '¡La luz venció!' : '¡Nivel superado!'}</h1>` +
-    `<p>${ultimo ? 'Lucifer fue vencido y todos los Sagrarios brillan de nuevo.' : 'Los demonios fueron vencidos y el Sagrario quedó abierto.'}</p>` +
+    `<h1>${ultimo ? '¡La luz venció!' : cfgNivel.jefe ? '¡Lucifer huyó herido!' : '¡Nivel superado!'}</h1>` +
+    `<p>${ultimo ? 'San Miguel y el misionero vencieron al dragón: todos los Sagrarios brillan de nuevo.' : cfgNivel.jefe ? 'Lucifer escapó a lo más hondo del abismo y sus demonios se esconden en nuevos lugares. Empieza la segunda parte.' : 'Los demonios fueron vencidos y el Sagrario quedó abierto.'}</p>` +
     `<div class="stats"><div>Tiempo <b>${fmtT(stats.tiempo)}</b></div><div>Precisión <b>${precision}%</b></div><div>Daño recibido <b>${Math.round(stats.danoRecibido)}</b></div><div>Puntos <b>+${stats.puntos}</b></div></div>` +
     `<p>★ Total: ${S.puntos} puntos misioneros</p>` +
     `<div class="lista" style="text-align:center"><p>«${v[0]}»<br><span class="pequeno">${v[1]}</span></p></div>` +
@@ -2828,6 +3068,7 @@ function nivelSuperado() {
   const b1 = $('b-siguiente'); if (b1) b1.onclick = () => empezar(nivel + 1, true);
   const b2 = $('b-reiniciar'); if (b2) b2.onclick = () => empezar(0, false);
   $('b-menu2').onclick = volverMenu;
+  if (MP) botonesFinMP(ultimo ? 0 : nivel + 1, !ultimo);
 }
 function perder() {
   estado = 'fin';
@@ -2843,22 +3084,23 @@ function perder() {
   $('hud').classList.remove('on');
   $('b-reintentar').onclick = () => empezar(n, false);
   $('b-menu3').onclick = volverMenu;
+  if (MP) botonesFinMP(n, false);
 }
 const CONTROLES = {
-  tactil: ['<b>Mover:</b> toca y arrastra en la mitad izquierda. Empuja hasta el borde para <b>correr</b>.', '<b>Mirar:</b> arrastra en la mitad derecha. Un toque rápido <b>bendice</b>.', '<b>BENDECIR</b> (botón grande) dispara el arma; <b>ARMA</b> la cambia.', '<b>ROSARIO:</b> mantenlo para alzarlo. Los demonios gritan y huyen… no siempre: depende de tu <b>fe</b>.', '<b>EMPUJAR</b> aparta al demonio que tienes encima; <b>ESQUIVAR</b> da un salto rápido; <b>ESCUDO</b> te protege y devuelve ataques.', '<b>SÚPER</b> se carga venciendo 3 demonios.'],
-  pc: ['<b>Mover:</b> W A S D o flechas · <b>Correr:</b> Mayúscula izquierda (gasta aliento).', '<b>Mirar:</b> el ratón (haz clic en el juego para capturarlo) · <b>Bendecir:</b> clic izquierdo o Espacio.', '<b>Rosario:</b> mantén el clic derecho o G. Los demonios gritan y huyen… no siempre: depende de tu <b>fe</b>.', '<b>E</b> esquivar · <b>F</b> escudo · <b>V</b> empujar · <b>R</b> súper · <b>1-4</b>, <b>Q</b> o la rueda: armas.', '<b>Esc</b> o <b>P</b> pausa · <b>H</b> muestra u oculta la ayuda de teclas.']
+  get pc() { return [`<b>Mover:</b> ${teclasTxt('adelante')} · ${teclasTxt('atras')} · ${teclasTxt('izquierda')} · ${teclasTxt('derecha')} · <b>Correr:</b> ${teclasTxt('correr')} (gasta aliento).`, `<b>Mirar:</b> el ratón (haz clic en el juego para capturarlo) · <b>Bendecir:</b> clic izquierdo o ${teclasTxt('bendecir')}.`, `<b>Rosario:</b> mantén el clic derecho o ${teclasTxt('rosario')}. Los demonios gritan y huyen… no siempre: depende de tu <b>fe</b>.`, `<b>${teclasTxt('esquivar')}</b> esquivar · <b>${teclasTxt('escudo')}</b> escudo · <b>${teclasTxt('empujar')}</b> empujar · <b>${teclasTxt('super')}</b> súper · <b>1-4</b>, <b>${teclasTxt('arma')}</b> o la rueda: armas.`, `<b>${teclasTxt('pausa')}</b> pausa · <b>H</b> muestra u oculta la ayuda de teclas. Cambia las teclas en <b>⚙ Controles</b>.`]; },
+  tactil: ['<b>Mover:</b> toca y arrastra en la mitad izquierda (la derecha si elegiste «zurdo»). Empuja hasta el borde para <b>correr</b>.', '<b>Mirar:</b> arrastra en la mitad derecha. Un toque rápido <b>bendice</b>.', '<b>BENDECIR</b> (botón grande) dispara el arma; <b>ARMA</b> la cambia.', '<b>ROSARIO:</b> mantenlo para alzarlo. Los demonios gritan y huyen… no siempre: depende de tu <b>fe</b>.', '<b>EMPUJAR</b> aparta al demonio que tienes encima; <b>ESQUIVAR</b> da un salto rápido; <b>ESCUDO</b> te protege y devuelve ataques.', '<b>SÚPER</b> se carga venciendo 3 demonios.', 'En <b>⚙ Controles</b> puedes mover los botones, cambiar su tamaño y elegir el joystick.'],
 };
 function pintarControles() {
   const lista = (tactil ? CONTROLES.tactil : CONTROLES.pc).concat(['Las puertas se abren al acercarte. La puerta dorada del Sagrario necesita la <b>llave dorada</b>.']).map((t) => '<p>• ' + t + '</p>').join('');
   $('m-controles').innerHTML = lista; $('pausa-controles').innerHTML = lista;
+  $('teclas-pc').innerHTML = `<b>Controles</b> <kbd>${teclasTxt('adelante')}</kbd> <kbd>${teclasTxt('izquierda')}</kbd> <kbd>${teclasTxt('atras')}</kbd> <kbd>${teclasTxt('derecha')}</kbd> mover · <kbd>Ratón</kbd> mirar · <kbd>Clic</kbd> bendecir · <kbd>Clic der.</kbd>/<kbd>${teclasTxt('rosario')}</kbd> rosario · <kbd>${teclasTxt('correr')}</kbd> correr · <kbd>${teclasTxt('esquivar')}</kbd> esquivar · <kbd>${teclasTxt('escudo')}</kbd> escudo · <kbd>${teclasTxt('empujar')}</kbd> empujar · <kbd>${teclasTxt('super')}</kbd> súper · <kbd>1-4</kbd> armas · <kbd>${teclasTxt('pausa')}</kbd> pausa · <kbd>H</kbd> ocultar`;
 }
 function pintarMenu() {
   pintarControles();
-  $('m-sens').value = S.sens || 1; $('m-sens-v').textContent = '×' + Number(S.sens || 1).toFixed(1);
   dificultadElegida = S.dificultad;
   nivelElegido = Math.min(nivelElegido, S.mejorNivel, NIVELES.length - 1);
   $('m-dific').innerHTML = Object.entries(DIFICULTADES).map(([k, d]) => `<button type="button" data-dif="${k}" aria-pressed="${k === S.dificultad}">${d.nombre}<small>${d.desc}</small></button>`).join('');
-  $('m-niveles').innerHTML = NIVELES.map((c, i) => `<button type="button" data-niv="${i}" title="${c.nombre}" aria-pressed="${i === nivelElegido}"${i > S.mejorNivel ? ' disabled' : ''}>${i + 1}</button>`).join('');
+  $('m-niveles').innerHTML = NIVELES.map((c, i) => (c.parte === 2 ? '<div class="parte">Segunda parte</div>' : '') + `<button type="button" data-niv="${i}" title="${c.nombre}" aria-pressed="${i === nivelElegido}"${i > S.mejorNivel ? ' disabled' : ''}>${i + 1}</button>`).join('');
   $('m-mejor').textContent = (S.mejorNivel ? `Niveles superados: ${S.mejorNivel} de ${NIVELES.length} · ` : '') + `★ ${S.puntos} puntos misioneros`;
   const don = donesDe(S.puntos), sig = DONES[don.n];
   $('m-dones').innerHTML = `<p class="pequeno">Con tus puntos misioneros recibes dones que te hacen más fuerte.</p><div class="dones-lista">${DONES.map((d) => `<span class="${S.puntos >= d.p ? 'ya' : ''}" title="${d.d}">${S.puntos >= d.p ? '✦' : '○'} ${d.n}<small>${S.puntos >= d.p ? d.d : '★ ' + d.p}</small></span>`).join('')}</div>` + (sig ? `<div class="barra-don"><i style="width:${Math.min(100, S.puntos / sig.p * 100).toFixed(1)}%"></i></div><p class="pequeno">Faltan ${sig.p - S.puntos} ★ para ${sig.n}</p>` : '<p class="pequeno">¡Tienes todos los dones!</p>');
@@ -2909,21 +3151,22 @@ function pintarBestiario() {
 
 /* ---------- Controles ---------- */
 addEventListener('keydown', (e) => {
+  if (escuchaTecla) return; // el editor de controles está esperando una tecla
   teclas[e.code] = true;
-  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code) || (estado === 'jugando' && ACCIONES.some((a) => esTecla(a[0], e.code)))) e.preventDefault();
   if (e.repeat) return;
   if (estado === 'jugando') {
-    if (e.code === 'KeyR') superPoder();
-    if (e.code === 'Space') fuego = true;
-    if (/^Digit[1-4]$/.test(e.code)) cambiarArma(ARMAS[Number(e.code.slice(5)) - 1].id);
-    if (e.code === 'KeyQ') siguienteArma(1);
-    if (e.code === 'KeyE' || e.code === 'ShiftRight') pedirEsquivar = true;
-    if (e.code === 'KeyF') pedirFe = true;
-    if (e.code === 'KeyV') empujar();
+    if (esTecla('super', e.code)) superPoder();
+    if (esTecla('bendecir', e.code)) fuego = true;
+    if (/^Digit[1-4]$/.test(e.code) && !ACCIONES.some((a) => S.teclas[a[0]] && S.teclas[a[0]].includes(e.code))) cambiarArma(ARMAS[Number(e.code.slice(5)) - 1].id);
+    if (esTecla('arma', e.code)) siguienteArma(1);
+    if (esTecla('esquivar', e.code)) pedirEsquivar = true;
+    if (esTecla('escudo', e.code)) pedirFe = true;
+    if (esTecla('empujar', e.code)) empujar();
   }
-  if (e.code === 'Escape' || e.code === 'KeyP') { if (estado === 'jugando') pausar(); else if (estado === 'pausa') seguir(); }
+  if (esTecla('pausa', e.code) || e.code === 'Escape') { if (estado === 'jugando' && !menuMP) pausar(); else if (estado === 'pausa' || menuMP) seguir(); }
 });
-addEventListener('keyup', (e) => { teclas[e.code] = false; if (e.code === 'Space') fuego = false; });
+addEventListener('keyup', (e) => { teclas[e.code] = false; if (esTecla('bendecir', e.code)) fuego = false; });
 addEventListener('blur', () => { for (const k in teclas) teclas[k] = false; fuego = false; mouseDown = false; alzarRaton = false; pausar(); });
 addEventListener('wheel', (e) => { if (estado === 'jugando') siguienteArma(e.deltaY > 0 ? 1 : -1); }, { passive: true });
 cv.addEventListener('pointerdown', (e) => {
@@ -2933,36 +3176,40 @@ cv.addEventListener('pointerdown', (e) => {
     if (document.pointerLockElement !== cv) { try { cv.requestPointerLock(); } catch (x) { /* sin bloqueo */ } }
     return;
   }
-  const izquierda = e.clientX < innerWidth / 2;
-  if (izquierda && !joy.activo) {
-    joy = { activo: true, id: e.pointerId, ox: e.clientX, oy: e.clientY, dx: 0, dy: 0 };
-    const k = $('joy'); k.style.left = (e.clientX - 65) + 'px'; k.style.top = (e.clientY - 65) + 'px';
+  const ladoMover = S.controles.zurdo ? e.clientX > innerWidth / 2 : e.clientX < innerWidth / 2;
+  if (ladoMover && !joy.activo) {
+    const [ox, oy] = S.controles.joyFijo ? centroJoy() : [e.clientX, e.clientY];
+    joy = { activo: true, id: e.pointerId, ox, oy, dx: 0, dy: 0 };
+    const k = $('joy'), r = tamJoy() / 2; k.style.left = (ox - r) + 'px'; k.style.top = (oy - r) + 'px';
     k.classList.add('on');
-  } else if (!izquierda && mirada.id < 0) {
+    if (S.controles.joyFijo) moverJoy(e.clientX, e.clientY);
+  } else if (!ladoMover && mirada.id < 0) {
     mirada = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), movido: 0 };
   }
   try { cv.setPointerCapture(e.pointerId); } catch (x) { /* nada */ }
 });
 cv.addEventListener('pointermove', (e) => {
-  if (e.pointerType === 'mouse') { if (document.pointerLockElement === cv && estado === 'jugando') { J.a += e.movementX * 0.0026 * (S.sens || 1); J.pitch = clamp(J.pitch - e.movementY * 0.0024 * (S.sens || 1), -0.75, 0.75); } return; }
-  if (joy.activo && e.pointerId === joy.id) {
-    let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy;
-    const d = Math.hypot(dx, dy), max = 50;
-    if (d > max) { dx = dx / d * max; dy = dy / d * max; }
-    joy.dx = dx / max; joy.dy = dy / max; $('joy-guia').classList.remove('on');
-    $('joy-k').style.transform = `translate(${dx}px,${dy}px)`;
-  }
+  const invY = S.controles.invertirY ? -1 : 1;
+  if (e.pointerType === 'mouse') { if (document.pointerLockElement === cv && estado === 'jugando') { J.a += e.movementX * 0.0026 * (S.sens || 1); J.pitch = clamp(J.pitch - e.movementY * 0.0024 * (S.sens || 1) * invY, -0.75, 0.75); } return; }
+  if (joy.activo && e.pointerId === joy.id) moverJoy(e.clientX, e.clientY);
   if (mirada.id === e.pointerId) {
     const dx = e.clientX - mirada.x, dy = e.clientY - mirada.y;
     mirada.x = e.clientX; mirada.y = e.clientY; mirada.movido += Math.abs(dx) + Math.abs(dy);
-    if (estado === 'jugando') { J.a += dx * 0.0062 * (S.sens || 1); J.pitch = clamp(J.pitch - dy * 0.005 * (S.sens || 1), -0.75, 0.75); $('mira-guia').classList.remove('on'); }
+    if (estado === 'jugando') { J.a += dx * 0.0062 * (S.sens || 1); J.pitch = clamp(J.pitch - dy * 0.005 * (S.sens || 1) * invY, -0.75, 0.75); $('mira-guia').classList.remove('on'); }
   }
 });
+function moverJoy(px, py) {
+  let dx = px - joy.ox, dy = py - joy.oy;
+  const d = Math.hypot(dx, dy), max = tamJoy() * 0.385;
+  if (d > max) { dx = dx / d * max; dy = dy / d * max; }
+  joy.dx = dx / max; joy.dy = dy / max; $('joy-guia').classList.remove('on');
+  $('joy-k').style.transform = `translate(${dx}px,${dy}px)`;
+}
 function soltar(e) {
   if (e.pointerType === 'mouse') { if (e.button !== 2) mouseDown = false; return; }
-  if (joy.activo && e.pointerId === joy.id) { joy = { activo: false, id: -1, ox: 0, oy: 0, dx: 0, dy: 0 }; $('joy').classList.remove('on'); $('joy-k').style.transform = ''; }
+  if (joy.activo && e.pointerId === joy.id) { joy = { activo: false, id: -1, ox: 0, oy: 0, dx: 0, dy: 0 }; if (!S.controles.joyFijo) $('joy').classList.remove('on'); $('joy-k').style.transform = ''; }
   if (mirada.id === e.pointerId) {
-    if (mirada.movido < 8 && performance.now() - mirada.t < 260) disparar();
+    if (S.controles.tocarBendice && mirada.movido < 8 && performance.now() - mirada.t < 260) disparar();
     mirada = { id: -1, x: 0, y: 0, t: 0, movido: 0 };
   }
 }
@@ -2988,10 +3235,12 @@ $('b-super').addEventListener('click', superPoder);
 for (const [id, fn] of [['b-esquivar', () => { pedirEsquivar = true; }], ['b-fe', () => { pedirFe = true; }]]) $(id).addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); fn(); });
 $('b-pausa').addEventListener('click', pausar);
 $('b-seguir').addEventListener('click', seguir);
-$('b-salir').addEventListener('click', volverMenu);
-$('b-jugar').addEventListener('click', () => empezar(nivelElegido, false));
-$('m-sens').addEventListener('input', (e) => { S.sens = Number(e.target.value); $('m-sens-v').textContent = '×' + S.sens.toFixed(1); guardar(); });
+$('b-salir').addEventListener('click', () => (MP ? salirMP() : volverMenu()));
+$('b-jugar').addEventListener('click', () => { pantallaCompleta(); empezar(nivelElegido, false); });
+$('b-controles').addEventListener('click', () => abrirEditor('menu'));
+$('b-controles2').addEventListener('click', () => abrirEditor('pausa'));
 document.body.classList.toggle('tactil', tactil);
+document.body.classList.toggle('en-juma', window.parent !== window);
 // Ayuda de teclas (H) y aviso para capturar el ratón en la computadora
 addEventListener('keydown', (e) => { if (e.code === 'KeyH' && !e.repeat) $('teclas-pc').classList.toggle('oculta'); });
 setInterval(() => { $('clic-captura').classList.toggle('on', estado === 'jugando' && !tactil && document.pointerLockElement !== cv && !SIN_PAUSA); }, 250);
@@ -2999,14 +3248,578 @@ $('m-dific').addEventListener('click', (e) => { const b = e.target.closest('[dat
 $('m-niveles').addEventListener('click', (e) => { const b = e.target.closest('[data-niv]'); if (!b || b.disabled) return; nivelElegido = Number(b.dataset.niv); pintarMenu(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) pausar(); });
 
+/* =====================================================================
+   Juego conectado: hasta 4 misioneros juntos en la misma wifi
+   - El anfitrión mueve a los demonios, decide los golpes y reparte los puntos.
+   - Cada jugador mueve a su misionero y lo cuenta 15 veces por segundo.
+   - Todos generan el mismo lugar con la misma semilla.
+   ===================================================================== */
+const COLORES_JUG = ['#ffd25a', '#6fd3ff', '#ff8a8a', '#9dff8a', '#d59bff', '#ffb36b'];
+const ESTADOS_E = ['dormido', 'caza', 'dolor', 'repelido', 'drenando', 'preparando', 'embestida', 'muerto'];
+const ESPECIALES_E = [null, 'baba', 'salto', 'temblor', 'robo', 'teletransporte', 'sopor', 'sombra', 'meteoros', 'espinas', 'drenar', 'tinieblas', 'encanto', 'ilusiones', 'enjambre', 'vomito'];
+const SND_RED = ['disparoEnemigo', 'gruñido', 'dolor', 'grito', 'baba', 'temblor', 'robo', 'teletransporte'];
+for (const k of SND_RED) { const f = SND[k]; SND[k] = (...a) => { f(...a); if (MP && MP.anfitrion && MP.enJuego) MP.red.enviar({ t: 'snd', k, a }); }; }
+function jugadorPorId(id) { if (!MP || id == null || id === MP.miId) return J; return MP.otros.get(id) || J; }
+function jugadoresGolpeables() {
+  if (!MP) return [J];
+  if (!MP.anfitrion) return J.caido ? [] : [J];
+  const l = J.caido ? [] : [J];
+  for (const q of MP.otros.values()) if (q.vivo) l.push(q);
+  return l;
+}
+function otroCerca(x, y, r) { if (!MP) return false; for (const q of MP.otros.values()) if (q.vivo && Math.hypot(q.x - x, q.y - y) < r) return true; return false; }
+/* Cada demonio persigue al misionero más cercano (los que no ve cuentan como más lejos) */
+function objetivoDe(e, dt) {
+  e.objT = (e.objT || 0) - dt;
+  if (e.obj && e.objT > 0 && (e.obj === J ? !J.caido : e.obj.vivo && MP.otros.get(e.obj.id) === e.obj)) return e.obj;
+  let mejor = null, md = 1e9;
+  const cand = J.caido ? [] : [J];
+  for (const q of MP.otros.values()) if (q.vivo) cand.push(q);
+  for (const q of cand) { let d = Math.hypot(q.x - e.x, q.y - e.y); if (!visible(e.x, e.y, q.x, q.y)) d *= 1.7; if (d < md) { md = d; mejor = q; } }
+  e.obj = mejor || J; e.objT = 0.5 + Math.random() * 0.3;
+  return e.obj;
+}
+function avisoJ(txt) { if (J.remoto) { if (MP) MP.red.enviar({ t: 'aviso', txt }, { a: J.id }); } else aviso(txt); }
+function avisoTodos(txt) { aviso(txt); if (MP && MP.anfitrion) MP.red.enviar({ t: 'aviso', txt }); }
+function impulsoJugador(vx, vy) { if (J.remoto) { if (MP) MP.red.enviar({ t: 'imp', vx, vy }, { a: J.id }); } else { J.vx += vx; J.vy += vy; } }
+function empujeJugador(dx, dy) { if (J.remoto) { if (MP) MP.red.enviar({ t: 'emp', dx, dy }, { a: J.id }); } else mover(J, dx, dy, 0.22); }
+function lentoJugador(t) { if (J.remoto) { if (MP) MP.red.enviar({ t: 'lento', v: t }, { a: J.id }); } else J.lento = Math.max(J.lento, t); }
+function sufrirRobo(dano, ox, oy) {
+  const def = armaDef(J.arma);
+  if (def.mun && J.mun[def.mun] > 0) { const q = Math.ceil(J.mun[def.mun] * 0.3); J.mun[def.mun] -= q; aviso('¡La avaricia te robó ' + q + ' de munición!'); actualizarHud(); return q; }
+  danoJugador(dano, ox, oy); return 0;
+}
+function agregarEnemigo(n) {
+  enemigos.push(n);
+  if (MP && MP.anfitrion) MP.red.enviar({ t: 'E+', tipo: n.tipo, x: n.x, y: n.y, ilusion: !!n.ilusion, mayor: !!n.mayor, vida: n.vidaMax, ilusionT: n.ilusionT || 0 });
+}
+function agregarPickup(o) { pickups.push(o); if (MP && MP.anfitrion) MP.red.enviar({ t: 'P+', i: pickups.length - 1, tipo: o.tipo, x: o.x, y: o.y }); }
+let SPR_NOMBRE = null;
+function nombreSpr(spr) {
+  if (!SPR_NOMBRE) { SPR_NOMBRE = new Map(); for (const [k, v] of Object.entries(SPR)) if (k !== 'p') SPR_NOMBRE.set(v, k); for (const [k, v] of Object.entries(SPR.p)) SPR_NOMBRE.set(v, 'p.' + k); }
+  return SPR_NOMBRE.get(spr) || 'oscuro';
+}
+const sprDeNombre = (n) => (n && n.startsWith('p.') ? SPR.p[n.slice(2)] : SPR[n]) || SPR.oscuro;
+const r3 = (v) => Math.round((v || 0) * 1000) / 1000;
+function proyectilARed(b) { return { x: r3(b.x), y: r3(b.y), z: r3(b.z), vx: r3(b.vx), vy: r3(b.vy), vz: r3(b.vz), g: b.g || 0, vida: b.vida, s: nombreSpr(b.spr), tam: b.tam, guia: b.guia || 0, estalla: b.estalla || 0, lento: b.lento || 0, luz: b.luz, obj: b.obj || null }; }
+function proyectilDeRed(m) { return { x: m.x, y: m.y, z: m.z, vx: m.vx, vy: m.vy, vz: m.vz, g: m.g, vida: m.vida, spr: sprDeNombre(m.s), tam: m.tam, guia: m.guia, estalla: m.estalla, lento: m.lento, luz: m.luz, obj: m.obj, mio: false, cosmetico: true, dano: 0 }; }
+
+/* ---- Figura 3D de los otros misioneros ---- */
+const GEO_FIG = (() => {
+  const sotana = new THREE.CylinderGeometry(0.11, 0.2, 0.62, 12); sotana.translate(0, 0.31, 0);
+  const capa = new THREE.CylinderGeometry(0.13, 0.17, 0.16, 12); capa.translate(0, 0.56, 0);
+  const cinto = new THREE.CylinderGeometry(0.135, 0.14, 0.035, 12); cinto.translate(0, 0.42, 0);
+  const cabeza = new THREE.SphereGeometry(0.085, 14, 10); cabeza.translate(0, 0.72, 0);
+  const pelo = new THREE.SphereGeometry(0.089, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.5); pelo.translate(0, 0.725, -0.008);
+  const aureola = new THREE.TorusGeometry(0.1, 0.012, 6, 24); aureola.rotateX(Math.PI / 2); aureola.translate(0, 0.87, 0);
+  const vara = new THREE.CylinderGeometry(0.012, 0.012, 0.36, 6); vara.rotateX(Math.PI / 2 - 0.5); vara.translate(0.16, 0.5, 0.14);
+  const bola = new THREE.SphereGeometry(0.035, 10, 8); bola.translate(0.16, 0.6, 0.3);
+  return { sotana, capa, cinto, cabeza, pelo, aureola, vara, bola };
+})();
+function etiquetaNombre(txt, color) {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+  const g = c.getContext('2d'); g.font = 'bold 30px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,.85)'; g.strokeText(txt, 128, 32); g.fillStyle = color; g.fillText(txt, 128, 32);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+  sp.scale.set(0.5, 0.125, 1); sp.position.y = 1.0;
+  return sp;
+}
+function crearFigura(color, nombre) {
+  const g = new THREE.Group();
+  const col = new THREE.Color(color);
+  const negro = new THREE.MeshStandardMaterial({ color: 0x17141c, roughness: 0.85 });
+  const piel = new THREE.MeshStandardMaterial({ color: 0xd9b08c, roughness: 0.7 });
+  const brillo = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.9, roughness: 0.4 });
+  const oro = new THREE.MeshStandardMaterial({ color: 0xffe08a, emissive: 0xffc94a, emissiveIntensity: 1.6, roughness: 0.3, metalness: 0.4 });
+  const pelo = new THREE.MeshStandardMaterial({ color: 0xd8d4cc, roughness: 0.9 });
+  const madera = new THREE.MeshStandardMaterial({ color: 0x6a4424, roughness: 0.8 });
+  const plata = new THREE.MeshStandardMaterial({ color: 0xcfd8e0, roughness: 0.3, metalness: 0.8 });
+  for (const [geo, mat] of [[GEO_FIG.sotana, negro], [GEO_FIG.capa, negro], [GEO_FIG.cinto, brillo], [GEO_FIG.cabeza, piel], [GEO_FIG.pelo, pelo], [GEO_FIG.aureola, oro], [GEO_FIG.vara, madera], [GEO_FIG.bola, plata]]) g.add(new THREE.Mesh(geo, mat));
+  g.add(etiquetaNombre(nombre, color));
+  g.userData.mats = [negro, piel, brillo, oro, pelo, madera, plata];
+  escena3.add(g);
+  return g;
+}
+function quitarFigura(q) {
+  if (!q.figura) return;
+  escena3.remove(q.figura);
+  for (const m of q.figura.userData.mats) m.dispose();
+  q.figura.traverse((o) => { if (o.isSprite) { o.material.map.dispose(); o.material.dispose(); } });
+  q.figura = null;
+}
+function nuevoOtro(j) {
+  return { id: j.id, nombre: j.nombre, color: j.color, remoto: true, x: 0, y: 0, a: 0, pitch: 0, tx: 0, ty: 0, ta: 0, vida: 100, vivo: false, en: false, caido: false, fe: 100, al: false, feT: 0, invulT: 0, alzaK: 0, arma: 'hisopo', rosT: 0, vx: 0, vy: 0, sacudida: 0, lento: 0, mun: {}, armas: [], paso: 0, visto: 0, figura: crearFigura(j.color, j.nombre) };
+}
+function actualizarFiguras(dt) {
+  for (const q of MP.otros.values()) {
+    const f = q.figura; if (!f) continue;
+    f.visible = q.en && (estado === 'jugando' || estado === 'cine');
+    if (!f.visible) continue;
+    const mov = Math.hypot(q.tx - q.x, q.ty - q.y);
+    q.paso += dt * Math.min(12, mov * 40);
+    f.position.set(q.x, q.caido ? 0.02 : Math.abs(Math.sin(q.paso)) * 0.025, q.y);
+    f.rotation.set(q.caido ? -1.45 : 0, Math.atan2(Math.cos(q.a), Math.sin(q.a)), 0);
+  }
+}
+function colocarEnInicio(q, k) {
+  const OFFS = [[0, 0], [0.8, 0], [0, 0.8], [-0.8, 0], [0, -0.8], [0.8, 0.8]];
+  const ini = salas[0], [ox, oy] = OFFS[Math.max(0, k) % OFFS.length];
+  const x = ini.cx + 0.5 + ox, y = ini.cy + 0.5 + oy;
+  if (!solidoCelda(x, y)) { q.x = x; q.y = y; }
+}
+
+/* ---- Sala, inicio de cada nivel y salida ---- */
+function abrirAmigos() {
+  if (MP && MP.sala) { MP.sala.mostrar(); return; }
+  const sala = abrirSala({
+    juego: 'luz', titulo: 'Luz contra el pecado · con amigos', acento: '#ffd25a', max: 4,
+    textoEmpezar: 'EMPEZAR LA MISIÓN', textoEspera: 'Esperando a que el anfitrión empiece la misión…',
+    opciones: (el) => pintarOpcionesMP(el),
+    alEmpezar: () => empezarMP(nivelElegido, false),
+    alSalir: () => terminarMP()
+  });
+  const red = sala.red;
+  MP = { red, sala, otros: new Map(), enJuego: false, superado: false, envioT: 0, enemT: 0, listaT: 0, get anfitrion() { return red.esAnfitrion; }, get miId() { return red.miId; } };
+  red.on('mensaje', alMensajeMP);
+  red.on('sale', (j) => { const q = MP && MP.otros.get(j.id); if (q) { quitarFigura(q); MP.otros.delete(j.id); if (MP.enJuego) aviso(j.nombre + ' salió de la partida'); } });
+  red.on('cerrada', (motivo) => { if (MP && MP.enJuego) salirMP(motivo); });
+}
+function pintarOpcionesMP(el) {
+  const niv = NIVELES.map((c, i) => `<option value="${i}"${i === nivelElegido ? ' selected' : ''}${i > S.mejorNivel ? ' disabled' : ''}>${i + 1}. ${c.nombre}</option>`).join('');
+  const dif = Object.entries(DIFICULTADES).map(([k, d]) => `<option value="${k}"${k === S.dificultad ? ' selected' : ''}>${d.nombre}</option>`).join('');
+  el.innerHTML = `<div class="opc-mp"><label>Lugar <select data-mp="nivel">${niv}</select></label><label>Dificultad <select data-mp="dif">${dif}</select></label></div>`;
+  el.onchange = (e) => { const t = e.target; if (t.dataset.mp === 'nivel') nivelElegido = Number(t.value); else if (t.dataset.mp === 'dif') { S.dificultad = t.value; guardar(); } };
+}
+function empezarMP(n, conservar) {
+  if (!MP || !MP.anfitrion) return;
+  const jugadores = MP.red.jugadores.map((j, i) => ({ id: j.id, nombre: j.nombre, color: COLORES_JUG[i % COLORES_JUG.length] }));
+  const m = { t: 'nivel', n, semilla: (Math.random() * 2147483647) | 0, dif: S.dificultad, jugadores, conservar: !!conservar };
+  MP.red.abrirEntrada(false);
+  MP.red.enviar(m);
+  iniciarNivelMP(m);
+}
+function iniciarNivelMP(m) {
+  MP.sala.ocultar();
+  MP.enJuego = true; MP.superado = false; menuMP = false;
+  DIF = DIFICULTADES[m.dif] || DIFICULTADES.misionero;
+  for (const q of MP.otros.values()) quitarFigura(q);
+  MP.otros = new Map();
+  for (const j of m.jugadores) if (j.id !== MP.miId) MP.otros.set(j.id, nuevoOtro(j));
+  const conservar = m.conservar && J && !J.caido;
+  prepararNivel(m.n, conservar, m.semilla);
+  J.id = MP.miId; J.caido = false;
+  colocarEnInicio(J, m.jugadores.findIndex((j) => j.id === MP.miId));
+  for (const q of MP.otros.values()) { colocarEnInicio(q, m.jugadores.findIndex((j) => j.id === q.id)); q.tx = q.x; q.ty = q.y; }
+  estado = 'intro';
+  $('menu').hidden = true; $('fin').hidden = true; $('pausa').hidden = true; $('caido').hidden = true;
+  $('hud').classList.remove('on');
+  $('mp-lista').hidden = false;
+  mostrarIntro(m.n);
+}
+/* Si el aviso del final llega durante la presentación del nivel, se cierra antes */
+function prepararFinMP() {
+  if (estado === 'cine') terminarCine();
+  if (estado === 'intro') { $('intro').hidden = true; estado = 'jugando'; }
+  menuMP = false; $('pausa').hidden = true;
+  return estado === 'jugando';
+}
+function superadoMP() {
+  if (!MP || MP.superado || estado !== 'jugando') return;
+  MP.superado = true;
+  MP.red.enviar({ t: 'superado' });
+  nivelSuperado();
+}
+/* Botones del final del nivel: el anfitrión elige cómo seguir; los demás esperan */
+function botonesFinMP(siguiente, conservar) {
+  const t = $('fin-tarjeta');
+  for (const b of t.querySelectorAll('.boton')) b.remove();
+  if (MP.anfitrion) {
+    t.insertAdjacentHTML('beforeend', `<button class="boton" type="button" id="b-mp-seguir">${conservar ? 'SIGUIENTE NIVEL' : siguiente === nivel ? 'REINTENTAR EL NIVEL' : 'JUGAR DE NUEVO'}</button><button class="boton sec" type="button" id="b-mp-sala">Volver a la sala</button><button class="boton sec" type="button" id="b-mp-salir">Salir de la sala</button>`);
+    $('b-mp-seguir').onclick = () => empezarMP(siguiente, conservar);
+    $('b-mp-sala').onclick = () => { MP.red.enviar({ t: 'sala' }); volverSalaMP(); };
+  } else {
+    t.insertAdjacentHTML('beforeend', `<p class="nota-mp">Esperando a que el anfitrión siga…</p><button class="boton sec" type="button" id="b-mp-salir">Salir de la sala</button>`);
+  }
+  $('b-mp-salir').onclick = () => salirMP();
+}
+function volverSalaMP() {
+  MP.enJuego = false;
+  for (const q of MP.otros.values()) quitarFigura(q);
+  MP.otros = new Map();
+  volverMenu();
+  if (MP.anfitrion) MP.red.abrirEntrada(true);
+  MP.sala.mostrar();
+}
+function salirMP(motivo) {
+  if (!MP) return;
+  const sala = MP.sala;
+  MP.red.cerrar();
+  terminarMP();
+  volverMenu();
+  if (motivo) { abrirAmigos(); MP.sala.error(motivo); }
+  void sala;
+}
+function terminarMP() {
+  if (!MP) return;
+  for (const q of MP.otros.values()) quitarFigura(q);
+  try { MP.sala.destruir(); } catch (e) { /* ya no estaba */ }
+  MP = null; menuMP = false;
+  if (J) { J.caido = false; delete J.id; }
+  $('mp-lista').hidden = true; $('caido').hidden = true;
+}
+/* Caer en el juego conectado: no se pierde el nivel, el misionero se levanta a los pocos segundos */
+function caer() {
+  if (!MP) return perder();
+  if (J.caido) return;
+  J.caido = true; J.vida = 0; J.caidoT = 7; fuego = false; mouseDown = false; J.alzaK = 0;
+  SND.derrota(); JS.vibrar([60, 40, 120]);
+  MP.red.enviar({ t: 'caido' });
+  $('caido').hidden = false;
+}
+function levantarse() {
+  J.caido = false; J.vida = Math.round(DON.vida * 0.6); J.invulT = 2.5; J.fe = 100;
+  colocarEnInicio(J, 0);
+  $('caido').hidden = true;
+  aviso('¡De pie, misionero! Vuelve a la lucha');
+  JS.coro([523.25, 659.25, 783.99], 1.2, 0.1, { at: 0.05 });
+  actualizarHud();
+}
+
+/* ---- Cada cuadro: contar dónde estoy, mover a los demás y (anfitrión) contar a los demonios ---- */
+function pasoRed(dt) {
+  MP.envioT -= dt;
+  if (MP.envioT <= 0) {
+    MP.envioT = 1 / 15;
+    MP.red.enviar({ t: 'J', x: r3(J.x), y: r3(J.y), a: r3(J.a), p: r3(J.pitch), v: Math.ceil(J.vida), en: estado === 'jugando', c: !!J.caido, fe: Math.round(J.fe), al: J.alzaK > 0.7, f: J.feT > 0 ? 1 : 0, ar: J.arma }, { rapido: true });
+  }
+  if (J.caido) {
+    J.caidoT -= dt;
+    $('caido-t').textContent = 'Vuelves a levantarte en ' + Math.max(1, Math.ceil(J.caidoT)) + ' s';
+    if (J.caidoT <= 0) levantarse();
+  }
+  const ahora = performance.now();
+  for (const q of MP.otros.values()) {
+    if (q.en && ahora - q.visto > 2500) q.vivo = false; // sin noticias: los demonios no lo persiguen
+    const k = Math.min(1, dt * 14);
+    if (Math.hypot(q.tx - q.x, q.ty - q.y) > 3) { q.x = q.tx; q.y = q.ty; } else { q.x += (q.tx - q.x) * k; q.y += (q.ty - q.y) * k; }
+    let da = q.ta - q.a; da = Math.atan2(Math.sin(da), Math.cos(da)); q.a += da * k;
+    if (MP.anfitrion && q.vivo && q.al) {
+      // El rosario alzado por otro jugador también espanta a los demonios
+      q.rosT -= dt;
+      if (q.rosT <= 0) { q.rosT = 0.4; const Jl = J; J = q; fxRed = true; try { rosarioEspanta(); } finally { fxRed = false; J = Jl; } }
+    }
+  }
+  if (MP.anfitrion) {
+    MP.enemT -= dt;
+    if (MP.enemT <= 0) {
+      MP.enemT = 1 / 12;
+      const l = [];
+      for (const e of enemigos) {
+        const f = (e.muerto ? 1 : 0) | (e.furia ? 2 : 0) | (e.mayor ? 4 : 0) | (e.flash > 0 ? 8 : 0) | (e.invisT > 0 ? 16 : 0) | ((e.rugido || 0) > 0 ? 32 : 0) | ((e.golpeT || 0) > 0 ? 64 : 0) | (e.ilusion ? 128 : 0);
+        l.push(Math.round(e.x * 100), Math.round(e.y * 100), Math.max(0, ESTADOS_E.indexOf(e.estado)), f, Math.round(clamp(e.vida / e.vidaMax, 0, 1) * 100), Math.max(0, ESPECIALES_E.indexOf(e.especial || null)));
+      }
+      MP.red.enviar({ t: 'E', s: sinPecados, tp: totalPecados, l }, { rapido: true });
+    }
+    // Si todos caen a la vez, se pierde el nivel
+    if (J.caido && MP.otros.size && Array.from(MP.otros.values()).every((q) => q.caido)) { MP.red.enviar({ t: 'derrota' }); perder(); }
+  }
+  MP.listaT -= dt;
+  if (MP.listaT <= 0) {
+    MP.listaT = 0.25;
+    const yo = MP.red.jugadores.find((j) => j.id === MP.miId);
+    $('mp-lista').innerHTML = [`<div class="${J.caido ? 'caido' : ''}"><i style="background:#fff"></i>${(yo && yo.nombre) || 'Tú'} (tú)<em>${Math.ceil(J.vida)}</em></div>`].concat(Array.from(MP.otros.values()).map((q) => `<div class="${q.caido ? 'caido' : ''}"><i style="background:${q.color}"></i>${q.nombre}<em>${q.en ? Math.ceil(q.vida) : '…'}</em></div>`)).join('');
+  }
+}
+/* Los invitados solo siguen a los demonios que mueve el anfitrión */
+function aplicarEnemigos(m) {
+  sinPecados = m.s; totalPecados = m.tp;
+  const l = m.l, n = Math.min(enemigos.length, Math.floor(l.length / 6));
+  for (let i = 0; i < n; i++) {
+    const e = enemigos[i], k = i * 6, f = l[k + 3];
+    e.tx = l[k] / 100; e.ty = l[k + 1] / 100;
+    const muerto = !!(f & 1);
+    if (muerto && !e.muerto) morirEnInvitado(e);
+    if (!muerto) {
+      e.estado = ESTADOS_E[l[k + 2]] || 'caza';
+      e.furia = !!(f & 2); e.mayor = !!(f & 4);
+      if (f & 8) e.flash = 0.12;
+      e.invisT = f & 16 ? 0.3 : 0;
+      if (f & 32) e.rugido = Math.max(e.rugido || 0, 0.3);
+      if (f & 64) e.golpeT = 0.2;
+      e.vida = l[k + 4] / 100 * e.vidaMax;
+      e.especial = ESPECIALES_E[l[k + 5]] || null;
+    }
+  }
+}
+function morirEnInvitado(e) {
+  e.muerto = true; e.muerteT = 0; e.estado = 'muerto'; e.vida = 0;
+  explotar(e.x, e.y, 'oro', e.tipo === 'tentador' ? 80 : 26, 0.45);
+  explotar(e.x, e.y, 'azul', e.tipo === 'tentador' ? 40 : 12, 0.6);
+  SND.muerte(e.x, e.y);
+  destellos.push({ x: e.x, y: e.y, t: 0.6, max: 0.6, r: 1, g: 0.45, b: 0.15, rad: 4.5, int: e.tipo === 'tentador' ? 5 : 3 });
+  if (e.tipo === 'tentador') $('jefe').hidden = true;
+}
+function seguirEnemigos(dt) {
+  for (const e of enemigos) {
+    e.flash = Math.max(0, e.flash - dt); e.golpeT = Math.max(0, (e.golpeT || 0) - dt); e.rugido = Math.max(0, (e.rugido || 0) - dt); e.invisT = Math.max(0, (e.invisT || 0) - dt);
+    if (e.muerto) { e.muerteT += dt; continue; }
+    if (e.tx !== undefined) {
+      const dx = e.tx - e.x, dy = e.ty - e.y, d = Math.hypot(dx, dy);
+      if (d > 3) { e.x = e.tx; e.y = e.ty; } else { const k = Math.min(1, dt * 12); e.x += dx * k; e.y += dy * k; }
+      if (d > 0.02) { e.dashX = dx / d; e.dashY = dy / d; }
+      e.fase += dt * (1 + Math.min(3, d * 8));
+    }
+    e.t = Math.max(0, (e.t || 0) - dt);
+    const d = Math.hypot(e.x - J.x, e.y - J.y);
+    if (d < 14 && tiempoJuego - e.ultimoVisto > 0.3 && visible(e.x, e.y, J.x, J.y)) e.ultimoVisto = tiempoJuego;
+  }
+}
+function alMensajeMP(m, de) {
+  if (!MP || !m) return;
+  switch (m.t) {
+    case 'nivel': if (!MP.anfitrion) iniciarNivelMP(m); break;
+    case 'J': {
+      const q = MP.otros.get(de); if (!q) break;
+      const nuevo = !q.en && m.en;
+      q.tx = m.x; q.ty = m.y; q.ta = m.a; q.pitch = m.p; q.vida = m.v; q.en = !!m.en; q.caido = !!m.c; q.vivo = q.en && !q.caido;
+      q.fe = m.fe; q.al = !!m.al; q.feT = m.f ? 1 : 0; q.arma = m.ar; q.visto = performance.now();
+      if (nuevo) { q.x = q.tx; q.y = q.ty; q.a = q.ta; }
+      break;
+    }
+    case 'E': if (!MP.anfitrion) aplicarEnemigos(m); break;
+    case 'E+': if (!MP.anfitrion) { prepararDemonio(m.tipo); const n = crearEnemigo(m.tipo, m.x, m.y); n.ilusion = m.ilusion; n.mayor = m.mayor; n.vida = n.vidaMax = m.vida; n.ilusionT = m.ilusionT; n.estado = 'caza'; enemigos.push(n); } break;
+    case 'P+': if (!MP.anfitrion) pickups[m.i] = { tipo: m.tipo, x: m.x, y: m.y, ya: false }; break;
+    case 'P-': {
+      const o = pickups[m.i]; if (!o || o.ya) break;
+      o.ya = true;
+      const quien = m.quien ? (MP.otros.get(m.quien) || {}).nombre : null;
+      if (o.tipo === 'llave') { llave = true; aviso((quien || 'Alguien') + ' encontró la llave dorada'); }
+      else if (['rosario', 'cruz', 'incensario'].includes(o.tipo) && !J.armas.includes(o.tipo)) {
+        J.armas.push(o.tipo);
+        const mun = { rosario: ['cuentas', 80], cruz: ['luz', 12], incensario: ['incienso', 8] }[o.tipo];
+        J.mun[mun[0]] = Math.min(MUN_MAX[mun[0]], (J.mun[mun[0]] || 0) + mun[1]);
+        aviso((quien || 'Alguien') + ' encontró un arma nueva: ¡también es tuya!'); SND.arma(); actualizarHud();
+      }
+      break;
+    }
+    case 'disp':
+      if (MP.anfitrion) { const q = MP.otros.get(de); crearDisparo(m, { cosmetico: false, de }); if (q) { q.x = m.x; q.y = m.y; } ruidoDisparo(); }
+      else if (de !== MP.miId) crearDisparo(m, { cosmetico: true, de });
+      break;
+    case 'acc': {
+      if (!MP.anfitrion) break;
+      const q = MP.otros.get(de); if (!q) break;
+      q.x = m.x; q.y = m.y; q.a = m.a;
+      fxRed = true;
+      try { if (m.k === 'empujar') empujarEnemigos(q); else if (m.k === 'super') superEnemigos(q); } finally { fxRed = false; }
+      break;
+    }
+    case 'golpe':
+      if (estado !== 'jugando' || J.caido) break;
+      if (m.suave) { if (J.feT > 0 || J.invulT > 0) break; J.vida = Math.max(0, J.vida - m.d); hurtT = Math.max(hurtT, 0.12); if (J.vida <= 0) caer(); actualizarHud(); }
+      else danoJugador(m.d, m.ox, m.oy);
+      break;
+    case 'imp': if (!J.caido) { J.vx += m.vx; J.vy += m.vy; } break;
+    case 'emp': if (!J.caido) mover(J, m.dx, m.dy, 0.22); break;
+    case 'lento': J.lento = Math.max(J.lento, m.v); break;
+    case 'sopor': if (!J.caido) { J.lento = Math.max(J.lento, 3); soporT = 3; aviso('Belfegor te llena de sopor…'); } break;
+    case 'encanto': if (!J.caido && enemigos[m.e]) { J.encantoT = 1.7; J.encantoDe = enemigos[m.e]; aviso('Asmodeo te hechiza… ¡alza el rosario!'); } break;
+    case 'robo': if (estado === 'jugando' && !J.caido) sufrirRobo(m.d, m.ox, m.oy); break;
+    case 'susto': {
+      const e = enemigos[m.e]; if (!e || estado !== 'jugando') break;
+      const v = $('miedo'); v.classList.remove('on'); void v.offsetWidth; v.classList.add('on');
+      J.sacudida = Math.max(J.sacudida, 0.45);
+      if (e.mayor) aviso('¡Un demonio mayor: ' + TIPOS[e.tipo].nombre + '!');
+      JS.vibrar([30, 40, 60]);
+      break;
+    }
+    case 'tinieblas': oscuridadT = 5.5; J.sacudida = Math.max(J.sacudida, 0.5); break;
+    case 'aviso': if (estado === 'jugando') aviso(m.txt); break;
+    case 'p': if (!MP.anfitrion) proyectiles.push(proyectilDeRed(m.b)); break;
+    case 'fx': if (!MP.anfitrion && estado === 'jugando') explotar(m.x, m.y, m.c, m.n, m.h); break;
+    case 'snd': if (!MP.anfitrion && estado === 'jugando' && SND[m.k]) SND[m.k](...(m.a || [])); break;
+    case 'mato':
+      if (m.poder) poder = Math.min(3, poder + 1);
+      if (stats) stats.puntos += m.pts;
+      S.puntos += m.pts; guardar(); actualizarHud();
+      break;
+    case 'altar': if (MP.anfitrion && sinPecados <= 0) superadoMP(); break;
+    case 'superado': if (!MP.anfitrion && prepararFinMP()) { MP.superado = true; nivelSuperado(); } break;
+    case 'derrota': if (!MP.anfitrion && prepararFinMP()) perder(); break;
+    case 'caido': { const q = MP.otros.get(de); if (q && estado === 'jugando') aviso(q.nombre + ' cayó: ¡protégelo!'); break; }
+    case 'sala': if (!MP.anfitrion) volverSalaMP(); break;
+  }
+}
+$('b-amigos').addEventListener('click', abrirAmigos);
+
+/* ---------- Controles táctiles: lugar y tamaño de cada botón ---------- */
+// Centro de cada botón medido desde la esquina inferior derecha, diámetro, letra e icono (en px, a escala 1)
+const BOT_DEF = { 'b-fuego': [48, 48, 96, 12, 28, 'BENDECIR'], 'b-rosario': [145, 41, 74, 10, 24, 'ROSARIO'], 'b-empujar': [122, 122, 60, 9, 20, 'EMPUJAR'], 'b-esquivar': [48, 140, 60, 9, 20, 'ESQUIVAR'], 'b-fe': [203, 109, 54, 9, 20, 'ESCUDO'], 'b-super': [181, 177, 54, 9, 20, 'SÚPER'], 'b-arma': [103, 197, 54, 9, 20, 'ARMA'], 'b-correr': [226, 36, 54, 9, 20, 'CORRER'] };
+const orientacion = () => (innerWidth > innerHeight ? 'h' : 'v');
+const escalaBase = () => clamp(Math.min(innerWidth, innerHeight) / 440, 0.72, 1.15);
+const tamJoy = () => Math.round(130 * S.controles.joyEscala * clamp(escalaBase(), 0.85, 1.1));
+function centroBoton(id) {
+  const C = S.controles, d = BOT_DEF[id], k = escalaBase() * C.escala, p = C.pos[orientacion()][id];
+  if (p) return [p[0] * innerWidth, p[1] * innerHeight];
+  const x = innerWidth - 12 - d[0] * k, y = innerHeight - 12 - d[1] * k;
+  return [C.zurdo ? innerWidth - x : x, y];
+}
+function centroJoy() {
+  const p = S.controles.pos[orientacion()].joy, r = tamJoy() / 2;
+  if (p) return [p[0] * innerWidth, p[1] * innerHeight];
+  const x = 24 + r;
+  return [S.controles.zurdo ? innerWidth - x : x, innerHeight - 24 - r];
+}
+function aplicarControles() {
+  const C = S.controles, k = escalaBase() * C.escala;
+  $('botones').style.setProperty('--op', C.opacidad);
+  for (const id in BOT_DEF) {
+    const b = $(id); if (!b) continue;
+    const d = BOT_DEF[id], t = k * (C.tam[id] || 1), diam = Math.round(d[2] * t);
+    const [cx, cy] = centroBoton(id);
+    const x = clamp(cx, diam / 2 + 2, innerWidth - diam / 2 - 2), y = clamp(cy, diam / 2 + 2, innerHeight - diam / 2 - 2);
+    Object.assign(b.style, { left: Math.round(x - diam / 2) + 'px', top: Math.round(y - diam / 2) + 'px', right: 'auto', bottom: 'auto', width: diam + 'px', height: diam + 'px', fontSize: (d[3] * t).toFixed(1) + 'px' });
+    const ic = b.querySelector('i'); if (ic) ic.style.fontSize = (d[4] * t).toFixed(1) + 'px';
+  }
+  $('b-correr').hidden = !C.correr;
+  const jd = tamJoy(), jk = $('joy');
+  jk.style.width = jk.style.height = jd + 'px';
+  jk.classList.toggle('fijo', !!C.joyFijo);
+  if (C.joyFijo && !joy.activo) { const [x, y] = centroJoy(); jk.style.left = (x - jd / 2) + 'px'; jk.style.top = (y - jd / 2) + 'px'; }
+  const g = $('joy-guia');
+  g.style.display = C.joyFijo ? 'none' : '';
+  g.style.left = C.zurdo ? 'auto' : ''; g.style.right = C.zurdo ? 'calc(env(safe-area-inset-right, 0px) + 18px)' : '';
+  const mg = $('mira-guia'); mg.style.right = C.zurdo ? 'auto' : ''; mg.style.left = C.zurdo ? '26px' : '';
+}
+/* Pantalla completa y en horizontal al empezar en el teléfono (si el navegador lo permite) */
+async function pantallaCompleta() {
+  if (!tactil || !S.controles.horizontal) return;
+  try {
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+    if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+  } catch (e) { /* el navegador no lo permite: se puede girar a mano */ }
+}
+
+/* ---------- Editor de controles ---------- */
+let escuchaTecla = null, editorDesde = 'menu', pestana = tactil ? 'tactil' : 'teclado', elegido = null, arrastre = null;
+function abrirEditor(desde) {
+  editorDesde = desde;
+  $('menu').hidden = true; $('pausa').hidden = true;
+  $('editor').hidden = false;
+  document.body.classList.add('editando');
+  pintarEditor();
+}
+function cerrarEditor() {
+  escuchaTecla = null; elegido = null; arrastre = null;
+  $('editor').hidden = true;
+  document.body.classList.remove('editando');
+  for (const b of document.querySelectorAll('.elegido')) b.classList.remove('elegido');
+  guardar(); pintarControles(); aplicarControles();
+  if (editorDesde === 'pausa' && (estado === 'pausa' || menuMP)) { $('pausa').hidden = false; }
+  else { $('hud').classList.remove('on'); $('botones').classList.remove('on'); $('joy').classList.remove('on'); $('menu').hidden = false; pintarMenu(); }
+}
+function vistaPrevia() {
+  // En la pestaña táctil se ven los botones de verdad, para moverlos con el dedo o el ratón
+  const ver = pestana === 'tactil';
+  $('hud').classList.toggle('on', ver || estado === 'pausa' || menuMP);
+  $('botones').classList.toggle('on', ver);
+  $('joy').classList.toggle('on', ver && S.controles.joyFijo);
+  $('joy-guia').classList.toggle('on', ver && !S.controles.joyFijo);
+  aplicarControles();
+}
+function filaRango(id, txt, min, max, paso, valor, fmt) { return `<div class="ed-fila"><label for="${id}">${txt}</label><input type="range" id="${id}" min="${min}" max="${max}" step="${paso}" value="${valor}"><output id="${id}-v">${fmt(valor)}</output></div>`; }
+function filaCheck(id, txt, v) { return `<div class="ed-fila"><label for="${id}">${txt}</label><input type="checkbox" id="${id}"${v ? ' checked' : ''}></div>`; }
+const pct = (v) => Math.round(v * 100) + '%';
+function pintarEditor() {
+  for (const b of document.querySelectorAll('[data-pest]')) b.setAttribute('aria-pressed', String(b.dataset.pest === pestana));
+  const C = S.controles;
+  let h = '';
+  if (pestana === 'tactil') {
+    const nom = elegido ? (elegido === 'joy' ? 'JOYSTICK' : BOT_DEF[elegido][5]) : null;
+    h = `<p class="ed-nota">Arrastra cada botón a donde te quede cómodo. Toca uno para cambiar solo su tamaño.</p>` +
+      filaRango('ed-escala', 'Tamaño de los botones', 0.6, 1.6, 0.05, C.escala, pct) +
+      (elegido && elegido !== 'joy' ? filaRango('ed-tam', 'Tamaño de ' + nom, 0.6, 1.8, 0.05, C.tam[elegido] || 1, pct) : '<p class="ed-nota">Toca un botón para cambiar solo su tamaño.</p>') +
+      filaRango('ed-op', 'Transparencia', 0.3, 1, 0.05, C.opacidad, pct) +
+      filaRango('ed-joy', 'Tamaño del joystick', 0.7, 1.5, 0.05, C.joyEscala, pct) +
+      filaCheck('ed-fijo', 'Joystick fijo (siempre en el mismo lugar)', C.joyFijo) +
+      filaCheck('ed-zurdo', 'Zurdo: botones a la izquierda', C.zurdo) +
+      filaCheck('ed-correr', 'Botón para correr (si no, empuja el joystick hasta el borde)', C.correr) +
+      filaCheck('ed-toque', 'Un toque rápido en la pantalla bendice', C.tocarBendice) +
+      filaRango('ed-sens', 'Sensibilidad de la mirada', 0.4, 2, 0.1, S.sens || 1, (v) => '×' + Number(v).toFixed(1)) +
+      filaCheck('ed-inv', 'Invertir la mirada arriba y abajo', C.invertirY) +
+      filaCheck('ed-horiz', 'Poner el teléfono en horizontal al jugar', C.horizontal);
+  } else {
+    h = `<p class="ed-nota">Toca una acción y luego pulsa la tecla que quieras usar.</p>` +
+      ACCIONES.map(([k, txt]) => `<div class="ed-fila"><label>${txt}</label><button type="button" class="ed-tecla${escuchaTecla === k ? ' escucha' : ''}" data-acc="${k}">${escuchaTecla === k ? 'Pulsa una tecla…' : teclasTxt(k)}</button></div>`).join('') +
+      filaRango('ed-sens', 'Sensibilidad del ratón', 0.4, 2, 0.1, S.sens || 1, (v) => '×' + Number(v).toFixed(1)) +
+      filaCheck('ed-inv', 'Invertir la mirada arriba y abajo', C.invertirY);
+  }
+  $('ed-cuerpo').innerHTML = h;
+  vistaPrevia();
+}
+$('ed-cuerpo').addEventListener('input', (e) => {
+  const C = S.controles, v = e.target.type === 'checkbox' ? e.target.checked : Number(e.target.value), id = e.target.id;
+  if (id === 'ed-escala') C.escala = v; else if (id === 'ed-tam' && elegido) C.tam[elegido] = v; else if (id === 'ed-op') C.opacidad = v;
+  else if (id === 'ed-joy') C.joyEscala = v; else if (id === 'ed-fijo') C.joyFijo = v; else if (id === 'ed-zurdo') { C.zurdo = v; C.pos = { h: {}, v: {} }; }
+  else if (id === 'ed-correr') C.correr = v; else if (id === 'ed-toque') C.tocarBendice = v; else if (id === 'ed-sens') S.sens = v;
+  else if (id === 'ed-inv') C.invertirY = v; else if (id === 'ed-horiz') C.horizontal = v;
+  const out = $(id + '-v'); if (out) out.textContent = id === 'ed-sens' ? '×' + v.toFixed(1) : pct(v);
+  if (e.target.type === 'checkbox') pintarEditor(); else vistaPrevia();
+  guardar();
+});
+$('ed-cuerpo').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-acc]'); if (!b) return;
+  escuchaTecla = escuchaTecla === b.dataset.acc ? null : b.dataset.acc; pintarEditor();
+});
+document.querySelectorAll('[data-pest]').forEach((b) => b.addEventListener('click', () => { pestana = b.dataset.pest; escuchaTecla = null; pintarEditor(); }));
+$('ed-plegar').addEventListener('click', () => { const p = $('editor-panel'); p.classList.toggle('plegado'); $('ed-plegar').textContent = p.classList.contains('plegado') ? '▾' : '▴'; });
+$('ed-listo').addEventListener('click', cerrarEditor);
+$('ed-restablecer').addEventListener('click', () => {
+  if (pestana === 'tactil') { const h = S.controles.horizontal; S.controles = CONTROLES_DEF(); S.controles.horizontal = h; elegido = null; }
+  else S.teclas = {};
+  guardar(); pintarEditor();
+});
+// Elegir una tecla nueva: se quita de la acción que la tenía antes
+addEventListener('keydown', (e) => {
+  if (!escuchaTecla) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  if (e.code === 'Escape') { escuchaTecla = null; pintarEditor(); return; }
+  for (const [k] of ACCIONES) if (k !== escuchaTecla && esTecla(k, e.code)) S.teclas[k] = teclasDe(k).filter((c) => c !== e.code);
+  S.teclas[escuchaTecla] = [e.code];
+  escuchaTecla = null; guardar(); pintarEditor();
+}, true);
+// Mover los botones arrastrándolos (antes de que el juego reciba el toque)
+document.addEventListener('pointerdown', (e) => {
+  if (!document.body.classList.contains('editando') || pestana !== 'tactil') return;
+  const b = e.target.closest('.botones .bt, .joy.fijo'); if (!b) return;
+  e.preventDefault(); e.stopPropagation();
+  const id = b.id === 'joy' ? 'joy' : b.id;
+  for (const x of document.querySelectorAll('.elegido')) x.classList.remove('elegido');
+  b.classList.add('elegido');
+  const r = b.getBoundingClientRect();
+  arrastre = { id, pid: e.pointerId, dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2) };
+  if (elegido !== id) { elegido = id; pintarEditor(); b.classList.add('elegido'); }
+}, true);
+document.addEventListener('pointermove', (e) => {
+  if (!arrastre || e.pointerId !== arrastre.pid) return;
+  e.preventDefault();
+  const x = clamp(e.clientX - arrastre.dx, 0, innerWidth), y = clamp(e.clientY - arrastre.dy, 0, innerHeight);
+  S.controles.pos[orientacion()][arrastre.id] = [+(x / innerWidth).toFixed(4), +(y / innerHeight).toFixed(4)];
+  aplicarControles();
+}, true);
+const soltarArrastre = (e) => { if (arrastre && e.pointerId === arrastre.pid) { arrastre = null; guardar(); } };
+document.addEventListener('pointerup', soltarArrastre, true);
+document.addEventListener('pointercancel', soltarArrastre, true);
+
 /* Arranque: un nivel de fondo girando detrás del menú */
 DIF = DIFICULTADES[S.dificultad];
 prepararNivel(0, false);
 estado = 'menu';
 pintarMenu();
 pintarBestiario();
+aplicarControles();
 requestAnimationFrame(bucle);
-window.__luz = { sprites: SPRITE_ENEMIGO, prueba(n) { const ini = generarNivel(n); const v = new Uint8Array(T * T), cola = [ini.cy * T + ini.cx]; v[cola[0]] = 1; const bloq = (i) => { const x = i % T + 0.5, y = ((i / T) | 0) + 0.5; return decor.some((d) => d.solido && Math.hypot(d.x - x, d.y - y) < d.solido + 0.25); }; while (cola.length) { const i = cola.pop(); for (const j of [i + 1, i - 1, i + T, i - T]) { if (v[j]) continue; const c = mapa[j]; if (c !== 0 && c !== M.PUERTA && c !== M.PUERTA_ORO) continue; if (bloq(j)) continue; v[j] = 1; cola.push(j); } } const ok = (x, y) => v[(y | 0) * T + (x | 0)]; return { salida: !!ok(salida.x, salida.y), objetos: pickups.every((p) => ok(p.x, p.y)), decor: decor.length }; }, get J() { return J; }, get mapa() { return mapa; }, get T() { return T; }, get labG() { return labG; }, get enemigos() { return enemigos; }, crear: crearEnemigo, cambiarArma, disparar, empezar, jugar, get estado() { return estado; } };
+window.__luz = { sprites: SPRITE_ENEMIGO, prueba(n) { const ini = generarNivel(n); const v = new Uint8Array(T * T), cola = [ini.cy * T + ini.cx]; v[cola[0]] = 1; const bloq = (i) => { const x = i % T + 0.5, y = ((i / T) | 0) + 0.5; return decor.some((d) => d.solido && Math.hypot(d.x - x, d.y - y) < d.solido + 0.25); }; while (cola.length) { const i = cola.pop(); for (const j of [i + 1, i - 1, i + T, i - T]) { if (v[j]) continue; const c = mapa[j]; if (c !== 0 && c !== M.PUERTA && c !== M.PUERTA_ORO) continue; if (bloq(j)) continue; v[j] = 1; cola.push(j); } } const ok = (x, y) => v[(y | 0) * T + (x | 0)]; return { salida: !!ok(salida.x, salida.y), objetos: pickups.every((p) => ok(p.x, p.y)), decor: decor.length }; }, get J() { return J; }, get mapa() { return mapa; }, get T() { return T; }, get labG() { return labG; }, get enemigos() { return enemigos; }, crear: crearEnemigo, cambiarArma, disparar, empezar, jugar, get estado() { return estado; }, get MP() { return MP; }, get pickups() { return pickups; }, get sinPecados() { return sinPecados; }, get salida() { return salida; }, get proyectiles() { return proyectiles; }, get SPR() { return SPR; }, matar(i) { const e = enemigos[i]; if (e && !e.muerto) matarEnemigo(e); }, terminarCine, superadoMP, salirMP };
 
 document.querySelectorAll('.x-salir').forEach(b => b.addEventListener('click', () => { try { window.parent.postMessage({ tipo: 'juma-cerrar' }, location.origin); } catch (e) { /* fuera de la app */ } }));
 </script>

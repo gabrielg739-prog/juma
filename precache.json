@@ -1,7 +1,7 @@
 {
- "version": "28088fe0cc96",
+ "version": "dfbd72dd9810",
  "recursos": "juma-recursos-v1",
- "tamano": 55411295,
+ "tamano": 55350115,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -741,12 +741,12 @@
   {
    "ruta": "index.html",
    "tamano": 148661,
-   "hash": "18b2a49229c0"
+   "hash": "72434c790d39"
   },
   {
    "ruta": "js/app.js",
-   "tamano": 498135,
-   "hash": "805f83e0199d"
+   "tamano": 497597,
+   "hash": "f63b080addf1"
   },
   {
    "ruta": "js/fe.js",
@@ -787,86 +787,6 @@
    "ruta": "juegos/camino-del-misionero.html",
    "tamano": 146213,
    "hash": "025d6e4a100b"
-  },
-  {
-   "ruta": "juegos/carrera/camara.js",
-   "tamano": 2755,
-   "hash": "a8945e160982"
-  },
-  {
-   "ruta": "juegos/carrera/datos.js",
-   "tamano": 7164,
-   "hash": "98ec6f0bfe06"
-  },
-  {
-   "ruta": "juegos/carrera/decor.js",
-   "tamano": 11090,
-   "hash": "4aa0d53ff3a7"
-  },
-  {
-   "ruta": "juegos/carrera/escena.js",
-   "tamano": 12259,
-   "hash": "c59261ac1126"
-  },
-  {
-   "ruta": "juegos/carrera/fisica.js",
-   "tamano": 7892,
-   "hash": "d58cdf6f294e"
-  },
-  {
-   "ruta": "juegos/carrera/hud.js",
-   "tamano": 4275,
-   "hash": "ca8e27b1b26d"
-  },
-  {
-   "ruta": "juegos/carrera/ia.js",
-   "tamano": 3199,
-   "hash": "e696562c4640"
-  },
-  {
-   "ruta": "juegos/carrera/karts.js",
-   "tamano": 11268,
-   "hash": "976681db2816"
-  },
-  {
-   "ruta": "juegos/carrera/main.js",
-   "tamano": 33304,
-   "hash": "ca1be641915d"
-  },
-  {
-   "ruta": "juegos/carrera/objetos.js",
-   "tamano": 8300,
-   "hash": "7dcc806710cb"
-  },
-  {
-   "ruta": "juegos/carrera/particulas.js",
-   "tamano": 5657,
-   "hash": "1238bd0280b4"
-  },
-  {
-   "ruta": "juegos/carrera/pista.js",
-   "tamano": 4144,
-   "hash": "6ce7365f77b3"
-  },
-  {
-   "ruta": "juegos/carrera/sonido.js",
-   "tamano": 6657,
-   "hash": "0ba1a903dcc5"
-  },
-  {
-   "ruta": "juegos/carrera/texturas.js",
-   "tamano": 8731,
-   "hash": "1251e454b112"
-  },
-  {
-   "ruta": "juegos/carrera/vitrina.js",
-   "tamano": 2334,
-   "hash": "6e8a60b39c49"
-  },
-  {
-   "ruta": "juegos/carrera-de-la-fe.html",
-   "tamano": 18123,
-   "hash": "2026d47dd3b6"
   },
   {
    "ruta": "juegos/cuadros/cap1-consolata.jpg",
@@ -944,9 +864,9 @@
    "hash": "e4ea2f6f453c"
   },
   {
-   "ruta": "juegos/gran-premio/index-DB2rrQhM.js",
-   "tamano": 884133,
-   "hash": "386a6adf44b7"
+   "ruta": "juegos/gran-premio/index-B-o8YiiC.js",
+   "tamano": 923793,
+   "hash": "5d170fc4a59a"
   },
   {
    "ruta": "juegos/gran-premio/kart_cruise_mid_loop-E9gzRWlQ.wav",
@@ -971,7 +891,7 @@
   {
    "ruta": "juegos/gran-premio-de-la-fe.html",
    "tamano": 50720,
-   "hash": "87a03b3a3323"
+   "hash": "4c04e172ae1e"
   },
   {
    "ruta": "juegos/huyendo-del-pecado.html",
@@ -989,6 +909,16 @@
    "hash": "3f7ec7d8ba4d"
   },
   {
+   "ruta": "juegos/lib/red.js",
+   "tamano": 26513,
+   "hash": "4c529519aac3"
+  },
+  {
+   "ruta": "juegos/lib/sala.js",
+   "tamano": 19239,
+   "hash": "77905fa43553"
+  },
+  {
    "ruta": "juegos/lib/sonido.js",
    "tamano": 21203,
    "hash": "9da7de19ddb6"
@@ -1000,8 +930,8 @@
   },
   {
    "ruta": "juegos/luz-contra-el-pecado.html",
-   "tamano": 218387,
-   "hash": "4e5136f5413c"
+   "tamano": 277172,
+   "hash": "764de7d48782"
   },
   {
    "ruta": "juegos/memoria-santos.html",
@@ -1027,11 +957,6 @@
    "ruta": "juegos/portadas/camino.jpg",
    "tamano": 23815,
    "hash": "287cb0ead62e"
-  },
-  {
-   "ruta": "juegos/portadas/carrera.jpg",
-   "tamano": 57687,
-   "hash": "7becaa741cc7"
   },
   {
    "ruta": "juegos/portadas/cuentas.jpg",
