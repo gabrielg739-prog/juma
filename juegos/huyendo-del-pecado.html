@@ -84,7 +84,8 @@
   .selector { display: grid; grid-template-columns: 46px 1fr 46px; gap: 8px; align-items: center; margin-top: 12px; padding: 8px; border-radius: 18px; background: rgba(255, 255, 255, .08); }
   .sel-fl { height: 46px; border: 0; border-radius: 14px; background: var(--azul); color: #fff; font-family: var(--f-titulo); font-size: 30px; line-height: 1; box-shadow: 0 3px 0 var(--azul-osc); cursor: pointer; }
   .sel-fl:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--azul-osc); }
-  .sel-info { min-width: 0; text-align: center; }
+  .sel-info { min-width: 0; display: flex; align-items: center; gap: 8px; justify-content: center; text-align: center; }
+  .sel-info img { flex: none; width: 54px; height: 72px; object-fit: contain; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .45)); }
   .sel-info i { display: block; font-style: normal; font-size: 11px; font-weight: 900; opacity: .6; letter-spacing: .08em; }
   .sel-info b { display: block; font-family: var(--f-titulo); font-weight: 400; font-size: 19px; line-height: 1.1; color: var(--oro); }
   .sel-info small { display: block; margin-top: 2px; font-size: 12px; font-weight: 800; opacity: .82; line-height: 1.35; }
@@ -204,7 +205,7 @@
     </div>
     <div class="selector" id="selector" role="group" aria-label="Elige tu corredor">
       <button type="button" class="sel-fl" data-sel="-1" aria-label="Corredor anterior">‹</button>
-      <div class="sel-info"><i id="sel-n"></i><b id="sel-nombre"></b><small id="sel-desc"></small></div>
+      <div class="sel-info"><img id="sel-img" alt="" hidden><div><i id="sel-n"></i><b id="sel-nombre"></b><small id="sel-desc"></small></div></div>
       <button type="button" class="sel-fl" data-sel="1" aria-label="Corredor siguiente">›</button>
     </div>
     <button id="b-jugar" class="btn grande" type="button">¡A CORRER!</button>
@@ -1407,219 +1408,127 @@ function crearMisionero() {
 }
 
 /* =====================================================================
-   Los santos corredores: San José Allamano, la Beata Leonella Sgorbati,
-   San José Cafasso y la Beata Irene Stefani (además del misionero)
+   Los santos corredores, tal como están dibujados: San José Allamano,
+   la Beata Leonella Sgorbati, San José Cafasso y la Beata Irene Stefani.
+   Cada uno usa sus vistas dibujadas (frente, espalda, lados, en acción y
+   surfeando) y el juego muestra la que corresponde según hacia dónde mira.
    ===================================================================== */
-// Sobrepelliz blanca con encaje calado abajo
-const TEX_ENCAJE = lienzo(128, 256, (g, w, h) => {
-  g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h);
-  for (let x = 0; x < w; x += 8) { g.fillStyle = 'rgba(40,40,60,.06)'; g.fillRect(x, 0, 3, h); }
-  const y0 = h * 0.8;
-  g.fillStyle = 'rgba(120,120,140,.4)'; g.fillRect(0, y0 - 4, w, 2);
-  g.globalCompositeOperation = 'destination-out';
-  for (let f = 0; f < 4; f++) for (let x = (f % 2) * 8; x < w + 8; x += 16) { g.beginPath(); g.arc(x + 4, y0 + 8 + f * 11, 3.4, 0, 7); g.fill(); }
-  for (let x = 0; x < w; x += 16) { g.beginPath(); g.arc(x + 8, h + 3, 9, 0, 7); g.fill(); }
-  g.globalCompositeOperation = 'source-over';
-  g.strokeStyle = 'rgba(130,130,150,.55)'; g.lineWidth = 1;
-  for (let x = 0; x < w; x += 16) { g.beginPath(); g.arc(x + 8, y0 + 24, 6, 0, 7); g.stroke(); }
-});
-TEX_ENCAJE.repeat.set(4, 1);
-// Estola dorada bordada con flores rojas y una cruz
-const TEX_ESTOLA = lienzo(64, 256, (g, w, h) => {
-  const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, '#a87a12'); gr.addColorStop(0.5, '#f2cf55'); gr.addColorStop(1, '#a87a12');
-  g.fillStyle = gr; g.fillRect(0, 0, w, h);
-  g.strokeStyle = '#7a5208'; g.lineWidth = 2; g.strokeRect(3, 3, w - 6, h - 6);
-  g.strokeStyle = 'rgba(90,60,5,.8)'; g.lineWidth = 1.4;
-  for (let y = 10; y < h - 50; y += 26) { g.beginPath(); g.moveTo(w / 2, y); g.bezierCurveTo(8, y + 6, 8, y + 18, w / 2, y + 24); g.bezierCurveTo(w - 8, y + 18, w - 8, y + 6, w / 2, y); g.stroke(); }
-  for (let y = 22; y < h - 50; y += 26) { g.fillStyle = '#c0282c'; g.beginPath(); g.arc(w / 2, y, 4, 0, 7); g.fill(); g.fillStyle = '#2f7a3a'; g.beginPath(); g.ellipse(w / 2 - 8, y + 2, 4, 2, 0.5, 0, 7); g.ellipse(w / 2 + 8, y + 2, 4, 2, -0.5, 0, 7); g.fill(); }
-  g.fillStyle = '#c0282c'; g.fillRect(w / 2 - 3, h - 46, 6, 26); g.fillRect(w / 2 - 11, h - 38, 22, 6);
-  for (let x = 4; x < w - 2; x += 4) { g.fillStyle = x % 8 ? '#e8b832' : '#8a6010'; g.fillRect(x, h - 12, 2, 12); }
-}, false);
-// Paja trenzada del sombrero de la Beata Irene
-const TEX_PAJA = lienzo(128, 128, (g, w, h) => {
-  g.fillStyle = '#d9b874'; g.fillRect(0, 0, w, h);
-  for (let y = 0; y < h; y += 6) { g.fillStyle = y % 12 ? 'rgba(255,240,200,.35)' : 'rgba(120,80,30,.35)'; g.fillRect(0, y, w, 3); }
-  for (let i = 0; i < 400; i++) { g.fillStyle = `rgba(110,70,20,${Math.random() * 0.25})`; g.fillRect(Math.random() * w, Math.random() * h, 4 + Math.random() * 8, 1); }
-});
-TEX_PAJA.repeat.set(6, 2);
-
-// Cilindro entre dos puntos (cordones)
-const _eje = new THREE.Vector3(0, 1, 0);
-function segmento(R, a, b, r, mat, padre) {
-  const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A);
-  const m = R.malla(new THREE.CylinderGeometry(r, r, d.length(), 6), mat, 0, 0, 0, padre);
-  m.position.copy(A).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(_eje, d.normalize());
-  return m;
+const CARGADOR = new THREE.TextureLoader();
+const ALTO_DIBUJO = 1.86;   // alto de la figura (en las mismas medidas que el misionero, antes de su escala)
+// Tamaño en píxeles de cada vista y altura del calzado (fracción de la vista de espalda)
+const DIBUJOS = {
+  allamano: { pies: 0.08, v: { frente: [144, 345], espalda: [145, 343], derecha: [96, 344], izquierda: [95, 344], accion: [188, 239], surf: [212, 239], arriba: [184, 169] } },
+  leonella: { pies: 0.075, v: { frente: [152, 344], espalda: [152, 343], derecha: [100, 344], izquierda: [100, 344], accion: [179, 248], surf: [199, 249], arriba: [168, 194] } },
+  cafasso: { pies: 0.085, v: { frente: [144, 269], espalda: [145, 269], derecha: [86, 269], izquierda: [87, 269], accion: [123, 178], surf: [188, 180], arriba: [170, 146] } },
+  irene: { pies: 0.14, v: { frente: [105, 262], espalda: [105, 261], derecha: [87, 260], izquierda: [87, 260], accion: [128, 181], surf: [167, 185], arriba: [152, 155] } }
+};
+const GEO_DIBUJO = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
+function texDibujo(id, vista) {
+  const t = CARGADOR.load(`personajes/${id}-${vista}.png`);
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = MAX_ANISO;
+  return t;
 }
-// Cruz colgada de un cordón sobre el pecho
-function cruzColgante(R, matCruz, matCordon, y, tam) {
-  const { pecho, malla } = R, k = tam || 1, z = frentePecho(y) - 0.012;
-  segmento(R, [-0.052, 0.375, frentePecho(0.34) + 0.01], [0, y + 0.045 * k, z], 0.0035, matCordon, pecho);
-  segmento(R, [0.052, 0.375, frentePecho(0.34) + 0.01], [0, y + 0.045 * k, z], 0.0035, matCordon, pecho);
-  const c = new THREE.Group(); c.position.set(0, y, z); c.rotation.x = 0.2; pecho.add(c);
-  malla(new THREE.BoxGeometry(0.014 * k, 0.075 * k, 0.008), matCruz, 0, 0, 0, c);
-  malla(new THREE.BoxGeometry(0.048 * k, 0.013 * k, 0.008), matCruz, 0, 0.014 * k, 0, c);
-  return c;
-}
-// Velo de religiosa: gorro, banda blanca (opcional) y tela que cae por la espalda y se mueve al correr
-function ponerVelo(R, mat, banda, largo, ancho) {
-  const { malla, cabeza } = R;
-  const gorro = malla(new THREE.SphereGeometry(0.124, 28, 16, 0, Math.PI * 2, 0, Math.PI * 0.6), mat, 0, 0.13, 0.02, cabeza);
-  gorro.rotation.x = 0.55; gorro.scale.set(0.95, 1.02, 1.06);
-  if (banda) { const b = malla(new THREE.SphereGeometry(0.128, 28, 3, 0, Math.PI * 2, Math.PI * 0.49, Math.PI * 0.1), banda, 0, 0.13, 0.02, cabeza); b.rotation.x = 0.55; b.scale.copy(gorro.scale); }
-  const caida = new THREE.Group(); caida.position.set(0, 0.11, 0.035); cabeza.add(caida);
-  const L = largo || 0.5;
-  const tela = malla(new THREE.CylinderGeometry(0.118, 0.22, L, 22, 4, true, -Math.PI * 0.62, Math.PI * 1.24), mat, 0, -L / 2, 0.015, caida);
-  tela.scale.set(ancho || 1.28, 1, 0.95);
-  R.velo = caida; R.fis.velo = { x: 0, v: 0 };
-}
-// Sombrero de ala ancha (fieltro o paja) que sale volando al chocar
-function ponerSombrero(R, matAla, matCinta, ancho, alto) {
-  const { malla, cabeza } = R;
-  const g = new THREE.Group(); g.position.set(0, alto || 0.205, 0.008); g.rotation.x = 0.06; cabeza.add(g);
-  const ala = malla(geoPerfil([[0.0, 0.0], [ancho, -0.006], [ancho + 0.012, 0.005], [ancho - 0.012, 0.013], [0.115, 0.016], [0, 0.016]], 36), matAla, 0, 0, 0, g);
-  malla(geoPerfil([[0.122, 0.0], [0.118, 0.065], [0.104, 0.098], [0.06, 0.112], [0, 0.106]], 30), matAla, 0, 0.008, 0, g);
-  malla(new THREE.CylinderGeometry(0.123, 0.123, 0.026, 30, 1, true), matCinta, 0, 0.026, 0, g);
-  ala.receiveShadow = true;
-  R.sombrero = g; R.sombreroBase = { p: g.position.clone(), r: g.rotation.clone() };
-}
-function cuelloClerical(R, M) { R.malla(new THREE.CylinderGeometry(0.062, 0.066, 0.035, 18), M.blanco, 0, 0.385, 0.004, R.pecho); }
-function botonesSotana(R, mat) {
-  for (let i = 0; i < 6; i++) { const y = 0.34 - i * 0.07; R.malla(new THREE.SphereGeometry(0.0085, 8, 6), mat, 0, y, frentePecho(y) - 0.004, R.pecho); }
-  for (let i = 0; i < 4; i++) { const y = 0.22 - i * 0.08; R.malla(new THREE.SphereGeometry(0.0085, 8, 6), mat, 0, y, -0.122, R.torso); }
-}
-function caraBase(o) {
-  return Object.assign({
-    zapato: estM(0x120d0b, 0.3, 0.08, { envMapIntensity: 1 }), suela: estM(0x0a0808, 0.8),
-    ojoBlanco: estM(0xf4f1ec, 0.15), iris: estM(0x4a2d16, 0.25), pupila: new THREE.MeshBasicMaterial({ color: 0x050505 }),
-    labio: estM(0xb06a62, 0.45), blanco: estM(0xf6f4ef, 0.55), negro: estM(0x0b0a0d, 0.45, 0.1)
-  }, o);
-}
-const pielDe = (c) => estM(c, 0.55, 0, { map: TEX_PIEL, normalMap: mapaNormal(TEX_PIEL, 1.2) });
-const peloDe = (c) => estM(c, 0.6, 0, { map: TEX_PELO, normalMap: mapaNormal(TEX_PELO, 3) });
-function telaDe(color, claro, rep, rug) { const t = texTela(claro, rep || 4); return estM(color, rug || 0.86, 0, { map: t, normalMap: mapaNormal(t, 2.5) }); }
-
-/* San José Allamano: sotana negra abotonada, cuello blanco, solideo negro y pelo blanco */
-function crearAllamano() {
-  const M = caraBase({
-    torso: telaDe(0x1a191e, '#606068'), pantalon: estM(0x111014, 0.85, 0, { map: texTela('#a0a0a0', 4) }),
-    piel: pielDe(0xe0ae8e), iris: estM(0x3d5a7a, 0.25), cejas: estM(0xdedad2, 0.7), pelo: peloDe(0xe9e7e2),
-    forro: estM(0x0c0b0e, 0.8, 0, { side: THREE.DoubleSide })
-  });
-  M.manga = M.torso; M.puno = M.torso;
-  const R = crearHumano({ M, cejaCeno: 0.0, peloCorto: true });
-  cuelloClerical(R, M);
-  botonesSotana(R, estM(0x2a2a30, 0.3, 0.4));
-  R.malla(new THREE.CylinderGeometry(0.17, 0.17, 0.05, 22), estM(0x0e0d11, 0.6), 0, 0.0, 0, R.torso).scale.z = 0.74;
-  R.faldas = faldones(R, M.torso, M.forro, 0.86, 0.17, 0.29, false);
-  // Solideo: el gorrito negro de los sacerdotes (sale volando al chocar)
-  const sol = new THREE.Group(); sol.position.set(0, 0.168, 0.03); sol.rotation.x = 0.36; R.cabeza.add(sol);
-  const casq = R.malla(new THREE.SphereGeometry(0.1, 26, 8, 0, Math.PI * 2, 0, Math.PI * 0.28), estM(0x0d0c10, 0.5, 0, { side: THREE.DoubleSide }), 0, 0, 0, sol); casq.scale.set(0.95, 0.95, 1);
-  R.malla(new THREE.CylinderGeometry(0.005, 0.007, 0.016, 8), M.negro, 0, 0.1, 0, sol);
-  R.sombrero = sol; R.sombreroBase = { p: sol.position.clone(), r: sol.rotation.clone() };
-  agregarPoderes(R, 1.38);
-  R.estilo = 'sacerdote'; R.zancada = 0.9;
+function crearDibujado(id) {
+  const D = DIBUJOS[id], escala = 1.38;
+  const raiz = new THREE.Group(); scene.add(raiz);
+  const giro = new THREE.Group(); raiz.add(giro);
+  // Cada vista completa, y la espalda partida en cuerpo + dos pies para dar los pasos
+  const tex = {}; for (const v in D.v) tex[v] = texDibujo(id, v);
+  const f = D.pies;
+  const recorte = (t, x, y, w, h) => { const c = t.clone(); c.needsUpdate = true; c.offset.set(x, y); c.repeat.set(w, h); return c; };
+  const pieza = (t) => {
+    const mat = new THREE.MeshBasicMaterial({ map: t, alphaTest: 0.5, side: THREE.DoubleSide });
+    const m = new THREE.Mesh(GEO_DIBUJO, mat);
+    m.castShadow = true;
+    m.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: t, alphaTest: 0.5 });
+    giro.add(m);
+    return m;
+  };
+  const cuerpo = pieza(tex.frente);
+  const pieI = pieza(recorte(tex.espalda, 0, 0, 0.5, f)), pieD = pieza(recorte(tex.espalda, 0.5, 0, 0.5, f));
+  const cuerpoEsp = recorte(tex.espalda, 0, f, 1, 1 - f);
+  const pxM = ALTO_DIBUJO / D.v.frente[1]; // metros por píxel (igual para todas las vistas de pie)
+  // Grupos donde se enganchan las alas, la aureola y el aura (como en el misionero)
+  const pecho = new THREE.Group(); pecho.position.y = 1.22; giro.add(pecho);
+  const cabeza = new THREE.Group(); cabeza.position.y = 1.62; giro.add(cabeza);
+  const malla = (geo, mat, x, y, z, padre) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; padre.add(m); return m; };
+  const R = {
+    dibujo: true, id, raiz, giro, cuerpo, pieI, pieD, tex, cuerpoEsp, pxM, D, pecho, cabeza, malla, vista: '', escala,
+    M: { zapato: { emissive: new THREE.Color() } },
+    fis: { y: null, vy: 0, x: null, vx: 0, ay: 0, ax: 0, parpT: 9 }
+  };
+  agregarPoderes(R, escala);
+  R.estilo = 'dibujo';
   return R;
 }
-
-/* Beata Leonella Sgorbati: hábito gris, velo gris con banda blanca, cuello blanco y cruz de plata */
-function crearLeonella() {
-  const M = caraBase({
-    torso: telaDe(0x6c7584, '#d4d7de'), pantalon: estM(0x26262a, 0.7),
-    piel: pielDe(0xe8b897), iris: estM(0x5a3b20, 0.25), cejas: estM(0x9a948c, 0.7), pelo: peloDe(0xb0aaa2),
-    labio: estM(0xbd7a70, 0.45), forro: estM(0x4a5260, 0.85, 0, { side: THREE.DoubleSide }),
-    velo: estM(0x5f6876, 0.9, 0, { map: texTela('#cfd3da', 4), side: THREE.DoubleSide }), banda: estM(0xf7f6f2, 0.6, 0, { side: THREE.DoubleSide }),
-    plata: estM(0xdfe4ea, 0.22, 1, { envMapIntensity: 1.3 })
-  });
-  M.manga = M.torso; M.puno = M.torso;
-  const R = crearHumano({ M, cejaCeno: -0.08 });
-  R.faldas = faldones(R, M.torso, M.forro, 0.88, 0.17, 0.32, false);
-  R.malla(new THREE.CylinderGeometry(0.171, 0.171, 0.03, 22), estM(0x59616f, 0.85), 0, 0.02, 0, R.torso).scale.z = 0.74;
-  ponerVelo(R, M.velo, M.banda, 0.52);
-  // Cuello blanco de dos puntas y cruz de plata
-  for (const l of [-1, 1]) { const c = R.malla(new THREE.SphereGeometry(0.045, 14, 10), M.blanco, 0.034 * l, 0.372, -0.062, R.pecho); c.scale.set(1, 0.32, 0.62); c.rotation.set(0.35, 0, -0.45 * l); }
-  cruzColgante(R, M.plata, M.negro, 0.2);
-  agregarPoderes(R, 1.34);
-  R.estilo = 'hermana'; R.zancada = 0.74;
-  return R;
+// Pone una vista en el cuerpo (la espalda deja los pies aparte para que den pasos)
+function vistaDibujo(R, v) {
+  if (R.vista === v) return;
+  R.vista = v;
+  const [w, h] = R.D.v[v], k = v === 'accion' || v === 'surf' ? ALTO_DIBUJO * 1.02 / h : R.pxM;
+  const W = w * k, H = h * k, partida = v === 'espalda';
+  R.ancho = W; R.alto = H; R.partida = partida;
+  R.cuerpo.material.map = partida ? R.cuerpoEsp : R.tex[v];
+  R.cuerpo.customDepthMaterial.map = R.cuerpo.material.map;
+  R.cuerpo.material.needsUpdate = true; R.cuerpo.customDepthMaterial.needsUpdate = true;
+  R.pieI.visible = R.pieD.visible = partida;
 }
-
-/* San José Cafasso: sotana negra, sobrepelliz blanca con encaje y estola dorada bordada */
-function crearCafasso() {
-  const M = caraBase({
-    torso: telaDe(0x16151a, '#58585f'), pantalon: estM(0x111014, 0.85),
-    piel: pielDe(0xdba684), iris: estM(0x3a2414, 0.25), cejas: estM(0x16100c, 0.7), pelo: estM(0x17110e, 0.35, 0, { map: TEX_PELO, normalMap: mapaNormal(TEX_PELO, 3) }),
-    forro: estM(0x0c0b0e, 0.8, 0, { side: THREE.DoubleSide }),
-    encaje: estM(0xfbfaf7, 0.72, 0, { map: TEX_ENCAJE, alphaTest: 0.45, side: THREE.DoubleSide }),
-    estola: estM(0xffffff, 0.35, 0.55, { map: TEX_ESTOLA, envMapIntensity: 1.1 })
-  });
-  M.manga = M.torso; M.puno = M.torso;
-  const R = crearHumano({ M, cejaCeno: 0.04, peloCorto: true });
-  const { malla, pecho, cabeza } = R;
-  cuelloClerical(R, M);
-  R.faldas = faldones(R, M.torso, M.forro, 0.86, 0.17, 0.28, false);
-  // Sobrepelliz: túnica blanca hasta las rodillas, con mangas anchas
-  const sob = malla(geoPerfil([[0.315, -0.76], [0.3, -0.56], [0.258, -0.26], [0.226, -0.03], [0.212, 0.12], [0.216, 0.23], [0.2, 0.31], [0.16, 0.35], [0.09, 0.386], [0.068, 0.392]], 30), M.encaje, 0, 0, 0, pecho);
-  sob.scale.z = 0.76;
-  R.sobrepelliz = sob;
-  for (const l of [-1, 1]) malla(new THREE.SphereGeometry(0.078, 16, 12), M.blanco, 0.2 * l, 0.295, 0, pecho).scale.set(1, 0.85, 1);
-  for (const B of R.brazos) {
-    const manga = malla(new THREE.CylinderGeometry(0.07, 0.15, 0.44, 18, 1, true), M.encaje, 0, -0.2, 0, B.b);
-    manga.scale.z = 0.9;
+const _dirCam = new THREE.Vector3(), _derCam = new THREE.Vector3(), _wp = new THREE.Vector3();
+// Animación del dibujo: elige la vista según hacia dónde mira, da pasos, se balancea y se agacha
+function animarDibujo(R, dt, s) {
+  // Hacia dónde mira el personaje (en el mundo) y desde dónde lo ve la cámara
+  const yaw = R.raiz.rotation.y + (s.giroExtra || 0);
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  R.raiz.getWorldPosition(_wp);
+  _dirCam.set(camara.position.x - _wp.x, 0, camara.position.z - _wp.z).normalize();
+  _derCam.setFromMatrixColumn(camara.matrixWorld, 0);
+  const haciaCam = fx * _dirCam.x + fz * _dirCam.z, aDerecha = fx * _derCam.x + fz * _derCam.z;
+  let v = haciaCam > 0.25 ? 'frente' : haciaCam < -0.25 ? 'espalda' : aDerecha > 0 ? 'derecha' : 'izquierda';
+  if (s.surf) v = 'surf';
+  vistaDibujo(R, v);
+  // El dibujo siempre de cara a la cámara (como un recortable)
+  R.giro.rotation.y = Math.atan2(_dirCam.x, _dirCam.z) - R.raiz.rotation.y;
+  const W = R.ancho, H = R.alto;
+  let sy = 1, sx = 1, y = 0, roll = 0, lado = 0;
+  const f = s.fase, paso = Math.sin(f);
+  if (s.modo === 'correr') {
+    y = Math.abs(paso) * 0.045; sy = 1 + Math.cos(f * 2) * 0.018; sx = 1 - Math.cos(f * 2) * 0.012; roll = paso * 0.035;
+  } else if (s.modo === 'aire') {
+    sy = 1.05 - s.aire * 0.08; sx = 0.97 + s.aire * 0.05; roll = Math.sin(s.aire * Math.PI) * 0.05;
+  } else if (s.modo === 'rodar') {
+    sy = 0.58; sx = 1.12; roll = Math.sin(s.rodar * Math.PI * 2) * 0.25;
+  } else if (s.modo === 'volar') {
+    y = Math.sin(reloj * 4) * 0.05; roll = Math.sin(reloj * 2) * 0.06;
+  } else if (s.modo === 'quieto') {
+    sy = 1 + Math.sin(reloj * 1.7) * 0.008;
+    const t = reloj % 6; if (t > 4.6 && t < 5.2) y = Math.sin((t - 4.6) / 0.6 * Math.PI) * 0.14; // un saltito de alegría
   }
-  // Estola dorada: dos bandas que caen del cuello y se mecen al correr
-  R.colgantes = [];
-  for (const l of [-1, 1]) {
-    const g = new THREE.Group(); g.position.set(0.062 * l, 0.36, frentePecho(0.36) - 0.012); pecho.add(g);
-    const banda = malla(new THREE.BoxGeometry(0.078, 0.92, 0.012), M.estola, 0, -0.46, 0, g);
-    banda.rotation.z = 0.035 * l;
-    R.colgantes.push({ g, base: 0.24, k: 0.0035, s: { x: 0, v: 0 }, sz: { x: 0, v: 0 }, min: -0.05, max: 0.7 });
+  if (s.aplastar > 0) { const a = Math.sin(s.aplastar * Math.PI * 0.5); sy *= 1 - a * 0.14; sx *= 1 + a * 0.08; }
+  lado = s.lado || 0;
+  const C = R.cuerpo;
+  if (R.partida) {
+    const fp = R.D.pies;
+    C.scale.set(W * sx, H * (1 - fp) * sy, 1); C.position.set(0, y + H * fp * sy, 0);
+    // Pasos: cada pie se levanta por turnos
+    const levI = s.modo === 'correr' ? Math.max(0, paso) * 0.07 : 0, levD = s.modo === 'correr' ? Math.max(0, -paso) * 0.07 : 0;
+    R.pieI.scale.set(W * sx / 2, H * fp * sy * (1 - levI), 1); R.pieI.position.set(-W * sx / 4, y + levI, 0.002);
+    R.pieD.scale.set(W * sx / 2, H * fp * sy * (1 - levD), 1); R.pieD.position.set(W * sx / 4, y + levD, 0.002);
+  } else {
+    C.scale.set(W * sx, H * sy, 1); C.position.set(0, y, 0);
   }
-  const nuca = malla(new THREE.TorusGeometry(0.075, 0.02, 6, 18, Math.PI * 1.1), M.estola, 0, 0.372, 0.0, pecho);
-  nuca.rotation.set(Math.PI / 2, 0, -0.05); nuca.scale.set(1, 0.85, 0.5);
-  agregarPoderes(R, 1.36);
-  R.estilo = 'sacerdote'; R.zancada = 0.88;
-  return R;
-}
-
-/* Beata Irene Stefani: hábito blanco con cordón, velo blanco, sombrero de paja y botas */
-function crearIrene() {
-  const M = caraBase({
-    torso: telaDe(0xece5d5, '#ffffff'), pantalon: estM(0x3a2416, 0.7),
-    zapato: estM(0x6a3f1e, 0.45, 0.02, { map: TEX_CUERO, normalMap: mapaNormal(TEX_CUERO, 3) }),
-    piel: pielDe(0xeab996), iris: estM(0x3b2a1a, 0.25), cejas: estM(0x5a3a22, 0.7), pelo: peloDe(0x4a3020),
-    labio: estM(0xc27a6e, 0.45), forro: estM(0xd8d0bf, 0.85, 0, { side: THREE.DoubleSide }),
-    velo: estM(0xf5f2ea, 0.9, 0, { map: texTela('#ffffff', 4), side: THREE.DoubleSide }),
-    paja: estM(0xffffff, 0.85, 0, { map: TEX_PAJA, normalMap: mapaNormal(TEX_PAJA, 2), side: THREE.DoubleSide }), cinta: estM(0x6a4426, 0.7),
-    cuerda: estM(0xc9ae7c, 0.9), madera: estM(0x4a2c18, 0.55)
-  });
-  M.manga = M.torso; M.puno = M.torso;
-  const R = crearHumano({ M, cejaCeno: -0.05 });
-  const { malla, torso } = R;
-  R.faldas = faldones(R, M.torso, M.forro, 0.84, 0.17, 0.31, false);
-  ponerVelo(R, M.velo, null, 0.4, 1.08);
-  ponerSombrero(R, M.paja, M.cinta, 0.25, 0.214);
-  // Botas altas de cuero
-  for (const L of R.piernas) malla(new THREE.CylinderGeometry(0.056, 0.05, 0.17, 14), M.zapato, 0, 0.06, 0, L.tob);
-  // Cordón a la cintura con las puntas colgando y cruz de madera
-  const cin = malla(new THREE.TorusGeometry(0.176, 0.011, 6, 32), M.cuerda, 0, 0.0, 0, torso); cin.rotation.x = Math.PI / 2; cin.scale.y = 0.74;
-  const g = new THREE.Group(); g.position.set(0.075, -0.01, -0.12); torso.add(g);
-  segmento(R, [0, 0, 0], [0.012, -0.36, -0.005], 0.009, M.cuerda, g);
-  segmento(R, [0, 0, 0], [-0.016, -0.32, 0.004], 0.009, M.cuerda, g);
-  malla(new THREE.SphereGeometry(0.018, 10, 8), M.cuerda, 0.012, -0.36, -0.005, g);
-  malla(new THREE.SphereGeometry(0.016, 10, 8), M.cuerda, -0.016, -0.32, 0.004, g);
-  R.colgantes = [{ g, base: 0.12, k: -0.012, s: { x: 0, v: 0 }, sz: { x: 0, v: 0 }, min: -0.6, max: 0.5 }];
-  cruzColgante(R, M.madera, M.cuerda, 0.19, 1.15);
-  agregarPoderes(R, 1.34);
-  R.estilo = 'hermana'; R.zancada = 0.76;
-  return R;
+  R.giro.rotation.z = roll + lado;
+  // Las sandalias del poder iluminan los pies de verde; en los túneles el dibujo se oscurece
+  const luz = 0.45 + 0.55 * luzFactor;
+  C.material.color.setScalar(luz);
+  const verde = s.sandalias;
+  R.pieI.material.color.setRGB(verde ? luz * 0.6 : luz, luz, verde ? luz * 0.5 : luz); R.pieD.material.color.copy(R.pieI.material.color);
 }
 
 const PERSONAJES = [
-  { id: 'allamano', nombre: 'San José Allamano', desc: 'Fundador de los Misioneros y las Misioneras de la Consolata.', crear: crearAllamano },
-  { id: 'leonella', nombre: 'Beata Leonella Sgorbati', desc: 'Misionera de la Consolata en Kenia y Somalia. Murió perdonando.', crear: crearLeonella },
-  { id: 'cafasso', nombre: 'San José Cafasso', desc: 'Sacerdote de Turín, consuelo de los presos y tío de Allamano.', crear: crearCafasso },
-  { id: 'irene', nombre: 'Beata Irene Stefani', desc: 'Misionera de la Consolata en Kenia, «Nyaatha»: madre de misericordia.', crear: crearIrene },
+  { id: 'allamano', nombre: 'San José Allamano', desc: 'Fundador de los Misioneros y las Misioneras de la Consolata.', crear: () => crearDibujado('allamano') },
+  { id: 'leonella', nombre: 'Beata Leonella Sgorbati', desc: 'Misionera de la Consolata en Kenia y Somalia. Murió perdonando.', crear: () => crearDibujado('leonella') },
+  { id: 'cafasso', nombre: 'San José Cafasso', desc: 'Sacerdote de Turín, consuelo de los presos y tío de Allamano.', crear: () => crearDibujado('cafasso') },
+  { id: 'irene', nombre: 'Beata Irene Stefani', desc: 'Misionera de la Consolata en Kenia, «Nyaatha»: madre de misericordia.', crear: () => crearDibujado('irene') },
   { id: 'misionero', nombre: 'El misionero', desc: 'Con su mochila de viaje y su sombrero de ala ancha.', crear: crearMisionero }
 ];
 const CACHE_PJ = {};
@@ -2294,20 +2203,6 @@ function animarJugador(dt) {
     P.m = [0.04, -0.03]; P.r = [-0.1, -0.03]; P.t = [0.06, 0.06]; P.bz = [-0.1 - P.cadZ, 0.1];
     const ciclo = t % 9;
     if (ciclo < 1.8) { P.bz[1] = 2.55; P.bx[1] = 0.2; P.c[1] = 0.45 + Math.sin(t * 9) * 0.45; P.puno[1] = 0; P.cabY = 0.1; P.cabX = 0.05; }
-    else if (ciclo > 4.2 && ciclo < 7 && R.estilo === 'sacerdote') {
-      // Bendición: la mano derecha traza la cruz y la izquierda descansa en el pecho
-      const u = (ciclo - 4.2) / 2.8, a = Math.sin(Math.min(1, u * 4) * Math.PI / 2) * (u > 0.85 ? (1 - u) / 0.15 : 1);
-      P.bx[1] = (1.15 + (u > 0.2 && u < 0.5 ? Math.sin((u - 0.2) / 0.3 * Math.PI) * 0.4 : 0)) * a;
-      P.bz[1] = (0.12 + (u >= 0.5 && u < 0.8 ? Math.sin((u - 0.5) / 0.3 * Math.PI * 2) * 0.32 : 0)) * a;
-      P.c[1] = 0.55 * a + 0.3 * (1 - a); P.puno[1] = 0.1;
-      P.bx[0] = 0.45 * a; P.bz[0] = 0.32 * a - 0.1 * (1 - a); P.c[0] = 1.9 * a + 0.3 * (1 - a);
-      P.cabX = 0.08 * a;
-    } else if (ciclo > 4.2 && ciclo < 7.4 && R.estilo === 'hermana') {
-      // Oración: manos juntas y la cabeza inclinada
-      const u = (ciclo - 4.2) / 3.2, a = Math.min(1, u * 5, (1 - u) * 5);
-      P.bx = [0.62 * a, 0.62 * a]; P.bz = [0.42 * a - 0.1 * (1 - a), -0.42 * a + 0.1 * (1 - a)]; P.c = [1.72 * a + 0.3 * (1 - a), 1.72 * a + 0.3 * (1 - a)]; P.puno = [0, 0];
-      P.cabX = 0.24 * a;
-    }
     P.cabX -= 0.03;
   } else if (estado === 'choque' || estado === 'fin') {
     P.bx = [2.3, 1.9]; P.bz = [-0.95, 0.85]; P.c = [0.45, 0.75]; P.m = [0.55, 0.15]; P.r = [-0.75, -0.3]; P.t = [0.3, 0.1]; P.puno = [0.2, 0.3]; P.cabX = 0.35; P.tx = 0.1;
@@ -2343,7 +2238,7 @@ function animarJugador(dt) {
     P.bx[0] += a * 0.5; P.bx[1] += a * 0.5; P.bz[0] -= a * 0.3; P.bz[1] += a * 0.3;
   }
   if (animTropiezo > 0) { const a = Math.sin((animTropiezo / 0.45) * Math.PI); P.tx += a * 0.55; P.bz[0] = -1.5 * a; P.bz[1] = 1.5 * a; P.bx[0] += a; P.bx[1] += a; P.cabX -= a * 0.4; }
-  aplicarPose(R, P, kp);
+  if (!R.dibujo) aplicarPose(R, P, kp);
   R.raiz.scale.setScalar(R.escala);
   // Caída con gravedad al chocar: se va de espaldas, golpea el suelo y rebota un poco
   const C = F.caida;
@@ -2355,7 +2250,7 @@ function animarJugador(dt) {
   R.raiz.position.set(px, py + (conTabla ? 0.14 : 0) + Math.sin(C.a) * 0.17, 0);
   R.raiz.rotation.x = -C.a;
   moverSombrero(dt);
-  fisica(R, dt, estado === 'jugando' ? velocidad : 0, 0.55);
+  if (!R.dibujo) fisica(R, dt, estado === 'jugando' ? velocidad : 0, 0.55);
   const dx = CARRIL_X[carril] - px;
   const deFrente = estado === 'menu' || estado === 'cargando' || estado === 'choque' || estado === 'fin';
   ap(R.raiz.rotation, 'z', estado === 'jugando' ? -dx * 0.14 : 0, k);
@@ -2365,13 +2260,20 @@ function animarJugador(dt) {
   // Poderes visibles
   R.alas.visible = poder.alas > 0 && estado !== 'menu';
   if (R.alas.visible) { const f = Math.sin(reloj * 12) * 0.4; R.alasL[0].rotation.z = -0.2 - f; R.alasL[1].rotation.z = 0.2 + f; }
-  R.aureola.visible = conTabla; R.aura.visible = conTabla; R.tabla.visible = conTabla;
+  R.aureola.visible = conTabla; R.aura.visible = conTabla; R.tabla.visible = conTabla && !R.dibujo;
+  if (R.dibujo) {
+    const modo = estado === 'menu' || estado === 'cargando' ? 'quieto' : estado === 'choque' || estado === 'fin' ? 'caido'
+      : poder.alas > 0 && corriendo ? 'volar' : rodarT > 0 ? 'rodar' : enAire ? 'aire' : corriendo ? 'correr' : 'quieto';
+    const v0 = saltoV0 || SALTO_V;
+    animarDibujo(R, dt, { modo, fase, aplastar, sandalias: poder.sandalias > 0 && estado !== 'menu', surf: conTabla,
+      aire: clamp((v0 - vy) / (2 * v0), 0, 1), rodar: rodarT > 0 ? 1 - rodarT / RODAR_T : 0, lado: estado === 'jugando' ? -dx * 0.05 : 0 });
+  }
   if (conTabla) {
     R.aura.material.opacity = 0.1 + Math.sin(reloj * 6) * 0.04 + (escudoT < 3 && Math.floor(reloj * 8) % 2 ? -0.08 : 0);
     R.aureola.rotation.z = reloj * 2;
     R.tabla.rotation.z = -dx * 0.25; R.tabla.position.y = Math.sin(reloj * 8) * 0.03;
   }
-  R.M.zapato.emissive.setHex(poder.sandalias > 0 && estado !== 'menu' ? 0x2a8a10 : 0x000000);
+  if (!R.dibujo) R.M.zapato.emissive.setHex(poder.sandalias > 0 && estado !== 'menu' ? 0x2a8a10 : 0x000000);
   R.raiz.visible = window.__dios || !(invulT > 0 && estado === 'jugando' && Math.floor(reloj * 14) % 2 === 0);
 }
 /* Animación del Tentador: corre, salta detrás del misionero, se teletransporta en humo y lanza fuego oscuro */
@@ -2617,6 +2519,8 @@ function pintarSelector() {
   $('sel-n').textContent = `CORREDOR ${i + 1} DE ${PERSONAJES.length}`;
   $('sel-nombre').textContent = pj.nombre;
   $('sel-desc').textContent = pj.desc;
+  const im = $('sel-img');
+  if (DIBUJOS[pj.id]) { im.src = `personajes/${pj.id}-accion.png`; im.hidden = false; } else im.hidden = true;
 }
 function pintarMenu() {
   pintarSelector();

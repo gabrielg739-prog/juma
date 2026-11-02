@@ -1,7 +1,7 @@
 {
- "version": "d36d2825a594",
+ "version": "2de8311ca654",
  "recursos": "juma-recursos-v1",
- "tamano": 55370818,
+ "tamano": 56680159,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -895,8 +895,8 @@
   },
   {
    "ruta": "juegos/huyendo-del-pecado.html",
-   "tamano": 171352,
-   "hash": "746ed7eaf38c"
+   "tamano": 164660,
+   "hash": "1150a4f46a76"
   },
   {
    "ruta": "juegos/lib/demonios3d.js",
@@ -942,6 +942,146 @@
    "ruta": "juegos/palabras-juma.html",
    "tamano": 118358,
    "hash": "d4e49044c94e"
+  },
+  {
+   "ruta": "juegos/personajes/allamano-accion.png",
+   "tamano": 45952,
+   "hash": "f3a0d151ae9a"
+  },
+  {
+   "ruta": "juegos/personajes/allamano-arriba.png",
+   "tamano": 40723,
+   "hash": "aa591404ae35"
+  },
+  {
+   "ruta": "juegos/personajes/allamano-derecha.png",
+   "tamano": 33986,
+   "hash": "86f3693dc099"
+  },
+  {
+   "ruta": "juegos/personajes/allamano-espalda.png",
+   "tamano": 41809,
+   "hash": "ae548336ed3e"
+  },
+  {
+   "ruta": "juegos/personajes/allamano-frente.png",
+   "tamano": 47797,
+   "hash": "4f6534dd18a9"
+  },
+  {
+   "ruta": "juegos/personajes/allamano-izquierda.png",
+   "tamano": 34122,
+   "hash": "9a44a236592c"
+  },
+  {
+   "ruta": "juegos/personajes/allamano-surf.png",
+   "tamano": 67865,
+   "hash": "e21ddc242be7"
+  },
+  {
+   "ruta": "juegos/personajes/cafasso-accion.png",
+   "tamano": 37095,
+   "hash": "84e7e71e1197"
+  },
+  {
+   "ruta": "juegos/personajes/cafasso-arriba.png",
+   "tamano": 51657,
+   "hash": "94fad2cba765"
+  },
+  {
+   "ruta": "juegos/personajes/cafasso-derecha.png",
+   "tamano": 46642,
+   "hash": "8d2abce991dd"
+  },
+  {
+   "ruta": "juegos/personajes/cafasso-espalda.png",
+   "tamano": 59625,
+   "hash": "19a6c5b8f01b"
+  },
+  {
+   "ruta": "juegos/personajes/cafasso-frente.png",
+   "tamano": 70877,
+   "hash": "03b15d8b5f98"
+  },
+  {
+   "ruta": "juegos/personajes/cafasso-izquierda.png",
+   "tamano": 47232,
+   "hash": "7d8a948429f3"
+  },
+  {
+   "ruta": "juegos/personajes/cafasso-surf.png",
+   "tamano": 51013,
+   "hash": "3a3fd53c35ca"
+  },
+  {
+   "ruta": "juegos/personajes/irene-accion.png",
+   "tamano": 37249,
+   "hash": "c3be72e08d5f"
+  },
+  {
+   "ruta": "juegos/personajes/irene-arriba.png",
+   "tamano": 43998,
+   "hash": "f54e7e9d5e5f"
+  },
+  {
+   "ruta": "juegos/personajes/irene-derecha.png",
+   "tamano": 35760,
+   "hash": "e107ffe7cf3d"
+  },
+  {
+   "ruta": "juegos/personajes/irene-espalda.png",
+   "tamano": 44546,
+   "hash": "40bcfc61b05a"
+  },
+  {
+   "ruta": "juegos/personajes/irene-frente.png",
+   "tamano": 48810,
+   "hash": "4f5c0b54cb40"
+  },
+  {
+   "ruta": "juegos/personajes/irene-izquierda.png",
+   "tamano": 35632,
+   "hash": "0caf5094216f"
+  },
+  {
+   "ruta": "juegos/personajes/irene-surf.png",
+   "tamano": 47518,
+   "hash": "f6039ca25d4b"
+  },
+  {
+   "ruta": "juegos/personajes/leonella-accion.png",
+   "tamano": 43331,
+   "hash": "6504bc94ba4d"
+  },
+  {
+   "ruta": "juegos/personajes/leonella-arriba.png",
+   "tamano": 46079,
+   "hash": "86968608b7dd"
+  },
+  {
+   "ruta": "juegos/personajes/leonella-derecha.png",
+   "tamano": 44751,
+   "hash": "49cc03876319"
+  },
+  {
+   "ruta": "juegos/personajes/leonella-espalda.png",
+   "tamano": 52479,
+   "hash": "97644f687e72"
+  },
+  {
+   "ruta": "juegos/personajes/leonella-frente.png",
+   "tamano": 60085,
+   "hash": "66098386be14"
+  },
+  {
+   "ruta": "juegos/personajes/leonella-izquierda.png",
+   "tamano": 44852,
+   "hash": "842fe3e60f3e"
+  },
+  {
+   "ruta": "juegos/personajes/leonella-surf.png",
+   "tamano": 54548,
+   "hash": "0851a072f26e"
   },
   {
    "ruta": "juegos/portadas/angel.jpg",
