@@ -1,7 +1,7 @@
 {
- "version": "d15dbe3b22a1",
+ "version": "b017da9d6eac",
  "recursos": "juma-recursos-v1",
- "tamano": 56523432,
+ "tamano": 56528231,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -741,12 +741,12 @@
   {
    "ruta": "index.html",
    "tamano": 148661,
-   "hash": "21f7a0a08fa7"
+   "hash": "343640cad56c"
   },
   {
    "ruta": "js/app.js",
    "tamano": 497684,
-   "hash": "587f0ba06e1c"
+   "hash": "703203732a58"
   },
   {
    "ruta": "js/fe.js",
@@ -895,8 +895,8 @@
   },
   {
    "ruta": "juegos/huyendo-del-pecado.html",
-   "tamano": 167584,
-   "hash": "6f6c07bb6a00"
+   "tamano": 167597,
+   "hash": "3384438532ae"
   },
   {
    "ruta": "juegos/lib/demonios3d.js",
@@ -920,8 +920,8 @@
   },
   {
    "ruta": "juegos/lib/santos3d.js",
-   "tamano": 22806,
-   "hash": "e94fb3f9dc6c"
+   "tamano": 27592,
+   "hash": "53e37834f895"
   },
   {
    "ruta": "juegos/lib/sonido.js",

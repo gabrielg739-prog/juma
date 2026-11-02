@@ -1543,14 +1543,14 @@ function elegirPersonaje(id) {
   S.personaje = def.id;
   return def;
 }
-/* Los santos en 3D se construyen a partir de sus hojas de personaje (frente, espalda y lados).
-   Si algo fallara al cargarlos, se usan sus dibujos planos. */
+/* Los santos en 3D, modelados siguiendo sus hojas de personaje (lib/santos3d.js).
+   Si algo fallara al prepararlos, se usan sus dibujos planos. */
 const ESTILO_SANTO = { allamano: ['sacerdote', 0.88], leonella: ['hermana', 0.76], cafasso: ['sacerdote', 0.88], irene: ['hermana', 0.78] };
 const preparando = {};
 function prepararSanto(id) {
   if (CACHE_PJ[id] || !ESTILO_SANTO[id]) return Promise.resolve();
-  return preparando[id] || (preparando[id] = construirSanto(THREE, id, 'personajes/').then((R) => {
-    agregarPoderes(R, 1.38);
+  return preparando[id] || (preparando[id] = construirSanto(THREE, id).then((R) => {
+    agregarPoderes(R, 1.32);
     R.estilo = ESTILO_SANTO[id][0]; R.zancada = ESTILO_SANTO[id][1];
     CACHE_PJ[id] = R;
   }).catch((e) => console.warn('No se pudo preparar en 3D a', id, e)));
@@ -2173,6 +2173,7 @@ function fisica(R, dt, avance, parpAbierto) {
   const cerrado = F.parpT < 0.13 && F.parpT > 0;
   if (F.parpT <= 0) F.parpT = 2.2 + Math.random() * 3.5;
   for (const p of R.parpados) p.rotation.x = cerrado ? -1.25 : parpAbierto;
+  if (R.parpadeo) R.parpadeo(cerrado);
 }
 // El sombrero sale volando al chocar y rebota en el suelo
 function soltarSombrero() {
