@@ -2862,6 +2862,29 @@ window.JUMA_NAV = {
   ir(id) { switchSection(id); }
 };
 
+/* ---------- Santos y beatos: los de la Consolata (los mismos de «Un misionero de JUMA es…») y los jóvenes ---------- */
+(function pintarSantos() {
+  const cons = document.getElementById('santos-consolata');
+  if (cons && !cons.children.length) {
+    $$('#identidad .patrons > details').forEach((d) => {
+      const c = d.cloneNode(true);
+      c.open = false;
+      c.setAttribute('name', 'santos-c');
+      c.querySelectorAll('img').forEach((im) => { im.setAttribute('loading', 'lazy'); im.setAttribute('decoding', 'async'); });
+      cons.appendChild(c);
+    });
+  }
+  const jov = document.getElementById('santos-jovenes');
+  const lista = window.SANTOS_JOVENES || [];
+  if (jov && !jov.children.length) {
+    jov.innerHTML = lista.map((s) => {
+      const img = 'juegos/' + s.img;
+      const alt = 'Imagen de ' + s.nombre;
+      return `<details class="patron-d" name="santos-j"><summary class="patron"><img src="${esc(img)}" alt="${esc(alt)}" loading="lazy" decoding="async"><div><b>${esc(s.nombre)}</b><span>${esc(s.titulo)}</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="${esc(img)}" alt="${esc(alt)}" loading="lazy" decoding="async"><div class="pd-txt">${s.bio.map((p) => `<p>${p}</p>`).join('')}${s.fiesta ? `<p><b>Fiesta:</b> ${esc(s.fiesta)}.</p>` : ''}</div></div></details>`;
+    }).join('');
+  }
+})();
+
 /* ---------- menú lateral, barra inferior y hoja de secciones ---------- */
 const NAV_CONOCENOS = [
   ['inicio', 'Inicio', 'home'],
@@ -2869,6 +2892,7 @@ const NAV_CONOCENOS = [
   ['vive', 'Así se vive', 'sparkles'],
   ['domingos', 'Domingos', 'calendar'],
   ['consolata', 'La Consolata', 'globe'],
+  ['santos', 'Santos y beatos', 'star'],
   ['formacion', 'Formación', 'cap'],
   ['fe', 'Vida de fe', 'book'],
   ['novedades', 'Noticias', 'news'],
@@ -2878,7 +2902,7 @@ const NAV_CONOCENOS = [
   ['unete', 'Únete a JUMA', 'userplus']
 ];
 /* Qué entrada del menú se ilumina según la parte de la página que se está viendo */
-const NAV_DE_SECCION = { biblioteca: 'biblioteca', juegos: 'juegos', inicio: 'inicio', quienes: 'quienes', vive: 'vive', domingos: 'domingos', pilares: 'domingos', consolata: 'consolata', mapa: 'consolata', identidad: 'consolata', formacion: 'formacion', fe: 'fe', areas: 'fe', novedades: 'novedades', testimonios: 'novedades', galeria: 'galeria', 'muro-sec': 'galeria', logo: 'unete', unete: 'unete', comunidad: 'comunidad' };
+const NAV_DE_SECCION = { biblioteca: 'biblioteca', juegos: 'juegos', inicio: 'inicio', quienes: 'quienes', vive: 'vive', domingos: 'domingos', pilares: 'domingos', consolata: 'consolata', mapa: 'consolata', identidad: 'consolata', santos: 'santos', formacion: 'formacion', fe: 'fe', areas: 'fe', novedades: 'novedades', testimonios: 'novedades', galeria: 'galeria', 'muro-sec': 'galeria', logo: 'unete', unete: 'unete', comunidad: 'comunidad' };
 let navActual = 'inicio';
 function seccionDeElemento(id) {
   if (NAV_DE_SECCION[id]) return NAV_DE_SECCION[id];
@@ -3469,12 +3493,12 @@ function renderJuegosView() {
       </article>
       <article class="lib-card">
         <div class="lib-cover con-img" style="--bk:#0A235C;background-image:url(juegos/portadas/palabras.jpg)" role="img" aria-label="Portada de Palabras JUMA"><b>Palabras JUMA</b></div>
-        <div class="lib-info"><h2>Palabras JUMA</h2><small>Crucigrama y rueda de letras</small><p>Forma palabras del manual y de la fe, completa los crucigramas y arma los cuadros de cada capítulo.</p>
+        <div class="lib-info"><h2>Palabras JUMA</h2><small>Crucigrama y rueda de letras · 500 niveles · ¡Nuevo!</small><p>Forma palabras de la Biblia, la misa, el catecismo y la fe, completa los crucigramas y arma los cuadros de la Consolata y de 19 santos y beatos jóvenes. Con niveles de desafío ⚡ y maestros 👑.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/palabras-juma.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
         <div class="lib-cover con-img" style="--bk:#4A2A6E;background-image:url(juegos/portadas/memoria.jpg)" role="img" aria-label="Portada de Memoria de santos"><b>Memoria de santos</b></div>
-        <div class="lib-info"><h2>Memoria de santos</h2><small>Juego de memoria · 15 niveles</small><p>Une santos y signos de la fe con su nombre, en tres dificultades, y aprende algo nuevo en cada pareja.</p>
+        <div class="lib-info"><h2>Memoria de santos</h2><small>Juego de memoria · 215 niveles · santos jóvenes · ¡Nuevo!</small><p>Encuentra las parejas de santos, beatos y signos de la fe, en tres dificultades. Conoce a Carlo Acutis, Domingo Savio, Chiara Badano, Laura Vicuña y otros santos jóvenes, y aprende algo nuevo en cada pareja.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/memoria-santos.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
@@ -3518,7 +3542,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=122" allow="fullscreen; camera"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=123" allow="fullscreen; camera"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
   document.body.appendChild(r);
   /* Botón Atrás del teléfono: cierra el juego en vez de salir de la app */
   try { history.pushState({ jumaJuego: 1 }, ''); } catch (e) {}
@@ -7968,7 +7992,7 @@ document.addEventListener('click', (e) => {
     if (has(t, ['irene', 'stefani', 'nyaatha', 'kenia'])) return santo(4);
     if (has(t, ['allamano', 'fundador', 'jose'])) return santo(1);
     if (has(t, ['virgen', 'consolata', 'maria', 'patrona', 'madre'])) return santo(0);
-    if (has(t, ['santo', 'santos', 'beata', 'beato'])) return P(['Nos acompañan María Consolata, San José Allamano, San José Cafasso, la beata Leonella Sgorbati y la beata Irene Stefani.', 'Pregúntame por cualquiera de ellos y te cuento su historia.']);
+    if (has(t, ['santo', 'santos', 'beata', 'beato'])) return P(['Nos acompañan María Consolata, San José Allamano, San José Cafasso, la beata Leonella Sgorbati y la beata Irene Stefani.', 'En la sección «Santos y beatos» también conocerás a santos jóvenes como Carlo Acutis, Domingo Savio, Chiara Badano y Laura Vicuña.']) + '<button type="button" class="jbtn" data-goto="#santos">Ver santos y beatos</button>';
     if (has(t, ['area', 'servir', 'coro', 'liturgia', 'logistica', 'ayudar', 'donde puedo'])) { const ar = $$('#areas .areas h3').map((h) => esc(txt(h))); return P(['Cada joven tiene un lugar donde servir. Nuestras áreas son:', ar.join(', ') + '.', 'Cada área tiene un encargado y un auxiliar.']); }
     if (has(t, ['pilar', 'evangeliz', 'animacion', 'recreacion'])) return P(['Cuatro pilares sostienen cada mes: <b>formación</b>, <b>evangelización</b>, <b>animación</b> y <b>recreación y compartir</b>.']);
     if (has(t, ['mision ', 'vision', 'objetivo', 'que buscan', 'proposito'])) return P(['<b>Nuestro objetivo:</b> promover en los jóvenes espacios de formación, evangelización y misión a través del carisma de los Misioneros de la Consolata.']);

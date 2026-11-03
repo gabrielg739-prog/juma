@@ -42,6 +42,9 @@
   .dific button small { display: block; font-weight: 700; font-size: 11px; opacity: .78; margin-top: 3px; }
   .dific button[aria-pressed="true"] { border-color: var(--gold); background: rgba(255, 210, 90, .2); }
   .mapa { display: grid; grid-template-columns: repeat(5, 1fr); gap: 9px; }
+  .nivel.reto { border-color: #ffb020; box-shadow: 0 0 0 2px rgba(255,176,32,.35) inset; }
+  .nivel { position: relative; }
+  .nivel i { position: absolute; top: 4px; right: 6px; font-style: normal; font-size: 12px; }
   .nivel { aspect-ratio: 1; border-radius: 18px; background: var(--glass-2); border: 2px solid var(--borde); display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; box-shadow: 0 4px 0 rgba(0, 0, 0, .3); }
   .nivel small { font-size: 10.5px; color: var(--gold); min-height: 13px; }
   .nivel.bloq { opacity: .4; }
@@ -158,7 +161,8 @@
     <p class="sub">Encuentra las parejas: cada santo con su nombre y cada signo de la fe con su significado.</p>
     <div class="como">
       <p>• Voltea dos cartas. Si forman pareja quedan <b>encendidas</b> y aprendes algo nuevo.</p>
-      <p>• <b>15 niveles</b> con más cartas cada vez; en los últimos, las cartas se mueven y corre el reloj. Las <b>cartas doradas</b> valen el doble.</p>
+      <p>• <b>215 niveles</b> con más cartas cada vez; en los últimos, las cartas se mueven y corre el reloj. Cada 10 niveles hay un <b>desafío ⚡</b>. Las <b>cartas doradas</b> valen el doble.</p>
+      <p>• Desde el nivel 16 conocerás a los <b>santos y beatos jóvenes</b>: Carlo Acutis, Domingo Savio, Chiara Badano, Laura Vicuña y muchos más.</p>
       <p>• Encadena aciertos para sumar <b>racha</b>. Menos movimientos, más estrellas.</p>
     </div>
     <div class="dific" id="dific"></div>
@@ -190,6 +194,7 @@
 <div class="fondo" id="fondo"><div class="hoja" id="hoja"></div></div>
 
 <script src="lib/sonido.js"></script>
+<script src="lib/santos-jovenes.js"></script>
 <script>
 'use strict';
 const $ = (id) => document.getElementById(id);
@@ -199,6 +204,15 @@ const NIVELES = [
   { pares: 8, cols: 4, dorada: true }, { pares: 8, cols: 4, dorada: true }, { pares: 9, cols: 6, dorada: true }, { pares: 10, cols: 5, dorada: true }, { pares: 10, cols: 5, dorada: true, mezcla: true },
   { pares: 11, cols: 6, dorada: true, mezcla: true }, { pares: 11, cols: 6, dorada: true, reloj: true }, { pares: 12, cols: 6, dorada: true, mezcla: true }, { pares: 12, cols: 6, dorada: true, reloj: true, mezcla: true }, { pares: 12, cols: 6, dorada: true, reloj: true, mezcla: true }
 ];
+/* Niveles 16 a 215: más parejas poco a poco (de 8 a 15) y, sobre todo, los santos y beatos jóvenes.
+   Cada 10 niveles hay un desafío: una pareja más, cartas que se mueven y reloj. */
+for (let k = 0; k < 200; k++) {
+  const n = 16 + k, reto = n % 10 === 0;
+  const pares = Math.min(15, 8 + Math.floor(k / 25) + (reto ? 1 : 0));
+  const cartasN = pares * 2;
+  NIVELES.push({ pares, cols: cartasN <= 16 ? 4 : cartasN <= 20 ? 5 : 6, dorada: true, jovenes: true, reto,
+    mezcla: reto || k % 3 === 1 || k >= 120, reloj: reto || k % 4 === 3 || k >= 160 });
+}
 const DIFS = {
   facil: { n: 'Fácil', d: 'Vistazo inicial para memorizar', vistazo: 2600, iguales: true, tiempo: 0, mezcla: false },
   normal: { n: 'Normal', d: 'Encuentra cada pareja de imágenes', vistazo: 0, iguales: false, tiempo: 0, mezcla: false },
@@ -228,6 +242,8 @@ const SIGNOS = [
 ];
 const DEFS = '<defs><linearGradient id="oro" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset=".5" stop-color="#ffcf3a"/><stop offset="1" stop-color="#b8780a"/></linearGradient><radialGradient id="llama" cx=".5" cy=".7" r=".6"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="#ffd060"/><stop offset="1" stop-color="#ff6a1a"/></radialGradient></defs>';
 const DORSO = '<svg viewBox="0 0 90 120" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="dg" cx=".5" cy=".42" r=".8"><stop offset="0" stop-color="#9a64cc"/><stop offset=".55" stop-color="#4a2672"/><stop offset="1" stop-color="#1e0e30"/></radialGradient><linearGradient id="dor" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset=".45" stop-color="#ffcf3a"/><stop offset="1" stop-color="#a86a00"/></linearGradient><pattern id="dp" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M5 0v10M0 5h10" stroke="rgba(255,210,90,.10)" stroke-width="1"/></pattern></defs><rect width="90" height="120" fill="url(#dg)"/><rect width="90" height="120" fill="url(#dp)"/><g opacity=".22" stroke="#ffe6a0" stroke-width="1.2">' + Array.from({ length: 24 }, (_, i) => { const a = i / 24 * Math.PI * 2; return `<path d="M${45 + Math.cos(a) * 26} ${60 + Math.sin(a) * 26}L${45 + Math.cos(a) * 44} ${60 + Math.sin(a) * 44}"/>`; }).join('') + '</g><rect x="5.5" y="5.5" width="79" height="109" rx="9" fill="none" stroke="url(#dor)" stroke-width="2"/><rect x="9.5" y="9.5" width="71" height="101" rx="7" fill="none" stroke="rgba(255,210,90,.45)" stroke-width="1"/>' + [[14, 14, 0], [76, 14, 90], [76, 106, 180], [14, 106, 270]].map(([x, y, r]) => `<g transform="translate(${x} ${y}) rotate(${r})"><path d="M-2 6C-2 0 0 -2 6 -2M2 9C2 3 3 2 9 2" fill="none" stroke="url(#dor)" stroke-width="1.3"/><circle cx="0" cy="0" r="1.6" fill="#ffd25a"/></g>`).join('') + '<circle cx="45" cy="60" r="22" fill="rgba(30,10,50,.45)" stroke="url(#dor)" stroke-width="2.2"/><circle cx="45" cy="60" r="17" fill="none" stroke="rgba(255,210,90,.4)" stroke-width="1"/><path d="M45 43v34M34 55h22" stroke="#7a4a08" stroke-width="7" stroke-linecap="round" opacity=".5" transform="translate(1 1.5)"/><path d="M45 43v34M34 55h22" stroke="url(#dor)" stroke-width="5.5" stroke-linecap="round"/><path d="M44 45v12M35.5 54.5h7" stroke="#fff8d0" stroke-width="1.4" stroke-linecap="round" opacity=".8"/></svg>';
+/* Santos y beatos jóvenes (lib/santos-jovenes.js) */
+(window.SANTOS_JOVENES || []).forEach((sj) => SANTOS.push({ id: sj.id, img: sj.img, nombre: sj.nombre, dato: sj.resumen, joven: true }));
 const ELEMENTOS = SANTOS.map((s) => Object.assign({ tipo: 'santo' }, s)).concat(SIGNOS.map((s) => Object.assign({ tipo: 'signo' }, s)));
 
 /* ---------- Guardado ---------- */
@@ -299,7 +315,13 @@ function iniciarNivel(n) {
   nivel = n; DIF = DIFS[S.dificultad]; if (JS.ctx()) JS.musica('calma');
   const cfg = cfgN();
   // Primero santos y signos que aún no se conocen, luego el resto
-  const elegidos = barajar(ELEMENTOS).slice(0, cfg.pares);
+  let elegidos;
+  if (cfg.jovenes) {
+    // En los niveles nuevos, más de la mitad de las parejas son santos y beatos jóvenes
+    const jov = barajar(ELEMENTOS.filter((e) => e.joven)), otros = barajar(ELEMENTOS.filter((e) => !e.joven));
+    const nj = Math.min(jov.length, Math.ceil(cfg.pares * 0.6));
+    elegidos = jov.slice(0, nj).concat(otros.slice(0, cfg.pares - nj));
+  } else elegidos = barajar(ELEMENTOS).slice(0, cfg.pares);
   const mazo = [];
   const doradaId = cfg.dorada ? elegidos[Math.floor(Math.random() * elegidos.length)].id : null;
   elegidos.forEach((e) => {
@@ -311,7 +333,7 @@ function iniciarNivel(n) {
   cartas = barajar(mazo);
   abiertas = []; encontrados = 0; movimientos = 0; racha = 0; fallosSeguidos = 0; pistas = 2; ganadosNivel = 0;
   limiteT = DIF.tiempo || cfg.reloj ? (cfg.pares * (DIF.tiempo ? 9 : 10) + 15) * 1000 : 0;
-  $('g-nivel').textContent = 'Nivel ' + n;
+  $('g-nivel').textContent = 'Nivel ' + n + (cfg.reto ? ' ⚡' : '');
   $('g-racha').textContent = 'Racha 0';
   $('t-pistas').textContent = pistas; $('btn-pista').disabled = false;
   $('g-reloj').hidden = !limiteT;
@@ -500,7 +522,7 @@ function pintarMapa() {
   let h = '';
   for (let n = 1; n <= NIVELES.length; n++) {
     const bloq = n > S.nivelMax, est = S.estrellas[n] || 0;
-    h += `<button type="button" class="nivel${bloq ? ' bloq' : ''}${est ? ' listo' : ''}" style="--d:${(n - 1) * 35}ms" data-nivel="${n}"${bloq ? ' disabled' : ''}>${n}<small>${est ? '★'.repeat(est) : NIVELES[n - 1].pares + ' parejas'}</small></button>`;
+    h += `<button type="button" class="nivel${bloq ? ' bloq' : ''}${est ? ' listo' : ''}${NIVELES[n - 1].reto ? ' reto' : ''}" style="--d:${Math.min(n - 1, 24) * 35}ms" data-nivel="${n}"${bloq ? ' disabled' : ''}>${n}${NIVELES[n - 1].reto ? '<i>⚡</i>' : ''}<small>${est ? '★'.repeat(est) : NIVELES[n - 1].pares + ' parejas'}</small></button>`;
   }
   $('mapa').innerHTML = h;
   $('m-dif').textContent = 'Dificultad: ' + DIFS[S.dificultad].n + ' · ' + DIFS[S.dificultad].d;

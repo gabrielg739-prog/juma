@@ -1,7 +1,7 @@
 {
- "version": "35c76a2edfa4",
+ "version": "6cba6b5536fd",
  "recursos": "juma-recursos-v1",
- "tamano": 56800947,
+ "tamano": 56991429,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -745,13 +745,13 @@
   },
   {
    "ruta": "index.html",
-   "tamano": 148661,
-   "hash": "a433f4ecd94a"
+   "tamano": 149780,
+   "hash": "38fc6cb868be"
   },
   {
    "ruta": "js/app.js",
-   "tamano": 497791,
-   "hash": "81ac033d5cbe"
+   "tamano": 499664,
+   "hash": "5ca65b66048a"
   },
   {
    "ruta": "js/fe.js",
@@ -924,6 +924,11 @@
    "hash": "edd9c47dd42e"
   },
   {
+   "ruta": "juegos/lib/santos-jovenes.js",
+   "tamano": 19114,
+   "hash": "d035ede92a5f"
+  },
+  {
    "ruta": "juegos/lib/santos3d.js",
    "tamano": 39872,
    "hash": "17d542d2102f"
@@ -945,13 +950,18 @@
   },
   {
    "ruta": "juegos/memoria-santos.html",
-   "tamano": 46075,
-   "hash": "7f7dec6ed1b9"
+   "tamano": 47790,
+   "hash": "fcf1c85c83fc"
   },
   {
    "ruta": "juegos/palabras-juma.html",
-   "tamano": 118358,
-   "hash": "d4e49044c94e"
+   "tamano": 122838,
+   "hash": "5f13f4436422"
+  },
+  {
+   "ruta": "juegos/palabras-niveles.js",
+   "tamano": 162181,
+   "hash": "6f38f5f0ab8a"
   },
   {
    "ruta": "juegos/personajes/allamano-accion.png",

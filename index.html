@@ -1521,6 +1521,25 @@ body.is-guest .solo-miembros { display: none !important; }
 </section>
 </div>
 
+<!-- ============ BLOQUE: SANTOS Y BEATOS ============ -->
+<div class="blk blk-oculto" id="blk-santos" data-blk-t="Santos y beatos" data-blk-ic="star">
+<section id="santos" class="sec" style="background: var(--paper)">
+<div class="wrap">
+<div class="split"><h2 class="h-display h-xl">Santos y beatos</h2><p class="body">Amigos de Dios que nos muestran el camino. Toca cada uno para conocer su historia.</p></div>
+<div class="patrons-head">
+<h3 class="h-display h-md" style="color: var(--royal)">Santos y beatos de la Consolata</h3>
+<p class="body">Nuestra madre, nuestro fundador y los santos de la familia de la Consolata.</p>
+</div>
+<div class="patrons" id="santos-consolata"></div>
+<div class="patrons-head">
+<h3 class="h-display h-md" style="color: var(--royal)">Santos y beatos jóvenes</h3>
+<p class="body">Vivieron pocos años, pero los vivieron a fondo. Nos enseñan que se puede ser santo en la escuela, en la familia, con los amigos, en el deporte y en la misión.</p>
+</div>
+<div class="patrons" id="santos-jovenes"></div>
+</div>
+</section>
+</div>
+
 <!-- ============ BLOQUE 4: FORMACIÓN ============ -->
 <div class="blk blk-oculto" id="blk-formacion" data-blk-t="Formación" data-blk-ic="cap">
 <section id="formacion" class="sec night">
@@ -1802,8 +1821,9 @@ body.is-guest .solo-miembros { display: none !important; }
 <div id="modal-root"></div>
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode.min.js"></script>
-<script type="module" src="js/app.js?v=122"></script>
-<script type="module" src="js/offline.js?v=122"></script>
+<script src="juegos/lib/santos-jovenes.js?v=123"></script>
+<script type="module" src="js/app.js?v=123"></script>
+<script type="module" src="js/offline.js?v=123"></script>
 <script type="module" src="js/fe.js?v=65"></script>
 </body>
 </html>
