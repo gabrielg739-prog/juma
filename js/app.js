@@ -3523,7 +3523,7 @@ function renderJuegosView() {
       </article>
       <article class="lib-card">
         <div class="lib-cover con-img" style="--bk:#3A1F5A;background-image:url(juegos/portadas/granpremio.jpg)" role="img" aria-label="Portada de Gran Premio de la Fe"><b>Gran Premio de la Fe</b></div>
-        <div class="lib-info"><h2>Gran Premio de la Fe</h2><small>Carreras en 3D · poderes · santos al volante · con amigos · ¡Nuevo!</small><p>Corre con San José Allamano, Irene Stefani, Leonella, José Cafasso, Don Bosco, San Pablo, Francisco Javier o Teresa de Ávila en kart, papamóvil, furgoneta misionera o moto. Recoge las cajas de gracia y lanza agua bendita, la paloma o la campanilla; protégete con el rosario y brilla con la estrella de Belén. Siete mundos con vueltas de más de un minuto (entre ellos la plaza de la basílica, el Arca de Noé y el Camino al Cielo), pista ancha con tierra que frena si te sales, el carro de fuego de Elías para los que van atrás, el maná con cinco turbos, el ángel de la guarda que te rescata, rampas para volar, ala delta para planear, derrapes con mini-turbo y el superimpulso del rebufo. En el teléfono gira con el joystick. Gana las cinco copas o corre con tus amigos.</p>
+        <div class="lib-info"><h2>Gran Premio de la Fe</h2><small>Carreras en 3D · poderes · santos al volante · con amigos · ¡Nuevo!</small><p>Corre con San José Allamano, Irene Stefani, Leonella, José Cafasso, Don Bosco, San Pablo, Francisco Javier o Teresa de Ávila en kart, papamóvil, furgoneta misionera o moto. Recoge las cajas de gracia y lanza agua bendita, la paloma o la campanilla; protégete con el rosario y brilla con la estrella de Belén. Siete mundos con vueltas de más de un minuto (entre ellos la plaza de la basílica, el Arca de Noé y el Camino al Cielo), pista ancha con tierra que frena si te sales, el carro de fuego de Elías para los que van atrás, el maná con cinco turbos, el ángel de la guarda que te rescata, derrapes con mini-turbo y el superimpulso del rebufo. Secciones especiales: planea en ala delta sobre el valle de Lourdes, corre en lancha alrededor de la isla del faro del Arca y hazte pequeñito en el pueblito en miniatura del Pesebre. En el teléfono gira con el joystick. Gana las cinco copas o corre con tus amigos.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/gran-premio-de-la-fe.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
@@ -3542,7 +3542,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=127" allow="fullscreen; camera"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=128" allow="fullscreen; camera"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
   document.body.appendChild(r);
   /* Botón Atrás del teléfono: cierra el juego en vez de salir de la app */
   try { history.pushState({ jumaJuego: 1 }, ''); } catch (e) {}
