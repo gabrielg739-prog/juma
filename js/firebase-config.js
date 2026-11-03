@@ -5,6 +5,8 @@ globalThis.JUMA_FIREBASE = {
   apiKey: "AIzaSyC8-zbb-AGZmHHsdwo0B0K7mVQZDalwnlc",
   authDomain: "juma-e4ab8.firebaseapp.com",
   projectId: "juma-e4ab8",
+  // Realtime Database: puente por internet del juego con amigos (cuando la wifi no deja conectar directo)
+  databaseURL: "https://juma-e4ab8-default-rtdb.firebaseio.com",
   storageBucket: "juma-e4ab8.firebasestorage.app",
   messagingSenderId: "551880580074",
   appId: "1:551880580074:web:618f067a7f3ddc9da1b093",

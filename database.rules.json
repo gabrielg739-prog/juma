@@ -1,0 +1,28 @@
+{
+  "rules": {
+    "salasRed": {
+      "$codigo": {
+        ".read": "$codigo.matches(/^[A-Z0-9]{4}$/)",
+        ".write": "$codigo.matches(/^[A-Z0-9]{4}$/)",
+        "a": {
+          "$para": {
+            "$de": {
+              "f": {
+                "$k": {
+                  ".validate": "newData.hasChildren(['n', 'e']) && newData.child('n').isNumber() && newData.child('e').isString() && newData.child('e').val().length < 20000"
+                }
+              },
+              "r": {
+                "$k": {
+                  ".validate": "newData.hasChildren(['n', 'e']) && newData.child('n').isNumber() && newData.child('e').isString() && newData.child('e').val().length < 20000"
+                }
+              },
+              "$otro": { ".validate": false }
+            }
+          }
+        },
+        "$otro": { ".validate": false }
+      }
+    }
+  }
+}

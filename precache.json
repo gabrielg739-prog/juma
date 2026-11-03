@@ -1,7 +1,7 @@
 {
- "version": "a20fe632aa0c",
+ "version": "35c76a2edfa4",
  "recursos": "juma-recursos-v1",
- "tamano": 56778105,
+ "tamano": 56800947,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -42,6 +42,11 @@
    "ruta": "contenido.json",
    "tamano": 2675,
    "hash": "d18acc0e0f81"
+  },
+  {
+   "ruta": "database.rules.json",
+   "tamano": 867,
+   "hash": "be66c257c959"
   },
   {
    "ruta": "descargar.html",
@@ -755,8 +760,8 @@
   },
   {
    "ruta": "js/firebase-config.js",
-   "tamano": 716,
-   "hash": "cb1880aaed72"
+   "tamano": 888,
+   "hash": "bc7be3dc7944"
   },
   {
    "ruta": "js/misioneros.js",
@@ -864,9 +869,9 @@
    "hash": "e4ea2f6f453c"
   },
   {
-   "ruta": "juegos/gran-premio/index-CSu-CrYR.js",
-   "tamano": 1157205,
-   "hash": "cb878a396e3e"
+   "ruta": "juegos/gran-premio/index-C7Phsc0e.js",
+   "tamano": 1163898,
+   "hash": "d0267e873e73"
   },
   {
    "ruta": "juegos/gran-premio/kart_cruise_mid_loop-E9gzRWlQ.wav",
@@ -891,7 +896,7 @@
   {
    "ruta": "juegos/gran-premio-de-la-fe.html",
    "tamano": 54795,
-   "hash": "d528946c61ba"
+   "hash": "592414021301"
   },
   {
    "ruta": "juegos/huyendo-del-pecado.html",
@@ -910,13 +915,13 @@
   },
   {
    "ruta": "juegos/lib/red.js",
-   "tamano": 26513,
-   "hash": "4c529519aac3"
+   "tamano": 41169,
+   "hash": "b3c7012305d4"
   },
   {
    "ruta": "juegos/lib/sala.js",
-   "tamano": 19239,
-   "hash": "77905fa43553"
+   "tamano": 19693,
+   "hash": "edd9c47dd42e"
   },
   {
    "ruta": "juegos/lib/santos3d.js",

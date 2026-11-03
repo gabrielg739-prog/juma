@@ -17,6 +17,11 @@
                   anfitrión lo escanea (o pega el texto) y responde con otro.
    - Dos canales por jugador: «fiable» (ordenado, para eventos) y «rapido»
      (sin reenvíos, para posiciones que se mandan muchas veces por segundo).
+   - Puente por internet: entre teléfonos la conexión directa a veces no se
+     abre (el router no deja que se vean, o uno usa datos móviles). Si en unos
+     segundos no se abre, ese jugador sigue conectado a través de la Realtime
+     Database del proyecto JUMA (salasRed/<código>). Va algo más lento, pero
+     funciona en cualquier red con internet.
 
    Uso
      const red = crearRed({ juego: 'luz', nombre: 'Ana' });
@@ -38,6 +43,10 @@ const SIN_RESPUESTA = 20000;    // ms sin noticias de un jugador: se da por desc
 const ESPERA_ICE = 2500;        // ms máximos reuniendo direcciones (en la misma wifi basta con menos)
 const ESPERA_RESPUESTA = 40000; // ms esperando a que el anfitrión responda al invitado
 const ESPERA_CANAL = 15000;     // ms esperando a que se abra la conexión directa
+const ESPERA_DIRECTA = 6000;    // ms dándole una oportunidad a la conexión directa antes de usar el puente
+const ESPERA_PUENTE = 25000;    // ms esperando la bienvenida por el puente
+const TICK_PUENTE = 120;        // ms entre envíos de posiciones por el puente
+const forzarPuente = () => /[?&]forzarPuente=1\b/.test(location.search); // pruebas: sin conexión directa
 
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 const azar = (n, abc = LETRAS) => Array.from({ length: n }, () => abc[Math.floor(Math.random() * abc.length)]).join('');
@@ -123,6 +132,126 @@ export function almacenPorDefecto() {
 }
 
 /* ---------------------------------------------------------------------
+   Puente por internet (Firebase Realtime Database, por su API REST)
+   Cada jugador tiene un buzón: salasRed/<código>/a/<id>/<remitente>/…
+     f/q0000001 … mensajes fiables numerados (se entregan en orden)
+     r/<clave>    lo último de cada tipo de mensaje rápido (posiciones)
+   El buzón se escucha con EventSource (eventos «put» y «patch»).
+   --------------------------------------------------------------------- */
+async function urlPuente() {
+  const q = location.search.match(/[?&]puente=([^&]+)/);
+  if (q) return decodeURIComponent(q[1]).replace(/\/$/, '');
+  const c = await asegurarConfig();
+  if (!c) return null;
+  return (c.databaseURL || (c.projectId ? `https://${c.projectId}-default-rtdb.firebaseio.com` : '')).replace(/\/$/, '') || null;
+}
+
+function crearPuente(base, codigo) {
+  const raiz = `${base}/salasRed/${codigo}`;
+  const json = (ruta) => `${raiz}/${ruta}.json`;
+  async function pedir(metodo, ruta, cuerpo, intentos = 3) {
+    for (let i = 0; i < intentos; i++) {
+      try {
+        const r = await fetch(json(ruta) + (metodo === 'GET' ? '?shallow=true' : '?print=silent'), { method: metodo, body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo), cache: 'no-store' });
+        if (r.ok) return true;
+        if (r.status === 401 || r.status === 403 || r.status === 404) return false;
+      } catch (e) { /* se reintenta */ }
+      await espera(300 * (i + 1));
+    }
+    return false;
+  }
+
+  /** Escucha el buzón de `yo` y entrega cada mensaje una sola vez y en orden. */
+  function escuchar(yo, alMensaje, alEstado) {
+    const estado = new Map(); // remitente → { f: último fiable entregado, pend: Map, r: Map clave→n }
+    let es = null, cerrado = false, fallos = 0;
+    const de = (rem) => { if (!estado.has(rem)) estado.set(rem, { f: 0, pend: new Map(), r: new Map() }); return estado.get(rem); };
+    function hoja(rem, tipo, clave, val) {
+      if (!val || typeof val !== 'object' || typeof val.e !== 'string') return;
+      const st = de(rem), n = Number(val.n) || 0;
+      let env; try { env = JSON.parse(val.e); } catch (e) { return; }
+      if (tipo === 'r') {
+        if (n <= (st.r.get(clave) || 0)) return;
+        st.r.set(clave, n);
+        alMensaje(rem, env, true);
+      } else if (tipo === 'f') {
+        if (n <= st.f || st.pend.has(n)) return;
+        st.pend.set(n, env);
+        while (st.pend.has(st.f + 1)) { st.f++; const m = st.pend.get(st.f); st.pend.delete(st.f); alMensaje(rem, m, false); }
+      }
+    }
+    function bajar(segs, d) {
+      if (d === null || d === undefined) return;
+      if (segs.length === 3) return hoja(segs[0], segs[1], segs[2], d);
+      if (typeof d !== 'object') return;
+      for (const k of Object.keys(d)) bajar(segs.concat(k), d[k]);
+    }
+    function tratar(ev) {
+      let d; try { d = JSON.parse(ev.data); } catch (e) { return; }
+      if (!d) return;
+      fallos = 0;
+      const segs = String(d.path || '/').split('/').filter(Boolean);
+      bajar(segs, d.data);
+    }
+    function abrir() {
+      if (cerrado) return;
+      es = new EventSource(json('a/' + yo));
+      es.addEventListener('open', () => { alEstado && alEstado('abierto'); });
+      es.addEventListener('put', tratar);
+      es.addEventListener('patch', tratar);
+      es.addEventListener('cancel', () => { cerrado = true; if (es) es.close(); alEstado && alEstado('sin-permiso'); });
+      es.onerror = () => {
+        // El navegador reintenta solo; si se rinde, se vuelve a abrir unas cuantas veces
+        fallos++;
+        if (fallos > 12) { cerrado = true; if (es) es.close(); alEstado && alEstado('error'); return; }
+        if (es && es.readyState === EventSource.CLOSED) { es = null; setTimeout(abrir, 1200 * Math.min(fallos, 5)); }
+      };
+    }
+    abrir();
+    return { cerrar() { cerrado = true; if (es) es.close(); es = null; } };
+  }
+
+  /** Envío de `yo` al buzón de `a`: fiables numerados y rápidos agrupados (lo último de cada uno). */
+  function enlace(yo, a) {
+    let seq = 0, n = 0, enCurso = false, cerrado = false, timer = null;
+    const pend = new Map();
+    function vaciar() {
+      timer = null;
+      if (cerrado || enCurso || !pend.size) return;
+      const lote = {};
+      for (const [k, env] of pend) lote[k] = { n: ++n, e: JSON.stringify(env) };
+      pend.clear();
+      enCurso = true;
+      pedir('PATCH', `a/${a}/${yo}/r`, lote, 1).finally(() => { enCurso = false; if (pend.size && !timer) timer = setTimeout(vaciar, TICK_PUENTE); });
+    }
+    return {
+      fiable(env) {
+        if (cerrado) return;
+        const k = ++seq;
+        pedir('PUT', `a/${a}/${yo}/f/q${String(k).padStart(7, '0')}`, { n: k, e: JSON.stringify(env) }, 5);
+      },
+      rapido(env) {
+        if (cerrado) return;
+        const m = env.m || {};
+        const clave = String((env.d || '') + '_' + (m.t || env.s || 'x') + (m.s != null ? '_' + m.s : '')).replace(/[.#$\[\]\/]/g, '_');
+        pend.set(clave, env);
+        if (!timer && !enCurso) timer = setTimeout(vaciar, TICK_PUENTE);
+      },
+      cerrar() { cerrado = true; clearTimeout(timer); pend.clear(); }
+    };
+  }
+
+  return {
+    escuchar,
+    enlace,
+    /** ¿Está activada la Realtime Database y se puede usar esta sala? */
+    disponible: () => pedir('GET', 'a', undefined, 2),
+    borrar: (ruta) => pedir('DELETE', ruta, undefined, 1),
+    borrarTodo: () => fetch(`${raiz}.json`, { method: 'DELETE', cache: 'no-store' }).catch(() => {})
+  };
+}
+
+/* ---------------------------------------------------------------------
    Tarjeta de presentación compacta (para el modo sin internet)
    Se guarda solo lo imprescindible de la SDP y se reconstruye al otro lado.
    --------------------------------------------------------------------- */
@@ -175,7 +304,19 @@ function esperarIce(pc, ms) {
 }
 function nuevaConexion() {
   if (typeof RTCPeerConnection === 'undefined') throw new ErrorRed('sin-webrtc', 'Este navegador no permite el juego conectado.');
+  // En las pruebas se puede simular que la conexión directa no se abre nunca
+  if (forzarPuente()) return new RTCPeerConnection({ iceServers: [], iceTransportPolicy: 'relay' });
   return new RTCPeerConnection({ iceServers: ICE });
+}
+/** Qué direcciones encontró este equipo (para explicar por qué no conecta). */
+function resumenDirecciones(sdp) {
+  const t = { local: 0, mdns: 0, publica: 0 };
+  for (const m of String(sdp || '').matchAll(/a=candidate:\S+ \d+ udp \d+ (\S+) \d+ typ (host|srflx)/gi)) {
+    if (m[2] === 'srflx') t.publica++;
+    else if (/\.local$/i.test(m[1])) t.mdns++;
+    else t.local++;
+  }
+  return t;
 }
 
 /* ---------------------------------------------------------------------
@@ -191,12 +332,20 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
   let datosPropios = {};
   const tienda = almacen || almacenPorDefecto();
   const procesados = new Set();
+  let puente = null;        // conexión con la Realtime Database (si está disponible)
+  let buzon = null;         // mi buzón en el puente
+  let miBuzon = null;       // id de mi buzón (anfitrión: 'h'; invitado: el id de su pedido)
+  let diagnostico = '';
 
   function info(p) { return { id: p.id, nombre: p.nombre, datos: p.datos || {} }; }
   function listaJugadores() { return Array.from(jugadores.values()); }
 
   /* ---- envío ---- */
+  const directa = (p) => !!(p.fiable && p.fiable.readyState === 'open');
+  const unido = (p) => directa(p) || !!p.puente;
   function mandarA(p, env, rapido) {
+    // Por la conexión directa si está abierta; si no, por el puente de internet
+    if (!directa(p) && p.puente) { if (rapido) p.puente.rapido(env); else p.puente.fiable(env); return; }
     const c = rapido ? p.rapido : p.fiable;
     if (!c || c.readyState !== 'open') { if (rapido && p.fiable && p.fiable.readyState === 'open' && !p.rapido) p.fiable.send(JSON.stringify(env)); return; }
     if (rapido && c.bufferedAmount > 65536) return; // va atrasado: se descarta la posición vieja
@@ -213,11 +362,14 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
       const p = peers.get(ID_ANFITRION); if (p) mandarA(p, { a, m }, rapido);
     }
   }
-  function sistema(p, s, extra) { mandarA(p, Object.assign({ s }, extra || {}), false); }
+  // Los latidos (ping/pong) van por el canal rápido: por el puente no se guardan uno tras otro
+  function sistema(p, s, extra) { mandarA(p, Object.assign({ s }, extra || {}), s === 'ping' || s === 'pong'); }
 
   /* ---- recepción ---- */
   function recibir(p, txt, rapido) {
-    let env; try { env = JSON.parse(txt); } catch (e) { return; }
+    let env;
+    if (typeof txt === 'string') { try { env = JSON.parse(txt); } catch (e) { return; } } else env = txt;
+    if (!env) return;
     p.visto = performance.now();
     if (env.s) return sistemaRecibido(p, env);
     if (rol === 'anfitrion') {
@@ -241,6 +393,8 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
         break;
       case 'presento': // el invitado dice su nombre y sus datos
         if (rol !== 'anfitrion') break;
+        // Si llega dos veces (por la directa y por el puente), solo se le vuelve a dar la bienvenida
+        if (jugadores.has(p.id)) { sistema(p, 'hola', { id: p.id, jugadores: listaJugadores() }); break; }
         p.nombre = String(env.nombre || p.nombre).slice(0, 24); p.datos = env.datos || {};
         jugadores.set(p.id, info(p));
         sistema(p, 'hola', { id: p.id, jugadores: listaJugadores() });
@@ -265,13 +419,21 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
     const rapido = canal.label === 'rapido';
     if (rapido) p.rapido = canal; else p.fiable = canal;
     canal.onmessage = (e) => recibir(p, e.data, rapido);
-    canal.onclose = () => { if (!rapido) quitarPeer(p, 'se cortó la conexión'); };
+    canal.onclose = () => {
+      if (rapido || p.puente) return;
+      // Se cortó la conexión directa: si hay puente se sigue por internet
+      if (p._rescate) p._rescate(); else quitarPeer(p, 'se cortó la conexión');
+    };
   }
 
   function quitarPeer(p, motivo) {
     if (!peers.has(p.id)) return;
     peers.delete(p.id);
-    try { p.pc.close(); } catch (e) { /* ya cerrada */ }
+    try { p.pc && p.pc.close(); } catch (e) { /* ya cerrada */ }
+    if (p.puente) {
+      p.puente.cerrar();
+      if (puente && p.idSenal) { puente.borrar('a/' + p.idSenal); puente.borrar('a/' + ID_ANFITRION + '/' + p.idSenal); }
+    }
     if (rol === 'anfitrion') {
       const j = jugadores.get(p.id); jugadores.delete(p.id);
       for (const q of peers.values()) sistema(q, 'sale', { id: p.id });
@@ -295,7 +457,7 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
       anterior = ahora;
       if (bloqueado) for (const p of peers.values()) if (p.visto) p.visto = ahora;
       for (const p of Array.from(peers.values())) {
-        if (p.fiable && p.fiable.readyState === 'open') sistema(p, 'ping', { t: ahora });
+        if (unido(p)) sistema(p, 'ping', { t: ahora });
         if (p.visto && ahora - p.visto > SIN_RESPUESTA) quitarPeer(p, 'no responde');
       }
     }, LATIDO);
@@ -308,12 +470,18 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
     const p = { id, nombre: nombreInv || 'Jugador', datos: {}, pc, fiable: null, rapido: null, visto: 0, rtt: 0, idSenal };
     peers.set(id, p);
     pc.ondatachannel = (e) => prepararCanal(p, e.channel);
-    pc.onconnectionstatechange = () => { if (pc.connectionState === 'failed') quitarPeer(p, 'no se pudo conectar'); };
+    // Si la conexión directa falla, el invitado puede seguir por el puente: se le espera un poco más
+    pc.onconnectionstatechange = () => { if (pc.connectionState === 'failed' && !p.puente && !puente) quitarPeer(p, 'no se pudo conectar'); };
+    // Si la directa se corta a mitad de partida y hay puente, se le da tiempo al invitado para pasarse a él
+    p._rescate = () => {
+      if (!puente) return quitarPeer(p, 'se cortó la conexión');
+      setTimeout(() => { if (peers.get(p.id) === p && !unido(p)) quitarPeer(p, 'se cortó la conexión'); }, 10000);
+    };
     await pc.setRemoteDescription(oferta);
     await pc.setLocalDescription(await pc.createAnswer());
     await esperarIce(pc, ESPERA_ICE);
-    // Si nunca llega a conectar, se libera el lugar
-    setTimeout(() => { if (peers.get(id) === p && !(p.fiable && p.fiable.readyState === 'open')) quitarPeer(p, 'no se pudo conectar'); }, ESPERA_CANAL + 5000);
+    // Si nunca llega a conectar (ni directo ni por el puente), se libera el lugar
+    setTimeout(() => { if (peers.get(id) === p && !unido(p)) quitarPeer(p, 'no se pudo conectar'); }, ESPERA_CANAL + ESPERA_PUENTE);
     return pc.localDescription;
   }
 
@@ -334,8 +502,44 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
     }
     if (!codigo) throw new ErrorRed('nube', 'No se pudo crear la sala. Prueba otra vez.');
     abierta = true; empezarLatido(); sondear();
+    abrirPuenteAnfitrion();
     emitir('lista', listaJugadores());
     return codigo;
+  }
+
+  /* ---- puente ---- */
+  let puenteProbado = null;
+  async function prepararPuente(cod) {
+    if (puente) return puente;
+    if (puenteProbado === cod) return null; // ya se vio que no está activado
+    const base = await urlPuente().catch(() => null);
+    if (!base || typeof EventSource === 'undefined' || typeof fetch === 'undefined') return null;
+    const pt = crearPuente(base, cod);
+    if (!(await pt.disponible())) { puenteProbado = cod; return null; }
+    if (cerrada) return null;
+    puente = pt;
+    return puente;
+  }
+  async function abrirPuenteAnfitrion() {
+    const pt = await prepararPuente(codigo);
+    if (!pt || cerrada) return;
+    // Una sala vieja con el mismo código pudo dejar mensajes: se empieza de cero
+    await pt.borrarTodo();
+    if (cerrada) return;
+    miBuzon = ID_ANFITRION;
+    buzon = pt.escuchar(ID_ANFITRION, (rem, env, rapido) => {
+      // ¿Quién es? El id del buzón del invitado es el de su pedido
+      let p = null;
+      for (const q of peers.values()) if (q.idSenal === rem) { p = q; break; }
+      if (!p) {
+        // Entra por el puente un invitado cuya conexión directa ya se había dado por perdida
+        if (!abierta || peers.size + 1 >= max || env.s !== 'presento') return;
+        p = { id: 'j' + azar(5, 'abcdefghijkmnpqrstuvwxyz23456789'), nombre: 'Jugador', datos: {}, pc: null, fiable: null, rapido: null, visto: 0, rtt: 0, idSenal: rem };
+        peers.set(p.id, p);
+      }
+      if (!p.puente) p.puente = pt.enlace(ID_ANFITRION, rem);
+      recibir(p, env, rapido);
+    }, (est) => { if (est === 'sin-permiso') { puente = null; } });
   }
 
   /** Anfitrión sin internet: también vale para recibir invitados por código QR. */
@@ -366,9 +570,14 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
         if (!abierta) { tienda.actualizar(ruta, { respuesta: 'EMPEZADA' }).catch(() => {}); continue; }
         if (peers.size + 1 >= max) { tienda.actualizar(ruta, { respuesta: 'LLENA' }).catch(() => {}); continue; }
         try {
+          if (!datos.oferta) throw new ErrorRed('sin-webrtc', 'El invitado no tiene conexión directa');
           const resp = await aceptarOferta({ type: 'offer', sdp: datos.oferta }, datos.nombre, id);
           await tienda.actualizar(ruta, { respuesta: resp.sdp });
-        } catch (e) { console.warn('No se pudo responder a', id, e); }
+        } catch (e) {
+          // Sin conexión directa posible (en este equipo o en el del invitado): que entre por el puente
+          if (puente) tienda.actualizar(ruta, { respuesta: 'PUENTE' }).catch(() => {});
+          else console.warn('No se pudo responder a', id, e);
+        }
       }
     } catch (e) {
       emitir('aviso', e.message || 'Problema con la nube');
@@ -377,27 +586,86 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
   }
 
   /* ---- invitado ---- */
-  async function prepararInvitado() {
+  async function prepararInvitado(soloPuenteSiHaceFalta = false) {
     rol = 'invitado'; cerrada = false;
+    if (soloPuenteSiHaceFalta && typeof RTCPeerConnection === 'undefined') {
+      // Este navegador no tiene conexión directa: se usará solo el puente
+      const p = { id: ID_ANFITRION, nombre: 'Anfitrión', datos: {}, pc: null, fiable: null, rapido: null, visto: 0, rtt: 0 };
+      peers.set(ID_ANFITRION, p);
+      return p;
+    }
     const pc = nuevaConexion();
     const p = { id: ID_ANFITRION, nombre: 'Anfitrión', datos: {}, pc, fiable: null, rapido: null, visto: 0, rtt: 0 };
     peers.set(ID_ANFITRION, p);
     prepararCanal(p, pc.createDataChannel('fiable', { ordered: true }));
     prepararCanal(p, pc.createDataChannel('rapido', { ordered: false, maxRetransmits: 0 }));
-    pc.onconnectionstatechange = () => { if (pc.connectionState === 'failed') quitarPeer(p, 'no se pudo conectar'); };
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState !== 'failed') return;
+      if (p._alFallar) p._alFallar();
+      else if (p.puente) return;
+      else if (p._rescate) p._rescate();
+      else quitarPeer(p, 'no se pudo conectar');
+    };
     await pc.setLocalDescription(await pc.createOffer());
     await esperarIce(pc, ESPERA_ICE);
     return p;
   }
-  function esperarBienvenida(p) {
+  /**
+   * Espera la bienvenida del anfitrión. Primero por la conexión directa; si no se abre a tiempo
+   * (o falla) y hay puente (`conPuente` devuelve el enlace), sigue por internet.
+   */
+  function esperarBienvenida(p, conPuente) {
     return new Promise((ok, mal) => {
-      const t = setTimeout(() => { quitarPeerSilencioso(p); mal(new ErrorRed('no-conecta', 'No se pudo conectar con el anfitrión. ¿Están en la misma wifi?')); }, ESPERA_CANAL);
-      p._alHola = () => { clearTimeout(t); empezarLatido(); ok(); };
-      const presentar = () => sistema(p, 'presento', { nombre, datos: datosPropios });
-      if (p.fiable.readyState === 'open') presentar(); else p.fiable.addEventListener('open', presentar, { once: true });
+      let hecho = false, tPuente = null, t = null;
+      const fallar = () => {
+        if (hecho) return; hecho = true; clearTimeout(tPuente); clearTimeout(t);
+        quitarPeerSilencioso(p);
+        const d = resumenDirecciones(p.pc && p.pc.localDescription && p.pc.localDescription.sdp);
+        diagnostico = `directa: no se abrió · direcciones: ${d.local} locales, ${d.mdns} ocultas, ${d.publica} públicas · puente: ${p.puente ? 'sin respuesta' : 'no disponible'}`;
+        mal(new ErrorRed('no-conecta', p.puente
+          ? 'No se pudo conectar con el anfitrión ni directo ni por internet. Revisen que los dos tengan internet y prueben otra vez.'
+          : 'No se pudo conectar con el anfitrión. La conexión directa no funcionó en esta red.'));
+      };
+      t = setTimeout(fallar, ESPERA_CANAL);
+      p._alHola = () => {
+        if (hecho) return;
+        hecho = true; clearTimeout(t); clearTimeout(tPuente); p._alFallar = null;
+        // Más adelante, si se corta la directa, se sigue por el puente
+        if (conPuente) p._rescate = async () => {
+          if (p.puente) return;
+          const enl = await conPuente().catch(() => null);
+          if (!enl) return quitarPeer(p, 'se cortó la conexión');
+          p.puente = enl;
+          sistema(p, 'ping', { t: performance.now() });
+        };
+        empezarLatido(); ok();
+      };
+      const presentar = () => { if (!hecho) sistema(p, 'presento', { nombre, datos: datosPropios }); };
+      const usarPuente = async () => {
+        clearTimeout(tPuente); tPuente = null;
+        if (hecho || p.puente || directa(p) || !conPuente) return;
+        const enl = await conPuente().catch(() => null);
+        if (hecho || directa(p)) { if (enl) enl.cerrar(); return; }
+        if (!enl) return; // sin puente: sigue esperando la directa hasta el final
+        p.puente = enl;
+        clearTimeout(t); t = setTimeout(fallar, ESPERA_PUENTE);
+        presentar();
+      };
+      p._alFallar = usarPuente;
+      if (!p.fiable || (p.pc && p.pc.signalingState === 'closed')) usarPuente();
+      else if (p.fiable.readyState === 'open') presentar();
+      else {
+        p.fiable.addEventListener('open', presentar, { once: true });
+        tPuente = setTimeout(usarPuente, forzarPuente() ? 1500 : ESPERA_DIRECTA);
+      }
     });
   }
-  function quitarPeerSilencioso(p) { peers.delete(p.id); try { p.pc.close(); } catch (e) { /* nada */ } }
+  function quitarPeerSilencioso(p) {
+    peers.delete(p.id);
+    try { p.pc && p.pc.close(); } catch (e) { /* nada */ }
+    if (p.puente) { p.puente.cerrar(); p.puente = null; }
+    if (buzon) { buzon.cerrar(); buzon = null; }
+  }
 
   async function unirse(cod) {
     cod = String(cod || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -405,10 +673,10 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
     const sala = await tienda.leer(COLECCION + '/' + cod);
     if (!sala) throw new ErrorRed('no-existe', 'No hay ninguna sala con el código ' + cod + '.');
     if (sala.juego && sala.juego !== juego) throw new ErrorRed('otro-juego', 'Esa sala es de otro juego.');
-    const p = await prepararInvitado();
+    const p = await prepararInvitado(true);
     const id = azar(12, 'abcdefghijkmnpqrstuvwxyz23456789');
     const ruta = COLECCION + '/' + cod + '/pedidos/' + id;
-    await tienda.crear(COLECCION + '/' + cod + '/pedidos', id, { oferta: p.pc.localDescription.sdp, nombre: String(nombre).slice(0, 24), creado: new Date() });
+    await tienda.crear(COLECCION + '/' + cod + '/pedidos', id, { oferta: p.pc ? p.pc.localDescription.sdp : '', nombre: String(nombre).slice(0, 24), creado: new Date() });
     const limite = Date.now() + ESPERA_RESPUESTA;
     let resp = null;
     while (!resp && Date.now() < limite && peers.has(ID_ANFITRION)) {
@@ -419,8 +687,22 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
     if (!resp) { quitarPeerSilencioso(p); tienda.borrar(ruta); throw new ErrorRed('sin-respuesta', 'El anfitrión no respondió. Revisa el código.'); }
     if (resp === 'LLENA') { quitarPeerSilencioso(p); tienda.borrar(ruta); throw new ErrorRed('llena', 'La sala está llena.'); }
     if (resp === 'EMPEZADA') { quitarPeerSilencioso(p); tienda.borrar(ruta); throw new ErrorRed('empezada', 'La partida ya empezó. Espera a que vuelvan a la sala.'); }
-    await p.pc.setRemoteDescription({ type: 'answer', sdp: resp });
-    try { await esperarBienvenida(p); } finally { tienda.borrar(ruta); }
+    if (resp !== 'PUENTE' && p.pc) await p.pc.setRemoteDescription({ type: 'answer', sdp: resp });
+    else if (p.pc) { try { p.pc.close(); } catch (e) { /* nada */ } }
+    // Puente por internet para este invitado: escucha su buzón y escribe en el del anfitrión
+    const conPuente = async () => {
+      const pt = await prepararPuente(cod);
+      if (!pt) return null;
+      miBuzon = id;
+      if (!buzon) {
+        buzon = pt.escuchar(id, (rem, env, rapido) => {
+          const q = peers.get(ID_ANFITRION);
+          if (rem === ID_ANFITRION && q) recibir(q, env, rapido);
+        });
+      }
+      return pt.enlace(id, ID_ANFITRION);
+    };
+    try { await esperarBienvenida(p, conPuente); } finally { tienda.borrar(ruta); }
     codigo = cod;
   }
 
@@ -462,8 +744,17 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
     if (cerrada) return;
     cerrada = true; abierta = false;
     clearTimeout(sondeo); clearInterval(latido);
-    for (const p of peers.values()) { if (avisar) sistema(p, 'adios'); try { p.pc.close(); } catch (e) { /* nada */ } }
+    for (const p of peers.values()) { if (avisar) sistema(p, 'adios'); try { p.pc && p.pc.close(); } catch (e) { /* nada */ } }
+    // El «adiós» por el puente sale un instante después: se cierra el envío y el buzón tras enviarlo
+    const enlaces = Array.from(peers.values()).map((p) => p.puente).filter(Boolean);
     peers.clear();
+    if (buzon) { buzon.cerrar(); buzon = null; }
+    const pt = puente;
+    setTimeout(() => {
+      for (const e of enlaces) e.cerrar();
+      if (pt) { if (rol === 'anfitrion') pt.borrarTodo(); else if (miBuzon) { pt.borrar('a/' + miBuzon); pt.borrar('a/' + ID_ANFITRION + '/' + miBuzon); } }
+    }, 1500);
+    puente = null;
     if (rol === 'anfitrion' && codigo && codigo !== 'QR') tienda.borrar(COLECCION + '/' + codigo);
   }
   addEventListener('pagehide', () => cerrar());
@@ -476,6 +767,13 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
     get conectada() { return !cerrada && (rol === 'anfitrion' || peers.has(ID_ANFITRION)); },
     get jugadores() { return listaJugadores(); },
     get almacen() { return tienda.nombre; },
+    /** 'directa' o 'internet' para un jugador (el anfitrión ve la de cada uno; el invitado, la suya). */
+    via(id) {
+      const p = rol === 'anfitrion' ? peers.get(id) : peers.get(ID_ANFITRION);
+      if (!p) return '';
+      return directa(p) ? 'directa' : p.puente ? 'internet' : '';
+    },
+    get diagnostico() { return diagnostico; },
     ping(id) { const p = peers.get(id || ID_ANFITRION); return p ? Math.round(p.rtt) : 0; },
     on(ev, f) { (oyentes[ev] = oyentes[ev] || []).push(f); return () => { oyentes[ev] = oyentes[ev].filter((x) => x !== f); }; },
     crearSala, crearSalaManual, responderCodigo, unirse, codigoInvitado, completarInvitado,

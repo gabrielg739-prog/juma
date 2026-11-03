@@ -97,18 +97,23 @@ export function abrirSala(o) {
   }
   const textoError = (e) => MENSAJE_NUBE[e && e.codigo] || (e && e.message) || 'Algo salió mal. Prueba otra vez.';
 
+  // Cómo está conectado cada uno: directo por la wifi o por el puente de internet
+  function via(j) {
+    const v = red.esAnfitrion ? (j.id !== red.miId ? red.via(j.id) : '') : (j.id === red.miId ? red.via() : '');
+    return v === 'directa' ? ' · 📶 wifi directa' : v === 'internet' ? ' · 🌐 por internet' : '';
+  }
   function lista() {
-    return `<ul class="jsala-lista">${red.jugadores.map((j) => `<li><i style="background:${esc(j.datos?.color || '#7bd86b')}"></i><b>${esc(j.nombre)}${j.id === red.miId ? ' (tú)' : ''}${j.id === red.ID_ANFITRION ? ' · anfitrión' : ''}</b><em>${esc(o.detalle ? o.detalle(j) : '')}</em></li>`).join('')}</ul>`;
+    return `<ul class="jsala-lista">${red.jugadores.map((j) => `<li><i style="background:${esc(j.datos?.color || '#7bd86b')}"></i><b>${esc(j.nombre)}${j.id === red.miId ? ' (tú)' : ''}${j.id === red.ID_ANFITRION ? ' · anfitrión' : ''}</b><em>${esc((o.detalle ? o.detalle(j) : '') + via(j))}</em></li>`).join('')}</ul>`;
   }
 
   function pintar() {
     pararCamara();
-    const err = error ? `<p class="jsala-error">${esc(error)}</p>` : '';
+    const err = error ? `<p class="jsala-error">${esc(error)}</p>${red.diagnostico ? `<p class="jsala-nota">${esc(red.diagnostico)}</p>` : ''}` : '';
     const ocup = ocupado ? `<p><span class="jsala-gira"></span>${esc(ocupado)}</p>` : '';
     let h = '';
     if (vista === 'inicio') {
       h = `<h2>${esc(o.titulo || 'Jugar con amigos')}</h2>
-        <p>Jueguen juntos en la <b>misma wifi</b>. Uno crea la sala y los demás se unen con el código.</p>
+        <p>Uno crea la sala y los demás se unen con el código. Funciona en la <b>misma wifi</b> y también si cada uno usa su propio internet.</p>
         <input data-nombre maxlength="24" placeholder="Tu nombre" value="${esc(nombre)}" autocomplete="off">
         ${err}${ocup}
         <button class="jsala-btn" data-a="crear" type="button"${ocupado ? ' disabled' : ''}>CREAR SALA</button>
