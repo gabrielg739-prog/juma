@@ -3499,7 +3499,7 @@ function renderJuegosView() {
       </article>
       <article class="lib-card">
         <div class="lib-cover con-img" style="--bk:#3A1F5A;background-image:url(juegos/portadas/granpremio.jpg)" role="img" aria-label="Portada de Gran Premio de la Fe"><b>Gran Premio de la Fe</b></div>
-        <div class="lib-info"><h2>Gran Premio de la Fe</h2><small>Carreras en 3D · coches y motos · con amigos · ¡Nuevo!</small><p>Corre en kart, papamóvil, furgoneta misionera o moto por el escritorio del catequista, el pesebre de Belén, el altar de la capilla y la gruta de Lourdes. Gana las tres copas y el Cáliz de Oro, o corre con tus amigos en la misma wifi. Se juega en el teléfono y en la computadora.</p>
+        <div class="lib-info"><h2>Gran Premio de la Fe</h2><small>Carreras en 3D · poderes · santos al volante · con amigos · ¡Nuevo!</small><p>Corre con San José Allamano, Irene Stefani, Leonella, José Cafasso, Don Bosco, San Pablo, Francisco Javier o Teresa de Ávila en kart, papamóvil, furgoneta misionera o moto. Recoge las cajas de gracia y lanza agua bendita, la paloma o la campanilla; protégete con el rosario y brilla con la estrella de Belén. Gana las tres copas o corre con tus amigos en la misma wifi.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/gran-premio-de-la-fe.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
@@ -3518,7 +3518,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=121" allow="fullscreen; camera"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=122" allow="fullscreen; camera"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
   document.body.appendChild(r);
   /* Botón Atrás del teléfono: cierra el juego en vez de salir de la app */
   try { history.pushState({ jumaJuego: 1 }, ''); } catch (e) {}

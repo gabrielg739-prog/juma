@@ -1,9 +1,10 @@
 /* =====================================================================
-   JUMA · Los santos de «Huyendo del pecado», modelados en 3D
+   JUMA · Los santos de los libros, modelados en 3D
    ---------------------------------------------------------------------
    San José Allamano, Beata Leonella Sgorbati, San José Cafasso y Beata
-   Irene Stefani, modelados siguiendo sus hojas de personaje (que sirven
-   de guía para proporciones, colores y ropa):
+   Irene Stefani (siguiendo sus hojas de personaje), y Don Bosco, San
+   Pablo, San Francisco Javier y Santa Teresa de Ávila (de los libros
+   «Los quiero así» y el manual JUMA):
      · formas suaves y redondeadas (cabeza, ropa, manos y zapatos),
      · sombreado de dibujo animado en tres tonos y contorno oscuro,
      · caras pintadas de caricatura, con parpadeo,
@@ -11,6 +12,11 @@
        del juego, para usar sus animaciones (correr, saltar, rodar, surf).
    Las medidas siguen las del misionero: cadera a 0,98, hombros a 1,52 y
    cuello a 1,67 (antes de la escala del juego).
+
+   construirSanto(THREE, id)            → el personaje entero (Huyendo del pecado)
+   construirPiloto(THREE, id, opciones) → sentado al volante o en la moto, con la
+                                           cabeza grande de caricatura, aureola y
+                                           animaciones de conducir (Gran Premio)
    ===================================================================== */
 
 let T = null;          // THREE
@@ -32,6 +38,7 @@ function matContorno(color, grosor) {
   const m = new T.MeshBasicMaterial({ color, side: T.BackSide });
   m.onBeforeCompile = (sh) => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>\n transformed += normalize(normal) * ${grosor.toFixed(4)};`); };
   m.customProgramCacheKey = () => 'contorno' + grosor.toFixed(4);
+  m.userData.grosor = grosor;
   cacheContorno.set(k, m);
   return m;
 }
@@ -217,16 +224,44 @@ const SANTOS = {
   irene: {
     piel: 0xf3c8a6, ojos: 0x3d2a1c, cejas: 0x5a3a22, pestanas: true, ropa: 0xf2ecdf, ropa2: 0xd9d0bd, piernas: 0x5a3a24, zapato: 0x7a4a26,
     tipo: 'habito', velo: 0xf7f4ec, cruz: 0x5a3418, cordon: 0xc9ad7a, sombrero: true, cingulo: true, botas: true
+  },
+  // San Juan Bosco: sotana negra, pelo oscuro ondulado y su sonrisa de siempre
+  bosco: {
+    piel: 0xf0c09a, ojos: 0x3a2618, cejas: 0x231812, pelo: 0x2a1d16, ropa: 0x1f1e24, ropa2: 0x121116, piernas: 0x141317, zapato: 0x121114,
+    tipo: 'sotana', cuello: 'clerical', peloCorto: true, botones: true
+  },
+  // San Pablo: calvo, barba larga, túnica verde y manto rojo cruzado
+  pablo: {
+    piel: 0xe2a77e, ojos: 0x3a2618, cejas: 0x4a3326, viejo: true, pelo: 0x4f3a2c, barba: 0x4a3426, ropa: 0x41694c, ropa2: 0x2d4c36, piernas: 0x7a5232, zapato: 0x7a5232,
+    tipo: 'habito', manto: 0xa0302a, calvo: true
+  },
+  // San Francisco Javier: jesuita misionero, sotana negra, barba y crucifijo
+  javier: {
+    piel: 0xebb994, ojos: 0x2e2016, cejas: 0x1a120d, pelo: 0x1d1612, peloCorto: true, barba: 0x1d1612, ropa: 0x1d1c22, ropa2: 0x111015, piernas: 0x121116, zapato: 0x121114,
+    tipo: 'sotana', cuello: 'clerical', cruz: 0xe8c45a, cordon: 0x111015
+  },
+  // Santa Teresa de Ávila: carmelita, hábito marrón, toca blanca y velo negro
+  teresa: {
+    piel: 0xf1c3a0, ojos: 0x3a2618, cejas: 0x4a3326, pestanas: true, ropa: 0x6b4a2e, ropa2: 0x553a22, piernas: 0x3a2818, zapato: 0x3a2818,
+    tipo: 'habito', velo: 0x18171c, banda: 0xf7f6f2, cuello: 'puntas', manto: 0xf2efe6, cingulo: true, cordon: 0x18171c
   }
 };
+
+/* Para el menú y otros juegos */
+export const LISTA_SANTOS = Object.keys(SANTOS);
 
 /**
  * Construye un santo y devuelve el objeto de personaje que usan las animaciones del juego.
  */
 export async function construirSanto(THREE, id) {
+  return construir(THREE, id, {});
+}
+
+function construir(THREE, id, op) {
   T = THREE;
   const o = SANTOS[id];
   if (!o) throw new Error('Santo desconocido: ' + id);
+  const PIL = !!op.piloto; // versión ligera para ir sentado en un vehículo
   const OSC = 0x17131c;
   const malla = (geo, mat, x, y, z, padre, borde) => {
     const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; padre.add(m);
@@ -238,7 +273,7 @@ export async function construirSanto(THREE, id) {
   const ropa = toon(o.ropa, { map: pliegues });
   const ropaLisa = toon(o.ropa);
   const ropa2 = toon(o.ropa2);
-  const piernasM = toon(o.piernas);
+  const piernasM = toon(PIL && (o.tipo === 'sotana' || o.tipo === 'habito') ? o.ropa2 : o.piernas);
   const zapatoM = toon(o.zapato);
   const blanco = toon(0xf8f7f2);
 
@@ -254,9 +289,9 @@ export async function construirSanto(THREE, id) {
   /* ---------- Piernas y zapatos ---------- */
   const piernas = [-1, 1].map((l) => {
     const p = new T.Group(); p.position.set(0.09 * l, -0.04, 0); cadera.add(p);
-    malla(new T.CapsuleGeometry(0.058, 0.36, 6, 16), piernasM, 0, -0.22, 0, p, 0.004);
+    malla(new T.CapsuleGeometry(PIL ? 0.07 : 0.058, 0.36, 6, 16), piernasM, 0, -0.22, 0, p, 0.004);
     const rod = new T.Group(); rod.position.y = -0.46; p.add(rod);
-    malla(new T.CapsuleGeometry(0.05, 0.36, 6, 16), piernasM, 0, -0.2, 0, rod, 0.004);
+    malla(PIL ? new T.CylinderGeometry(0.066, 0.085, 0.42, 16) : new T.CapsuleGeometry(0.05, 0.36, 6, 16), piernasM, 0, -0.2, 0, rod, 0.004);
     const tob = new T.Group(); tob.position.y = -0.44; rod.add(tob);
     // Zapato redondeado con suela
     const zap = malla(new T.SphereGeometry(0.07, 26, 16), zapatoM, 0, -0.03, -0.045, tob, 0.005); zap.scale.set(0.95, 0.65, 1.75);
@@ -280,7 +315,7 @@ export async function construirSanto(THREE, id) {
   const largoFalda = o.tipo === 'sotana' ? 0.88 : 0.9, r0 = 0.165, r1 = o.tipo === 'sotana' ? 0.28 : 0.31;
   const matFalda = toon(o.ropa, { map: pliegues, side: T.DoubleSide });
   const forro = toon(o.ropa2, { side: T.BackSide });
-  const faldas = [-1, 1].map((l) => {
+  const faldas = (PIL ? [] : [-1, 1]).map((l) => {
     const g = new T.Group(); cadera.add(g);
     const geo = new T.CylinderGeometry(r0, r1, largoFalda, 28, 10, true, l > 0 ? 0 : Math.PI, Math.PI);
     plisar(geo, -largoFalda / 2, largoFalda / 2, 5, 0.025);
@@ -302,9 +337,9 @@ export async function construirSanto(THREE, id) {
     malla(torno([[0.0, -0.25], [mangaAncha ? 0.08 : 0.054, -0.245], [mangaAncha ? 0.072 : 0.056, -0.2], [0.06, -0.08], [0.058, 0.02], [0.0, 0.03]], 24, 4), ropaLisa, 0, 0, 0, codo, 0.005);
     const puno = malla(new T.TorusGeometry(mangaAncha ? 0.072 : 0.052, 0.012, 8, 24), ropa2, 0, -0.24, 0, codo, false); puno.rotation.x = Math.PI / 2;
     const mano = new T.Group(); mano.position.y = -0.27; codo.add(mano);
-    const palma = malla(new T.SphereGeometry(0.048, 22, 16), piel, 0, -0.035, -0.004, mano, 0.004); palma.scale.set(0.62, 1, 1.02);
+    const palma = malla(new T.SphereGeometry(0.048, 22, 16), piel, 0, -0.035, -0.004, mano, 0.004); palma.scale.set(PIL ? 0.8 : 0.62, PIL ? 1.15 : 1, 1.02);
     const dedos = [];
-    for (let d = 0; d < 4; d++) {
+    for (let d = 0; d < (PIL ? 0 : 4); d++) {
       const dg = new T.Group(); dg.position.set(0, -0.07, -0.024 + d * 0.016); mano.add(dg);
       malla(new T.CapsuleGeometry(0.0115, 0.026, 4, 10), piel, 0, -0.018, 0, dg, 0.003);
       const dg2 = new T.Group(); dg2.position.y = -0.034; dg.add(dg2);
@@ -346,7 +381,7 @@ export async function construirSanto(THREE, id) {
       // Pelo blanco a los lados y detrás (la coronilla la cubre el solideo)
       malla(new T.SphereGeometry(R0 * 1.07, 40, 20, Math.PI * 1.84, Math.PI * 1.32, Math.PI * 0.2, Math.PI * 0.42), mp, 0, YC, 0.008, cabeza, 0.006).scale.set(0.98, 1.0, 1.02);
       for (const l of [-1, 1]) { const t = malla(new T.SphereGeometry(0.06, 18, 12), mp, R0 * 0.9 * l, YC + 0.05, 0.014, cabeza, 0.004); t.scale.set(0.62, 0.95, 1.3); }
-      malla(new T.SphereGeometry(R0 * 1.035, 36, 14, 0, Math.PI * 2, 0, Math.PI * 0.32), mp, 0, YC + 0.003, 0.01, cabeza, false).scale.set(0.96, 1.02, 1.0);
+      if (!o.calvo) malla(new T.SphereGeometry(R0 * 1.035, 36, 14, 0, Math.PI * 2, 0, Math.PI * 0.32), mp, 0, YC + 0.003, 0.01, cabeza, false).scale.set(0.96, 1.02, 1.0);
     }
   }
   if (o.solideo) {
@@ -390,7 +425,7 @@ export async function construirSanto(THREE, id) {
     const bot = toon(0x45454f);
     for (let i = 0; i < 6; i++) { const y = 0.34 - i * 0.07; malla(new T.SphereGeometry(0.009, 10, 8), bot, 0, y, frentePecho(y) - 0.005, pecho, false); }
     for (let i = 0; i < 3; i++) { const y = 0.2 - i * 0.09; malla(new T.SphereGeometry(0.009, 10, 8), bot, 0, y, -0.165 * 0.72 - 0.005, torso, false); }
-    for (let i = 0; i < 7; i++) {
+    if (faldas.length) for (let i = 0; i < 7; i++) {
       const y = -0.02 - i * 0.12, r = r0 + (r1 - r0) * ((0.02 - y) / largoFalda);
       malla(new T.SphereGeometry(0.009, 10, 8), bot, 0.004, y, -r * 0.78 - 0.004, faldas[1].g, false);
     }
@@ -407,6 +442,25 @@ export async function construirSanto(THREE, id) {
     malla(new T.BoxGeometry(0.016, 0.075, 0.01), mc, 0, 0, 0, c, 0.003);
     malla(new T.BoxGeometry(0.05, 0.015, 0.01), mc, 0, 0.014, 0, c, 0.003);
   }
+  if (o.barba) {
+    // Barba de caricatura bajo la boca y bigote
+    const mb = toon(0xffffff, { map: texPelo(o.barba) });
+    const b = malla(new T.SphereGeometry(R0 * 0.78, 32, 18), mb, 0, YC - R0 * 0.62, -R0 * 0.36, cabeza, 0.006);
+    b.scale.set(1.08, o.viejo ? 1.05 : 0.78, 0.82);
+    for (const l of [-1, 1]) {
+      const p = malla(new T.SphereGeometry(R0 * 0.62, 20, 12), mb, R0 * 0.58 * l, YC - R0 * 0.28, -R0 * 0.32, cabeza, 0.005);
+      p.scale.set(0.55, 0.95, 0.75);
+      const bg = malla(new T.SphereGeometry(0.036, 14, 10), mb, 0.034 * l, YC - R0 * 0.36, -R0 * 0.93, cabeza, 0.003);
+      bg.scale.set(1.25, 0.5, 0.55); bg.rotation.z = 0.35 * l;
+    }
+  }
+  if (o.manto) {
+    // Manto cruzado sobre el pecho, del hombro a la cadera
+    const mm = toon(o.manto, { map: texPliegues(5, 0.12) });
+    const m = malla(new T.TorusGeometry(0.205, 0.05, 12, 40), mm, 0, 0.14, 0.0, pecho, 0.005);
+    m.rotation.set(0, 0, 0.62); m.scale.set(1, 1.05, 0.78);
+    const h = malla(new T.SphereGeometry(0.1, 20, 14), mm, -0.19, 0.29, 0.01, pecho, 0.005); h.scale.set(1, 0.85, 0.95);
+  }
   let colgantes = null;
   if (o.cingulo) {
     const cord = toon(o.cordon), g = new T.Group(); g.position.set(0.07, 0.0, -0.11); torso.add(g);
@@ -419,7 +473,7 @@ export async function construirSanto(THREE, id) {
   if (o.sobrepelliz) {
     // Sobrepelliz blanca con encaje hasta las rodillas y mangas anchas
     const enc = toon(0xffffff, { map: texEncaje(), alphaTest: 0.5, side: T.DoubleSide });
-    malla(torno([[0.32, -0.76], [0.29, -0.55], [0.245, -0.28], [0.222, -0.04], [0.214, 0.12], [0.222, 0.23], [0.215, 0.31], [0.165, 0.36], [0.09, 0.392], [0.07, 0.398]], 44, 5), enc, 0, 0, 0, pecho, 0.006).scale.z = 0.76;
+    malla(torno(PIL ? [[0.25, -0.26], [0.235, -0.16], [0.222, -0.04], [0.214, 0.12], [0.222, 0.23], [0.215, 0.31], [0.165, 0.36], [0.09, 0.392], [0.07, 0.398]] : [[0.32, -0.76], [0.29, -0.55], [0.245, -0.28], [0.222, -0.04], [0.214, 0.12], [0.222, 0.23], [0.215, 0.31], [0.165, 0.36], [0.09, 0.392], [0.07, 0.398]], 44, 5), enc, 0, 0, 0, pecho, 0.006).scale.z = 0.76;
     for (const l of [-1, 1]) { const h = malla(new T.SphereGeometry(0.09, 24, 16), blanco, 0.2 * l, 0.29, 0, pecho, 0.005); h.scale.set(1, 0.9, 0.9); }
     for (const B of brazos) malla(new T.CylinderGeometry(0.075, 0.15, 0.42, 28, 4, true), enc, 0, -0.2, 0, B.b, 0.005).scale.z = 0.9;
     if (o.estola) {
@@ -427,7 +481,7 @@ export async function construirSanto(THREE, id) {
       for (const l of [-1, 1]) {
         const pts = [];
         for (let k = 0; k <= 24; k++) {
-          const y = 0.37 - k * 1.11 / 24;
+          const y = 0.37 - k * (PIL ? 0.6 : 1.11) / 24;
           const rf = y > 0.23 ? 0.12 + (0.37 - y) * 0.68 : y > -0.04 ? 0.218 : 0.222 + (-0.04 - y) * 0.13;
           pts.push(new T.Vector3((0.06 + Math.max(0, 0.25 - y) * 0.03) * l, y, -rf * 0.76 - 0.012));
         }
@@ -442,4 +496,192 @@ export async function construirSanto(THREE, id) {
     M: { zapato: zapatoM },
     fis: { y: null, vy: 0, x: null, vx: 0, ay: 0, ax: 0, parpT: 2 + Math.random() * 3, velo: fisVelo || { x: 0, v: 0 } }
   };
+}
+
+/* =====================================================================
+   Pilotos: el santo sentado en su vehículo
+   ===================================================================== */
+const POSTURAS = {
+  // muslo/rodilla/tobillo: piernas · brazo/codo: brazos hacia el volante · espalda: inclinación (+ hacia atrás)
+  kart: { muslo: 1.42, rodilla: -0.62, tobillo: 0.3, brazo: 0.92, codo: 0.78, abre: 0.12, espalda: 0.16 },
+  erguido: { muslo: 1.5, rodilla: -1.45, tobillo: 0.0, brazo: 0.7, codo: 0.95, abre: 0.1, espalda: 0.04 },
+  moto: { muslo: 1.0, rodilla: -1.8, tobillo: 0.5, brazo: 2.05, codo: 0.3, abre: 0.2, espalda: -0.85 },
+  scooter: { muslo: 1.45, rodilla: -1.45, tobillo: 0.1, brazo: 1.95, codo: 0.2, abre: 0.22, espalda: -0.42 },
+  // En el sillón del papamóvil: bendice y saluda con la mano derecha
+  trono: { muslo: 1.5, rodilla: -1.5, tobillo: 0.0, brazo: 0.35, codo: 1.1, abre: 0.12, espalda: 0.05, saluda: true },
+  chopper: { muslo: 1.35, rodilla: -0.75, tobillo: 0.35, brazo: 2.3, codo: 0.08, abre: 0.4, espalda: 0.1 },
+};
+
+/**
+ * Une las mallas que se mueven juntas (menos dibujos por cuadro):
+ *  - las de color liso pasan a un solo material con el color en cada vértice,
+ *  - los contornos se inflan aquí (en la geometría) y comparten un material,
+ *  - las que llevan textura (cara, pelo, telas) se unen por material.
+ */
+let MAT_VC = null, MAT_VC2 = null, MAT_BORDE = null;
+function fusionar(raiz, animados, unir) {
+  raiz.updateMatrixWorld(true);
+  MAT_VC = MAT_VC || new T.MeshToonMaterial({ vertexColors: true, gradientMap: gradiente() });
+  MAT_VC2 = MAT_VC2 || new T.MeshToonMaterial({ vertexColors: true, gradientMap: gradiente(), side: T.DoubleSide });
+  MAT_BORDE = MAT_BORDE || new T.MeshBasicMaterial({ color: 0x17131c, side: T.BackSide });
+  const cubos = new Map();
+  const quitar = [];
+  const inv = new T.Matrix4();
+  raiz.traverse((o) => {
+    if (!o.isMesh) return;
+    let anc = o.parent;
+    while (anc && anc !== raiz && !animados.has(anc)) anc = anc.parent;
+    if (!anc) anc = raiz;
+    inv.copy(anc.matrixWorld).invert();
+    const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+    for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
+    if (!g.attributes.uv) g.setAttribute('uv', new T.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+    g.morphAttributes = {};
+    let mat = o.material;
+    if (mat.userData && mat.userData.grosor) {
+      // Contorno: se infla la copia a lo largo de sus normales
+      const pos = g.attributes.position, nor = g.attributes.normal, e = mat.userData.grosor;
+      for (let i = 0; i < pos.count; i++) pos.setXYZ(i, pos.getX(i) + nor.getX(i) * e, pos.getY(i) + nor.getY(i) * e, pos.getZ(i) + nor.getZ(i) * e);
+      mat = MAT_BORDE;
+    } else if (mat.isMeshToonMaterial && !mat.map && !mat.transparent && !mat.alphaTest) {
+      const n = g.attributes.position.count, col = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) { col[i * 3] = mat.color.r; col[i * 3 + 1] = mat.color.g; col[i * 3 + 2] = mat.color.b; }
+      g.setAttribute('color', new T.Float32BufferAttribute(col, 3));
+      mat = mat.side === T.DoubleSide ? MAT_VC2 : MAT_VC;
+    }
+    g.applyMatrix4(new T.Matrix4().multiplyMatrices(inv, o.matrixWorld));
+    const clave = anc.uuid + '|' + mat.uuid;
+    if (!cubos.has(clave)) cubos.set(clave, { anc, mat, geos: [], sombra: o.castShadow });
+    cubos.get(clave).geos.push(g.index ? g : g);
+    quitar.push(o);
+  });
+  for (const o of quitar) if (o.parent) o.parent.remove(o);
+  for (const c of cubos.values()) {
+    const indexadas = c.geos.filter((g) => g.index);
+    const sueltas = c.geos.filter((g) => !g.index);
+    for (const lote of [indexadas, sueltas]) {
+      if (!lote.length) continue;
+      const geo = lote.length === 1 ? lote[0] : unir(lote, false);
+      if (!geo) continue;
+      const m = new T.Mesh(geo, c.mat);
+      m.castShadow = false;
+      m.receiveShadow = false;
+      c.anc.add(m);
+      for (const g of lote) if (g !== geo) g.dispose();
+    }
+  }
+}
+
+/**
+ * Santo sentado al volante (o en la moto) con cabeza de caricatura y aureola.
+ * Devuelve { raiz, animar(dt, estado) } — raiz mira hacia +Z (el frente del vehículo).
+ * opciones: { postura, cabeza (escala de la cabeza), fusionar (mergeGeometries de three) }
+ */
+export function construirPiloto(THREE, id, opciones = {}) {
+  const S = construir(THREE, id, { piloto: true });
+  const o = SANTOS[id];
+  const { raiz, cadera, torso, pecho, cabeza, piernas, brazos, velo } = S;
+  const P = POSTURAS[opciones.postura] || POSTURAS.kart;
+  const R0 = 0.158, YC = 0.168;
+  cabeza.scale.setScalar(opciones.cabeza ?? 1.7);
+  cabeza.position.y += 0.02;
+
+  // Aureola dorada que brilla
+  const halo = new T.Mesh(new T.TorusGeometry(0.16, 0.017, 8, 36), new T.MeshBasicMaterial({ color: new T.Color(1.6, 1.25, 0.45), toneMapped: false }));
+  halo.rotation.x = Math.PI / 2;
+  halo.position.set(0, o.sombrero ? YC + 0.36 : o.velo || o.solideo ? YC + R0 + 0.08 : YC + R0 + 0.05, 0.02);
+  cabeza.add(halo);
+
+  // Postura fija de las piernas
+  for (const L of piernas) {
+    L.p.rotation.x = P.muslo;
+    L.rod.rotation.x = P.rodilla;
+    L.tob.rotation.x = P.tobillo;
+  }
+  for (const L of piernas) L.p.rotation.z = (L === piernas[0] ? 1 : -1) * 0.06;
+
+  const animados = new Set([raiz, torso, pecho, cabeza]);
+  for (const B of brazos) { animados.add(B.b); animados.add(B.codo); }
+  if (velo) animados.add(velo);
+  if (opciones.fusionar) fusionar(raiz, animados, opciones.fusionar);
+  else raiz.traverse((m) => { if (m.isMesh) m.castShadow = false; });
+
+  // Mira hacia el frente del vehículo (+Z)
+  raiz.rotation.y = Math.PI;
+
+  let t = Math.random() * 10;
+  let parpT = 1 + Math.random() * 3;
+  let cerrado = 0;
+  let giroS = 0;
+  const lerp = (a, b, k) => a + (b - a) * k;
+
+  /**
+   * estado: { giro (+ izquierda), vel, turbo, golpe (0..1, da vueltas), lanzar (0..1), festejo }
+   */
+  function animar(dt, e = {}) {
+    t += dt;
+    const k = Math.min(1, dt * 10);
+    giroS = lerp(giroS, THREE.MathUtils.clamp(e.giro || 0, -0.55, 0.55), k);
+    const g = giroS;
+    const vel = Math.abs(e.vel || 0);
+    const golpe = e.golpe || 0;
+    const lanzar = e.lanzar || 0;
+    const festejo = !!e.festejo;
+
+    // Tronco: se echa hacia atrás con el turbo e inclina hacia la curva
+    const traque = vel > 0.01 ? Math.sin(t * 38) * 0.008 : 0;
+    torso.rotation.x = P.espalda + (e.turbo ? 0.1 : 0) + traque;
+    torso.rotation.z = lerp(torso.rotation.z, g * 0.32 + (golpe ? Math.sin(t * 20) * 0.25 : 0), k);
+    pecho.rotation.y = lerp(pecho.rotation.y, g * 0.18, k);
+
+    // Cabeza: mira hacia la curva; con el golpe, se marea
+    cabeza.rotation.y = lerp(cabeza.rotation.y, g * 0.7 + (festejo ? Math.sin(t * 2) * 0.4 : 0), k);
+    cabeza.rotation.z = lerp(cabeza.rotation.z, golpe ? Math.sin(t * 14) * 0.3 : -g * 0.12, k);
+    cabeza.rotation.x = lerp(cabeza.rotation.x, -P.espalda * 0.6 + (golpe ? 0.25 : 0), k);
+
+    // Brazos: al volante (una mano sube y otra baja al girar), agitados con el golpe,
+    // el derecho lanza el poder y los dos arriba al celebrar
+    for (const B of brazos) {
+      const l = B.l;
+      let bx = P.brazo + l * g * 0.55;
+      let bz = l * (P.abre - g * 0.08);
+      let cx = P.codo - l * g * 0.25;
+      if (golpe) {
+        bx = 2.7 + Math.sin(t * 22 + l) * 0.35;
+        bz = l * (0.55 + Math.sin(t * 18) * 0.2);
+        cx = 0.3;
+      } else if (festejo && (l > 0 || Math.sin(t * 1.3) > 0)) {
+        bx = 2.9 + Math.sin(t * 9 + l) * 0.15;
+        bz = l * 0.35;
+        cx = 0.25 + Math.sin(t * 9) * 0.25;
+      } else if (P.saluda && l > 0) {
+        bx = 2.45 + Math.sin(t * 2.2) * 0.1;
+        bz = 0.3 + Math.sin(t * 5) * 0.22;
+        cx = 0.45 + Math.sin(t * 5 + 1) * 0.2;
+      } else if (lanzar > 0 && l > 0) {
+        const s = Math.sin(lanzar * Math.PI);
+        bx = lerp(P.brazo, 2.6, s);
+        cx = lerp(P.codo, 0.1, s);
+        bz = 0.3 * s;
+      }
+      B.b.rotation.x = lerp(B.b.rotation.x, bx, golpe || festejo || lanzar ? Math.min(1, dt * 18) : k);
+      if (P.saluda && !golpe && !festejo) B.b.rotation.x = bx;
+      B.b.rotation.z = lerp(B.b.rotation.z, bz, k);
+      B.codo.rotation.x = lerp(B.codo.rotation.x, cx, k);
+    }
+
+    // Velo: ondea hacia atrás con la velocidad
+    if (velo) velo.rotation.x = lerp(velo.rotation.x, -(0.1 + Math.min(0.9, vel * 3.2)) - Math.sin(t * 17) * 0.06 * Math.min(1, vel * 5), k);
+
+    // Aureola que gira despacio
+    halo.rotation.z = t * 0.6;
+
+    // Parpadeo (y ojos cerrados al recibir un golpe)
+    parpT -= dt;
+    if (parpT <= 0) { cerrado = 0.12; parpT = 2 + Math.random() * 3.5; }
+    cerrado = Math.max(0, cerrado - dt);
+    S.parpadeo(cerrado > 0 || golpe > 0.2);
+  }
+
+  return { raiz, animar, alturaCadera: 0.98, santo: S };
 }
