@@ -1,7 +1,7 @@
 {
- "version": "816fc7ea4056",
+ "version": "fde34ef3f5c9",
  "recursos": "juma-recursos-v1",
- "tamano": 58397724,
+ "tamano": 59839024,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -746,12 +746,12 @@
   {
    "ruta": "index.html",
    "tamano": 149780,
-   "hash": "e69b20e36ab2"
+   "hash": "ae624f0b21df"
   },
   {
    "ruta": "js/app.js",
-   "tamano": 500093,
-   "hash": "bad0894e26c5"
+   "tamano": 500347,
+   "hash": "48007f3b1b30"
   },
   {
    "ruta": "js/fe.js",
@@ -820,18 +820,18 @@
   },
   {
    "ruta": "juegos/cuadros/jov-andres-phu-yen.jpg",
-   "tamano": 69907,
-   "hash": "be9e8857fdba"
+   "tamano": 96963,
+   "hash": "29f5458b934e"
   },
   {
    "ruta": "juegos/cuadros/jov-carlo-acutis.jpg",
-   "tamano": 68529,
-   "hash": "7ef37eb7a35b"
+   "tamano": 177755,
+   "hash": "ff3262b16d45"
   },
   {
    "ruta": "juegos/cuadros/jov-ceferino-namuncura.jpg",
-   "tamano": 69057,
-   "hash": "733ed13a7ddb"
+   "tamano": 86392,
+   "hash": "5c6a23b7a6e7"
   },
   {
    "ruta": "juegos/cuadros/jov-chiara-badano.jpg",
@@ -840,78 +840,78 @@
   },
   {
    "ruta": "juegos/cuadros/jov-domingo-savio.jpg",
-   "tamano": 67964,
-   "hash": "3f34c6511dbe"
+   "tamano": 236432,
+   "hash": "781cb0a48821"
   },
   {
    "ruta": "juegos/cuadros/jov-eulalia-de-barcelona.jpg",
-   "tamano": 66717,
-   "hash": "706f461c1a4d"
+   "tamano": 362461,
+   "hash": "6667b1c3a2c5"
   },
   {
    "ruta": "juegos/cuadros/jov-eulalia-de-merida.jpg",
-   "tamano": 68466,
-   "hash": "a66f51a7c47e"
+   "tamano": 166613,
+   "hash": "db93ada01b92"
   },
   {
    "ruta": "juegos/cuadros/jov-francisco-marto.jpg",
-   "tamano": 67188,
-   "hash": "77a6dfff3850"
+   "tamano": 86672,
+   "hash": "3afd73db8e4b"
   },
   {
    "ruta": "juegos/cuadros/jov-ines.jpg",
-   "tamano": 58134,
-   "hash": "d5840d7be6db"
+   "tamano": 210915,
+   "hash": "577975f92fe9"
   },
   {
    "ruta": "juegos/cuadros/jov-jacinta-marto.jpg",
-   "tamano": 66656,
-   "hash": "f56bf14c53c2"
+   "tamano": 116291,
+   "hash": "88f673071960"
   },
   {
    "ruta": "juegos/cuadros/jov-jose-sanchez-del-rio.jpg",
-   "tamano": 67235,
-   "hash": "6c9a850308c3"
+   "tamano": 74255,
+   "hash": "4ece62351f99"
   },
   {
    "ruta": "juegos/cuadros/jov-justo-y-pastor.jpg",
-   "tamano": 67487,
-   "hash": "9df61c08f916"
+   "tamano": 223707,
+   "hash": "64157575dc35"
   },
   {
    "ruta": "juegos/cuadros/jov-laura-vicuna.jpg",
-   "tamano": 61989,
-   "hash": "487e14213c49"
+   "tamano": 60765,
+   "hash": "7d97b839b7f1"
   },
   {
    "ruta": "juegos/cuadros/jov-luis-gonzaga.jpg",
-   "tamano": 63472,
-   "hash": "d484907d2540"
+   "tamano": 145146,
+   "hash": "689b7134298f"
   },
   {
    "ruta": "juegos/cuadros/jov-marcel-callo.jpg",
-   "tamano": 59113,
-   "hash": "cfa5b2eec293"
+   "tamano": 79565,
+   "hash": "3536e01e5a5f"
   },
   {
    "ruta": "juegos/cuadros/jov-maria-goretti.jpg",
-   "tamano": 63046,
-   "hash": "f893c83ed25f"
+   "tamano": 127540,
+   "hash": "75dfb422dc1a"
   },
   {
    "ruta": "juegos/cuadros/jov-pancracio.jpg",
-   "tamano": 60491,
-   "hash": "aaa210c427e3"
+   "tamano": 112560,
+   "hash": "097883e7b8a3"
   },
   {
    "ruta": "juegos/cuadros/jov-pier-giorgio-frassati.jpg",
-   "tamano": 65497,
-   "hash": "d0c8f7f20b69"
+   "tamano": 167393,
+   "hash": "30b07b7f3434"
   },
   {
    "ruta": "juegos/cuadros/jov-tarsicio.jpg",
-   "tamano": 67352,
-   "hash": "561dc01e56c1"
+   "tamano": 85658,
+   "hash": "a01f601af1d5"
   },
   {
    "ruta": "juegos/cuentas-de-gracia.html",
@@ -1020,8 +1020,8 @@
   },
   {
    "ruta": "juegos/lib/santos-jovenes.js",
-   "tamano": 19114,
-   "hash": "d035ede92a5f"
+   "tamano": 21377,
+   "hash": "bb77fe31721a"
   },
   {
    "ruta": "juegos/lib/santos3d.js",

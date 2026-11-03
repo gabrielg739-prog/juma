@@ -2880,7 +2880,7 @@ window.JUMA_NAV = {
     jov.innerHTML = lista.map((s) => {
       const img = 'juegos/' + s.img;
       const alt = 'Imagen de ' + s.nombre;
-      return `<details class="patron-d" name="santos-j"><summary class="patron"><img src="${esc(img)}" alt="${esc(alt)}" loading="lazy" decoding="async"><div><b>${esc(s.nombre)}</b><span>${esc(s.titulo)}</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="${esc(img)}" alt="${esc(alt)}" loading="lazy" decoding="async"><div class="pd-txt">${s.bio.map((p) => `<p>${p}</p>`).join('')}${s.fiesta ? `<p><b>Fiesta:</b> ${esc(s.fiesta)}.</p>` : ''}</div></div></details>`;
+      return `<details class="patron-d" name="santos-j"><summary class="patron"><img src="${esc(img)}" alt="${esc(alt)}" loading="lazy" decoding="async"><div><b>${esc(s.nombre)}</b><span>${esc(s.titulo)}</span></div><i class="pd-ic" aria-hidden="true"></i></summary><div class="pd-body"><img class="pd-big" src="${esc(img)}" alt="${esc(alt)}" loading="lazy" decoding="async"><div class="pd-txt">${s.bio.map((p) => `<p>${p}</p>`).join('')}${s.fiesta ? `<p><b>Fiesta:</b> ${esc(s.fiesta)}.</p>` : ''}${s.credito ? `<p style="font-size:12px;opacity:.72">Imagen: <a href="${esc('https://' + 'commons.wikimedia.org/wiki/File:' + encodeURIComponent(String(s.fuente || '').replace(/ /g, '_')))}" target="_blank" rel="noopener">${esc(s.credito)}</a></p>` : ''}</div></div></details>`;
     }).join('');
   }
 })();
@@ -3542,7 +3542,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=124" allow="fullscreen; camera"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=125" allow="fullscreen; camera"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
   document.body.appendChild(r);
   /* Botón Atrás del teléfono: cierra el juego en vez de salir de la app */
   try { history.pushState({ jumaJuego: 1 }, ''); } catch (e) {}
