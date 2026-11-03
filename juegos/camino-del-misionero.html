@@ -103,6 +103,14 @@ body.touch #dKey{display:none}
 @keyframes late{50%{transform:scale(1.08);opacity:.85}}@keyframes gira{to{transform:rotate(360deg)}}
 .caps{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:2px 0 12px}.caps span{font-size:11.5px;padding:5px 9px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#dbe8ff}.caps span.ok{border-color:rgba(75,227,161,.6);color:#bff5dc;background:rgba(75,227,161,.12)}
 .record{font-size:12.5px;color:var(--oro);margin:-4px 0 6px;opacity:.9}
+.rutas{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:4px 0 10px;text-align:left}
+.ruta{font:inherit;color:#fff;display:flex;align-items:center;gap:8px;min-height:52px;padding:7px 9px;border-radius:14px;border:1.5px solid rgba(255,255,255,.16);background:rgba(255,255,255,.07);cursor:pointer;touch-action:manipulation;position:relative;transition:transform .12s cubic-bezier(.23,1,.32,1),background .15s}
+.ruta:active{transform:scale(.97)}.ruta.on{border-color:#ffd36b;background:rgba(255,211,107,.16);box-shadow:0 0 0 3px rgba(255,211,107,.12)}
+.ruta .ri{font-size:24px;line-height:1;flex:none}.ruta .rt{display:flex;flex-direction:column;min-width:0}.ruta b{font-size:12.5px;line-height:1.15}.ruta small{font-size:10.5px;opacity:.72;line-height:1.2;margin-top:2px}
+.ruta i{position:absolute;top:4px;right:7px;font-style:normal;font-size:10.5px;color:var(--oro)}.ruta i.rf{color:#4be3a1;font-size:13px}
+.ruta-act{font-size:12.5px;letter-spacing:.3px;color:#ffe9b0;margin:-4px 0 8px;opacity:.95}
+@media (hover:hover) and (pointer:fine){.ruta:hover{background:rgba(255,255,255,.13)}}
+@media (max-width:360px){.rutas{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){.panel,.sol::before,.sol::after{animation:none}}
 .panel h1{font-family:Georgia,'Times New Roman',serif;font-size:36px;line-height:1.05;margin:6px 0 10px;color:var(--crema);text-shadow:0 2px 14px rgba(255,211,107,.35)}
 .panel h2{font-family:Georgia,serif;margin:4px 0 12px;font-size:26px;color:var(--crema)}
@@ -211,7 +219,7 @@ function qFromEuler(rx,ry,rz){const cx=Math.cos(rx/2),sx=Math.sin(rx/2),cy=Math.
 
 'use strict';
 /* ================= CONTENIDO DEL JUEGO (todo en español, sin conexión) ================= */
-const CAPS=[
+const CAPS_PUEBLO=[
  {n:'Capítulo 1 · Escuchar',lema:'Antes de hablar, caminar junto al otro (Lc 24,13-35)'},
  {n:'Capítulo 2 · Dar razón con mansedumbre',lema:'«Estén siempre listos para dar razón de su esperanza, con mansedumbre y respeto» (1 Pe 3,15)'},
  {n:'Capítulo 3 · Unidos en la diferencia',lema:'Diálogo, respeto y amistad'},
@@ -225,7 +233,7 @@ const TIPOS={
  peor:{d:-25,p:0,et:'⛔ Eso aleja',c:'#ff6f6f'}
 };
 const o=(tipo,t,fb)=>({tipo,t,fb});
-const ENC=[
+const ENC_PUEBLO=[
 { id:'anselmo',cap:0,nombre:'Don Anselmo',rol:'Anciano viudo',emoji:'👴',s:34,lado:1,
   intro:'Don Anselmo barre el portal de su casa. Te mira de reojo, sin ganas de conversar.',
   reac:{mejor:'(Deja de barrer y te mira con más calma)',bien:'(Afloja un poco el ceño)',regular:'(Se encoge de hombros)',mal:'(Aprieta la escoba con enojo)',peor:'(Te da la espalda)'},
@@ -371,6 +379,484 @@ const ENC=[
   leccion:'El primer anuncio',cita:'«Dejen que los niños vengan a mí» (Mc 10,14)',
   txt:'El primer anuncio es simple y cálido: Dios te ama, Jesús vive y te acompaña. Todo evangelizador lo vive y lo transmite con alegría.'}
 ];
+/* ---------- Ruta 2 · La ciudad (calles, colegio, hospital y parroquia) ---------- */
+const CAPS_CIUDAD=[
+ {n:'Capítulo 1 · Jóvenes de hoy',lema:'«Que nadie te menosprecie por ser joven» (1 Tm 4,12)'},
+ {n:'Capítulo 2 · Sanar heridas',lema:'«El Señor está cerca de los que tienen el corazón herido» (Sal 34,19)'},
+ {n:'Capítulo 3 · Servir, no lucirse',lema:'«El que quiera ser el primero, que sea el servidor de todos» (Mc 9,35)'},
+ {n:'Capítulo 4 · Anunciar con mansedumbre',lema:'«Con mansedumbre y respeto» (1 Pe 3,16)'}
+];
+const ENC_CIUDAD=[
+{ id:'valentina',cap:0,nombre:'Valentina',rol:'Adolescente de 15 años',emoji:'📱',s:34,lado:1,amb:'ciudad',
+  intro:'En la parada del bus, Valentina mira su celular sin parar. Suspira cada vez que desliza la pantalla.',
+  reac:{mejor:'(Baja el celular y te mira a los ojos)',bien:'(Sonríe un poco)',regular:'(Vuelve a mirar la pantalla)',mal:'(Pone los ojos en blanco)',peor:'(Se pone los audífonos)'},
+  pasos:[
+   {n:'Subí una foto y casi nadie le dio «me gusta». Mis amigas tienen miles. Seguro soy aburrida y fea.',k:'Tu valor no se mide en «me gusta»',o:[
+     o('mejor','Tú vales muchísimo más que un número en una pantalla. ¿Me cuentas qué te gusta hacer cuando nadie te está mirando?','Devolverle su valor y preguntar por ella misma abre el corazón. «El hombre mira las apariencias, pero el Señor mira el corazón» (1 Sam 16,7).'),
+     o('bien','A mí también me pasó. Las redes muestran solo lo bonito; nadie sube sus días malos.','Compartir tu experiencia acerca y desarma la comparación. Falta recordarle cuánto vale para Dios.'),
+     o('regular','No le hagas caso a eso; mejor deja el celular y ya.','Es un consejo práctico, pero suena a regaño y no toca la herida de fondo: sentirse poco valiosa.'),
+     o('peor','Eso te pasa por vanidosa. Una buena cristiana no sube fotos.','Juzgar y avergonzar aleja. Jesús nunca humilló a nadie para corregirlo: lo miraba con amor (Mc 10,21).')]},
+   {n:'A veces me da ansiedad y no puedo dormir pensando en lo que dicen de mí. ¿Dios se fija en esas cosas?',k:'Dios te mira con amor',o:[
+     o('mejor','Sí, Dios se fija en ti, y te mira con cariño. Te dice: «Eres preciosa a mis ojos y yo te amo» (Is 43,4). Y si la ansiedad no te deja dormir, cuéntaselo también a tus papás o a un adulto de confianza: pedir ayuda es de valientes.','Anunciar el amor de Dios y, a la vez, animar a pedir ayuda a adultos de confianza es cuidar a la persona entera. La fe y el cuidado de la salud van juntos.'),
+     o('bien','Hagamos un reto: una hora sin celular antes de dormir, y en ese rato le hablas a Dios como a un amigo.','Una propuesta concreta y sana. Sería aún mejor recordarle que Dios ya la ama tal como es.'),
+     o('mal','Eso es falta de fe. Si rezaras de verdad, no tendrías ansiedad.','La ansiedad no es falta de fe. Culpar a quien sufre hiere; hay que acompañar y, si hace falta, buscar ayuda.'),
+     o('peor','Dios tiene cosas más importantes que atender que tus fotos.','Es falso y cruel: para Dios cada persona es importante. Hasta los cabellos de tu cabeza están contados (Lc 12,7).')]}
+  ],
+  ok:'Nadie me había dicho que valgo por ser yo. Hoy no voy a mirar los «me gusta». ¡Gracias! Sigue, el camino está abierto.',no:'Ya, ya... mejor me voy, que ya viene mi bus.',
+  leccion:'Valemos por lo que somos',cita:'«Eres precioso a mis ojos y yo te amo» (Is 43,4)',
+  txt:'En un mundo de pantallas y comparaciones, el misionero recuerda a cada joven que vale por lo que es, no por lo que muestra: es hijo amado de Dios.'},
+{ id:'diego',cap:0,nombre:'Diego',rol:'Estudiante de 14 años',emoji:'🎮',s:78,lado:-1,amb:'escuela',
+  intro:'Junto al colegio, Diego juega en su consola sentado en la vereda. Su mochila está tirada, con los cuadernos sin abrir.',
+  reac:{mejor:'(Pausa el juego, interesado)',bien:'(Asiente sin dejar de jugar)',regular:'(Se encoge de hombros)',mal:'(Bufa, molesto)',peor:'(Te ignora y sube el volumen)'},
+  pasos:[
+   {n:'¿Tareas? ¿Para qué? Voy a ser jugador profesional de videojuegos o influencer. El colegio no sirve para nada.',k:'Interesarse por sus sueños',o:[
+     o('mejor','¡Qué buen sueño! Cuéntame: ¿qué juego te gusta y qué se necesita para llegar a ser profesional?','Interesarse por sus sueños antes de corregir crea confianza. Desde ahí se puede hablar de esfuerzo y de estudios.'),
+     o('bien','Los que llegan lejos en eso también estudian: inglés, matemáticas, cómo manejar contratos... ¿Sabías?','Un buen argumento que une su sueño con el estudio. Hubiera sido mejor escucharlo primero.'),
+     o('regular','Bueno, pero haz las tareas igual, porque si no te van a castigar.','Estudiar por miedo al castigo no convence a nadie. Falta descubrir el sentido de lo que hace.'),
+     o('peor','Los videojuegos son una pérdida de tiempo. Nunca vas a llegar a nada así.','Despreciar sus sueños lo hiere y cierra la conversación. Nadie se abre a quien lo hace sentir un fracasado.')]},
+   {n:'Es que no entiendo matemáticas y me da vergüenza preguntar. Mejor ni lo intento.',k:'Acompañar con paciencia',o:[
+     o('mejor','Te entiendo; a mí también me costaba. ¿Hacemos juntos un ejercicio ahora? Y pídele ánimo a Dios: Jesús también aprendió y «crecía en sabiduría» (Lc 2,52).','Ofrecer ayuda concreta y presentar el estudio como parte de crecer con Dios. Hacer bien las tareas de cada día también es camino de santidad.'),
+     o('bien','Preguntar no es de tontos, es de valientes. Mañana pregúntale al profe. ¡Te va a ir mejor!','Un ánimo bonito. Acompañarlo un rato con el ejercicio lo haría aún más real.'),
+     o('mal','Si no entiendes, es porque no prestas atención. Pon más empeño.','Un reproche sin ayuda desanima más. «No irriten a sus hijos, para que no se desanimen» (Col 3,21).'),
+     o('peor','Algunos simplemente no nacieron para estudiar. Dedícate a otra cosa.','Etiquetar a alguien como incapaz es injusto. Cada uno tiene dones que crecen con paciencia y esfuerzo.')]}
+  ],
+  ok:'Oye... sí entendí ese ejercicio. Voy a hacer la tarea antes de jugar. ¡Pasa, ya te abro!',no:'Meh. Mejor sigo jugando.',
+  leccion:'Lo de cada día, bien hecho',cita:'«Jesús crecía en sabiduría, en estatura y en gracia» (Lc 2,52)',
+  txt:'Estudiar, hacer las tareas y ayudar en casa también son camino de santidad. San José Allamano decía: «El bien hay que hacerlo bien».'},
+{ id:'kevin',cap:0,nombre:'Kevin',rol:'Repartidor de 19 años',emoji:'🚲',s:119,lado:-1,puente:true,amb:'ciudad',
+  intro:'El puente levadizo está arriba. Kevin, repartidor en bicicleta, espera junto a la palanca mirando el reloj.',
+  reac:{mejor:'(Se quita el casco y respira)',bien:'(Se ríe un poco)',regular:'(Mira el reloj otra vez)',mal:'(Frunce el ceño)',peor:'(Se sube a la bicicleta para irse)'},
+  pasos:[
+   {n:'Trabajo doce horas al día repartiendo comida y estudio de noche. ¿La fe? Eso es para los que tienen tiempo, o para los viejitos.',k:'Valorar su esfuerzo',o:[
+     o('mejor','Lo que haces es admirable: trabajas y estudias a la vez. ¿Por quién te esfuerzas tanto?','Reconocer su esfuerzo y preguntar por sus motivos toca lo más hondo de su vida. Jesús también fue trabajador: «el hijo del carpintero» (Mt 13,55).'),
+     o('bien','Jesús no era un viejito: era un joven de unos treinta años que trabajaba con sus manos.','Rompe el prejuicio de que la fe es «de viejos». Primero conviene mostrar interés por su vida.'),
+     o('regular','Siempre hay tiempo para Dios, si uno quiere.','Es verdad, pero dicho así suena a reproche a alguien que está agotado.'),
+     o('peor','Si no tienes tiempo para Dios, no esperes que Él tenga tiempo para ti.','Falso: Dios nunca deja de buscarnos. Esa frase presenta a un Dios rencoroso que no es el de Jesús.')]},
+   {n:'Lo hago por mi mamá y mis hermanos. Pero estoy cansado... a veces siento que vivo solo para trabajar.',k:'Cristo vive y te quiere vivo',o:[
+     o('mejor','Lo que haces por tu familia ya es amor, y Dios lo ve. Jesús dice: «Vengan a mí los que están cansados, y yo los aliviaré» (Mt 11,28). No necesitas horas: un minuto en el semáforo para hablarle ya es oración. ¿Te paso un audio cortito con el Evangelio de cada día?','Mostrar que Dios entra en la vida real, sin pedir lo imposible, es anunciar a un Cristo vivo. «Cristo vive y te quiere vivo» (Christus Vivit 1).'),
+     o('bien','El domingo hay misa de jóvenes a las siete de la noche. ¿Te animas a venir después del trabajo?','Una invitación concreta y adaptada a su horario. Falta mostrarle que Dios ya está presente en su cansancio.'),
+     o('mal','Deberías dejar ese trabajo; te está alejando de Dios.','Es un consejo irreal: su familia depende de él. A Dios no se le encuentra huyendo de la vida, sino dentro de ella.'),
+     o('peor','Eso te pasa por vivir sin Dios. Si fueras a misa, no estarías cansado.','La fe no es una receta contra el cansancio, y culpar a quien se esfuerza tanto es injusto.')]}
+  ],
+  ok:'Un minuto en el semáforo... eso sí puedo. Mándame ese audio. ¡Bajo el puente!',no:'No tengo tiempo para esto. El puente se queda así.',
+  leccion:'Dios entra en la vida real',cita:'«Vengan a mí todos los que están cansados» (Mt 11,28)',
+  txt:'Los jóvenes de hoy trabajan, estudian y cargan muchas responsabilidades. El misionero no les pide lo imposible: les muestra que Cristo vive y camina con ellos en lo de cada día.'},
+{ id:'marta',cap:1,nombre:'Doña Marta',rol:'Paciente del hospital',emoji:'🏥',s:165,lado:1,amb:'hospital',
+  intro:'En el jardín del hospital, doña Marta toma un poco de sol en bata. Mañana la operan del corazón.',
+  reac:{mejor:'(Te toma la mano)',bien:'(Sonríe con ternura)',regular:'(Mira hacia el hospital)',mal:'(Se le humedecen los ojos)',peor:'(Te pide que te vayas)'},
+  pasos:[
+   {n:'Tengo miedo. Mañana me operan del corazón y no sé si voy a despertar.',k:'Estar cerca del que sufre',o:[
+     o('mejor','Es normal tener miedo, doña Marta. ¿Quiere contarme qué es lo que más le preocupa? Aquí me quedo un rato con usted.','Aceptar su miedo y quedarse a su lado es una obra de misericordia: «Estuve enfermo y me visitaron» (Mt 25,36).'),
+     o('bien','Los médicos de aquí son muy buenos. Seguro que todo saldrá bien.','Quieres animarla, pero prometer un resultado no está en nuestras manos. Mejor acompañar su miedo que taparlo.'),
+     o('regular','No piense en eso; piense en cosas bonitas.','Evadir el tema no la consuela. Quien sufre necesita ser escuchado, no distraído.'),
+     o('peor','Si tiene miedo, es porque le falta fe.','El mismo Jesús sintió angustia en Getsemaní (Mc 14,33-34). El miedo no es falta de fe: es humano.')]},
+   {n:'Hace años que no me confieso ni comulgo. ¿Será que Dios todavía me quiere recibir?',k:'Los sacramentos son abrazo de Dios',o:[
+     o('mejor','¡Claro que sí! Dios la espera con los brazos abiertos, como el padre que corre a abrazar a su hijo (Lc 15,20). Si usted quiere, le pedimos al capellán del hospital que venga: puede confesarse y recibir la Unción de los enfermos, que da fuerza y paz.','Anunciar la misericordia y ofrecer los sacramentos con libertad es un gran regalo. La Unción de los enfermos da consuelo, paz y ánimo (St 5,14-15; Catecismo 1520).'),
+     o('bien','Dios siempre la quiere. Podemos rezar juntos un Padrenuestro ahora mismo.','Rezar con ella es hermoso. Faltó ofrecerle los sacramentos, que son un abrazo concreto de Dios.'),
+     o('mal','Va a tener que ver si el padre le da permiso, después de tantos años.','La confesión no es un trámite para ganarse un permiso: es el encuentro con un Padre que perdona.'),
+     o('peor','Mejor no se preocupe por eso; a estas alturas ya da igual.','Nunca es tarde para Dios. Negarle esa esperanza es quitarle el consuelo que más necesita.')]}
+  ],
+  ok:'Qué paz siento... Llame al capellán, por favor. Ya no tengo tanto miedo. Vaya con Dios: la puerta está abierta.',no:'Estoy cansada. Déjeme descansar, por favor.',
+  leccion:'Acompañar a los enfermos',cita:'«Estuve enfermo y me visitaron» (Mt 25,36)',
+  txt:'En el hospital, el misionero lleva cercanía y esperanza. No tiene todas las respuestas, pero ofrece compañía, oración y los sacramentos que sanan el alma.'},
+{ id:'javier',cap:1,nombre:'Javier',rol:'Joven de 17 años',emoji:'😠',s:205,lado:-1,amb:'iglesia',
+  intro:'Frente a la parroquia, Javier rompe un folleto de la catequesis. Acaba de ver en las noticias un escándalo de un sacerdote.',
+  reac:{mejor:'(Respira hondo y se calma un poco)',bien:'(Te escucha con atención)',regular:'(Niega con la cabeza)',mal:'(Se enoja más)',peor:'(Se va gritando)'},
+  pasos:[
+   {n:'¿Viste las noticias? Un sacerdote les hizo daño a unos niños y otros lo taparon. ¿Y ustedes quieren que crea en esta Iglesia?',k:'No justificar el mal',o:[
+     o('mejor','Tienes razón en indignarte. Eso es un pecado y un delito gravísimo, y nunca se debe tapar. Jesús fue durísimo con quien hace daño a los pequeños (Mt 18,6). Lo primero es estar con las víctimas.','Reconocer el mal sin excusas y poner primero a las víctimas es lo que pide el Evangelio. El papa Francisco pidió «tolerancia cero» y obligó a denunciar los abusos (Vos estis lux mundi, 2019).'),
+     o('bien','Yo también me sentí muy mal cuando lo supe. Es una herida enorme para la Iglesia.','Compartir el dolor acerca. Conviene decir claramente que es un delito, que no se tapa y que las víctimas van primero.'),
+     o('regular','Bueno, eso pasa en todas partes, no solo en la Iglesia.','Aunque pase en otros lugares, decirlo así suena a excusa y minimiza el daño a las víctimas.'),
+     o('peor','No hables mal de los sacerdotes. Esas noticias son exageraciones contra la Iglesia.','Negar o tapar el abuso es lo que más daño ha hecho. La verdad y la justicia son parte del Evangelio (Jn 8,32).')]},
+   {n:'Entonces, ¿por qué sigues tú en la Iglesia? ¿No te da vergüenza?',k:'Distinguir a Cristo del pecado de algunos',o:[
+     o('mejor','Me duele, sí. Pero sigo porque la Iglesia es de Jesús, no de quien la traiciona. Judas fue uno de los Doce, y los demás siguieron a Jesús. Conozco muchos sacerdotes buenos que dan la vida por los demás. Y escucha: si alguna vez alguien, sea quien sea, te hace sentir incómodo o te pide guardar un secreto así, cuéntaselo enseguida a un adulto de confianza.','Distinguir a Cristo y a su pueblo del pecado de algunos, y enseñar a protegerse y a pedir ayuda, es cuidar de verdad a los jóvenes. Un buen misionero también protege.'),
+     o('bien','Porque la Iglesia somos todos, y hay que ayudar a que cambie desde dentro.','Es cierto y es valiente. Falta poner en el centro a Jesús y enseñar a cuidarse y a pedir ayuda.'),
+     o('mal','Todos somos pecadores; hay que perdonar y olvidar.','Perdonar no significa olvidar ni dejar sin justicia. Quien hace daño debe responder ante la ley, y las víctimas deben ser escuchadas y protegidas.'),
+     o('peor','Esas cosas no se cuentan; hay que proteger el buen nombre de la Iglesia.','El silencio y el encubrimiento son contrarios al Evangelio. La Iglesia se purifica con la verdad, no escondiendo el mal.')]}
+  ],
+  ok:'No pensé que un católico me hablara tan claro. Me quedo con eso de Judas y los otros apóstoles. Pasa, te abro.',no:'No me convences. Déjame solo.',
+  leccion:'La verdad nos hace libres',cita:'«La verdad los hará libres» (Jn 8,32)',
+  txt:'Ante el escándalo, el misionero no justifica ni encubre: reconoce el mal, se pone del lado de las víctimas y anuncia que la Iglesia es de Cristo, que la purifica con la verdad. Si algo te incomoda, cuéntaselo siempre a un adulto de confianza.'},
+{ id:'camila',cap:2,nombre:'Camila',rol:'Cantante del coro',emoji:'🎤',s:245,lado:1,amb:'iglesia',
+  intro:'En el atrio de la parroquia, Camila ensaya con su micrófono. Está molesta porque hoy le dieron el solo a otra chica.',
+  reac:{mejor:'(Baja el micrófono y piensa)',bien:'(Se ríe de sí misma)',regular:'(Se cruza de brazos)',mal:'(Te mira con desdén)',peor:'(Suelta el micrófono con rabia)'},
+  pasos:[
+   {n:'¡Yo canto mejor que todas! El coro debería ser mío. Si no me dan los solos, me voy de esta parroquia.',k:'El servicio no es un escenario',o:[
+     o('mejor','Tienes una voz preciosa: es un don de Dios. ¿Para quién cantas en la misa: para que te aplaudan o para ayudar a otros a rezar?','Reconocer su don y preguntarle por el sentido la ayuda a mirar hacia dentro. En la liturgia, el protagonista es Dios.'),
+     o('bien','Entiendo que te duela. Pero tu compañera también necesita oportunidades para crecer.','Empatía y una mirada hacia los demás. Falta ayudarla a descubrir para quién canta.'),
+     o('regular','Bueno, cada uno tiene su momento. Ya te tocará.','Calma la situación, pero deja intacta la idea de que el coro es un escenario para lucirse.'),
+     o('peor','Tienes razón, eres la mejor. Exige tus solos o vete.','Alimentar el orgullo no ayuda. «Nada hagan por rivalidad ni por vanagloria» (Flp 2,3).')]},
+   {n:'Es que... cuando canto siento que por fin alguien me ve. En mi casa nadie me hace caso.',k:'Dios ya te mira',o:[
+     o('mejor','Gracias por contármelo. Dios ya te ve y te quiere, con aplausos o sin ellos. Tu canto es más bonito cuando es un regalo. ¿Y si ayudas a tu compañera a preparar su solo? Es lo que hizo Jesús: «No vine a ser servido, sino a servir» (Mc 10,45).','Descubrir la herida que hay debajo del protagonismo y proponer el servicio sana el corazón. El que sirve, como Jesús, es el más grande.'),
+     o('bien','Qué duro lo de tu casa. Aquí en el coro eres importante, aunque no cantes el solo.','La consuelas y la valoras. Sería mejor ayudarla a pasar del «que me vean» al «servir».'),
+     o('mal','Ese es tu problema: buscas atención. Tienes que ser más humilde.','Tiene algo de verdad, pero dicho así la humilla justo cuando se abrió. La humildad se contagia con cariño, no con regaños.'),
+     o('peor','Entonces cántale solo a tu familia y deja en paz el coro.','Rechazarla cuando muestra su herida es cerrarle la puerta. La comunidad debe ser casa para quien se siente invisible.')]}
+  ],
+  ok:'Voy a ayudarle a ensayar su solo. ¡Qué raro, me siento feliz! Pasa, la puerta está abierta.',no:'No sé... todavía estoy enojada. Mejor otro día.',
+  leccion:'Servir, no lucirse',cita:'«El que quiera ser el primero, que sea el servidor de todos» (Mc 9,35)',
+  txt:'En la Iglesia no somos estrellas: somos servidores. Cada don —cantar, leer, ayudar— brilla más cuando se regala para que otros encuentren a Dios.'},
+{ id:'saul',cap:3,nombre:'Hermano Saúl',rol:'Predicador callejero',emoji:'📢',s:285,lado:-1,amb:'ciudad',
+  intro:'En la plaza, el hermano Saúl predica con un megáfono: «¡Los católicos adoran estatuas y no son salvos!». Algunos se ríen de él.',
+  reac:{mejor:'(Baja el megáfono, sorprendido)',bien:'(Te escucha con atención)',regular:'(Te mira con desconfianza)',mal:'(Levanta la voz)',peor:'(Te señala con el dedo)'},
+  pasos:[
+   {n:'¡Tú, católico! ¿Ya eres salvo? Ustedes adoran estatuas, y eso es idolatría. ¡Arrepiéntete!',k:'Responder con mansedumbre',o:[
+     o('mejor','Buenas tardes, hermano. Veo que ama mucho la Biblia; yo también. Le cuento con gusto: no adoramos estatuas, solo adoramos a Dios. Las imágenes son como las fotos de la familia: nos recuerdan a quienes amamos.','Saludarlo como hermano y explicar con calma es dar razón de la fe «con mansedumbre y respeto» (1 Pe 3,15-16). El honor que se da a una imagen se dirige a quien representa (Catecismo 2132).'),
+     o('bien','Yo creo en Jesucristo como mi Salvador, igual que usted. Eso ya nos une.','Empezar por lo que nos une es sabio. Faltó explicarle con calma lo de las imágenes.'),
+     o('regular','Cada uno con su religión. No me interesa discutir.','Evitar la pelea está bien, pero cerrarse pierde la ocasión de dar testimonio con respeto.'),
+     o('peor','¡Ustedes son una secta! Váyase a predicar a otra parte.','Responder con insultos repite lo que criticamos. Todos miran cómo se tratan los cristianos (Jn 13,35).')]},
+   {n:'Pero Dios mandó: «No te harás imagen» (Éx 20,4). ¿No lo has leído?',k:'Conocer la Biblia y amar al hermano',o:[
+     o('mejor','Sí, y lo tomamos en serio: nunca adoraremos una imagen. Pero el mismo Dios mandó hacer dos querubines de oro para el Arca (Éx 25,18) y la serpiente de bronce (Nm 21,8). Lo prohibido es adorarlas como dioses. ¿Le parece si leemos juntos el Evangelio de hoy, en vez de pelear?','Responder con la Biblia, sin humillarlo, y proponer leerla juntos convierte una discusión en encuentro. Un cristiano no busca ganar: busca la unidad (Jn 17,21).'),
+     o('bien','Lo he leído. Tal vez podamos conversar con calma otro día, con la Biblia en la mano.','Deja la puerta abierta al diálogo. Habría sido bueno dar ya una respuesta bíblica sencilla.'),
+     o('mal','Yo no necesito leer la Biblia; para eso están los sacerdotes.','Los católicos también estamos llamados a leer la Biblia. «Desconocer la Escritura es desconocer a Cristo» (San Jerónimo).'),
+     o('peor','Usted ni sabe leer la Biblia; está todo equivocado.','Despreciar al otro le cierra el corazón. La verdad se ofrece con amor, no se lanza a la cara (Ef 4,15).')]}
+  ],
+  ok:'Mmm... nunca me lo habían explicado así. Leamos juntos ese Evangelio. Pase, que Dios lo bendiga.',no:'¡Ya lo sabía! Ustedes no saben responder. Siga su camino.',
+  leccion:'Dar razón con amor',cita:'«Que todos sean uno» (Jn 17,21)',
+  txt:'Ante quien ataca nuestra fe, el misionero no pelea ni humilla: responde con la Biblia, con calma y con cariño, y busca lo que nos une como hermanos en Cristo.'},
+{ id:'nico',cap:3,nombre:'Nico',rol:'Niño de 10 años',emoji:'🍬',s:335,lado:1,amb:'ciudad',
+  intro:'En el semáforo, cerca de la capilla, Nico vende dulces a los carros. Te ofrece uno con una gran sonrisa.',
+  reac:{mejor:'(Le brillan los ojos)',bien:'(Sonríe)',regular:'(Se rasca la cabeza)',mal:'(Se pone triste)',peor:'(Se va corriendo)'},
+  pasos:[
+   {n:'¿Me compras un dulce? Es para ayudar a mi mamá. ¿Y tú por qué andas con esa cruz?',k:'Ver la dignidad de cada niño',o:[
+     o('mejor','¡Claro que te compro! ¿Cómo te llamas? La cruz me recuerda que Jesús me quiere mucho... y a ti también, Nico.','Ayudar, preguntar su nombre y anunciar con sencillez el amor de Jesús: así se evangeliza a un niño. Cada niño es un tesoro para Dios.'),
+     o('bien','Te compro dos, y uno es para ti. Esta cruz es de Jesús, mi mejor amigo.','Generoso y sencillo. Preguntar su nombre lo haría sentir aún más visto y querido.'),
+     o('regular','No tengo plata, perdona. Es una cruz, nada más.','Aunque no puedas comprar, siempre puedes regalar una sonrisa y una palabra sobre Jesús.'),
+     o('peor','Los niños no deberían estar pidiendo en la calle. Vete a tu casa.','Echarlo lo hiere: él no tiene la culpa de su situación. Jesús abrazaba a los niños y los bendecía (Mc 10,16).')]},
+   {n:'¿Jesús me quiere a mí? Pero si no voy a la escuela todos los días, y a veces me porto mal.',k:'El primer anuncio',o:[
+     o('mejor','Jesús te quiere muchísimo, Nico, ¡tal como eres! Él dijo: «Dejen que los niños vengan a mí» (Mc 10,14). Mira, en esa capilla hay catequesis y apoyo escolar los sábados; si tu mamá quiere, yo los acompaño a conocerlos.','El primer anuncio es sencillo: Jesús te ama. Y el amor se hace concreto acompañando a la familia hacia una comunidad que le ayude a estudiar y a crecer.'),
+     o('bien','Jesús te quiere aunque te equivoques. Cuando te portes mal, le pides perdón y listo.','Verdadero y sencillo. Sería mejor invitarlo, con su mamá, a una comunidad que lo acompañe.'),
+     o('mal','Si te portas bien y vas a la escuela, Jesús te va a querer más.','El amor de Dios no se gana portándose bien: es gratis. Él nos amó primero, y su amor nos ayuda a cambiar (1 Jn 4,19).'),
+     o('peor','Jesús no quiere a los niños que se portan mal.','Es mentira y hace mucho daño. Jesús vino a buscar justamente a quienes se sienten perdidos (Lc 19,10).')]}
+  ],
+  ok:'¡Jesús me quiere! ¡Le voy a decir a mi mamá que vayamos el sábado! Toma, te regalo un dulce.',no:'Ah... bueno. Tengo que seguir vendiendo.',
+  leccion:'Jesús te quiere tal como eres',cita:'«Dejen que los niños vengan a mí» (Mc 10,14)',
+  txt:'El primer anuncio es la buena noticia más sencilla: Jesús te ama. El misionero la dice con palabras y la hace visible con gestos concretos de ayuda.'}
+];
+
+/* ---------- Ruta 3 · Campos y caseríos ---------- */
+const CAPS_CAMPO=[
+ {n:'Capítulo 1 · Lo de cada día',lema:'«Todo lo que hagan, háganlo de corazón, como para el Señor» (Col 3,23)'},
+ {n:'Capítulo 2 · Amar de verdad',lema:'«El amor es paciente, es servicial... no busca su propio interés» (1 Co 13,4-5)'},
+ {n:'Capítulo 3 · Libres para amar a Dios',lema:'«Para ser libres nos liberó Cristo» (Gál 5,1)'},
+ {n:'Capítulo 4 · La fe del pueblo',lema:'«Te alabo, Padre, porque has revelado estas cosas a los pequeños» (Mt 11,25)'}
+];
+const ENC_CAMPO=[
+{ id:'rafael',cap:0,nombre:'Rafael',rol:'Joven campesino de 16 años',emoji:'🌽',s:34,lado:1,amb:'campo',
+  intro:'En el maizal, Rafael carga un costal en la espalda. Se levanta a las cinco para ordeñar, luego va al colegio y en la tarde cuida a sus hermanos.',
+  reac:{mejor:'(Deja el costal y se seca el sudor)',bien:'(Te sonríe, cansado)',regular:'(Sigue trabajando)',mal:'(Resopla)',peor:'(Te da la espalda)'},
+  pasos:[
+   {n:'Ordeño, siembro, estudio, cuido a mis hermanos... No me queda tiempo para Dios. Ni para rezar.',k:'Dios está en el trabajo',o:[
+     o('mejor','¡Cuánto amor hay en todo lo que haces! ¿Te ayudo con ese costal mientras me cuentas?','Servir mientras escuchas es evangelizar con obras. Jesús también trabajó con sus manos en Nazaret.'),
+     o('bien','Dios no está solo en la iglesia: también está aquí, en el campo, contigo.','Una gran verdad. Ofrecer una mano con el trabajo la habría hecho más creíble.'),
+     o('regular','Bueno, por lo menos ve a misa el domingo.','Es bueno invitar a misa, pero suena a una tarea más para alguien que ya está agotado.'),
+     o('peor','Si no rezas, todo ese trabajo no vale nada ante Dios.','Falso: el trabajo hecho con amor agrada a Dios. «Todo lo que hagan, háganlo de corazón, como para el Señor» (Col 3,23).')]},
+   {n:'A veces me da rabia: mis amigos juegan y yo siempre trabajando. ¿Cómo voy a ser santo así?',k:'Santidad en lo ordinario',o:[
+     o('mejor','Precisamente así. Puedes ofrecerle a Dios cada tarea: «Señor, este ordeño es por mi familia». María y José vivían igual, trabajando en lo sencillo. Y también tienes derecho a descansar y jugar: hablemos con tus papás para que tengas un rato libre.','Mostrar que lo ordinario se vuelve santo cuando se ofrece con amor, y cuidar su descanso, es una mirada sana de la fe. Dios mismo descansó el séptimo día (Gn 2,2).'),
+     o('bien','Puedes rezar mientras trabajas: un Avemaría al sembrar, un «gracias» al terminar.','Una idea práctica y hermosa. Falta reconocer también su cansancio y su necesidad de descansar.'),
+     o('mal','Deja de quejarte; hay niños que tienen menos que tú.','Comparar sufrimientos no consuela. Su cansancio es real y merece ser escuchado.'),
+     o('peor','Los santos no se quejan nunca. Si te da rabia, ya pecaste.','Sentir rabia no es pecado: lo importante es qué hacemos con ella. Hasta los salmos están llenos de quejas sinceras a Dios.')]}
+  ],
+  ok:'«Este ordeño es por mi familia»... ¡me gusta! Y gracias por el costal. Pasa, te abro la tranquera.',no:'No tengo tiempo para hablar. Tengo mucho que hacer.',
+  leccion:'Santos en lo de cada día',cita:'«Todo lo que hagan, háganlo de corazón» (Col 3,23)',
+  txt:'La santidad no es solo para quien tiene tiempo libre: se vive en el trabajo, en el estudio y en las tareas de la casa, hechas con amor y ofrecidas a Dios.'},
+{ id:'eusebio',cap:0,nombre:'Don Eusebio',rol:'Campesino en tiempo de sequía',emoji:'👨‍🌾',s:78,lado:-1,amb:'rural',
+  intro:'Don Eusebio mira su campo reseco junto al corral. Hace tres meses que no llueve y las vacas están flacas.',
+  reac:{mejor:'(Se quita el sombrero y suspira)',bien:'(Asiente despacio)',regular:'(Mira hacia otro lado)',mal:'(Te mira con rabia)',peor:'(Te manda a callar)'},
+  pasos:[
+   {n:'Tres meses sin lluvia. Se me está muriendo todo. Dios se olvidó de los pobres del campo.',k:'Acompañar el dolor',o:[
+     o('mejor','Debe ser muy duro ver sufrir lo que usted cuida con tanto esfuerzo. ¿Desde cuándo trabaja esta tierra?','Entrar en su dolor y preguntar por su historia es acompañar. La tierra es su vida; escucharlo es respetarlo.'),
+     o('bien','Lo siento mucho, don Eusebio. ¿Le ayudo a llevar agua a las vacas?','La ayuda concreta habla de Dios sin palabras. Escuchar su historia también le haría bien.'),
+     o('regular','Ya va a llover; tenga paciencia.','No sabemos cuándo lloverá. Las frases optimistas no alivian a quien lo está perdiendo todo.'),
+     o('peor','La sequía es un castigo de Dios por los pecados del pueblo.','Dios no castiga al pueblo con sequías. Jesús rechazó la idea de que las desgracias son castigo por los pecados (Lc 13,4-5; Jn 9,3).')]},
+   {n:'Mi papá trabajó esta tierra, y su papá también. Si se seca, me tendré que ir a la ciudad. ¿Qué hago?',k:'Fe que se hace solidaria',o:[
+     o('mejor','No está solo. Hablemos con la comunidad: podemos organizar una minga para hacer un reservorio de agua y, el domingo, rezar todos juntos por la lluvia. Dios actúa a través de los hermanos, y nos pide cultivar y cuidar la tierra que nos dio (Gn 2,15).','Unir oración, solidaridad y cuidado de la creación es la fe hecha vida. El papa Francisco lo llama ecología integral (Laudato si’).'),
+     o('bien','Vamos a rezar juntos por la lluvia. Dios escucha el clamor de los pobres.','Rezar juntos es bueno, y Dios escucha a los pobres (Sal 34,7). La fe también se hace acción organizada con la comunidad.'),
+     o('mal','Si se va a la ciudad, seguro le irá mejor. Aquí no hay futuro.','Desanimarlo no ayuda. Antes de rendirse, la comunidad unida puede buscar soluciones.'),
+     o('peor','Eso le pasa por no ir a misa. Rece más y ya verá.','Condicionar la ayuda de Dios a la asistencia a misa presenta un Dios comerciante, no el Padre bueno de Jesús.')]}
+  ],
+  ok:'Una minga para el reservorio... ¡eso es! Mañana hablo con los vecinos. Gracias, joven. Pase.',no:'Las palabras bonitas no traen agua. Siga su camino.',
+  leccion:'Fe que se hace solidaria',cita:'«Dios puso al hombre en el jardín para que lo cultivara y lo cuidara» (Gn 2,15)',
+  txt:'Ante el sufrimiento del campo, el misionero acompaña, reza con el pueblo y lo anima a organizarse y a cuidar la creación: la fe se vuelve solidaridad.'},
+{ id:'laura',cap:1,nombre:'Laura',rol:'Joven de 17 años',emoji:'💔',s:119,lado:-1,puente:true,amb:'rural',
+  intro:'Junto al puente levadizo, Laura mira su celular con angustia. Su novio le ha mandado veinte mensajes en una hora.',
+  reac:{mejor:'(Respira aliviada)',bien:'(Asiente, pensativa)',regular:'(Duda)',mal:'(Se pone a la defensiva)',peor:'(Se aleja llorando)'},
+  pasos:[
+   {n:'Mi novio me revisa el celular y se enoja si salgo con mis amigas. Dice que es porque me ama mucho... ¿Será?',k:'El amor verdadero respeta',o:[
+     o('mejor','Gracias por confiar en mí. El amor de verdad no controla ni da miedo: cuida, respeta y te deja ser libre. ¿Cómo te sientes tú cuando él hace eso?','Nombrar con claridad lo que es amor y lo que no, y preguntarle cómo se siente, la ayuda a mirar su situación. «En el amor no hay temor» (1 Jn 4,18).'),
+     o('bien','Los celos no son una prueba de amor, aunque muchas canciones lo digan.','Bien dicho. Preguntarle cómo se siente la ayudaría a abrir más su corazón.'),
+     o('regular','Bueno, son cosas de novios. Ya se le pasará.','Minimizar el control puede dejarla sola ante una relación dañina. Los celos que controlan no se pasan solos.'),
+     o('peor','Si él se enoja, algo habrás hecho tú. Hazle caso.','Culparla es injusto y peligroso. Nadie merece ser controlado ni tenerle miedo a su pareja.')]},
+   {n:'También me dice que, si de verdad lo quiero, tengo que demostrárselo haciendo todo lo que él pide. Me da miedo perderlo.',k:'Mereces ser cuidada',o:[
+     o('mejor','Tú vales muchísimo, Laura. Quien te ama de verdad nunca te presiona ni te pone pruebas: «el amor es paciente y no busca su propio interés» (1 Co 13,4-5). No tienes que hacer nada que no quieras. Habla con tu mamá o con un adulto de confianza: no tienes que cargar esto sola.','Afirmar su dignidad, decir con claridad que la presión no es amor y animarla a buscar a un adulto de confianza es protegerla. Un noviazgo sano es escuela de respeto y libertad.'),
+     o('bien','Un noviazgo bonito es donde los dos se cuidan. Si te da miedo, eso ya es una señal.','Una pista importante. Falta animarla a contárselo a un adulto de confianza que la acompañe.'),
+     o('mal','Mejor termina hoy mismo y no le cuentes a nadie.','Callar no es la solución. Contarlo a un adulto de confianza es la forma más segura de salir de una relación que da miedo.'),
+     o('peor','Si lo quieres, demuéstraselo. Así son las relaciones.','Eso es falso y peligroso. El amor no se demuestra cediendo a presiones: se demuestra respetando la libertad del otro.')]}
+  ],
+  ok:'Hoy mismo voy a hablar con mi mamá. Me siento más tranquila... Gracias. ¡Ya bajo el puente!',no:'No sé... no quiero hablar más de esto. El puente se queda arriba.',
+  leccion:'El amor verdadero respeta',cita:'«El amor es paciente, es servicial... no busca su propio interés» (1 Co 13,4-5)',
+  txt:'El amor verdadero cuida, respeta y deja libre. Los celos que controlan y la presión no son amor. Si algo te da miedo en una relación, cuéntaselo a un adulto de confianza.'},
+{ id:'julian',cap:1,nombre:'Julián',rol:'Joven enamorado de 18 años',emoji:'💐',s:165,lado:1,amb:'caserio',
+  intro:'En el caserío, Julián arregla un ramo de flores silvestres. Quiere pedirle a Ana que sea su novia, pero tiene muchas dudas.',
+  reac:{mejor:'(Se le ilumina la cara)',bien:'(Sonríe nervioso)',regular:'(Se rasca la nuca)',mal:'(Suelta una carcajada burlona)',peor:'(Tira las flores)'},
+  pasos:[
+   {n:'Mis amigos dicen que un noviazgo cristiano es aburrido: que no se puede hacer nada y que solo hay prohibiciones. ¿Es verdad?',k:'El noviazgo es un regalo',o:[
+     o('mejor','¡Para nada! Un noviazgo con Dios es una aventura: conocerse de verdad, reír, servir juntos, soñar y cuidarse. ¿Qué es lo que más admiras de Ana?','Presentar el noviazgo como algo bueno y bello, y preguntarle por lo que admira, lo ayuda a mirar el amor con profundidad. Dios es el autor del amor.'),
+     o('bien','No es aburrido; es diferente. Se trata de cuidar a la otra persona.','Una buena respuesta. Podrías ayudarle a descubrir todo lo bonito que trae un noviazgo con Dios.'),
+     o('regular','Bueno, sí hay reglas, pero hay que cumplirlas.','Reducir el noviazgo a reglas hace justo lo que temen sus amigos: lo vuelve una lista de prohibiciones.'),
+     o('peor','Mejor no tengas novia; eso distrae de Dios.','El amor humano no es enemigo de Dios: es un camino hacia Él. «No es bueno que el hombre esté solo» (Gn 2,18).')]},
+   {n:'¿Y cómo sé si Ana es la persona correcta? ¿Para qué esperar hasta casarse para todo?',k:'El amor sabe esperar',o:[
+     o('mejor','Lo vas descubriendo con tiempo: si se respetan, si sacan lo mejor del otro, si pueden rezar juntos. Esperar no es perder; es decir: «Te valoro tanto que no te uso». La entrega total es para el compromiso total del matrimonio. ¿Y si conversas con un matrimonio de la comunidad que te aconseje?','Explicar la castidad como un «sí» al amor verdadero, no como un «no», y proponer el acompañamiento de un matrimonio es una gran ayuda. Amar es buscar el bien del otro.'),
+     o('bien','Recen el uno por el otro y pídanle a Dios que guíe su relación.','Muy bueno: Dios en el centro. Podrías explicarle también por qué vale la pena esperar.'),
+     o('mal','Porque lo dice la Iglesia, y punto. No preguntes tanto.','Los jóvenes merecen razones, no imposiciones. La Iglesia propone la castidad porque protege el amor y la dignidad de la persona.'),
+     o('peor','Si te gusta, apúrate antes de que otro te la quite.','Ver a la otra persona como un premio cosifica el amor. Ana no es un objeto: es alguien a quien cuidar.')]}
+  ],
+  ok:'«Te valoro tanto que no te uso»... Me lo voy a aprender. Voy a hablar con don Ernesto y su esposa. ¡Pasa!',no:'Mejor les pregunto a mis amigos. Nos vemos.',
+  leccion:'El noviazgo, escuela de amor',cita:'«El amor no busca su propio interés» (1 Co 13,5)',
+  txt:'El noviazgo es un tiempo hermoso para conocerse, crecer, rezar juntos y aprender a amar buscando el bien del otro. El amor verdadero sabe esperar.'},
+{ id:'jonas',cap:2,nombre:'Jonás',rol:'Muchacho de 13 años',emoji:'📿',s:205,lado:-1,amb:'caserio',
+  intro:'Detrás de las casas del caserío, Jonás patea piedras. Su abuela lo obligó a rezar tres rosarios de castigo.',
+  reac:{mejor:'(Deja de patear piedras)',bien:'(Te mira de reojo)',regular:'(Bufa)',mal:'(Aprieta los puños)',peor:'(Sale corriendo)'},
+  pasos:[
+   {n:'Odio rezar. Mi abuela me castiga con rosarios y dice que si no voy a misa me voy a ir al infierno.',k:'Dios no es un castigo',o:[
+     o('mejor','Uf, debe ser difícil sentir que rezar es un castigo. ¿Y cuando eras más pequeño? ¿Te gustaba hablar con Dios?','Escuchar su enojo sin juzgar y buscar un recuerdo bueno de su fe le ayuda a separar a Dios del castigo. La fe crece en libertad, no a la fuerza.'),
+     o('bien','Rezar no debería ser un castigo. Dios es un amigo, no un policía.','Una idea clara y liberadora. Escucharlo un poco más le ayudaría a sentirse comprendido.'),
+     o('regular','Bueno, tu abuela lo hace por tu bien. Hazle caso.','Quizá tenga buena intención, pero ignorar lo que él siente lo aleja todavía más.'),
+     o('peor','Tu abuela tiene razón: si no rezas, te vas al infierno.','Usar el miedo para obligar a creer deforma la imagen de Dios. «No recibieron un espíritu de esclavos para volver al temor, sino de hijos» (Rm 8,15).')]},
+   {n:'Antes me gustaba ir a la capilla con mi abuelo... Pero ahora todo es obligación. ¿Puedo hablar con Dios sin rosarios?',k:'La oración es amistad',o:[
+     o('mejor','¡Claro! Rezar es hablar con Dios como con un amigo, con tus propias palabras, como hacías con tu abuelo. El rosario también puede ser muy bonito cuando se reza con amor. ¿Y si le cuentas a tu abuela, con cariño, cómo te sientes? Yo puedo acompañarte.','Presentar la oración como amistad, valorar el rosario sin imponerlo y proponer un diálogo con la abuela sana la relación. Jesús dice: «Los llamo amigos» (Jn 15,15).'),
+     o('bien','Sí. Puedes contarle a Dios lo que te pasa, aunque sea enojado. Él te escucha.','Muy bien: Dios escucha incluso nuestro enojo. Falta ayudarle a arreglar las cosas con su abuela.'),
+     o('mal','No: el rosario es obligatorio para ser buen católico.','El rosario es una oración preciosa, pero no la única. Dios escucha cualquier oración sincera.'),
+     o('peor','Mejor no reces nada hasta que tengas ganas.','Dejar de hablar con Dios no es la solución. Se trata de descubrir la oración como amistad, no de abandonarla.')]}
+  ],
+  ok:'Le voy a contar a mi abuela... y tal vez le pida que recemos juntos, pero un misterio nomás. ¡Pasa!',no:'Todos dicen lo mismo. Déjame tranquilo.',
+  leccion:'La fe se propone, no se impone',cita:'«Ya no los llamo siervos, sino amigos» (Jn 15,15)',
+  txt:'La santidad no se fuerza con castigos ni con miedo. La fe se contagia con amor y libertad, y la oración es amistad con Dios.'},
+{ id:'daniela',cap:2,nombre:'Daniela',rol:'Joven de 16 años',emoji:'😟',s:245,lado:1,amb:'iglesia',
+  intro:'En la puerta de la capilla rural, Daniela tiene una libreta llena de listas: oraciones, sacrificios y pecados tachados. Se ve agotada.',
+  reac:{mejor:'(Cierra la libreta y suspira)',bien:'(Se le escapa una sonrisa)',regular:'(Vuelve a su libreta)',mal:'(Se pone nerviosa)',peor:'(Rompe a llorar)'},
+  pasos:[
+   {n:'Tengo que ser perfecta. Si fallo en algo, siento que Dios ya no me quiere. Me confieso cada semana y siempre siento que no es suficiente.',k:'Dios te amó primero',o:[
+     o('mejor','Daniela, Dios no te quiere porque seas perfecta: te quiere porque eres su hija. Él te amó primero (1 Jn 4,19). ¿Desde cuándo te sientes así?','Anunciar el amor gratuito de Dios es el centro del Evangelio. La santidad no es perfeccionismo: es dejarse amar y transformar por Dios.'),
+     o('bien','Qué bonito que quieras ser santa. Pero Dios no te pide perfección, sino amor.','Valoras su deseo y corriges con suavidad. Falta escuchar desde cuándo vive esa angustia.'),
+     o('regular','Bueno, mientras más reces, mejor.','Así se alimenta más su angustia. No se trata de hacer más cosas, sino de confiar en el amor de Dios.'),
+     o('peor','Así es: con un solo error, Dios se aleja. Hay que ser perfecto.','Es falso y aplasta el alma. Dios es compasivo y misericordioso y siempre nos levanta (Sal 103,8-14).')]},
+   {n:'Pero Jesús dijo: «Sean perfectos como el Padre». ¿Cómo no voy a exigirme?',k:'Santos de la puerta de al lado',o:[
+     o('mejor','En el Evangelio de Lucas, esa misma enseñanza dice: «Sean misericordiosos como el Padre» (Lc 6,36). Ser perfecto como Dios es amar como Él, empezando por tratarte a ti misma con misericordia. Los santos no fueron perfectos: se dejaron amar. Y si la angustia no te deja en paz, habla con un sacerdote y con tus papás.','Explicar la Biblia en su contexto y proponer acompañamiento libera de la santidad forzada. El papa Francisco habla de los «santos de la puerta de al lado», que viven el amor en lo sencillo (Gaudete et exsultate 7).'),
+     o('bien','Exígete en amar a los demás, no en hacer listas. Los santos también tuvieron defectos.','Un buen cambio de mirada. Explicar el sentido de la frase de Jesús la ayudaría todavía más.'),
+     o('mal','Pues sigue con tus listas; algún día lo lograrás.','La santidad no es un logro propio que se consigue con listas: es un regalo de Dios que se recibe con humildad.'),
+     o('peor','Si no puedes ser perfecta, mejor no intentes ser santa.','Todos estamos llamados a la santidad, con nuestras fragilidades. Dios no llama a los perfectos: perfecciona a los que llama.')]}
+  ],
+  ok:'«Sean misericordiosos»... también conmigo. Me quito un peso de encima. Gracias. La puerta está abierta.',no:'No sé... tengo que pensarlo. Mejor sigo con mis listas.',
+  leccion:'La santidad es dejarse amar',cita:'«Sean misericordiosos como el Padre es misericordioso» (Lc 6,36)',
+  txt:'La santidad no se fuerza ni es perfeccionismo: es responder con amor al amor de Dios, en lo sencillo de cada día, como los «santos de la puerta de al lado».'},
+{ id:'rut',cap:3,nombre:'Rut',rol:'Joven de una iglesia evangélica',emoji:'📕',s:285,lado:-1,amb:'caserio',
+  intro:'En la plaza del caserío, Rut reparte folletos que dicen: «María no salva. ¡Deja la idolatría!».',
+  reac:{mejor:'(Guarda los folletos y te escucha)',bien:'(Asiente, curiosa)',regular:'(Te mira con desconfianza)',mal:'(Te contesta enojada)',peor:'(Te da la espalda)'},
+  pasos:[
+   {n:'Ustedes, los católicos, ponen a María en el lugar de Jesús. Le rezan a ella en vez de rezarle a Dios. ¡Eso no está en la Biblia!',k:'Hablar desde la Biblia',o:[
+     o('mejor','Te entiendo; si eso fuera así, a mí también me preocuparía. Pero para nosotros solo Jesús salva. A María la queremos porque la Biblia dice: «Todas las generaciones me llamarán bienaventurada» (Lc 1,48). ¿Leemos juntos ese pasaje?','Reconocer su preocupación, aclarar que solo Jesús salva y responder con la Biblia es dialogar con respeto. Los católicos no adoramos a María: la veneramos como madre (Catecismo 971).'),
+     o('bien','Yo también creo que Jesús es el único Salvador. María siempre nos lleva a Él.','Una respuesta que une. Mostrarle en la Biblia por qué queremos a María sería aún mejor.'),
+     o('regular','Esas son cosas de cada iglesia. No vale la pena discutir.','Evitar la pelea está bien, pero se pierde la ocasión de compartir la fe con respeto.'),
+     o('peor','¡Ustedes ni respetan a la madre de Jesús! Están equivocados.','Contestar con ataques solo levanta muros. Somos hermanos en Cristo, aunque tengamos diferencias.')]},
+   {n:'Pero ¿para qué le rezan a María, si pueden ir directo a Jesús?',k:'María nos lleva a Jesús',o:[
+     o('mejor','Claro que vamos directo a Jesús. Pero, así como tú me pides que rece por ti, le pedimos a María que rece por nosotros. En Caná ella dijo: «Hagan lo que él les diga» (Jn 2,5): siempre señala a su Hijo. ¿Te parece si rezamos juntos por los enfermos del caserío?','Explicar la intercesión con un ejemplo sencillo y con la Biblia, y proponer rezar juntos por otros, une a los cristianos en lo que más importa: amar a Jesús y servir.'),
+     o('bien','Porque es nuestra madre: Jesús nos la dio en la cruz (Jn 19,27).','Una cita bíblica preciosa. Explicar que le pedimos que rece por nosotros ayudaría a entender mejor.'),
+     o('mal','Porque así lo hacemos los católicos, y punto.','Decir «y punto» cierra el diálogo. Dar razón de la fe es explicar con paciencia (1 Pe 3,15).'),
+     o('peor','Tú no entiendes nada porque no tienes a María. Pobre de ti.','La soberbia espiritual aleja. María, la humilde servidora (Lc 1,38), nunca despreció a nadie.')]}
+  ],
+  ok:'Rezar juntos por los enfermos... eso sí lo puedo hacer contigo. Me caes bien. ¡Sigue!',no:'Seguimos sin estar de acuerdo. Que Dios te ilumine.',
+  leccion:'María nos lleva a Jesús',cita:'«Hagan lo que él les diga» (Jn 2,5)',
+  txt:'Con los hermanos de otras iglesias, incluso cuando nos atacan, el misionero responde con la Biblia y con mansedumbre, y busca lo que nos une: el amor a Jesús.'},
+{ id:'chepe',cap:3,nombre:'Chepe',rol:'Joven en la fiesta del patrono',emoji:'🎉',s:335,lado:1,amb:'caserio',
+  intro:'Es la fiesta de San Isidro, patrono del caserío. Chepe está en la plaza con la música a todo volumen y una botella en la mano.',
+  reac:{mejor:'(Deja la botella en el suelo)',bien:'(Se ríe contigo)',regular:'(Sube la música)',mal:'(Te hace una mueca)',peor:'(Te empuja)'},
+  pasos:[
+   {n:'¡Es la fiesta del santo! Música, baile y trago. ¿Qué? ¿Vienes a decirme que la fiesta es pecado?',k:'Valorar la fe del pueblo',o:[
+     o('mejor','¡Para nada! Qué bonita fiesta. Me encanta cómo celebra el pueblo a San Isidro. ¿Tú sabes quién fue y por qué es el patrono?','Valorar la fiesta y preguntar por su sentido es respetar la piedad popular, que es un tesoro (Evangelii gaudium 122-126).'),
+     o('bien','La fiesta es buena: Jesús fue a una boda y convirtió el agua en vino (Jn 2,1-11).','La alegría es cristiana. Falta recordar el sentido de la fiesta: el santo y Dios.'),
+     o('regular','No es pecado, pero no tomes tanto.','Un consejo correcto, pero suena a regaño y no lo ayuda a descubrir el sentido de la fiesta.'),
+     o('peor','Estas fiestas son paganas. No sé cómo la Iglesia las permite.','Despreciar la fe sencilla del pueblo es un error. La piedad popular expresa una fe profunda que hay que valorar y acompañar.')]},
+   {n:'San Isidro... era un campesino, ¿no? La verdad es que ahora la fiesta es solo trago, y al día siguiente nadie se acuerda del santo.',k:'Purificar con amor',o:[
+     o('mejor','Sí, era un campesino que rezaba mientras trabajaba la tierra y compartía lo poco que tenía con los pobres. ¿Y si mañana, en la procesión, cargas tú la imagen con los jóvenes? La fiesta puede ser alegría con sentido, sin pasarse de tragos.','Proponerle un papel activo en la fiesta y animar a la moderación con cariño ayuda a recuperar su sentido. La alegría cristiana no necesita excesos.'),
+     o('bien','Podemos hacer que la fiesta vuelva a ser del santo: una misa, una procesión y después la música.','Una buena idea. Invitarlo a ser parte activa la volvería suya.'),
+     o('mal','Entonces mejor que no haya fiesta. Que la prohíban.','Prohibir no evangeliza. Se trata de devolverle el sentido a la fiesta, no de quitársela al pueblo.'),
+     o('peor','Eres un borracho; así nunca vas a ser buen cristiano.','Etiquetar a alguien lo encierra en su error. Jesús comía con los pecadores para llamarlos a una vida nueva (Mc 2,16-17).')]}
+  ],
+  ok:'¡Mañana cargo a San Isidro en la procesión! Y nada de trago antes. ¡Ven a la fiesta, misionero!',no:'Bah, déjame disfrutar mi fiesta.',
+  leccion:'La fe sencilla del pueblo',cita:'«Te alabo, Padre, porque has revelado estas cosas a los pequeños» (Mt 11,25)',
+  txt:'Las fiestas patronales y la devoción popular son un tesoro de fe. El misionero las valora, participa con alegría y ayuda a que nunca pierdan su sentido: Dios y sus santos.'}
+];
+
+/* ---------- Ruta 4 · La comunidad indígena (selva, río, maloca y misión) ---------- */
+const CAPS_SELVA=[
+ {n:'Capítulo 1 · Descalzos ante el otro',lema:'«Quítate las sandalias, porque el lugar que pisas es tierra sagrada» (Éx 3,5)'},
+ {n:'Capítulo 2 · Cada uno en su lengua',lema:'«Cada uno los oía hablar en su propia lengua» (Hch 2,6)'},
+ {n:'Capítulo 3 · Discernir con amor',lema:'«Examínenlo todo y quédense con lo bueno» (1 Tes 5,21)'},
+ {n:'Capítulo 4 · Todos protagonistas',lema:'«Ustedes son el cuerpo de Cristo, y cada uno es un miembro» (1 Co 12,27)'}
+];
+const ENC_SELVA=[
+{ id:'aurelio',cap:0,nombre:'Abuelo Aurelio',rol:'Sabedor de la comunidad',emoji:'🪶',s:34,lado:1,amb:'indigena',
+  intro:'Junto a la gran maloca, el abuelo Aurelio teje una canasta. Te observa en silencio cuando ve tu cruz de misionero.',
+  reac:{mejor:'(Deja de tejer y te invita a sentarte)',bien:'(Asiente con calma)',regular:'(Sigue tejiendo sin mirarte)',mal:'(Frunce el ceño)',peor:'(Se levanta y entra a la maloca)'},
+  pasos:[
+   {n:'Hace muchos años vinieron otros misioneros. Nos prohibieron nuestra lengua y dijeron que nuestras costumbres eran del demonio. ¿Tú también vienes a cambiarnos?',k:'Escuchar y pedir perdón',o:[
+     o('mejor','Abuelo, siento mucho el daño que les hicieron. Eso estuvo mal, y la Iglesia ha pedido perdón. Yo vengo a aprender de ustedes. ¿Me enseña cómo teje esa canasta?','Reconocer con humildad los errores del pasado y ponerse a aprender abre el corazón. El papa Francisco pidió perdón a los pueblos indígenas por los pecados cometidos contra ellos.'),
+     o('bien','No vengo a cambiar a nadie. Vengo a conocerlos y a compartir lo que me hace feliz.','Un buen comienzo de respeto. Reconocer el dolor que él cuenta haría más creíble tu palabra.'),
+     o('regular','Eso fue hace mucho tiempo; ahora las cosas son diferentes.','Pasar rápido sobre su herida suena a no querer escucharla. El dolor del pasado merece ser reconocido.'),
+     o('peor','Bueno, algunas costumbres de ustedes sí eran cosas del demonio.','Despreciar una cultura repite el error de quienes lo hirieron. En cada pueblo hay «semillas del Verbo», huellas de Dios (Ad gentes 11).')]},
+   {n:'Nosotros siempre hemos dado gracias al Creador por el río, la selva y la cosecha. ¿Tu Dios entiende eso?',k:'Semillas del Verbo',o:[
+     o('mejor','¡Claro! Su gratitud por la creación es una huella del Dios que yo conozco: el Creador que hizo todo con amor. Jesús hablaba de semillas, de pájaros y de flores del campo. Me gustaría contarle de Él y escuchar también sus historias. ¿Nos sentamos con la comunidad?','Valorar lo bueno de su cultura y desde ahí anunciar a Jesús es inculturar el Evangelio, como pide la Iglesia en la Amazonía (Querida Amazonia). San Pablo, en Atenas, partió de lo que el pueblo ya veneraba (Hch 17,23).'),
+     o('bien','Dios hizo todo lo que nos rodea. San Francisco de Asís llamaba al sol «hermano» y a la tierra «hermana madre».','Un puente precioso con el Cántico de las criaturas. Falta proponer escuchar a la comunidad y anunciar a Jesús.'),
+     o('mal','Eso no es cristiano; tienen que dejarlo.','Rechazar sin discernir hiere. Se trata de purificar y llevar a plenitud lo bueno de cada cultura, no de destruirlo.'),
+     o('peor','Mi Dios es el verdadero, y lo suyo es superstición.','Esa arrogancia cierra todas las puertas. El Evangelio se ofrece con humildad y respeto, nunca con desprecio.')]}
+  ],
+  ok:'Siéntate, entonces. Esta noche hablaremos todos alrededor del fuego. Tu Jesús parece un buen caminante. Pasa.',no:'Todavía no confío en ti. Vuelve otro día.',
+  leccion:'Descalzos ante el otro',cita:'«Quítate las sandalias, porque el lugar que pisas es tierra sagrada» (Éx 3,5)',
+  txt:'El misionero llega a otra cultura con humildad: escucha, reconoce los errores del pasado, valora las huellas de Dios en cada pueblo y desde ahí anuncia a Jesús.'},
+{ id:'celestina',cap:0,nombre:'Doña Celestina',rol:'Partera de la comunidad',emoji:'🌿',s:78,lado:-1,amb:'hospital',
+  intro:'Frente al pequeño puesto de salud, doña Celestina prepara agua de hierbas. Su nieta tiene mucha fiebre y el hospital queda a un día en canoa.',
+  reac:{mejor:'(Te mira con esperanza)',bien:'(Asiente)',regular:'(Sigue moviendo la olla)',mal:'(Se ofende)',peor:'(Te da la espalda)'},
+  pasos:[
+   {n:'Mi nieta tiene fiebre desde hace tres días. Le doy mis hierbas, como me enseñó mi madre. El médico de afuera nos trató mal la otra vez.',k:'Valorar y cuidar la vida',o:[
+     o('mejor','Se nota cuánto la cuida, doña Celestina, y cuánto sabe de plantas. Siento que la hayan tratado mal. Con tres días de fiebre conviene que la vea también la enfermera del puesto. ¿La acompaño ahora mismo?','Valorar su saber, reconocer el maltrato y a la vez cuidar la vida de la niña buscando atención médica es amor concreto. La beata Irene Stefani, misionera de la Consolata, cuidaba a los enfermos en Kenia con gran ternura.'),
+     o('bien','Recemos por su nieta. Dios está aquí con ustedes.','Rezar es bueno, pero con tres días de fiebre también hay que actuar: la fe y la medicina van juntas.'),
+     o('regular','Bueno, usted sabrá lo que hace con sus hierbas.','Desentenderse no ayuda. La salud de la niña necesita que alguien la acompañe a ser atendida.'),
+     o('peor','Esas hierbas son brujería. Por eso la niña está enferma.','Despreciar su saber la humilla y no ayuda a la niña. Muchas plantas curan; lo importante es cuidar la vida con todos los medios.')]},
+   {n:'Está bien, vamos. Pero si hay que llevarla al hospital, no tenemos para la gasolina de la canoa. ¿Y si Dios no nos ayuda?',k:'Dios ayuda a través de los hermanos',o:[
+     o('mejor','No está sola. Hablemos con el catequista y con la comunidad: entre todos podemos juntar la gasolina, y yo voy con ustedes en la canoa. Dios nos ayuda a través de los hermanos. Y mientras viajamos, rezamos juntos.','Organizar la solidaridad de la comunidad y acompañar en persona hace visible el amor de Dios. Una fe que no ayuda al hermano necesitado «¿de qué sirve?» (St 2,15-16).'),
+     o('bien','Dios siempre ayuda. Ya veremos cómo, pero no la vamos a dejar sola.','Confiar y acompañar es bueno. Proponer una solución concreta con la comunidad lo haría realidad.'),
+     o('mal','Eso ya no es asunto mío. Yo solo vine a evangelizar.','Evangelizar es también cuidar la vida. Jesús curaba a los enfermos mientras anunciaba el Reino (Mt 4,23).'),
+     o('peor','Si Dios no los ayuda, es porque no tienen suficiente fe.','Culpar a los pobres de su pobreza es injusto. Dios está siempre del lado de los que sufren.')]}
+  ],
+  ok:'La comunidad ya está juntando la gasolina... Gracias, misionero. Esto es lo que hace tu Jesús, ¿verdad? Pasa.',no:'Mejor me arreglo sola, como siempre.',
+  leccion:'Cuidar la vida es evangelizar',cita:'«Jesús recorría Galilea... sanando toda enfermedad y dolencia» (Mt 4,23)',
+  txt:'El misionero cuida la vida entera: valora la sabiduría de cada pueblo, acompaña a los enfermos, organiza la solidaridad y reza con quienes sufren.'},
+{ id:'wilmer',cap:1,nombre:'Wilmer',rol:'Joven de 18 años',emoji:'🎧',s:119,lado:-1,puente:true,amb:'indigena',
+  intro:'El puente levadizo está levantado. Wilmer, con audífonos y una gorra de la ciudad, cuida la palanca. Mañana se quiere ir para siempre.',
+  reac:{mejor:'(Se quita los audífonos)',bien:'(Te mira con interés)',regular:'(Se encoge de hombros)',mal:'(Se ríe con desprecio)',peor:'(Sube el volumen)'},
+  pasos:[
+   {n:'Aquí no hay futuro. En la ciudad hay internet, trabajo, de todo. Me da vergüenza ser de aquí: los de afuera se burlan de nosotros.',k:'Escuchar sus sueños',o:[
+     o('mejor','Es normal soñar con más oportunidades. Pero nunca te avergüences de quién eres: tu pueblo tiene una riqueza enorme. ¿Qué te gustaría estudiar o hacer allá?','Escuchar sus sueños y a la vez sanar la vergüenza de su identidad lo ayuda a crecer sin perder sus raíces. «Te doy gracias porque me hiciste maravilloso» (Sal 139,14).'),
+     o('bien','Puedes ir a la ciudad y seguir siendo de aquí; las dos cosas no se pelean.','Una idea muy sana. Preguntarle por sus sueños lo haría sentir escuchado.'),
+     o('regular','La ciudad es peligrosa; mejor quédate.','Asustarlo no lo convence. Él necesita que alguien tome en serio sus sueños.'),
+     o('peor','Sí, la verdad es que aquí son muy atrasados.','Confirmar el desprecio que él sufre lo hiere más. Toda cultura tiene una dignidad dada por Dios.')]},
+   {n:'Quiero estudiar enfermería para volver un día y ayudar. Pero allá no conozco a nadie. ¿Y si me pierdo?',k:'Raíces y alas',o:[
+     o('mejor','¡Qué sueño tan lindo: volver para servir! No irás solo: te puedo pasar el contacto de la pastoral juvenil y de los misioneros de la ciudad, para que tengas comunidad allá. Y Dios va contigo: «Yo estoy con ustedes todos los días» (Mt 28,20).','Acompañar el sueño con una red concreta de comunidad cuida a los jóvenes que migran. Los jóvenes no son el futuro: son el ahora de Dios (papa Francisco, JMJ de Panamá, 2019).'),
+     o('bien','Reza mucho y no olvides de dónde vienes. Dios te cuidará.','Un buen consejo. Conectarlo con una comunidad en la ciudad lo protegería mucho más.'),
+     o('mal','Allá te vas a perder, seguro; todos los que se van se olvidan de Dios.','Profetizar su fracaso lo desanima. Muchos jóvenes mantienen su fe y sus raíces en la ciudad cuando encuentran comunidad.'),
+     o('peor','No te preocupes: en la ciudad nadie necesita a Dios.','Es falso: en la ciudad también se necesita a Dios, y quizá más. Nadie debería caminar solo.')]}
+  ],
+  ok:'Enfermero... y volver para ayudar. ¡Sí! Pásame esos contactos. Ya bajo el puente.',no:'Ya veré qué hago. Por ahora, el puente se queda así.',
+  leccion:'Raíces y alas',cita:'«Yo estoy con ustedes todos los días» (Mt 28,20)',
+  txt:'Los jóvenes de hoy sueñan con salir y crecer. El misionero los escucha, les ayuda a amar sus raíces y les asegura que nunca caminan solos: Dios y la comunidad van con ellos.'},
+{ id:'yaneth',cap:1,nombre:'Profesora Yaneth',rol:'Maestra bilingüe',emoji:'📚',s:165,lado:1,amb:'escuela',
+  intro:'En la escuelita de la comunidad, la profesora Yaneth revisa cuadernos. Muchos niños no traen las tareas.',
+  reac:{mejor:'(Sonríe agradecida)',bien:'(Asiente)',regular:'(Suspira)',mal:'(Te mira molesta)',peor:'(Cierra la puerta de la escuela)'},
+  pasos:[
+   {n:'Los niños no hacen las tareas: después de clase ayudan en la chagra o se van a pescar. Y a muchos les da vergüenza hablar en nuestra lengua.',k:'Servir con lo concreto',o:[
+     o('mejor','Qué gran labor la suya. ¿Y si organizamos un rato de apoyo con las tareas aquí en la escuela, después de la pesca? Yo puedo ayudar.','Ofrecer un servicio concreto que respete la vida de la comunidad es evangelizar con obras. Los misioneros de la Consolata siempre han unido Evangelio y educación.'),
+     o('bien','Los niños aprenden mucho en la chagra también. Quizá las tareas pueden hablar de eso.','Una idea creativa que valora su vida. Ofrecer tu ayuda la haría más fácil de realizar.'),
+     o('regular','Habría que obligar a los papás a que los pongan a estudiar.','Obligar sin comprender la realidad de las familias no funciona. Hay que buscar soluciones juntos.'),
+     o('peor','Es que aquí la gente no valora el estudio.','Generalizar con desprecio es injusto. Las familias tienen muchas tareas para salir adelante; merecen comprensión.')]},
+   {n:'¿Y lo de la lengua? Algunos dicen que es mejor olvidarla y hablar solo castellano. ¿La Iglesia qué dice?',k:'Dios habla todas las lenguas',o:[
+     o('mejor','Su lengua es un regalo de Dios. En Pentecostés, cada uno oyó a los apóstoles «en su propia lengua» (Hch 2,6). ¿Y si los niños rezan el Padrenuestro y cantan en su lengua? Así sentirán que Dios también habla como ellos.','Valorar la lengua materna y unirla a la fe es inculturar el Evangelio. La Biblia y la liturgia se han traducido a muchísimas lenguas indígenas.'),
+     o('bien','Hay que enseñar las dos: el castellano y su lengua. Las dos son riquezas.','Un consejo equilibrado. Unir la lengua a la oración ayudaría a los niños a sentirse orgullosos de ella.'),
+     o('mal','Mejor que aprendan bien el castellano; la lengua no les sirve para el futuro.','Perder la lengua es perder parte de la identidad. Dios ama la diversidad de pueblos y lenguas (Ap 7,9).'),
+     o('peor','Las lenguas indígenas no sirven para rezar.','Es falso: Dios entiende y ama todas las lenguas. Pentecostés muestra que el Evangelio es para todos los pueblos.')]}
+  ],
+  ok:'¡Mañana empezamos el apoyo de tareas! Y vamos a cantar el Padrenuestro en nuestra lengua. Pasa, misionero.',no:'Lo pensaré. Ahora tengo mucho que revisar.',
+  leccion:'Cada uno en su lengua',cita:'«Cada uno los oía hablar en su propia lengua» (Hch 2,6)',
+  txt:'El Evangelio se hace carne en cada cultura y en cada lengua. El misionero sirve con lo concreto, como el apoyo en las tareas, y ayuda a cada pueblo a sentirse amado por Dios tal como es.'},
+{ id:'josue',cap:2,nombre:'Hermano Josué',rol:'Predicador de un grupo evangélico',emoji:'📣',s:205,lado:-1,amb:'indigena',
+  intro:'En la orilla, el hermano Josué grita que la danza de la cosecha es «cosa del diablo» y que hay que quemar los collares. Los jóvenes se miran confundidos.',
+  reac:{mejor:'(Se calma y te escucha)',bien:'(Asiente, desconfiado)',regular:'(Te mira de arriba abajo)',mal:'(Te grita también)',peor:'(Te acusa delante de todos)'},
+  pasos:[
+   {n:'¡Tú eres el misionero católico! Ustedes dejan que esta gente siga con sus danzas paganas. ¡Hay que quemar todo eso!',k:'No pelear delante del pueblo',o:[
+     o('mejor','Hermano Josué, los dos amamos a Jesús. No discutamos delante de la comunidad. ¿Podemos conversar con calma, aparte, con la Biblia en la mano?','Evitar el espectáculo de cristianos peleando y proponer un diálogo sereno es testimonio. «Mantengan la unidad del Espíritu con el vínculo de la paz» (Ef 4,3).'),
+     o('bien','Yo creo en Jesucristo como usted. Tal vez veamos las cosas distinto, pero somos hermanos.','Lo reconoces como hermano. Sería mejor apartarse de la gente para conversar sin tensión.'),
+     o('regular','Cada uno que haga lo que quiera.','No se trata de indiferencia: hay que buscar la verdad y la unidad con paciencia.'),
+     o('peor','¡Usted es un fanático! Váyase de esta comunidad.','Echar a otro cristiano con insultos escandaliza a la comunidad. Somos hermanos, aunque no estemos de acuerdo.')]},
+   {n:'Está bien, hablemos. Pero esa danza es idolatría. ¿O es que tú la defiendes?',k:'Examinarlo todo, quedarse con lo bueno',o:[
+     o('mejor','Discernámoslo juntos, con los mayores de la comunidad: si la danza da gracias al Creador por la cosecha, eso es bueno, como los salmos que alaban a Dios con danzas (Sal 149,3). Lo que vaya contra Dios se deja, pero lo bueno no se quema. ¿Y mientras tanto ayudamos juntos a reconstruir la casa de la familia que lo perdió todo en la creciente?','Discernir la cultura a la luz del Evangelio, con la comunidad, y servir juntos a quien sufre une a los cristianos. «Examínenlo todo y quédense con lo bueno» (1 Tes 5,21).'),
+     o('bien','No toda costumbre es idolatría. Preguntemos a los mayores qué significa la danza antes de juzgarla.','Muy sabio: escuchar antes de juzgar. Proponer servir juntos los uniría aún más.'),
+     o('mal','Yo defiendo todo lo de ellos, sin excepción.','Discernir no es aceptarlo todo ni rechazarlo todo. El Evangelio purifica y eleva lo bueno de cada cultura.'),
+     o('peor','Usted no sabe nada de la Biblia. Yo sí.','La soberbia destruye el diálogo. El amor «no es jactancioso ni se envanece» (1 Co 13,4).')]}
+  ],
+  ok:'Ayudar juntos a esa familia... eso sí es del Señor. Mañana llevo herramientas, hermano. Pase.',no:'No me convence. Seguiré predicando a mi manera.',
+  leccion:'Discernir con amor',cita:'«Examínenlo todo y quédense con lo bueno» (1 Tes 5,21)',
+  txt:'Ante grupos que condenan todo, el misionero no pelea: dialoga con calma, discierne con la comunidad lo bueno de su cultura y busca servir junto a los hermanos de otras iglesias.'},
+{ id:'abelardo',cap:2,nombre:'Don Abelardo',rol:'Catequista de toda la vida',emoji:'🔑',s:245,lado:1,amb:'iglesia',
+  intro:'En la capilla de la misión, don Abelardo guarda todas las llaves. Hace treinta años que lo hace todo él: catequesis, cantos, lecturas y limpieza.',
+  reac:{mejor:'(Deja las llaves sobre la mesa)',bien:'(Se rasca la barba)',regular:'(Aprieta las llaves)',mal:'(Se pone rojo de enojo)',peor:'(Cierra la capilla de un portazo)'},
+  pasos:[
+   {n:'Los jóvenes quieren leer en la misa y tocar la guitarra, pero lo hacen mal. Mejor lo hago yo, como siempre. Sin mí, esta capilla se cae.',k:'Agradecer antes de proponer',o:[
+     o('mejor','Don Abelardo, gracias por treinta años de servicio. ¡Cuánto ha hecho por esta comunidad! ¿Cómo aprendió usted a ser catequista?','Agradecer su entrega y preguntarle por su historia lo hace sentir valorado. Desde ahí podrá abrirse a compartir su lugar.'),
+     o('bien','Usted ha servido mucho. Seguro que los jóvenes aprenderían mucho de usted.','Valoras su experiencia. Escuchar primero su historia le daría aún más confianza.'),
+     o('regular','Bueno, pero algún día tendrá que dejarlo.','Es verdad, pero dicho así suena a que ya no sirve. Nadie suelta lo que ama si se siente desplazado.'),
+     o('peor','Usted es un egoísta que no deja participar a nadie.','El insulto solo lo endurece. Detrás de su control hay amor por la capilla, y quizá miedo a no ser necesario.')]},
+   {n:'Me enseñó el padre Giuseppe, un misionero italiano... Pero si los jóvenes lo hacen todo, ¿yo para qué sirvo?',k:'Formar a otros también es servir',o:[
+     o('mejor','Usted sirve muchísimo: ahora le toca ser para ellos lo que el padre Giuseppe fue para usted. Enséñeles a leer, a cantar y a preparar la catequesis. Como Juan el Bautista: «Es necesario que él crezca y que yo disminuya» (Jn 3,30). En la Iglesia todos somos necesarios.','Proponerle ser maestro de los jóvenes transforma su protagonismo en un servicio fecundo. «El ojo no puede decirle a la mano: no te necesito» (1 Co 12,21).'),
+     o('bien','Podría compartir algunas tareas: que los jóvenes lean un domingo y usted los acompañe.','Una solución práctica y gradual. Mostrarle su nuevo papel de formador lo animaría todavía más.'),
+     o('mal','Usted ya cumplió; déjeselo todo a los jóvenes y descanse.','Apartarlo de golpe lo hiere. La comunidad necesita tanto su experiencia como la energía de los jóvenes.'),
+     o('peor','La verdad es que ya no sirve para mucho.','Despreciar a un mayor es contrario al Evangelio. «Sus ancianos tendrán sueños y sus jóvenes verán visiones» (Jl 3,1).')]}
+  ],
+  ok:'Ser como el padre Giuseppe... Mañana les enseño a los muchachos a proclamar las lecturas. ¡Tome, una llave para usted! Pase.',no:'No, no. Aquí las cosas se hacen como yo digo.',
+  leccion:'Servir es formar a otros',cita:'«Es necesario que él crezca y que yo disminuya» (Jn 3,30)',
+  txt:'En la Iglesia nadie es dueño de un servicio. El verdadero protagonismo es servir y formar a otros, para que todos, mayores y jóvenes, encuentren su lugar en la comunidad.'},
+{ id:'mayra',cap:3,nombre:'Mayra',rol:'Joven de 15 años',emoji:'😔',s:285,lado:-1,amb:'iglesia',
+  intro:'Sentada en una canoa en la orilla, Mayra no quiere entrar a la capilla. Dice que no quiere saber nada de los curas.',
+  reac:{mejor:'(Levanta la mirada)',bien:'(Asiente en silencio)',regular:'(Mira el río)',mal:'(Se le llenan los ojos de lágrimas)',peor:'(Se aleja remando)'},
+  pasos:[
+   {n:'El padre que venía antes nos gritaba, nos humillaba delante de todos y solo venía cuando había plata. ¿Por qué voy a creer en los curas?',k:'Reconocer el daño',o:[
+     o('mejor','Lo que me cuentas está mal, Mayra, y siento mucho que hayas pasado por eso. Un pastor debe cuidar a sus ovejas, no humillarlas. ¿Quieres contarme más?','Reconocer el daño sin justificarlo y escucharla es el primer paso para sanar. Dios mismo denunció a los malos pastores que se aprovechan del rebaño (Ez 34,2-4).'),
+     o('bien','Tienes razón en estar dolida. No todos los sacerdotes son así.','Validas su dolor. Es mejor escuchar primero antes de defender a los demás sacerdotes.'),
+     o('regular','Bueno, los curas también son humanos.','Es verdad, pero dicho así suena a excusa. Su herida necesita ser escuchada, no justificada.'),
+     o('peor','Seguro exageras. Los padres siempre tienen razón.','Negar su experiencia la hiere y la aleja. Quien ha sido maltratado necesita ser creído y escuchado.')]},
+   {n:'Desde entonces no quiero ir a la capilla. ¿Dios es como ese padre?',k:'Jesús es el Buen Pastor',o:[
+     o('mejor','No, Mayra. Dios es como Jesús, el Buen Pastor, que llama a cada oveja por su nombre y da la vida por ella (Jn 10,3.11). Un mal ejemplo no cambia el amor de Dios por ti. Lo que te pasó se le puede contar al obispo, para que no le pase a nadie más; y si algo así vuelve a ocurrir, cuéntaselo siempre a un adulto de confianza. ¿Te gustaría conocer al nuevo padre conmigo?','Separar a Dios del mal ejemplo, presentar al Buen Pastor y enseñar que el maltrato se denuncia y no se calla es cuidar de verdad. La Iglesia tiene el deber de escuchar y de proteger.'),
+     o('bien','Dios no es así. Él te quiere y nunca te humillaría.','Una verdad que sana. Faltó decirle que eso se puede denunciar y que no tiene que cargarlo sola.'),
+     o('mal','Eso ya pasó; tienes que perdonar y volver a la capilla como si nada.','El perdón es un camino que lleva tiempo y no significa callar. Obligarla a «hacer como si nada» la vuelve a herir.'),
+     o('peor','Si no vas a la capilla, la culpa es tuya, no del padre.','Culpar a quien fue herida es injusto. Hay que acogerla y ayudarla a reencontrarse con Dios a su ritmo.')]}
+  ],
+  ok:'El Buen Pastor... me gusta. Bueno, vamos a conocer al nuevo padre, pero tú vienes conmigo. Pasa.',no:'No estoy lista. Déjame un rato sola.',
+  leccion:'Jesús, el Buen Pastor',cita:'«Yo soy el buen pastor: el buen pastor da la vida por sus ovejas» (Jn 10,11)',
+  txt:'Cuando un mal sacerdote hiere, el misionero no justifica: escucha, cree a quien sufre, anima a denunciar y muestra que Dios es como Jesús, el Buen Pastor. Si algo te hace daño, cuéntaselo siempre a un adulto de confianza.'},
+{ id:'ana',cap:3,nombre:'Ana',rol:'Joven de 17 años',emoji:'🎒',s:335,lado:1,amb:'iglesia',
+  intro:'En la plaza de la misión, Ana sostiene una mochila llena de Biblias. Quiere ir a misionar a las comunidades del río, pero le dicen que es muy joven.',
+  reac:{mejor:'(Abraza su mochila con ilusión)',bien:'(Sonríe)',regular:'(Baja la mirada)',mal:'(Se desanima)',peor:'(Deja caer la mochila)'},
+  pasos:[
+   {n:'Quiero ser misionera y catequista, pero los mayores dicen que soy muy joven, que primero termine de estudiar. ¿Será que no sirvo?',k:'Los jóvenes son el ahora de Dios',o:[
+     o('mejor','¡Claro que sirves! Dios llamó a Jeremías cuando era muy joven y le dijo: «No digas que eres muy joven» (Jr 1,7). Los jóvenes no son el futuro: son el ahora de Dios. ¿Qué te gustaría hacer en las comunidades?','Animar su vocación con la Palabra de Dios y preguntarle por sus sueños la hace protagonista. Así lo pide la Iglesia: que los jóvenes sean protagonistas de la misión (Christus Vivit).'),
+     o('bien','Ser joven no es un problema. Habla con el padre para ver cómo empezar.','La animas y la orientas. Recordarle que Dios llama a los jóvenes le daría todavía más fuerza.'),
+     o('regular','Tal vez tienen razón; espera unos años.','Hacerla esperar sin motivo apaga su entusiasmo. La misión necesita hoy la alegría de los jóvenes.'),
+     o('peor','La misión es cosa de sacerdotes y monjas, no de chicas como tú.','Falso: todos los bautizados somos misioneros. Muchos santos jóvenes evangelizaron siendo laicos.')]},
+   {n:'¿Y cómo empiezo? No sé predicar como los padres; me pongo nerviosa.',k:'Misioneros en comunidad',o:[
+     o('mejor','No tienes que predicar como nadie: empieza con lo que eres, con tu testimonio y tu alegría. Únete al grupo misionero de jóvenes: nadie misiona solo, Jesús envió a sus discípulos de dos en dos (Lc 10,1). Prepárense bien, con formación y oración. «Primero santos, luego misioneros», decía San José Allamano.','Proponerle un camino concreto en comunidad, con formación y oración, la lanza a la misión con los pies en la tierra. El testimonio alegre es el primer anuncio.'),
+     o('bien','Reza mucho y empieza ayudando en la catequesis de los niños.','Un buen primer paso. Animarla a unirse a un grupo misionero le daría compañía y formación.'),
+     o('mal','Primero aprende toda la teología; después ya podrás evangelizar.','La formación es importante, pero no hace falta saberlo todo para dar testimonio. Se aprende caminando, acompañada.'),
+     o('peor','Vete sola a las comunidades; Dios te cuidará.','Ir sola es imprudente. La misión se vive en comunidad, con acompañamiento y cuidado.')]}
+  ],
+  ok:'¡De dos en dos! Mañana hablo con el grupo misionero. Gracias por creer en mí. ¡Vamos juntos a la capilla!',no:'Mejor lo pienso. Todavía me da miedo.',
+  leccion:'Todos somos misioneros',cita:'«No digas que eres muy joven. Tú irás adonde yo te envíe» (Jr 1,7)',
+  txt:'Los jóvenes no son el futuro: son el ahora de Dios. En la Iglesia todos los bautizados somos protagonistas de la misión, en comunidad, con formación y oración.'}
+];
+
+const RUTAS=[
+ {n:'El pueblo',ic:'🏡',amb:'Pueblo, río y mercado',caps:CAPS_PUEBLO,enc:ENC_PUEBLO},
+ {n:'La ciudad',ic:'🏙️',amb:'Calles, colegio, hospital y parroquia',caps:CAPS_CIUDAD,enc:ENC_CIUDAD},
+ {n:'Campos y caseríos',ic:'🌾',amb:'Campo, vida rural y caseríos',caps:CAPS_CAMPO,enc:ENC_CAMPO},
+ {n:'La comunidad indígena',ic:'🛶',amb:'Selva, maloca, río y misión',caps:CAPS_SELVA,enc:ENC_SELVA}
+];
+const RUTA=(()=>{let r=null;try{const q=new URLSearchParams(location.search).get('ruta');if(q!==null)r=parseInt(q,10);else{const g=localStorage.getItem('camino_misionero_ruta');if(g!==null)r=parseInt(g,10)}}catch(e){}return Number.isInteger(r)&&r>=0&&r<RUTAS.length?r:0})();
+const CAPS=RUTAS[RUTA].caps,ENC=RUTAS[RUTA].enc;
+/* Colores y densidad de cada ambiente */
+const AMB=[
+ {pasto:[[.25,.49,.18],[.46,.63,.27],[.35,.55,.22]],camino:[.62,.47,.31],relieve:1,arboles:520,palmas:0,pastoN:9000,flores:1400},
+ {pasto:[[.29,.45,.22],[.42,.55,.30],[.34,.49,.25]],camino:[.43,.43,.45],relieve:.45,arboles:190,palmas:0,pastoN:5200,flores:420,acera:1},
+ {pasto:[[.40,.52,.20],[.62,.63,.30],[.50,.57,.24]],camino:[.68,.53,.35],relieve:.8,arboles:280,palmas:0,pastoN:9000,flores:1600},
+ {pasto:[[.15,.40,.13],[.30,.55,.19],[.21,.47,.15]],camino:[.63,.37,.23],relieve:1.1,arboles:640,palmas:.42,pastoN:9000,flores:1100}
+][RUTA];
+
 const CONSEJOS=[
  'Primero santos, luego misioneros. — San José Allamano',
  'La Iglesia crece por atracción, no por proselitismo. — Benedicto XVI (cf. EG 14)',
@@ -660,7 +1146,7 @@ TG.nx=Math.floor(215/TG.sp)+1;TG.nz=Math.floor(485/TG.sp)+1;
 function rawH(x,z,d){
   let h=(fbm(x*.017+3.1,z*.017-1.7)-.45)*15+(fbm(x*.07+9,z*.07-4)-.5)*2.4;
   h+=smooth(40,120,d)*22*fbm(x*.01+30,z*.01+11);
-  h*=smooth(8,32,d);
+  h*=smooth(8,32,d)*AMB.relieve;
   const rd=Math.abs(z-ZR),rm=1-smooth(4.6,7.4,rd);
   return lerp(h,-2.7,rm)}
 function buildHeights(){
@@ -672,11 +1158,11 @@ function buildHeights(){
    const hl=TG.h[j*nx+Math.max(i-1,0)],hr=TG.h[j*nx+Math.min(i+1,nx-1)],hd=TG.h[Math.max(j-1,0)*nx+i],hu=TG.h[Math.min(j+1,nz-1)*nx+i];
    const ny=2*sp/Math.hypot(hl-hr,2*sp,hd-hu),slope=1-ny;
    const g=fbm(x*.045,z*.045),g2=fbm(x*.22+4,z*.22);
-   let c=mix3([.25,.49,.18],[.46,.63,.27],g);c=mix3(c,[.35,.55,.22],g2*.35);
+   let c=mix3(AMB.pasto[0],AMB.pasto[1],g);c=mix3(c,AMB.pasto[2],g2*.35);
    c=mix3(c,[.52,.49,.43],smooth(.10,.30,slope));
    c=mix3(c,[.60,.62,.60],smooth(10,20,h)*.6);
    const pm=(1-smooth(1.6,3.2,d))*(.85+.15*h2(Math.floor(x*2),Math.floor(z*2)));
-   c=mix3(c,[.62,.47,.31],pm);
+   c=mix3(c,AMB.camino,pm);if(AMB.acera)c=mix3(c,[.70,.68,.64],(1-smooth(3.7,4.3,d))*smooth(2.9,3.4,d));
    const rd=Math.abs(z-ZR);c=mix3(c,[.74,.68,.48],(1-smooth(5.2,10,rd))*.75);
    if(h<-1.2)c=mix3(c,[.20,.24,.27],smooth(-1.2,-2.4,h));
    TG.c[k*3]=c[0];TG.c[k*3+1]=c[1];TG.c[k*3+2]=c[2]}}
@@ -737,6 +1223,10 @@ function tree(x,z,s,type,col){
   if(type===0){const g=col||mix3(hex('#1f5a2a'),hex('#2f7a35'),RNG());
    addS('cyl',x,y+s*.9,z,0,0,0,.34*s,1.8*s,.34*s,hex('#5b3a21'),0,0,.05);
    for(let i=0;i<4;i++){const f=1-i*.2;addS('cone',x,y+s*(2+i*1.15),z,0,RNG()*6,0,s*(3.1*f),s*(2.4),s*(3.1*f),g,0,.55,1,.05)}}
+  else if(type===2){const g=col||mix3(hex('#2f7a35'),hex('#5a9a35'),RNG()),H=s*(4.2+RNG()*1.8),ty=y+H;
+   addS('cyl',x,y+H/2,z,0,0,0,.26*s,H,.26*s,hex('#7a5a3a'),0,.15,1,.05);
+   for(let i=0;i<8;i++){const a=i/8*TAU+RNG()*.5,L=2.9*s,rx=.38+RNG()*.3;addS('box',x+Math.sin(a)*L/2*Math.cos(rx),ty-L/2*Math.sin(rx),z+Math.cos(a)*L/2*Math.cos(rx),rx,a,0,.75*s,.05*s,L,mix3(g,[.5,.7,.3],RNG()*.2),0,.8,1,.05)}
+   for(let i=0;i<3;i++){const a=i*2.1;addS('sph',x+Math.sin(a)*.22*s,ty-.25*s,z+Math.cos(a)*.22*s,0,0,0,.3*s,.3*s,.3*s,hex('#6a4a28'),0,0,1,.2)}}
   else{const g=col||mix3(hex('#3c8a3a'),hex('#7aa63a'),RNG());
    addS('cyl',x,y+s*1.2,z,0,0,0,.42*s,2.4*s,.42*s,hex('#6a4528'),0,0,.05);
    addS('sph',x,y+s*3.5,z,0,0,0,s*3.4,s*2.8,s*3.4,g,0,.6,1,.05);
@@ -766,6 +1256,204 @@ function chain(a,b,n,slack,kind,col,lamps){
   CHAINS.push(c);return c}
 function pole(x,z,h){const y=Hs(x,z);addS('cyl',x,y+h/2,z,0,0,0,.14,h,.14,WOOD[0],0,0,.05);circ(x,z,.2,99);return [x,y+h,z]}
 
+/* ---- ambientes de las rutas: ciudad, colegio, hospital, iglesia, campo, rural, caserío e indígena ---- */
+function baseHacia(x,z,to,dy){const y=Hs(x,z)+(dy||0),psi=Math.atan2(to[0]-x,to[1]-z);return {y,psi,b:M4.trs(new Float32Array(16),x,y,z,0,psi,0,1,1,1)}}
+function fwd(x,z,psi,d){return [x+Math.sin(psi)*d,z+Math.cos(psi)*d]}
+function edificio(cx,cz,w,d,h,col,to){
+  const {psi,b}=baseHacia(cx,cz,to,-.3);
+  addB('box',b,0,h/2,0,0,0,0,w,h,d,col,0,0,.08);
+  addB('box',b,0,h+.2,0,0,0,0,w+.25,.4,d+.25,oscuro(col,.72),0,0,.1);
+  addB('box',b,0,.45,0,0,0,0,w+.15,.9,d+.15,hex('#8d8a82'),0,0,.05);
+  const pisos=Math.max(1,Math.floor((h-1.2)/2.4)),cols=Math.max(1,Math.round(w/1.9));
+  for(let p=0;p<pisos;p++)for(let c=0;c<cols;c++){const lx=-w/2+(c+.5)*w/cols,ly=1.9+p*2.4;if(p===0&&Math.abs(lx)<1)continue;const on=RNG()<.55;
+   addB('box',b,lx,ly,d/2+.03,0,0,0,.95,1.15,.06,on?hex('#ffe3a0'):hex('#3d5266'),on?.9:0,0,.6)}
+  addB('box',b,0,1.1,d/2+.04,0,0,0,1.5,2.2,.08,DARK,0,0,.1);
+  addB('box',b,0,2.4,d/2+.5,0,0,0,2.2,.12,1.1,oscuro(col,.6),0,0,.1);
+  obb(cx,cz,psi,w/2+.1,d/2+.1,99);reserve(cx,cz,Math.max(w,d)*.75+1.5);
+  return {b,psi}}
+function banco(s,off){const p=sidePt(s,off),y=Hs(p.x,p.z),b=M4.trs(new Float32Array(16),p.x,y,p.z,0,p.psi,0,1,1,1),out=-Math.sign(off);
+  addB('box',b,0,.48,0,0,0,0,.5,.08,1.8,WOOD[0],0,0,.1);addB('box',b,out*.24,.78,0,0,0,0,.07,.5,1.8,WOOD[1],0,0,.1);
+  for(const lz of [-.75,.75])addB('box',b,0,.24,lz,0,0,0,.45,.48,.08,hex('#3a3a40'),0,0,.3);obb(p.x,p.z,p.psi,.3,.95,.9)}
+function parada(s,side){const p=sidePt(s,side*5.3),y=Hs(p.x,p.z),b=M4.trs(new Float32Array(16),p.x,y,p.z,0,p.psi,0,1,1,1),out=-side;
+  for(const lz of [-1.5,1.5])addB('cyl',b,out*.55,1.2,lz,0,0,0,.09,2.4,.09,hex('#5a6470'),0,0,.4);
+  addB('box',b,0,2.45,0,0,0,0,1.8,.1,3.4,hex('#3a7bd5'),0,0,.3);
+  addB('box',b,out*.6,1.3,0,0,0,0,.05,1.6,3.0,hex('#bfe0ff'),.2,0,.9);
+  addB('box',b,out*.28,.5,0,0,0,0,.5,.08,2.6,WOOD[0],0,0,.1);
+  addB('box',b,out*.55,2.0,1.95,0,0,0,.06,.7,.5,hex('#ffd36b'),.6,0,.4);
+  obb(p.x,p.z,p.psi,.95,1.7,1.2)}
+function semaforo(s,side){const p=sidePt(s,side*3.8),y=Hs(p.x,p.z);addS('cyl',p.x,y+1.6,p.z,0,0,0,.1,3.2,.1,hex('#2f2f38'),0,0,1,.3);
+  const b=M4.trs(new Float32Array(16),p.x,y,p.z,0,p.psi+Math.PI,0,1,1,1);addB('box',b,0,3.0,0,0,0,0,.38,1.0,.3,hex('#1f1f26'),0,0,.3);
+  [['#ff4a3a',1.5],['#ffbf3f',.1],['#4be37a',.1]].forEach((c,i)=>addB('sph',b,0,3.3-i*.3,.16,0,0,0,.2,.2,.08,hex(c[0]),c[1],0,.6));circ(p.x,p.z,.18,99)}
+function carro(s,off,col,tipo){const p=sidePt(s,off),y=Hs(p.x,p.z),b=M4.trs(new Float32Array(16),p.x,y,p.z,0,p.psi+(RNG()<.5?0:Math.PI),0,1,1,1);
+  const amb=tipo==='amb';
+  addB('box',b,0,.68,0,0,0,0,1.75,.72,3.9,col,0,0,.5);
+  if(amb){addB('box',b,0,1.45,-.35,0,0,0,1.75,1.0,2.9,col,0,0,.5);addB('box',b,0,1.0,-.35,0,0,0,1.78,.18,2.92,hex('#e8322c'),0,0,.4);
+   addB('box',b,0,2.02,.5,0,0,0,.6,.16,.25,hex('#4a8cff'),1.6,0,.6);addB('box',b,0,1.55,1.13,0,0,0,1.5,.5,.05,hex('#9ad0ff'),.2,0,.9);
+   for(const sx of [-1,1]){addB('box',b,sx*.89,1.55,-.6,0,0,0,.04,.5,.5,hex('#e8322c'),.6,0,.4);addB('box',b,sx*.89,1.55,-.6,0,0,0,.05,.16,.16,WHITE,0,0,.4)}}
+  else{addB('box',b,0,1.28,-.2,0,0,0,1.55,.56,2.1,col,0,0,.5);addB('box',b,0,1.28,.86,0,0,0,1.42,.46,.05,hex('#9ad0ff'),.2,0,.9);addB('box',b,0,1.28,-1.26,0,0,0,1.42,.46,.05,hex('#9ad0ff'),.2,0,.9)}
+  for(const sx of [-.84,.84])for(const sz of [-1.2,1.25])addB('cyl',b,sx,.37,sz,0,0,Math.PI/2,.72,.26,.72,hex('#1c1c20'),0,0,.2);
+  for(const sx of [-.58,.58])addB('box',b,sx,.72,1.96,0,0,0,.32,.15,.03,hex('#fff6d0'),1.1,0,.6);
+  obb(p.x,p.z,p.psi,.92,2.0,1.7)}
+function bandera(x,z,cols){const y=Hs(x,z);addS('cyl',x,y+2.6,z,0,0,0,.1,5.2,.1,hex('#d8d8d8'),0,0,1,.5);
+  cols.forEach((c,i)=>addS('box',x+.75,y+4.85-i*.3,z,0,0,0,1.4,.3,.04,hex(c),.15,.8,1,.1));circ(x,z,.15,99)}
+function escuela(e){const sd=e.lado,hp=sidePt(e.s+1,sd*13),to=[pathAt(e.s+1).x,pathAt(e.s+1).z],selva=RUTA===3;
+  const h=houseAt(hp.x,hp.z,8.5,5.6,3.2,hex(selva?'#e7d6a8':'#f2d36b'),hex(selva?'#b8955a':'#a4452c'),to,{rh:1.6});
+  addB('box',h.base,0,2.75,2.84,0,0,0,3.2,.5,.05,hex('#2d63c8'),.3,0,.3);
+  const f=sidePt(e.s-4,sd*7.2);bandera(f.x,f.z,selva?['#2f8a3a','#ffd36b','#e8453c']:['#ffd36b','#2d63c8','#e8453c']);
+  const c=sidePt(e.s+6,sd*7.6),cy=Hs(c.x,c.z); // columpio
+  const a1=[c.x-c.tz*1.4,cy,c.z+c.tx*1.4],a2=[c.x+c.tz*1.4,cy,c.z-c.tx*1.4];
+  for(const a of [a1,a2]){addS('cyl',a[0],cy+1.25,a[2],0,0,0,.1,2.5,.1,hex('#c43d3d'),0,0,1,.3);circ(a[0],a[2],.15,99)}
+  segment(ST.box,[a1[0],cy+2.5,a1[2]],[a2[0],cy+2.5,a2[2]],.1,hex('#c43d3d'));
+  for(const t of [-.45,.45]){const q=[c.x-c.tz*t*1.4,cy,c.z+c.tx*t*1.4];segment(ST.box,[q[0],cy+2.5,q[2]],[q[0],cy+.6,q[2]],.03,hex('#888'));addS('box',q[0],cy+.58,q[2],0,c.psi,0,.5,.06,.25,WOOD[0],0,0,1,.1)}
+  reserve(c.x,c.z,2.5)}
+function hospital(e){const sd=e.lado;
+  if(RUTA===3){ // puesto de salud de la comunidad
+   const hp=sidePt(e.s+1,sd*12.5),to=[pathAt(e.s+1).x,pathAt(e.s+1).z],h=houseAt(hp.x,hp.z,7,5.2,3,hex('#f4f6f8'),hex('#b8955a'),to,{rh:1.4});
+   addB('box',h.base,0,2.55,2.66,0,0,0,1.1,.34,.05,hex('#e8322c'),1.1,0,.4);addB('box',h.base,0,2.55,2.66,0,0,0,.34,1.1,.05,hex('#e8322c'),1.1,0,.4);
+   const o=sidePt(e.s-2,sd*5.4),oy=Hs(o.x,o.z);fogata(o.x,o.z);addS('cyl',o.x,oy+.62,o.z,0,0,0,.7,.55,.7,hex('#2a2420'),0,0,1,.4);addS('cyl',o.x,oy+.9,o.z,0,0,0,.6,.04,.6,hex('#7aa63a'),.2,0,1,.6);
+   banco(e.s+5,sd*5.2);return}
+  const hp=sidePt(e.s-1,sd*15.5),to=[pathAt(e.s-1).x,pathAt(e.s-1).z],{b}=edificio(hp.x,hp.z,13,8,7.4,hex('#f4f6f8'),to);
+  addB('box',b,0,6.1,4.06,0,0,0,1.5,.45,.06,hex('#e8322c'),1.2,0,.4);addB('box',b,0,6.1,4.06,0,0,0,.45,1.5,.06,hex('#e8322c'),1.2,0,.4);
+  addB('box',b,3.4,6.1,4.05,0,0,0,4.2,.7,.05,hex('#2d63c8'),.35,0,.3);addB('box',b,-3.4,6.1,4.05,0,0,0,4.2,.7,.05,hex('#2d63c8'),.35,0,.3);
+  carro(e.s-7,sd*6.6,hex('#f6f6f2'),'amb');
+  banco(e.s-1.5,sd*5.4);banco(e.s+4.5,sd*5.4);
+  for(const q of [-3,3]){const lp=sidePt(e.s+q,-sd*3.7);lampPost(lp.x,lp.z)}
+  const FC=[hex('#ff8fb1'),hex('#ffd54a'),hex('#ffffff'),hex('#8cc8ff')];
+  for(let i=0;i<26;i++){const p=sidePt(e.s-5+RNG()*12,sd*(6.6+RNG()*2.2)),y=Hs(p.x,p.z);addS('sph',p.x,y+.3,p.z,0,0,0,.45,.4,.45,hex('#3f8a2e'),0,.5,1,.05);addS('sph',p.x,y+.52,p.z,0,0,0,.18,.14,.18,FC[i%4],.25,.6,1,.1)}}
+function iglesia(s,off,o){o=o||{};const p=sidePt(s,off),to=[pathAt(s).x,pathAt(s).z],{y,psi,b}=baseHacia(p.x,p.z,to,-.2);
+  const W=o.w||7,D=o.d||11,H=o.h||5,wall=o.wall||hex('#f4ecd8'),roof=o.roof||hex('#a4452c');
+  addB('box',b,0,H/2,0,0,0,0,W,H,D,wall,0,0,.05);addB('pyr',b,0,H+1.3,0,0,0,0,W*1.15,2.6,D*1.06,roof,0,0,.2);
+  addB('box',b,0,.3,0,0,0,0,W+.2,.6,D+.2,STONE,0,0,.05);
+  const tz=D/2+1.2,TH=H+3;
+  addB('box',b,0,TH/2,tz,0,0,0,2.8,TH,2.4,wall,0,0,.05);addB('pyr',b,0,TH+1.4,tz,0,0,0,3.3,2.8,2.9,roof,0,0,.2);
+  addB('box',b,0,TH-.9,tz+1.22,0,0,0,1.1,1.3,.05,DARK,0,0,.1);addB('sph',b,0,TH-1.0,tz+1.1,0,0,0,.65,.65,.4,hex('#d9a441'),.35,0,.8);
+  addB('box',b,0,TH+3.4,tz,0,0,0,.16,1.6,.16,hex('#fff2c0'),1.4,0,.5);addB('box',b,0,TH+3.6,tz,0,0,0,.9,.16,.16,hex('#fff2c0'),1.4,0,.5);
+  addB('box',b,0,1.3,tz+1.23,0,0,0,1.5,2.6,.08,DARK,0,0,.1);addB('box',b,0,1.4,tz+1.21,0,0,0,1.9,2.9,.05,hex('#ffd890'),1.1,0,.3);
+  addB('sph',b,0,3.5,tz+1.23,0,0,0,1.0,1.0,.06,hex('#7fb8ff'),1,0,.5);
+  for(const sx of [-1,1])for(const lz of [-D*.28,D*.08])addB('box',b,sx*(W/2+.04),H*.55,lz,0,0,0,.08,1.8,.9,hex('#7fb8ff'),1,0,.5);
+  addB('box',b,0,.12,tz+2.0,0,0,0,4,.24,1.4,STONE,0,0,.05);
+  obb(p.x,p.z,psi,W/2+.15,D/2+.15,99);const tw=fwd(p.x,p.z,psi,tz);obb(tw[0],tw[1],psi,1.5,1.3,99);reserve(p.x,p.z,Math.max(W,D)*.7+3);
+  return {b,psi}}
+function maizal(s0,s1,o0,o1){
+  for(let s=s0;s<s1;s+=1.35)for(let off=o0;Math.abs(off)<=Math.abs(o1);off+=Math.sign(o1)*1.5){const p=sidePt(s+(RNG()-.5)*.3,off+(RNG()-.5)*.3),y=Hs(p.x,p.z),h=1.6+RNG()*.6,r=RNG()*6;
+   addS('cyl',p.x,y+h/2,p.z,0,0,0,.08,h,.08,hex('#6a9a35'),0,.5,1,.05);
+   addS('box',p.x,y+h*.55,p.z,.0,r,.9,.08,.9,.02,hex('#5c8f2c'),0,.7,1,.05);addS('box',p.x,y+h*.75,p.z,0,r+1.6,-.9,.08,.8,.02,hex('#6aa83c'),0,.7,1,.05);
+   addS('cone',p.x,y+h+.15,p.z,0,0,0,.14,.35,.14,hex('#e8c55a'),0,.8,1,.1);
+   if(RNG()<.35)addS('sph',p.x+.08,y+h*.6,p.z,.4,r,0,.12,.32,.12,hex('#f2c94a'),.1,.5,1,.2)}
+  const m=(o0+o1)/2,R=Math.abs(o1-o0)/2+1;for(let s=s0;s<=s1;s+=3){const p=sidePt(s,m);reserve(p.x,p.z,R)}}
+function espantapajaros(x,z){const y=Hs(x,z);addS('cyl',x,y+1.2,z,0,0,0,.1,2.4,.1,WOOD[0],0,0,1,.05);addS('box',x,y+1.75,z,0,0,0,1.8,.1,.1,WOOD[1],0,0,1,.05);
+  addS('box',x,y+1.55,z,0,0,0,.7,.8,.34,hex('#c43d3d'),0,.3,1,.05);addS('sph',x,y+2.25,z,0,0,0,.42,.45,.42,hex('#e8d8a0'),0,0,1,.1);
+  addS('cone',x,y+2.6,z,0,0,0,.95,.35,.95,hex('#c9a86a'),0,0,1,.1);addS('cone',x,y+2.82,z,0,0,0,.42,.4,.42,hex('#c9a86a'),0,0,1,.1);circ(x,z,.2,99)}
+function paca(x,z,psi){const y=Hs(x,z);addS('cyl',x,y+.55,z,Math.PI/2,psi,0,1.1,1.3,1.1,hex('#d8b84a'),0,0,1,.05);addS('cyl',x,y+.55,z,Math.PI/2,psi,0,1.12,.06,1.12,hex('#b8953a'),0,0,1,.05);circ(x,z,.6,1.1)}
+function vaca(x,z,psi,col){const y=Hs(x,z),b=M4.trs(new Float32Array(16),x,y,z,0,psi,0,1,1,1),c=col||hex('#f2efe8'),m=hex('#3a2a1c');
+  addB('box',b,0,1.05,0,0,0,0,.78,.72,1.6,c,0,0,.1);addB('box',b,.12,1.12,.25,0,0,0,.8,.45,.55,m,0,0,.1);addB('box',b,-.1,1.0,-.45,0,0,0,.8,.4,.4,m,0,0,.1);
+  addB('box',b,0,1.28,1.0,.2,0,0,.46,.46,.55,c,0,0,.1);addB('box',b,0,1.16,1.3,.2,0,0,.36,.26,.12,hex('#e8a0a0'),0,0,.1);
+  for(const sx of [-1,1]){addB('cone',b,sx*.2,1.6,.95,0,0,sx*-.5,.08,.22,.08,hex('#e8e1cd'),0,0,.2);addB('box',b,sx*.3,1.38,.85,0,0,0,.18,.08,.12,c,0,0,.1)}
+  for(const sx of [-.26,.26])for(const sz of [-.6,.6])addB('box',b,sx,.36,sz,0,0,0,.16,.72,.16,c,0,0,.1);
+  addB('box',b,0,1.1,-.85,-.3,0,0,.05,.5,.05,c,0,0,.1);circ(x,z,.75,1.6)}
+function corral(cx,cz,a,b,psi){const c=Math.cos(psi),s=Math.sin(psi),P=(u,v)=>[cx+u*c+v*s,cz-u*s+v*c],q=[P(-a,-b),P(a,-b),P(a,b),P(-a,b)];
+  for(let i=0;i<4;i++){const p0=q[i],p1=q[(i+1)%4];fenceLine(p0[0],p0[1],p1[0],p1[1],WOOD[2],1.1)}reserve(cx,cz,Math.max(a,b)+1)}
+function carreta(x,z,psi){const y=Hs(x,z),b=M4.trs(new Float32Array(16),x,y,z,0,psi,0,1,1,1);
+  addB('box',b,0,.95,0,0,0,0,1.4,.12,2.2,WOOD[0],0,0,.1);for(const sx of [-1,1])addB('box',b,sx*.66,1.2,0,0,0,0,.08,.45,2.2,WOOD[1],0,0,.1);
+  for(const sx of [-.8,.8])addB('cyl',b,sx,.6,0,0,0,Math.PI/2,1.2,.12,1.2,WOOD[2],0,0,.1);
+  addB('box',b,0,.7,1.7,-.35,0,0,.1,.1,1.6,WOOD[0],0,0,.1);for(let i=0;i<3;i++)addB('sph',b,-.3+i*.3,1.25,-.4+i*.35,0,0,0,.5,.42,.6,hex('#d9c9a0'),0,0,.05);obb(x,z,psi,.85,1.2,1.4)}
+function gallinas(cx,cz,n){for(let i=0;i<n;i++){const x=cx+(RNG()-.5)*4,z=cz+(RNG()-.5)*4,y=Hs(x,z),r=RNG()*6,c=RNG()<.5?hex('#f4f0e6'):hex('#b0652c');
+  addS('sph',x,y+.22,z,0,r,0,.32,.3,.42,c,0,0,1,.1);addS('sph',x+Math.sin(r)*.18,y+.42,z+Math.cos(r)*.18,0,r,0,.18,.2,.18,c,0,0,1,.1);addS('cone',x+Math.sin(r)*.2,y+.55,z+Math.cos(r)*.2,0,r,0,.06,.1,.08,hex('#e8322c'),0,0,1,.1)}}
+function lena(x,z,psi){const y=Hs(x,z);for(let i=0;i<7;i++){const r=i<4?0:1,k=i<4?i:i-4;addS('cyl',x+Math.cos(psi)*(k-1.5+r*.5)*.32,y+.17+r*.29,z-Math.sin(psi)*(k-1.5+r*.5)*.32,Math.PI/2,psi,0,.3,1.4,.3,WOOD[i%3],0,0,1,.05)}circ(x,z,.7,.6)}
+function tendedero(s,off){const a=sidePt(s-3,off),b=sidePt(s+3,off),c1=pole(a.x,a.z,2.4),c2=pole(b.x,b.z,2.4);chain(c1,c2,10,1.06,'bunting',[hex('#ffffff'),hex('#7fb8ff'),hex('#ff8fb1'),hex('#ffd36b')])}
+function casita(s,off,wall,roof,w){const p=sidePt(s,off),to=[pathAt(s).x,pathAt(s).z];return houseAt(p.x,p.z,w||4.8,4.2,2.6,wall,roof,to,{rh:1.2,chimney:RNG()<.4})}
+function fogata(x,z){const y=Hs(x,z);for(let i=0;i<8;i++){const a=i/8*TAU;addS('sph',x+Math.cos(a)*.55,y+.08,z+Math.sin(a)*.55,0,a,0,.3,.2,.26,hex('#7a776f'),0,0,1,.1)}
+  addS('cone',x,y+.3,z,0,0,0,.5,.6,.5,hex('#ff9a2a'),2,.4,1,.2);addS('cone',x,y+.42,z,0,.8,0,.28,.55,.28,hex('#ffe08a'),2.4,.5,1,.2);LAMPS.push([x,y+.6,z]);circ(x,z,.7,.5)}
+function maloca(x,z,r,to){const y=Hs(x,z)-.25,a=Math.atan2(to[0]-x,to[1]-z);
+  addS('cyl',x,y+1.1,z,0,0,0,r*2,2.2,r*2,hex('#8b6a3e'),0,0,1,.05);
+  for(let i=0;i<10;i++){const t=i/10*TAU;addS('cyl',x+Math.sin(t)*r*1.01,y+1.1,z+Math.cos(t)*r*1.01,0,0,0,.22,2.2,.22,hex('#5e4426'),0,0,1,.05)}
+  addS('cone',x,y+2.1+3.2,z,0,0,0,r*2.55,6.4,r*2.55,hex('#b8955a'),0,0,1,.1);addS('cone',x,y+2.1+5.7,z,0,0,0,r*.8,1.6,r*.8,hex('#9a7a44'),0,0,1,.1);
+  const d=fwd(x,z,a,r);addS('box',d[0],y+1.0,d[1],0,a,0,1.5,2.0,.2,DARK,0,0,1,.1);
+  circ(x,z,r+.1,99);reserve(x,z,r+3)}
+function canoa(x,z,psi){const y=Hs(x,z);addS('sph',x,y+.22,z,0,psi,0,.95,.5,4.4,hex('#7a4d24'),0,0,1,.15);addS('sph',x,y+.36,z,0,psi,0,.75,.3,4.0,hex('#3a2414'),0,0,1,.1);
+  const r=fwd(x,z,psi,.6);addS('box',r[0]+.5,y+.32,r[1],0,psi+.4,0,.14,.05,1.6,WOOD[0],0,0,1,.1);obb(x,z,psi,.5,2.2,.7)}
+function hamaca(s,off){const a=sidePt(s-2,off),b=sidePt(s+2,off),c1=pole(a.x,a.z,2.2),c2=pole(b.x,b.z,2.2),cols=[hex('#e8453c'),hex('#ffd36b'),hex('#2f8a3a')];
+  for(let k=0;k<3;k++){const dx=(k-1)*.22,px=-a.tz*dx,pz=a.tx*dx;let prev=null;for(let i=0;i<=10;i++){const t=i/10,x=lerp(c1[0],c2[0],t)+px,z=lerp(c1[2],c2[2],t)+pz,y=lerp(c1[1],c2[1],t)-.4-Math.sin(t*Math.PI)*1.1;if(prev)segment(ST.box,prev,[x,y,z],.12,cols[k]);prev=[x,y,z]}}}
+function chagra(s0,s1,o0,o1){for(let s=s0;s<s1;s+=1.6)for(let off=o0;Math.abs(off)<=Math.abs(o1);off+=Math.sign(o1)*1.6){const p=sidePt(s+(RNG()-.5)*.4,off+(RNG()-.5)*.4),y=Hs(p.x,p.z),h=.9+RNG()*.5;
+   addS('cyl',p.x,y+h/2,p.z,0,0,0,.06,h,.06,hex('#7a5a3a'),0,.4,1,.05);for(let k=0;k<3;k++)addS('sph',p.x+(RNG()-.5)*.4,y+h+(RNG()-.3)*.25,p.z+(RNG()-.5)*.4,0,RNG()*6,0,.55,.18,.55,mix3(hex('#2f7a35'),hex('#6aa83c'),RNG()),0,.7,1,.05)}
+  const m=(o0+o1)/2,R=Math.abs(o1-o0)/2+1;for(let s=s0;s<=s1;s+=3){const p=sidePt(s,m);reserve(p.x,p.z,R)}}
+let iglesiaHecha=false;
+function fueraRio(p,r){return Math.abs(p.z-ZR)>8.6+(r||0)}
+function decorarAmbiente(i){
+  const e=ENC[i],sd=e.lado,ps=pathAt(e.s),to=[ps.x,ps.z];
+  if(e.amb==='ciudad'){
+   const cols=[hex('#d9c9b0'),hex('#c9d6df'),hex('#e6b8a0'),hex('#b8c4a8'),hex('#e8dcc8'),hex('#a8b8c8')];
+   [[-7,sd*14.5,7,6,9+RNG()*5],[17,sd*15,8,6.5,12+RNG()*7],[-4,-sd*15,8,6,8+RNG()*8],[18,-sd*14.5,6.5,6,10+RNG()*6]].forEach((q,k)=>{const p=sidePt(e.s+q[0],q[1]);if(!fueraRio(p,5))return;edificio(p.x,p.z,q[2],q[3],q[4],cols[(i+k)%cols.length],[pathAt(e.s+q[0]).x,pathAt(e.s+q[0]).z])});
+   if(e.id==='valentina'||i===0)parada(e.s-1,sd);else banco(e.s-2,sd*5.2);
+   semaforo(e.s+4,-sd);if(fueraRio(sidePt(e.s-9,0),2))carro(e.s-9,-sd*5,[hex('#c43d3d'),hex('#2d63c8'),hex('#f2b134'),hex('#4a4a52')][i%4]);
+   for(const q of [-6,5]){const lp=sidePt(e.s+q,sd*3.8);lampPost(lp.x,lp.z)}
+   if(e.id==='saul'){for(let k=0;k<3;k++)banco(e.s-5+k*3.2,-sd*6.4);bandera(sidePt(e.s+2,-sd*8).x,sidePt(e.s+2,-sd*8).z,['#ffd36b','#2d63c8','#e8453c'])}
+   if(e.id==='nico'){const st=sidePt(e.s-5,sd*6.4);stall(st.x,st.z,Math.atan2(ps.x-st.x,ps.z-st.z),hex('#ff8fb1'));reserve(st.x,st.z,3)}}
+  else if(e.amb==='escuela')escuela(e);
+  else if(e.amb==='hospital')hospital(e);
+  else if(e.amb==='iglesia'){
+   const selva=RUTA===3,campo=RUTA===2;
+   if(!iglesiaHecha){iglesiaHecha=true;iglesia(e.s+2,sd*15.5,selva?{w:6.4,d:10,h:4.2,wall:hex('#c9a06a'),roof:hex('#b8955a')}:campo?{w:6,d:9,h:4.4,wall:hex('#f6f3ec'),roof:hex('#3a6fb0')}:{w:8,d:12,h:6,wall:hex('#f0e2c4')})}
+   else{const hp=sidePt(e.s,sd*12.5);houseAt(hp.x,hp.z,6,5,3,hex(selva?'#d9c49a':'#f0e2c4'),hex(selva?'#b8955a':'#a4452c'),to,{rh:1.4})}
+   banco(e.s-3,sd*5.6);banco(e.s+3,sd*5.6);
+   if(e.id==='mayra'){const c=sidePt(e.s-1,sd*5.0);canoa(c.x,c.z,c.psi)}
+   if(e.id==='ana'||e.id==='camila'){const a=sidePt(e.s-6,-sd*6),b=sidePt(e.s+6,-sd*6),c1=pole(a.x,a.z,4.2),c2=pole(b.x,b.z,4.2);chain(c1,c2,14,1.1,'bunting',[hex('#ffffff'),hex('#ffd36b'),hex('#7fb8ff')])}
+   if(RUTA===1){for(const q of [-5,5]){const lp=sidePt(e.s+q,-sd*3.8);lampPost(lp.x,lp.z)}const p=sidePt(e.s-6,-sd*14);edificio(p.x,p.z,7,6,10,hex('#e6b8a0'),[pathAt(e.s-6).x,pathAt(e.s-6).z])}}
+  else if(e.amb==='campo'){
+   maizal(e.s-14,e.s+5,sd*7,sd*17);const ep=sidePt(e.s-3,sd*11.5);espantapajaros(ep.x,ep.z);
+   const g=sidePt(e.s+2,-sd*14);houseAt(g.x,g.z,7,6,3.8,hex('#a8322c'),hex('#4a3a30'),[pathAt(e.s+2).x,pathAt(e.s+2).z],{rh:2.2});
+   for(let k=0;k<4;k++){const p=sidePt(e.s-10+k*2.6,-sd*(7+RNG()*2));paca(p.x,p.z,p.psi+RNG())}
+   const f1=sidePt(e.s-15,sd*6),f2=sidePt(e.s+6,sd*6);fenceLine(f1.x,f1.z,f2.x,f2.z,WOOD[2],1.0)}
+  else if(e.amb==='rural'){
+   const hp=sidePt(e.s+1,sd*13);houseAt(hp.x,hp.z,6.5,5.4,3,hex('#e9c9a6'),hex('#a4452c'),to,{chimney:true});
+   const cp=sidePt(e.s-2,-sd*11),cpsi=cp.psi;corral(cp.x,cp.z,4.5,6,cpsi);
+   for(let k=0;k<(e.id==='eusebio'?3:2);k++){const v=sidePt(e.s-5+k*3,-sd*(10+RNG()*2));vaca(v.x,v.z,v.psi+RNG()*2-1,e.id==='eusebio'&&k===1?hex('#b8865a'):undefined)}
+   const tq=sidePt(e.s+2,-sd*8.2);addS('box',tq.x,Hs(tq.x,tq.z)+.35,tq.z,0,tq.psi,0,.8,.7,2.2,hex('#7a776f'),0,0,1,.1);addS('box',tq.x,Hs(tq.x,tq.z)+.68,tq.z,0,tq.psi,0,.6,.04,2.0,hex('#3a6a9a'),.15,0,1,.8);
+   const ca=sidePt(e.s-6,sd*7.5);carreta(ca.x,ca.z,ca.psi+.6);
+   if(e.id==='eusebio')for(let k=0;k<30;k++){const p=sidePt(e.s-12+RNG()*24,sd*(16+RNG()*8)),y=Hs(p.x,p.z);addS('cone5',p.x,y+.15,p.z,0,RNG()*6,0,.12,.3,.12,hex('#b8a05a'),0,.4,1,.05)}}
+  else if(e.amb==='caserio'){
+   const W=[hex('#e9c9a6'),hex('#f0e2c4'),hex('#d9b48a'),hex('#e8d8c0')],R=[hex('#a4452c'),hex('#8a5a2a'),hex('#9aa3a8'),hex('#a4452c')];
+   casita(e.s+1,sd*12,W[i%4],R[i%4]);casita(e.s-9,sd*12.5,W[(i+1)%4],R[(i+1)%4],4.2);casita(e.s-2,-sd*13,W[(i+2)%4],R[(i+2)%4]);
+   tendedero(e.s-4,sd*7.4);const l=sidePt(e.s+4,sd*6.4);lena(l.x,l.z,l.psi);const gp=sidePt(e.s-6,-sd*6.5);gallinas(gp.x,gp.z,5);
+   if(e.id==='chepe'||e.id==='rut'){const a=sidePt(e.s-9,-sd*5.5),b=sidePt(e.s+6,sd*5.5),c1=pole(a.x,a.z,4.4),c2=pole(b.x,b.z,4.4);chain(c1,c2,20,1.12,'bunting',[hex('#ff6b6b'),hex('#ffd36b'),hex('#6bc5ff'),hex('#8be28b')])}
+   if(e.id==='chepe'){const st=sidePt(e.s+5,-sd*7.5);stall(st.x,st.z,Math.atan2(ps.x-st.x,ps.z-st.z),hex('#f2b134'));reserve(st.x,st.z,3)}}
+  else if(e.amb==='indigena'){
+   const mp=sidePt(e.s+(e.puente?-6:2),sd*15);maloca(mp.x,mp.z,5.2,to);const m2=sidePt(e.s-10,-sd*16);maloca(m2.x,m2.z,3.6,[pathAt(e.s-10).x,pathAt(e.s-10).z]);
+   const fp=sidePt(e.s-4,sd*6.6);fogata(fp.x,fp.z);if(fueraRio(sidePt(e.s+7,0),0))hamaca(e.s+5,-sd*6.5);
+   chagra(e.s-16,e.s-3,-sd*6.5,-sd*11);const c=sidePt(e.s+3,sd*6);canoa(c.x,c.z,c.psi+.3);
+   if(e.id==='aurelio'){for(let k=0;k<3;k++){const p=sidePt(e.s-1+k*.9,sd*4.6);addS('cyl',p.x,Hs(p.x,p.z)+.22,p.z,0,0,0,.55,.44,.55,hex('#c9a06a'),0,0,1,.05)}}}
+}
+function fondoRuta(){
+  if(RUTA===1){ // horizonte de la ciudad
+   const cols=[hex('#c9cfd6'),hex('#d8cfc0'),hex('#b8c2cc'),hex('#e0d6c8'),hex('#aab6c2')];
+   for(let i=0,g=0;i<46&&g<600;g++){const s=RNG()*PTOT,sd=RNG()<.5?-1:1,p=sidePt(s,sd*(24+RNG()*34));if(Math.abs(p.z-ZR)<14||reserved(p.x,p.z,5))continue;
+    const y=Hs(p.x,p.z)-.5,w=6+RNG()*6,d=6+RNG()*5,h=10+RNG()*24,c=cols[i%5];addS('box',p.x,y+h/2,p.z,0,0,0,w,h,d,c,0,0,1,.08);addS('box',p.x,y+h+.2,p.z,0,0,0,w+.3,.4,d+.3,oscuro(c,.7),0,0,1,.1);
+    for(let k=0;k<6;k++){const fy=y+2+RNG()*(h-3),side=RNG()<.5;addS('box',p.x+(side?(RNG()-.5)*w*.8:w/2+.03),fy,p.z+(side?d/2+.03:(RNG()-.5)*d*.8),0,0,0,side?.9:.06,1.1,side?.06:.9,hex('#ffe3a0'),.9,0,1,.5)}
+    reserve(p.x,p.z,Math.max(w,d)*.7);i++}
+   [[-58,-170],[64,-240],[-66,-320]].forEach(m=>{const y=Hs(m[0],m[1]);addS('cyl',m[0],y+14,m[1],0,0,0,.6,28,.6,hex('#8a8f96'),0,0,1,.3);addS('sph',m[0],y+28.4,m[1],0,0,0,.7,.7,.7,hex('#ff4a3a'),2,0,1,.5)});
+   for(let s=12;s<PTOT-8;s+=24){for(const sd of [-1,1]){const ss=s+(sd>0?0:12),p=sidePt(ss,sd*3.8);if(reserved(p.x,p.z,.3)||nearGate(p.x,p.z)||Math.abs(p.z-ZR)<9)continue;if(NPCS.some(n=>Math.hypot(n.x-p.x,n.z-p.z)<4))continue;lampPost(p.x,p.z)}}}
+  else if(RUTA===2){
+   [[-62,-150],[60,-210],[-70,-300]].forEach(m=>{const y=Hs(m[0],m[1]);addS('cone',m[0],y+5,m[1],0,0,0,5.5,10,5.5,hex('#e8e0d0'),0,0,1,.1);addS('cone',m[0],y+11,m[1],0,0,0,6,2.4,6,hex('#a4452c'),0,0,1,.1);MILLS.push({x:m[0],y:y+9.5,z:m[1]})});
+   for(let i=0,g=0;i<16&&g<400;g++){const s=RNG()*PTOT,sd=RNG()<.5?-1:1,p=sidePt(s,sd*(26+RNG()*30));if(Math.abs(p.z-ZR)<14||reserved(p.x,p.z,6))continue;
+    const y=Hs(p.x,p.z),w=5+RNG()*3,d=5+RNG()*2,h=2.8+RNG()*.8,barn=i%3===0;addS('box',p.x,y+h/2,p.z,0,0,0,w,h,d,barn?hex('#a8322c'):hex(['#e9c9a6','#f0e2c4','#d9b48a'][i%3]),0,0,1,.05);addS('pyr',p.x,y+h+.8,p.z,0,0,0,w*1.28,1.6,d*1.28,barn?hex('#4a3a30'):hex('#a4452c'),0,0,1,.2);reserve(p.x,p.z,5);i++}
+   for(let i=0,g=0;i<40&&g<600;g++){const s=RNG()*PTOT,sd=RNG()<.5?-1:1,p=sidePt(s,sd*(18+RNG()*24));if(Math.abs(p.z-ZR)<10||reserved(p.x,p.z,1.5))continue;paca(p.x,p.z,RNG()*6);i++}}
+  else if(RUTA===3){
+   for(let i=0,g=0;i<8&&g<300;g++){const s=RNG()*PTOT,sd=RNG()<.5?-1:1,p=sidePt(s,sd*(28+RNG()*26));if(Math.abs(p.z-ZR)<16||reserved(p.x,p.z,8))continue;const q=pathAt(s);maloca(p.x,p.z,3.4+RNG()*2.4,[q.x,q.z]);i++}}
+}
+
+function capillaFinal(){
+   const cs=CHAPEL_S,cp=pathAt(cs),cy=Hs(cp.x,cp.z);
+   const base=M4.trs(new Float32Array(16),cp.x+0,cy,cp.z-9,0,0,0,1,1,1);
+   addB('box',base,0,2.5,0,0,0,0,9,5,10,hex('#f4ecd8'),0,0,.05);addB('pyr',base,0,6.2,0,0,0,0,10.4,2.8,11.4,hex('#a4452c'),0,0,.2);
+   addB('box',base,0,4,6,0,0,0,3.4,8,3.4,hex('#f4ecd8'),0,0,.05);addB('pyr',base,0,9.2,6,0,0,0,4.2,3.6,4.2,hex('#a4452c'),0,0,.2);
+   addB('box',base,0,10.9,6,0,0,0,.16,1.8,.16,hex('#fff2c0'),1.5,0,.5);addB('box',base,0,11.2,6,0,0,0,1,.16,.16,hex('#fff2c0'),1.5,0,.5);
+   addB('box',base,0,1.5,7.75,0,0,0,2.0,3,.2,hex('#3a2a1c'),0,0,.1);addB('box',base,0,1.6,7.7,0,0,0,2.5,3.4,.1,hex('#ffd890'),1.2,0,.3);
+   for(let i=0;i<4;i++)addB('box',base,0,.15+i*.15,8.4+i*.7,0,0,0,5-i*.3,.3,1,STONE,0,0,.05);
+   for(const sx of [-3.2,3.2])addB('box',base,sx,3.2,5.05,0,0,0,1.2,2.2,.12,hex('#7fb8ff'),1,0,.5);
+   obb(cp.x,cp.z-9,0,4.7,5.2,99);obb(cp.x,cp.z-3,0,1.9,1.9,99);reserve(cp.x,cp.z-9,9);
+   for(const sd of [-1,1]){lampPost(sidePt(cs-12,sd*3.4).x,sidePt(cs-12,sd*3.4).z);lampPost(sidePt(cs-26,sd*3.4).x,sidePt(cs-26,sd*3.4).z)}
+   const a=sidePt(cs-14,-5),b=sidePt(cs-14,5),c1=pole(a.x,a.z,4.6),c2=pole(b.x,b.z,4.6);chain(c1,c2,14,1.1,'bunting',[hex('#ffffff'),hex('#7fb8ff'),hex('#ffd36b')]);
+}
 function buildWorld(){
   buildHeights();buildTerrainMesh(TG);buildWaterMesh(-100,115,ZR-7.8,ZR+7.8,-.55);
   /* ---- encuentros: posiciones y puertas ---- */
@@ -792,28 +1480,30 @@ function buildWorld(){
    COL.push({k:1,cx:bx-2.3-60,cz:ZR,lx:1,lz:0,fx:0,fz:1,a:60,b:6.8,h:99,br:70});
    COL.push({k:1,cx:bx+2.3+60,cz:ZR,lx:1,lz:0,fx:0,fz:1,a:60,b:6.8,h:99,br:70});
   }
+  /* rutas nuevas: su ambiente se arma antes de los árboles para que no crezcan dentro de las casas */
+  if(RUTA){for(let i=0;i<ENC.length;i++)decorarAmbiente(i);capillaFinal();fondoRuta()}
   /* ---- árboles ---- */
-  const nTrees=520;let placed=0,guard=0;
+  const nTrees=AMB.arboles;let placed=0,guard=0;
   while(placed<nTrees&&guard<8000){guard++;
    const x=lerp(-95,105,RNG()),z=lerp(-420,30,RNG()),np=nearPath(x,z);
    if(np.d<6||Math.abs(z-ZR)<9||reserved(x,z,1.5)||nearGate(x,z))continue;
    if(np.d<14&&RNG()<.45)continue;
    const s=.8+RNG()*1.0*(np.d>30?1.4:1);
    const autumn=RNG()<.12?mix3(hex('#d98a2b'),hex('#c0522e'),RNG()):null;
-   tree(x,z,s,RNG()<.55?0:1,autumn);placed++}
+   const tp=AMB.palmas&&RNG()<AMB.palmas?2:(RNG()<.55?0:1);tree(x,z,s,tp,tp===2?null:autumn);placed++}
   /* ---- rocas estáticas, pasto y flores ---- */
   for(let i=0;i<70;i++){const x=lerp(-60,70,RNG()),z=lerp(-400,20,RNG()),np=nearPath(x,z);if(np.d<4||Math.abs(z-ZR)<9||reserved(x,z,1)||nearGate(x,z))continue;
    const s=.5+RNG()*1.6,y=Hs(x,z);addS('sph',x,y+s*.15,z,RNG(),RNG()*6,RNG(),s*1.5,s*.9,s*1.2,mix3(hex('#8d8a82'),hex('#6f6c66'),RNG()),0,0,1,.08);if(np.d<26)circ(x,z,s*.6,99)}
   let gr=0;const GCOL=[hex('#3f8a2e'),hex('#4f9a35'),hex('#2f7a2a'),hex('#6aa83c')];
-  while(gr<9000){const s=RNG()*PTOT,off=(RNG()*2-1)*(8+RNG()*20),p=sidePt(s,off),np=nearPath(p.x,p.z);
-   if(np.d<2.3||Math.abs(p.z-ZR)<8.4||reserved(p.x,p.z,0))continue;
+  while(gr<AMB.pastoN){const s=RNG()*PTOT,off=(RNG()*2-1)*(8+RNG()*20),p=sidePt(s,off),np=nearPath(p.x,p.z);
+   if(np.d<2.3||Math.abs(p.z-ZR)<8.4||reserved(p.x,p.z,0)||(AMB.acera&&np.d<4.6))continue;
    const n=3+(RNG()*3|0),col=GCOL[(RNG()*4)|0];
-   for(let k=0;k<n&&gr<9000;k++){const x=p.x+(RNG()-.5)*.7,z=p.z+(RNG()-.5)*.7,y=Hs(x,z),hh=.22+RNG()*.34;addS('cone5',x,y+hh/2-.02,z,(RNG()-.5)*.3,RNG()*6,(RNG()-.5)*.3,.09,hh,.09,mix3(col,[.5,.7,.3],RNG()*.25),0,1,1,.05);gr++}}
+   for(let k=0;k<n&&gr<AMB.pastoN;k++){const x=p.x+(RNG()-.5)*.7,z=p.z+(RNG()-.5)*.7,y=Hs(x,z),hh=.22+RNG()*.34;addS('cone5',x,y+hh/2-.02,z,(RNG()-.5)*.3,RNG()*6,(RNG()-.5)*.3,.09,hh,.09,mix3(col,[.5,.7,.3],RNG()*.25),0,1,1,.05);gr++}}
   const FC=[hex('#fff6e0'),hex('#ffd54a'),hex('#ff8fb1'),hex('#8cc8ff'),hex('#ffffff')];
-  for(let i=0;i<1400;i++){const sd=RNG()<.5?-1:1,s=RNG()*PTOT,p=sidePt(s,sd*(2.9+RNG()*9)),y=Hs(p.x,p.z);if(Math.abs(p.z-ZR)<8||reserved(p.x,p.z,.5))continue;
+  for(let i=0;i<AMB.flores;i++){const sd=RNG()<.5?-1:1,s=RNG()*PTOT,p=sidePt(s,sd*(2.9+RNG()*9)),y=Hs(p.x,p.z);if(Math.abs(p.z-ZR)<8||reserved(p.x,p.z,.5)||(AMB.acera&&nearPath(p.x,p.z).d<4.6))continue;
    addS('cone',p.x,y+.17,p.z,0,0,0,.05,.34,.05,hex('#3a8a30'),0,.8,1,.05);addS('sph',p.x,y+.36,p.z,0,0,0,.2,.14,.2,FC[(RNG()*5)|0],.25,.8,1,.1)}
-  /* ---- decoración por encuentro ---- */
-  const E=ENC;
+  /* ---- decoración por encuentro (ruta del pueblo) ---- */
+  if(!RUTA){const E=ENC;
   const ps=i=>pathAt(E[i].s);
   { // 0 Anselmo
    const hp=sidePt(E[0].s,12.5*E[0].lado);houseAt(hp.x,hp.z,6.5,5.5,3.1,hex('#f0e2c4'),hex('#a4452c'),[ps(0).x,ps(0).z],{chimney:true});
@@ -848,20 +1538,11 @@ function buildWorld(){
    const ca=sidePt(E[6].s,-6.2);addS('box',ca.x,Hs(ca.x,ca.z)+.04,ca.z,0,ca.psi,0,3.4,.06,2.2,hex('#a33a3a'),0,0,1,.05);
    for(let i=0;i<4;i++){const c=sidePt(E[6].s+4+i*1.1,-6);addS('box',c.x,Hs(c.x,c.z)+.35,c.z,0,i*.5,0,.8,.7,.8,WOOD[i%3],0,0,1,.05);circ(c.x,c.z,.5,.8)}}
   { // 7 Pablito: plaza y capilla final
-   const cs=CHAPEL_S,cp=pathAt(cs),cy=Hs(cp.x,cp.z);
-   const base=M4.trs(new Float32Array(16),cp.x+0,cy,cp.z-9,0,0,0,1,1,1);
-   addB('box',base,0,2.5,0,0,0,0,9,5,10,hex('#f4ecd8'),0,0,.05);addB('pyr',base,0,6.2,0,0,0,0,10.4,2.8,11.4,hex('#a4452c'),0,0,.2);
-   addB('box',base,0,4,6,0,0,0,3.4,8,3.4,hex('#f4ecd8'),0,0,.05);addB('pyr',base,0,9.2,6,0,0,0,4.2,3.6,4.2,hex('#a4452c'),0,0,.2);
-   addB('box',base,0,10.9,6,0,0,0,.16,1.8,.16,hex('#fff2c0'),1.5,0,.5);addB('box',base,0,11.2,6,0,0,0,1,.16,.16,hex('#fff2c0'),1.5,0,.5);
-   addB('box',base,0,1.5,7.75,0,0,0,2.0,3,.2,hex('#3a2a1c'),0,0,.1);addB('box',base,0,1.6,7.7,0,0,0,2.5,3.4,.1,hex('#ffd890'),1.2,0,.3);
-   for(let i=0;i<4;i++)addB('box',base,0,.15+i*.15,8.4+i*.7,0,0,0,5-i*.3,.3,1,STONE,0,0,.05);
-   for(const sx of [-3.2,3.2])addB('box',base,sx,3.2,5.05,0,0,0,1.2,2.2,.12,hex('#7fb8ff'),1,0,.5);
-   obb(cp.x,cp.z-9,0,4.7,5.2,99);obb(cp.x,cp.z-3,0,1.9,1.9,99);reserve(cp.x,cp.z-9,9);
+   capillaFinal();
    // pozo
    const w=sidePt(E[7].s,-8);addS('cyl',w.x,Hs(w.x,w.z)+.5,w.z,0,0,0,1.6,1,1.6,STONE,0,0,1,.05);addS('cyl',w.x,Hs(w.x,w.z)+.9,w.z,0,0,0,1.1,.2,1.1,hex('#1c3a55'),0,0,1,.6);
    for(const sx of [-.9,.9])addS('cyl',w.x+sx,Hs(w.x,w.z)+1.6,w.z,0,0,0,.1,2.2,.1,WOOD[0],0,0,1,.05);addS('pyr',w.x,Hs(w.x,w.z)+3.1,w.z,0,0,0,2.4,1,2.4,hex('#a4452c'),0,0,1,.1);circ(w.x,w.z,1.1,99);reserve(w.x,w.z,2.5);
-   for(const sd of [-1,1]){lampPost(sidePt(cs-12,sd*3.4).x,sidePt(cs-12,sd*3.4).z);lampPost(sidePt(cs-26,sd*3.4).x,sidePt(cs-26,sd*3.4).z)}
-   const a=sidePt(cs-14,-5),b=sidePt(cs-14,5),c1=pole(a.x,a.z,4.6),c2=pole(b.x,b.z,4.6);chain(c1,c2,14,1.1,'bunting',[hex('#ffffff'),hex('#7fb8ff'),hex('#ffd36b')]);
+
    // arco final (donde termina el camino)
   }
   /* molinos de fondo */
@@ -871,11 +1552,12 @@ function buildWorld(){
    const hcols=[hex('#f0e2c4'),hex('#e9c9a6'),hex('#dcd8c8'),hex('#cfe0e8')],rcols=[hex('#a4452c'),hex('#6b4a8c'),hex('#27508f'),hex('#8a5a2a')];
    const y=Hs(p.x,p.z),w=5+RNG()*3,d=5+RNG()*2,h=3+RNG()*.8;
    addS('box',p.x,y+h/2,p.z,0,0,0,w,h,d,hcols[i%4],0,0,1,.05);addS('pyr',p.x,y+h+.8,p.z,0,0,0,w*1.28,1.6,d*1.28,rcols[i%4],0,0,1,.2);addS('box',p.x+w*.3,y+h*.6,p.z+d/2+.02,0,0,0,.8,.7,.05,hex('#ffd890'),1,0,1,.3)}
+  }
   for(const k in ST)ST[k].upload();
   /* rocas empujables y balón */
   for(let i=0;i<9;i++){const sd=RNG()<.5?-1:1,p=sidePt(30+i*38+RNG()*10,sd*(3.2+RNG()*3));const r=.35+RNG()*.3;
    if(Math.abs(p.z-ZR)<9)continue;addBody({x:p.x,y:Hs(p.x,p.z)+r,z:p.z,r,m:20*r,e:.3,mu:2.2,col:mix3(hex('#8d8a82'),hex('#6f6c66'),RNG()),sx:1.25,sy:.8,sz:1.05,kind:'rock'})}
-  const nb=NPCS[4].ball;NPCS[4].ballBody=addBody({x:nb.x,y:Hs(nb.x,nb.z)+.3,z:nb.z,r:.24,m:.45,e:.7,mu:.5,col:hex('#f5f1e6'),sx:1,sy:1,sz:1,kind:'ball'})
+  const nb=NPCS[4]&&NPCS[4].ball;if(nb)NPCS[4].ballBody=addBody({x:nb.x,y:Hs(nb.x,nb.z)+.3,z:nb.z,r:.24,m:.45,e:.7,mu:.5,col:hex('#f5f1e6'),sx:1,sy:1,sz:1,kind:'ball'})
 }
 
 /* ---- cuerpos esféricos ---- */
@@ -961,7 +1643,7 @@ function drawChains(){
 
 /* ================= JUEGO: personajes, cámara, audio, interfaz y lógica ================= */
 const $=id=>document.getElementById(id);
-const CFG={claveGuardado:'camino_misionero_v1',clavePuntosJuma:'juma_puntos_camino_misionero',evento:'juma-puntos'};
+const CFG={claveGuardado:'camino_misionero_v1'+(RUTA?'_r'+RUTA:''),clavePuntosJuma:'juma_puntos_camino_misionero',evento:'juma-puntos'};
 const P=PH;P.yaw=Math.PI;P.grounded=true;P.walk=0;P.speed=0;P.fly=0;P.land=0;P.acc=0;P.emote=0;P.emoteT=0;P.mood=0;
 const S={mode:'menu',enc:0,lives:3,grace:0,lessons:[],done:[],tries:[],chStart:[],curEnc:-1,heart:20,step:0,opts:[],stepPts:0,shake:0,flash:0,
   t:0,wind:0,tod:0,todT:0,cam:{yaw:Math.PI,pitch:.32,dist:6.4,x:0,y:2,z:14,lx:0,ly:1.5,lz:0,shift:0,shiftT:0,fov:.95},
@@ -969,11 +1651,23 @@ const S={mode:'menu',enc:0,lives:3,grace:0,lessons:[],done:[],tries:[],chStart:[
 const isTouch=matchMedia('(pointer:coarse)').matches;
 
 /* ---------- guardado ---------- */
-function save(){try{localStorage.setItem(CFG.claveGuardado,JSON.stringify({gEnc:S.gEnc||[],enc:S.enc,lives:S.lives,grace:S.grace,lessons:S.lessons,done:S.done,tries:S.tries,best:S.best||0,settings:S.settings,pos:S.checkpoint}))}catch(e){}}
+function save(){try{localStorage.setItem('camino_misionero_ajustes',JSON.stringify(S.settings))}catch(e){}
+  /* sin partida empezada solo se guardan los ajustes: así no se borra el avance de la ruta */
+  if(!S.jugando){try{const j=load();if(j){j.settings=S.settings;localStorage.setItem(CFG.claveGuardado,JSON.stringify(j))}}catch(e){}return}
+  try{localStorage.setItem(CFG.claveGuardado,JSON.stringify({gEnc:S.gEnc||[],enc:S.enc,lives:S.lives,grace:S.grace,lessons:S.lessons,done:S.done,tries:S.tries,best:S.best||0,settings:S.settings,pos:S.checkpoint}))}catch(e){}}
 function load(){try{const j=JSON.parse(localStorage.getItem(CFG.claveGuardado)||'null');return j}catch(e){return null}}
+/* Cada ruta guarda su mejor gracia; a JUMA se envía la suma de todas las rutas (nunca baja) */
+function claveRuta(k){return CFG.clavePuntosJuma+'_r'+k}
+function mejorDeRuta(k){try{const v=localStorage.getItem(claveRuta(k));if(v!==null)return +v||0;return k===0?(+localStorage.getItem(CFG.clavePuntosJuma)||0):0}catch(e){return 0}}
 function reportPoints(total){
-  let mx=total;try{mx=Math.max(+localStorage.getItem(CFG.clavePuntosJuma)||0,total);localStorage.setItem(CFG.clavePuntosJuma,String(mx))}catch(e){}
+  let mx=total;try{
+   if(localStorage.getItem(claveRuta(0))===null)localStorage.setItem(claveRuta(0),String(+localStorage.getItem(CFG.clavePuntosJuma)||0));
+   if(total>mejorDeRuta(RUTA))localStorage.setItem(claveRuta(RUTA),String(total));
+   const suma=RUTAS.reduce((a,r,k)=>a+mejorDeRuta(k),0);
+   mx=Math.max(+localStorage.getItem(CFG.clavePuntosJuma)||0,suma);localStorage.setItem(CFG.clavePuntosJuma,String(mx))}catch(e){}
   try{if(window.parent&&window.parent!==window)window.parent.postMessage({tipo:'juma-puntos',juego:'camino',total:mx},location.origin)}catch(e){}}
+function irARuta(k){try{localStorage.setItem('camino_misionero_ruta',String(k))}catch(e){}
+  try{const u=new URL(location.href);u.searchParams.set('ruta',String(k));location.replace(u.toString())}catch(e){location.search='?ruta='+k}}
 function salirApp(){try{save()}catch(e){}try{if(window.parent&&window.parent!==window)window.parent.postMessage({tipo:'juma-cerrar'},location.origin)}catch(e){}}
 
 /* ---------- audio sintético (sin archivos) ---------- */
@@ -1102,6 +1796,31 @@ const NPC_LOOK={
  carmen:{shirt:hex('#3d6b8c'),skirt:hex('#2c4a64'),hair:hex('#5a4030'),hold:1,skin:hex('#e5b48c')},
  abdul:{shirt:hex('#e4d7b0'),pants:hex('#5a4a38'),hair:hex('#1a1210'),cap:hex('#f1ece0'),beard:hex('#1a1210'),skin:hex('#b98558')},
  pablito:{shirt:hex('#ffd36b'),pants:hex('#3a5a8a'),hair:hex('#3a2616'),sc:.62,skin:hex('#e0ac7e')}};
+Object.assign(NPC_LOOK,{
+ valentina:{shirt:hex('#e86fa0'),skirt:hex('#3a4a7a'),hair:hex('#2a1810'),skin:hex('#e0b08a'),sc:.93},
+ diego:{shirt:hex('#3a8ad9'),pants:hex('#2a2f3c'),hair:hex('#1c1410'),cap:hex('#222228'),pack:1,skin:hex('#d9a47a'),sc:.9},
+ kevin:{shirt:hex('#e8452c'),sleeve:hex('#e8452c'),pants:hex('#2a2a30'),hair:hex('#1a1210'),cap:hex('#e8452c'),pack:1,skin:hex('#b98558')},
+ marta:{shirt:hex('#cfe3ef'),skirt:hex('#a9c9dc'),hair:hex('#d9d9d4'),skin:hex('#e5b48c'),sc:.92,staff:1},
+ javier:{shirt:hex('#2f2f36'),pants:hex('#3a4a6b'),hair:hex('#2a1b12'),skin:hex('#e0ac7e')},
+ camila:{shirt:hex('#ffd36b'),skirt:hex('#7a3a8a'),hair:hex('#4a2a18'),hold:1,skin:hex('#d99a72')},
+ saul:{shirt:hex('#f4f4f2'),sleeve:hex('#f4f4f2'),pants:hex('#1f2430'),hair:hex('#1a1210'),book:1,hold:1,skin:hex('#c98a62')},
+ nico:{shirt:hex('#4be3a1'),pants:hex('#3a5a8a'),hair:hex('#1a1210'),cap:hex('#ffd36b'),sc:.66,skin:hex('#b98558')},
+ rafael:{shirt:hex('#c9a04a'),pants:hex('#4a4034'),hair:hex('#2a1810'),cap:hex('#d8c08a'),skin:hex('#c98a62')},
+ eusebio:{shirt:hex('#e8e1cd'),pants:hex('#5a4a38'),hair:hex('#bdbdb5'),beard:hex('#cfcfc8'),cap:hex('#c9a86a'),staff:1,skin:hex('#b98558'),sc:.96},
+ laura:{shirt:hex('#8cc8ff'),skirt:hex('#3a4a7a'),hair:hex('#3a2118'),skin:hex('#e5b48c')},
+ julian:{shirt:hex('#e8845c'),pants:hex('#2f3a4c'),hair:hex('#3a2616'),hold:1,skin:hex('#d9a47a')},
+ jonas:{shirt:hex('#7bc043'),pants:hex('#3a4a6b'),hair:hex('#1c1410'),sc:.82,skin:hex('#d9a47a')},
+ daniela:{shirt:hex('#f1ece0'),skirt:hex('#6b4a8c'),hair:hex('#2a1810'),book:1,scarf:hex('#c4b0e8'),skin:hex('#e0ac7e')},
+ rut:{shirt:hex('#f4f4f2'),skirt:hex('#27508f'),hair:hex('#3a2616'),book:1,hold:1,skin:hex('#c98a62')},
+ chepe:{shirt:hex('#e8453c'),pants:hex('#2a2f3c'),hair:hex('#1a1210'),cap:hex('#c9a86a'),hold:1,skin:hex('#b98558')},
+ aurelio:{shirt:hex('#d8c08a'),pants:hex('#7a5a38'),hair:hex('#d9d9d4'),scarf:hex('#e8453c'),staff:1,skin:hex('#a8744a'),sc:.94},
+ celestina:{shirt:hex('#e8453c'),skirt:hex('#2f6f77'),apron:hex('#f2b134'),hair:hex('#1a1210'),scarf:hex('#ffd36b'),skin:hex('#a8744a'),sc:.93},
+ wilmer:{shirt:hex('#2a2a30'),pants:hex('#3a4a6b'),hair:hex('#1a1210'),cap:hex('#3a9ad9'),skin:hex('#a8744a')},
+ yaneth:{shirt:hex('#f2b134'),skirt:hex('#7a3a5a'),hair:hex('#1a1210'),book:1,glasses:1,skin:hex('#a8744a')},
+ josue:{shirt:hex('#f4f4f2'),sleeve:hex('#f4f4f2'),pants:hex('#1f2430'),hair:hex('#2a1810'),book:1,hold:1,skin:hex('#d9a47a')},
+ abelardo:{shirt:hex('#6d7a5b'),pants:hex('#4a4034'),hair:hex('#9a9a94'),beard:hex('#bdbdb5'),cross:1,skin:hex('#b98558')},
+ mayra:{shirt:hex('#4be3a1'),skirt:hex('#2c4a64'),hair:hex('#1a1210'),skin:hex('#a8744a'),sc:.92},
+ ana:{shirt:hex('#ffd36b'),skirt:hex('#27508f'),hair:hex('#1a1210'),pack:1,cross:1,skin:hex('#a8744a')}});
 
 /* ---------- entrada ---------- */
 addEventListener('keydown',e=>{S.keys[e.code]=true;
@@ -1463,22 +2182,27 @@ function titleScreen(){
   const sv=load();
   S.mode='menu';$('hud').classList.add('hide');$('touch').classList.add('hide');$('dlg').classList.add('hide');
   const hechos=sv&&sv.done?sv.done:[];const capsH=CAPS.map((c,k)=>{const ids=ENC.map((e,i)=>e.cap===k?i:-1).filter(i=>i>=0);const ok=ids.every(i=>hechos[i]);return `<span class="${ok?'ok':''}">${ok?'✓ ':''}${c.n.split(' · ')[1]}</span>`}).join('');
-  let rec=0;try{rec=+localStorage.getItem(CFG.clavePuntosJuma)||0}catch(e){}
-  showScreen('title',`<button id="cerrarT" aria-label="Salir del juego"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="panel title"><div class="sol"><svg width="40" height="56" viewBox="0 0 40 56"><path d="M16 2h8v14h14v8H24v30h-8V24H2v-8h14z" fill="#ffd36b" stroke="#fff3c4" stroke-width="1.5" stroke-linejoin="round"/></svg></div><div class="marca">JUMA · Juventud Misionera Allamaniana</div><h1>Camino del<br>misionero</h1><p class="sub">Aprende a evangelizar escuchando, acompañando y anunciando a Jesús. Tus respuestas deciden hasta dónde llegas.</p>
+  const rec=mejorDeRuta(RUTA);
+  const rutasH=RUTAS.map((r,k)=>{const b=mejorDeRuta(k);let fin=false;try{fin=localStorage.getItem('camino_misionero_fin_r'+k)==='1'}catch(e){}
+   return `<button class="ruta${k===RUTA?' on':''}" data-r="${k}" aria-pressed="${k===RUTA}"><span class="ri" aria-hidden="true">${r.ic}</span><span class="rt"><b>${k+1}. ${r.n}</b><small>${r.amb}</small></span>${fin?'<i class="rf" aria-label="Ruta completada">✓</i>':b?`<i>✦ ${b}</i>`:''}</button>`}).join('');
+  showScreen('title',`<button id="cerrarT" aria-label="Salir del juego"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="panel title"><div class="sol"><svg width="40" height="56" viewBox="0 0 40 56"><path d="M16 2h8v14h14v8H24v30h-8V24H2v-8h14z" fill="#ffd36b" stroke="#fff3c4" stroke-width="1.5" stroke-linejoin="round"/></svg></div><div class="marca">JUMA · Juventud Misionera Allamaniana</div><h1>Camino del<br>misionero</h1><div class="ruta-act">${RUTAS[RUTA].ic} Ruta ${RUTA+1} · ${RUTAS[RUTA].n}</div><p class="sub">Aprende a evangelizar escuchando, acompañando y anunciando a Jesús. Tus respuestas deciden hasta dónde llegas.</p>
+   <div class="rutas" role="group" aria-label="Elige la ruta">${rutasH}</div>
    <div class="caps">${capsH}</div>${rec?`<div class="record">✦ Tu mejor gracia: ${rec}</div>`:''}
    ${sv&&sv.done&&sv.done.some(Boolean)?`<button class="btn big" id="bCont">Continuar el camino</button><button class="btn" id="bNew">Nueva partida</button>`:`<button class="btn big" id="bNew">¡Comenzar el camino!</button>`}
    <div class="row"><button class="btn ghost" id="bHow">Cómo jugar</button><button class="btn ghost" id="bSet">Ajustes</button></div>
    <p class="frase">${CONSEJOS[0]}</p></div>`);
   const go=(cont)=>{AU.init();AU.click();startGame(cont?sv:null)};
   if($('bCont'))$('bCont').addEventListener('click',()=>go(true));$('bNew').addEventListener('click',()=>go(false));$('cerrarT').addEventListener('click',salirApp);
-  $('bHow').addEventListener('click',()=>{AU.init();howScreen('title')});$('bSet').addEventListener('click',()=>{AU.init();settingsScreen('title')})}
+  $('bHow').addEventListener('click',()=>{AU.init();howScreen('title')});$('bSet').addEventListener('click',()=>{AU.init();settingsScreen('title')});
+  document.querySelectorAll('.ruta').forEach(b=>b.addEventListener('click',()=>{const k=+b.dataset.r;AU.init();AU.click();if(k!==RUTA)irARuta(k)}))}
 function howScreen(back){
   showScreen('how',`<div class="panel"><h2>Cómo jugar</h2><ul class="how"><li>🚶 <b>Camina</b> por el camino: ${isTouch?'palanca izquierda para moverte, arrastra la pantalla para girar la cámara':'W A S D o flechas; el ratón con clic arrastrado mueve la cámara; Mayús para correr; Espacio para saltar'}.</li>
    <li>💬 <b>Habla</b> con la persona que brilla (${isTouch?'botón Hablar':'tecla E'}). Elige cómo responderle.</li>
    <li>❤️ Cada respuesta cambia su <b>Corazón</b>. Con <b>70 o más</b> al final, se abre la puerta y avanzas.</li>
    <li>⚠️ Las malas respuestas tienen consecuencias físicas: caen piedras, tablas y truenos. Pierdes Paciencia (♥).</li>
    <li>🌟 Las buenas respuestas liberan <b>orbes de luz</b> que rebotan y vuelan hacia ti.</li>
-   <li>📴 Todo funciona <b>sin internet</b>. Tu avance se guarda solo.</li></ul><button class="btn big" id="bBack">Entendido</button></div>`);
+   <li>🗺️ Hay <b>4 rutas</b> con ambientes distintos: el pueblo, la ciudad (colegio, hospital y parroquia), los campos y caseríos, y la comunidad indígena. Elígela en el menú.</li>
+   <li>📴 Todo funciona <b>sin internet</b>. Tu avance se guarda solo, en cada ruta.</li></ul><button class="btn big" id="bBack">Entendido</button></div>`);
   $('bBack').addEventListener('click',()=>{AU.click();back==='title'?titleScreen():pauseScreen()})}
 function settingsScreen(back){
   const s=S.settings,mk=(k,l,vs)=>`<div class="srow"><span>${l}</span><div class="seg" data-k="${k}">${vs.map(v=>`<button class="${String(s[k])===String(v[0])?'on':''}" data-v="${v[0]}">${v[1]}</button>`).join('')}</div></div>`;
@@ -1497,21 +2221,24 @@ function pause(on){if(on){if(S.mode!=='play')return;S.mode='pause';pauseScreen()
 function endingScreen(){
   S.mode='ending';$('hud').classList.add('hide');$('touch').classList.add('hide');
   const max=ENC.length*300,pct=Math.round(S.grace/max*100),stars=pct>=85?3:pct>=60?2:1;S.best=Math.max(S.best||0,S.grace);save();reportPoints(S.grace);
+  try{localStorage.setItem('camino_misionero_fin_r'+RUTA,'1')}catch(e){}
+  const sig=RUTAS.findIndex((r,k)=>{if(k===RUTA)return false;try{return localStorage.getItem('camino_misionero_fin_r'+k)!=='1'}catch(e){return k>RUTA}});
   const dia=ENC.map((e,i)=>`<li><b>${e.leccion}</b><span>${e.txt}</span></li>`).join('');
   setTimeout(()=>{showScreen('end',`<div class="panel end"><div class="em">⛪</div><h1>¡Misión cumplida!</h1><div class="stars">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
    <p class="sub">Llegaste a la capilla. Evangelizar no es convencer: es compartir con alegría el amor de Jesús, escuchando y caminando con cada persona.</p>
    <div class="fin"><span>✦ Gracia</span><b>${S.grace}</b><small>de ${max} (${pct}%)</small></div>
    <div class="diary"><div class="lt">📖 Lo que aprendiste</div><ul>${dia}</ul></div>
    <p class="q">«Vayan por todo el mundo y anuncien la Buena Noticia» (Mc 16,15)<br>Primero santos, luego misioneros. — San José Allamano</p>
-   <button class="btn big" id="bAgain">Volver a caminar</button><button class="btn ghost" id="bMenu">Menú</button><button class="btn ghost" id="bSal">Salir</button></div>`);$('bSal').addEventListener('click',()=>{try{localStorage.removeItem(CFG.claveGuardado)}catch(e){}salirApp()});
-   $('bAgain').addEventListener('click',()=>{try{localStorage.removeItem(CFG.claveGuardado)}catch(e){}startGame(null)});$('bMenu').addEventListener('click',()=>{try{localStorage.removeItem(CFG.claveGuardado)}catch(e){}titleScreen()})},2400)}
+   ${sig>=0?`<button class="btn big" id="bSig">Siguiente ruta: ${RUTAS[sig].ic} ${RUTAS[sig].n}</button><button class="btn" id="bAgain">Volver a caminar</button>`:'<button class="btn big" id="bAgain">Volver a caminar</button>'}<button class="btn ghost" id="bMenu">Menú</button><button class="btn ghost" id="bSal">Salir</button></div>`);$('bSal').addEventListener('click',()=>{try{localStorage.removeItem(CFG.claveGuardado)}catch(e){}S.jugando=false;salirApp()});
+   if($('bSig'))$('bSig').addEventListener('click',()=>{try{localStorage.removeItem(CFG.claveGuardado)}catch(e){}S.jugando=false;irARuta(sig)});
+   $('bAgain').addEventListener('click',()=>{try{localStorage.removeItem(CFG.claveGuardado)}catch(e){}startGame(null)});$('bMenu').addEventListener('click',()=>{try{localStorage.removeItem(CFG.claveGuardado)}catch(e){}S.jugando=false;titleScreen()})},2400)}
 
 /* ---------- modo clásico (sin WebGL2) ---------- */
 function nextClassic(){if(S.enc>=ENC.length){endingScreen();return}startDialog(S.enc)}
 
 /* ---------- arranque ---------- */
 function startGame(sv){
-  hideScreen();S.mode='play';S.ending=false;
+  hideScreen();S.mode='play';S.ending=false;S.jugando=true;
   S.enc=0;S.lives=3;S.grace=0;S.lessons=[];S.done=ENC.map(()=>false);S.tries=ENC.map(()=>0);S.checkpoint=0;
   S.gEnc=[];if(sv){S.gEnc=sv.gEnc||[];S.enc=sv.enc||0;S.lives=sv.lives||3;S.grace=sv.grace||0;S.lessons=sv.lessons||[];S.done=ENC.map((e,i)=>!!(sv.done&&sv.done[i]));S.tries=ENC.map((e,i)=>(sv.tries&&sv.tries[i])||0);S.best=sv.best||0;S.checkpoint=sv.pos||0}
   S.enc=S.done.findIndex(d=>!d);if(S.enc<0)S.enc=ENC.length;
@@ -1570,7 +2297,8 @@ function frame(ts){
 }
 function boot(){
   const ok=initGL();
-  S.settings=Object.assign(S.settings,(load()||{}).settings||{});
+  let aj=null;try{aj=JSON.parse(localStorage.getItem('camino_misionero_ajustes')||'null')}catch(e){}
+  S.settings=Object.assign(S.settings,aj||(load()||{}).settings||{});
   bindTouch();
   addEventListener('resize',()=>{if(gl)resize()});
   $('bSalir').addEventListener('click',salirApp);
@@ -1583,7 +2311,7 @@ function boot(){
   if(S.classic){document.body.classList.add('classic');S.done=ENC.map(()=>false)}
   titleScreen();$('boot').remove();requestAnimationFrame(frame)}
 addEventListener('load',boot);
-window.__cam={pose(o){S.forzar=o},up:updatePlayer,get S(){return S},get P(){return P},ENC,NPCS,pathAt,G,startDialog,pick,afterFb,finishEnc,closeDialog};
+window.__cam={RUTA,RUTAS,irARuta,pose(o){S.forzar=o},up:updatePlayer,get S(){return S},get P(){return P},ENC,NPCS,pathAt,G,startDialog,pick,afterFb,finishEnc,closeDialog};
 
 
 </script>

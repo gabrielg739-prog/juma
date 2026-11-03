@@ -77,6 +77,19 @@
   .retrato-grande img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .boton { display: block; width: 100%; min-height: 54px; margin-top: 11px; border-radius: 999px; border: 0; font: inherit; font-weight: 900; font-size: 18px; color: #fff; background: linear-gradient(180deg, #6fd14d, #2e8a1f); box-shadow: 0 5px 0 #17521a; cursor: pointer; transition: transform .12s var(--ease); }
   .boton.sec { background: rgba(255, 255, 255, .12); box-shadow: 0 5px 0 rgba(0, 0, 0, .4); border: 2px solid rgba(255, 255, 255, .3); }
+  /* Selector de personaje */
+  .per-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 12px 0 4px; text-align: left; }
+  .per { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 8px 12px; border-radius: 18px; border: 2px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .06); color: #fff; font: inherit; cursor: pointer; text-align: center; }
+  .per[aria-pressed="true"] { border-color: var(--oro); background: rgba(255, 210, 90, .16); box-shadow: 0 0 18px rgba(255, 210, 90, .35); }
+  .per .foto { width: 74px; height: 74px; border-radius: 50%; overflow: hidden; border: 3px solid var(--oro); background: radial-gradient(circle at 50% 35%, #5a3a80, #1a0c2a); display: grid; place-items: center; font-size: 38px; }
+  .per .foto img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; }
+  .per b { font-size: 14px; line-height: 1.15; }
+  .per em { font-style: normal; font-size: 12px; font-weight: 800; color: var(--oro); }
+  .per small { font-size: 11.5px; line-height: 1.3; opacity: .85; }
+  .fila-per { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; font-weight: 800; }
+  .fila-per .foto-mini { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; border: 2px solid var(--oro); display: grid; place-items: center; font-size: 22px; background: #2a1640; }
+  .fila-per .foto-mini img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; }
+  .fila-per button { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, .3); background: rgba(255, 255, 255, .1); color: #fff; cursor: pointer; }
   .boton:active { transform: translateY(3px); }
   .titulo-sec { margin: 14px 0 6px; font: 800 12px system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
   .dific { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
@@ -302,6 +315,7 @@
   <div class="mp-lista" id="mp-lista" hidden></div>
   <div class="capa" id="destello"></div>
 </div>
+<div class="pantalla" id="elegir-per" style="z-index:40" hidden><div class="tarjeta" style="max-width:640px"><h2 style="margin:0">Elige tu personaje</h2><p class="pequeno">Cada uno tiene un poder propio. Con amigos, cada jugador elige el suyo.</p><div class="per-lista" id="per-lista"></div><button class="boton" id="b-per-ok" type="button">CONTINUAR</button><button class="boton sec" id="b-per-volver" type="button">Volver</button></div></div>
 <div class="caido-txt" id="caido" hidden><b>Caíste</b><span id="caido-t">Vuelves a levantarte en 7 s</span></div>
 
 <div class="pantalla" id="menu">
@@ -316,6 +330,7 @@
     <div class="dific" id="m-dific"></div>
     <div class="titulo-sec">Nivel</div>
     <div class="niveles" id="m-niveles"></div>
+    <div class="fila-per" id="m-personaje"></div>
     <button class="boton" id="b-jugar" type="button">COMENZAR</button>
     <div class="fila-botones"><button class="boton sec" id="b-controles" type="button">⚙ CONTROLES</button><button class="boton sec" id="b-amigos" type="button">👥 CON AMIGOS</button></div>
     <p class="pequeno" id="m-mejor"></p>
@@ -1638,12 +1653,13 @@ let oscuridadT = 0, soporT = 0, luzMundo = 1, avisoRos = -10;
 /* Alzar el rosario (como en las noches de terror): los demonios gritan y huyen,
    pero no siempre: depende de la fe, la distancia, el demonio y su furia */
 function actualizarRosario(dt) {
+  poderesPersonaje(dt);
   const quiere = (pulsada('rosario') || alzarRaton || alzarTactil) && J.cambio <= 0 && !(J.feAgotada > 0);
   J.alzado = quiere && J.fe > 0;
   J.alzaK += ((J.alzado ? 1 : 0) - J.alzaK) * Math.min(1, dt * 10);
   J.feAgotada = Math.max(0, (J.feAgotada || 0) - dt);
   if (J.alzado) {
-    J.fe = Math.max(0, J.fe - 18 * dt);
+    J.fe = Math.max(0, J.fe - 18 * dt * ((J.per && J.per.feGasto) || 1));
     if (J.fe <= 0) { J.feAgotada = 2.5; aviso('Tu fe se agotó: baja el rosario y ora'); }
   } else J.fe = Math.min(100, J.fe + (J.feAgotada > 0 ? 4 : 9) * dt);
   if (J.alzaK > 0.7) { J.rosT = (J.rosT || 0) - dt; if (J.rosT <= 0) { J.rosT = 0.4; if (!MP || MP.anfitrion) { fxRed = !!MP; rosarioEspanta(); fxRed = false; } } }
@@ -1658,7 +1674,7 @@ function rosarioEspanta() {
     let da = Math.atan2(dy, dx) - J.a; da = Math.atan2(Math.sin(da), Math.cos(da));
     if (Math.abs(da) > 0.62 || !visible(J.x, J.y, e.x, e.y)) continue;
     const cfg = TIPOS[e.tipo];
-    let pr = cfg.rosario * (0.35 + 0.65 * J.fe / 100) * (d < 2.5 ? 1.15 : d > 5 ? 0.7 : 1) * (e.furia ? 0.55 : 1) * (e.mayor ? 0.7 : 1) * (1 - (e.resiste || 0)) * (oscuridadT > 0 ? 0.8 : 1);
+    let pr = ((J.per && J.per.rosario) || 1) * cfg.rosario * (0.35 + 0.65 * J.fe / 100) * (d < 2.5 ? 1.15 : d > 5 ? 0.7 : 1) * (e.furia ? 0.55 : 1) * (e.mayor ? 0.7 : 1) * (1 - (e.resiste || 0)) * (oscuridadT > 0 ? 0.8 : 1);
     if (rnd() < pr) {
       // Grita, se tapa la cara y huye
       if (e.ilusion) { deshacerIlusion(e); if (tiempoJuego - avisoRos > 1.2) { avisoRos = tiempoJuego; avisoJ('¡Era un espejismo!'); } continue; }
@@ -1695,8 +1711,9 @@ function empujarEnemigos(q) {
     if (d > TIPOS[e.tipo].radio + 1.1) continue;
     let da = Math.atan2(dy, dx) - q.a; da = Math.atan2(Math.sin(da), Math.cos(da));
     if (Math.abs(da) > 0.9) continue;
-    autorGolpe = q.remoto ? q.id : null; herir(e, 2.2); autorGolpe = null;
-    const l = d || 1, f = e.tipo === 'tentador' ? 2 : 7;
+    const emp = (q.per && q.per.empuje) || 1;
+    autorGolpe = q.remoto ? q.id : null; herir(e, 2.2 * emp); autorGolpe = null;
+    const l = d || 1, f = (e.tipo === 'tentador' ? 2 : 7) * emp;
     e.kx = (e.kx || 0) + dx / l * f; e.ky = (e.ky || 0) + dy / l * f;
     if (!e.muerto && e.tipo !== 'tentador') { e.estado = 'dolor'; e.t = 0.55; }
     explotar(e.x, e.y, 'oro', 10, 0.6); alguno = true;
@@ -1714,7 +1731,7 @@ function esquivar(avance, lado) {
 }
 function escudoFe() {
   if (J.feCD > 0 || estado !== 'jugando') return;
-  J.feT = 2.6; J.feCD = 12;
+  J.feT = 2.6 * ((J.per && J.per.escudoT) || 1); J.feCD = 12 * ((J.per && J.per.escudoCD) || 1);
   explotar(J.x, J.y, 'oro', 30, 0.5);
   SND.escudoFe(); aviso('Escudo de la fe'); actualizarBotones();
 }
@@ -1730,7 +1747,7 @@ function actualizarBotones(forzar) {
     const b = $(id); if (!b) return;
     b.style.setProperty('--cd', g + 'deg'); b.classList.toggle('espera', g > 0);
   };
-  pinta('b-esquivar', J.esqCD || 0, 2.2); pinta('b-fe', J.feCD || 0, 12); pinta('b-empujar', J.empCD || 0, 1.3);
+  pinta('b-esquivar', J.esqCD || 0, 2.2); pinta('b-fe', J.feCD || 0, 12 * ((J.per && J.per.escudoCD) || 1)); pinta('b-empujar', J.empCD || 0, 1.3);
   // El rosario muestra cuánto falta para poder alzarlo de nuevo cuando la fe se agota
   pinta('b-rosario', J.feAgotada || 0, 2.5);
 }
@@ -1802,7 +1819,9 @@ let DON = donesDe(0);
 function herir(e, d, sinPuntos) {
   if (e.muerto) return;
   e.invisT = 0;
-  d *= DON.poder;
+  // Poder del personaje de quien golpea (en el juego con amigos, puede ser otro jugador)
+  const autor = MP && autorGolpe && autorGolpe !== MP.miId ? MP.otros.get(autorGolpe) : J;
+  d *= DON.poder * ((autor && autor.per && autor.per.poder) || 1);
   e.vida -= d; e.flash = 0.12; e.golpeT = 0.25;
   explotar(e.x, e.y, 'rojo', e.tipo === 'tentador' ? 5 : 8, 0.55);
   if (d > 4) { const l = Math.hypot(e.x - J.x, e.y - J.y) || 1; e.kx = (e.kx || 0) + (e.x - J.x) / l * 1.5; e.ky = (e.ky || 0) + (e.y - J.y) / l * 1.5; }
@@ -2927,7 +2946,10 @@ function prepararNivel(n, conservar, semilla) {
   else inicio = generarNivel(n);
   const viejo = conservar && J ? J : null;
   DON = donesDe(S.puntos);
+  const per = personajeDe(S.personaje);
+  DON.vel *= per.mod.vel || 1; DON.mun *= per.mod.mun || 1;
   J = nuevoJugador(inicio.cx + 0.5, inicio.cy + 0.5, n);
+  J.per = per.mod; J.personaje = per.id;
   J.vida = DON.vida;
   if (viejo) { J.armas = Array.from(new Set(viejo.armas.concat(J.armas))); J.mun = viejo.mun; J.vida = Math.max(viejo.vida, 60); J.escudo = viejo.escudo; J.arma = viejo.arma; }
   let mejor = 0, md = -1;
@@ -2947,7 +2969,8 @@ function mostrarIntro(n) {
     `<div class="lista">${MP ? `<p>• Juegan juntos: <b>${[MP.red.jugadores.find((j) => j.id === MP.miId)?.nombre || 'Tú'].concat(Array.from(MP.otros.values()).map((q) => q.nombre)).join(', ')}</b>. Si caes, te levantas a los pocos segundos.</p>` : ''}<p>• Vence a <b>${sinPecados}</b> demonios.</p>${c.jefe ? '<p>• Derrota a <b>Lucifer</b>: lanza fuego y llama a otros demonios.</p>' : '<p>• Busca la <b>llave dorada</b> y abre la puerta del Sagrario.</p>'}${c.arma ? `<p>• En este lugar hay un arma nueva escondida.</p>` : ''}</div>` +
     `<button class="boton" type="button" id="b-entrar">ENTRAR</button>`;
   $('intro').hidden = false;
-  $('b-entrar').onclick = () => { $('intro').hidden = true; jugar(); };
+  // Al entrar se pide pantalla completa y horizontal (también en el juego con amigos, donde el nivel lo empieza el anfitrión)
+  $('b-entrar').onclick = () => { pantallaCompleta(); $('intro').hidden = true; jugar(); };
   $('b-saltar-cine').onclick = terminarCine;
 }
 /* Cinemática 3D al empezar cada nivel: la cámara recorre el Sagrario (la meta) y baja hasta los ojos del misionero */
@@ -3255,6 +3278,56 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) pausa
    - Todos generan el mismo lugar con la misma semilla.
    ===================================================================== */
 const COLORES_JUG = ['#ffd25a', '#6fd3ff', '#ff8a8a', '#9dff8a', '#d59bff', '#ffb36b'];
+/* Personajes (los de «Huyendo del pecado»), cada uno con su poder:
+   rosario: el rosario espanta más · feGasto: gasta menos fe · escudoT/escudoCD: escudo de la fe más largo y que vuelve antes
+   poder/empuje: armas y empujón más fuertes · sanar: cura a los compañeros cercanos · vel/mun: velocidad y munición */
+const PERSONAJES = [
+  { id: 'allamano', nombre: 'San José Allamano', corto: 'Allamano', img: 'personajes/allamano-accion.png', poder: 'Rosario del fundador', desc: 'Su rosario espanta más a los pecados y gasta menos fe.', mod: { rosario: 1.4, feGasto: 0.7 } },
+  { id: 'leonella', nombre: 'Beata Leonella Sgorbati', corto: 'Leonella', img: 'personajes/leonella-accion.png', poder: '«Perdono, perdono»', desc: 'Su escudo de la fe dura el doble y vuelve mucho antes.', mod: { escudoT: 2, escudoCD: 0.6 } },
+  { id: 'cafasso', nombre: 'San José Cafasso', corto: 'Cafasso', img: 'personajes/cafasso-accion.png', poder: 'Fuerza del confesor', desc: 'Sus armas pegan un 25 % más y su empujón aparta con el doble de fuerza.', mod: { poder: 1.25, empuje: 2 } },
+  { id: 'irene', nombre: 'Beata Irene Stefani', corto: 'Irene', img: 'personajes/irene-accion.png', poder: 'Nyaatha, madre de misericordia', desc: 'Se cura poco a poco y sana a los compañeros que tiene cerca.', mod: { sanar: 1 } },
+  { id: 'misionero', nombre: 'El misionero', corto: 'Misionero', img: '', emoji: '🎒', poder: 'Mochila de viaje', desc: 'Corre más rápido y recoge un 40 % más de munición.', mod: { vel: 1.12, mun: 1.4 } }
+];
+const personajeDe = (id) => PERSONAJES.find((p) => p.id === id) || PERSONAJES[0];
+const fotoPer = (pe) => (pe.img ? `<img src="${pe.img}" alt="">` : pe.emoji);
+let alElegirPer = null, perElegido = null;
+function abrirElegirPersonaje(seguir) {
+  alElegirPer = seguir; perElegido = S.personaje || 'allamano';
+  pintarElegirPer();
+  $('elegir-per').hidden = false;
+}
+function pintarElegirPer() {
+  $('per-lista').innerHTML = PERSONAJES.map((pe) => `<button class="per" type="button" data-per="${pe.id}" aria-pressed="${pe.id === perElegido}"><span class="foto">${fotoPer(pe)}</span><b>${pe.nombre}</b><em>${pe.poder}</em><small>${pe.desc}</small></button>`).join('');
+}
+$('per-lista').addEventListener('click', (e) => { const b = e.target.closest('[data-per]'); if (!b) return; perElegido = b.dataset.per; pintarElegirPer(); });
+$('b-per-ok').addEventListener('click', () => {
+  S.personaje = perElegido; guardar(); $('elegir-per').hidden = true; pintarPersonajeMenu();
+  if (MP && MP.red) MP.red.ponerDatos({ personaje: S.personaje });
+  const f = alElegirPer; alElegirPer = null; if (f) f();
+});
+$('b-per-volver').addEventListener('click', () => { $('elegir-per').hidden = true; alElegirPer = null; });
+function pintarPersonajeMenu() {
+  const pe = personajeDe(S.personaje);
+  $('m-personaje').innerHTML = `<span class="foto-mini">${fotoPer(pe)}</span><span>${pe.corto} · ${pe.poder}</span><button type="button" id="b-per">Cambiar</button>`;
+  $('b-per').onclick = () => abrirElegirPersonaje(null);
+  const cara = document.querySelector('.cara img');
+  if (cara) { if (pe.img) { cara.src = pe.img; cara.style.objectPosition = '50% 10%'; } else { cara.src = 'cuadros/cap2-allamano.jpg'; cara.style.objectPosition = ''; } cara.alt = pe.nombre; }
+}
+/* Poderes que actúan cada cuadro (por ahora, la sanación de Irene) */
+let sanarT = 0;
+function poderesPersonaje(dt) {
+  if (!J || J.remoto || J.caido || estado !== 'jugando' || !(J.per && J.per.sanar)) return;
+  sanarT -= dt;
+  if (sanarT > 0) return;
+  sanarT = 1;
+  if (J.vida < DON.vida) { J.vida = Math.min(DON.vida, J.vida + 1.5); actualizarHud(); }
+  if (MP) for (const q of MP.otros.values()) {
+    if (q.vivo && Math.hypot(q.x - J.x, q.y - J.y) < 3.6) {
+      MP.red.enviar({ t: 'cura', v: 3 }, { a: q.id });
+      explotar(q.x, q.y, 'oro', 4, 0.6);
+    }
+  }
+}
 const ESTADOS_E = ['dormido', 'caza', 'dolor', 'repelido', 'drenando', 'preparando', 'embestida', 'muerto'];
 const ESPECIALES_E = [null, 'baba', 'salto', 'temblor', 'robo', 'teletransporte', 'sopor', 'sombra', 'meteoros', 'espinas', 'drenar', 'tinieblas', 'encanto', 'ilusiones', 'enjambre', 'vomito'];
 const SND_RED = ['disparoEnemigo', 'gruñido', 'dolor', 'grito', 'baba', 'temblor', 'robo', 'teletransporte'];
@@ -3324,19 +3397,34 @@ function etiquetaNombre(txt, color) {
   sp.scale.set(0.5, 0.125, 1); sp.position.y = 1.0;
   return sp;
 }
-function crearFigura(color, nombre) {
+const ROPA_PER = {
+  allamano: { ropa: 0x17141c, pelo: 0xd8d4cc },
+  cafasso: { ropa: 0x17141c, pelo: 0x2a1d16, sobrepelliz: true },
+  leonella: { ropa: 0x75808f, pelo: 0x6c7786, velo: true },
+  irene: { ropa: 0xf2ecdf, pelo: 0xf7f4ec, velo: true, sombrero: true },
+  misionero: { ropa: 0x8a744a, pelo: 0x3a2a1e, sombrero: true, mochila: true }
+};
+function crearFigura(color, nombre, perId) {
   const g = new THREE.Group();
   const col = new THREE.Color(color);
-  const negro = new THREE.MeshStandardMaterial({ color: 0x17141c, roughness: 0.85 });
+  const R = ROPA_PER[perId] || ROPA_PER.allamano;
+  const negro = new THREE.MeshStandardMaterial({ color: R.ropa, roughness: 0.85 });
   const piel = new THREE.MeshStandardMaterial({ color: 0xd9b08c, roughness: 0.7 });
   const brillo = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.9, roughness: 0.4 });
   const oro = new THREE.MeshStandardMaterial({ color: 0xffe08a, emissive: 0xffc94a, emissiveIntensity: 1.6, roughness: 0.3, metalness: 0.4 });
-  const pelo = new THREE.MeshStandardMaterial({ color: 0xd8d4cc, roughness: 0.9 });
+  const pelo = new THREE.MeshStandardMaterial({ color: R.pelo, roughness: 0.9 });
   const madera = new THREE.MeshStandardMaterial({ color: 0x6a4424, roughness: 0.8 });
+  const extra = new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.8 });
+  const paja = new THREE.MeshStandardMaterial({ color: perId === 'misionero' ? 0x6a4a2a : 0xd9b56a, roughness: 0.85 });
+  // Detalles de cada personaje: sobrepelliz, velo, sombrero y mochila
+  if (R.sobrepelliz) { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.19, 0.24, 12), extra); m.position.y = 0.46; g.add(m); }
+  if (R.velo) { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.16, 0.3, 12, 1, true), pelo); m.position.set(0, 0.6, -0.02); g.add(m); }
+  if (R.sombrero) { const ala = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.015, 18), paja); ala.position.y = 0.79; g.add(ala); const copa = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.09, 0.07, 14), paja); copa.position.y = 0.83; g.add(copa); }
+  if (R.mochila) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.24, 0.1), madera); m.position.set(0, 0.5, -0.16); g.add(m); }
   const plata = new THREE.MeshStandardMaterial({ color: 0xcfd8e0, roughness: 0.3, metalness: 0.8 });
   for (const [geo, mat] of [[GEO_FIG.sotana, negro], [GEO_FIG.capa, negro], [GEO_FIG.cinto, brillo], [GEO_FIG.cabeza, piel], [GEO_FIG.pelo, pelo], [GEO_FIG.aureola, oro], [GEO_FIG.vara, madera], [GEO_FIG.bola, plata]]) g.add(new THREE.Mesh(geo, mat));
   g.add(etiquetaNombre(nombre, color));
-  g.userData.mats = [negro, piel, brillo, oro, pelo, madera, plata];
+  g.userData.mats = [negro, piel, brillo, oro, pelo, madera, plata, extra, paja];
   escena3.add(g);
   return g;
 }
@@ -3348,7 +3436,8 @@ function quitarFigura(q) {
   q.figura = null;
 }
 function nuevoOtro(j) {
-  return { id: j.id, nombre: j.nombre, color: j.color, remoto: true, x: 0, y: 0, a: 0, pitch: 0, tx: 0, ty: 0, ta: 0, vida: 100, vivo: false, en: false, caido: false, fe: 100, al: false, feT: 0, invulT: 0, alzaK: 0, arma: 'hisopo', rosT: 0, vx: 0, vy: 0, sacudida: 0, lento: 0, mun: {}, armas: [], paso: 0, visto: 0, figura: crearFigura(j.color, j.nombre) };
+  const pe = personajeDe(j.personaje);
+  return { per: pe.mod, personaje: pe.id, id: j.id, nombre: j.nombre, color: j.color, remoto: true, x: 0, y: 0, a: 0, pitch: 0, tx: 0, ty: 0, ta: 0, vida: 100, vivo: false, en: false, caido: false, fe: 100, al: false, feT: 0, invulT: 0, alzaK: 0, arma: 'hisopo', rosT: 0, vx: 0, vy: 0, sacudida: 0, lento: 0, mun: {}, armas: [], paso: 0, visto: 0, figura: crearFigura(j.color, j.nombre, pe.id) };
 }
 function actualizarFiguras(dt) {
   for (const q of MP.otros.values()) {
@@ -3375,7 +3464,9 @@ function abrirAmigos() {
     juego: 'luz', titulo: 'Luz contra el pecado · con amigos', acento: '#ffd25a', max: 4,
     textoEmpezar: 'EMPEZAR LA MISIÓN', textoEspera: 'Esperando a que el anfitrión empiece la misión…',
     opciones: (el) => pintarOpcionesMP(el),
-    alEmpezar: () => empezarMP(nivelElegido, false),
+    datos: { personaje: S.personaje || 'allamano' },
+    detalle: (j) => personajeDe(j.datos && j.datos.personaje).corto,
+    alEmpezar: () => { pantallaCompleta(); empezarMP(nivelElegido, false); },
     alSalir: () => terminarMP()
   });
   const red = sala.red;
@@ -3392,7 +3483,7 @@ function pintarOpcionesMP(el) {
 }
 function empezarMP(n, conservar) {
   if (!MP || !MP.anfitrion) return;
-  const jugadores = MP.red.jugadores.map((j, i) => ({ id: j.id, nombre: j.nombre, color: COLORES_JUG[i % COLORES_JUG.length] }));
+  const jugadores = MP.red.jugadores.map((j, i) => ({ id: j.id, nombre: j.nombre, color: COLORES_JUG[i % COLORES_JUG.length], personaje: (j.datos && j.datos.personaje) || 'allamano' }));
   const m = { t: 'nivel', n, semilla: (Math.random() * 2147483647) | 0, dif: S.dificultad, jugadores, conservar: !!conservar };
   MP.red.abrirEntrada(false);
   MP.red.enviar(m);
@@ -3527,7 +3618,7 @@ function pasoRed(dt) {
   if (MP.listaT <= 0) {
     MP.listaT = 0.25;
     const yo = MP.red.jugadores.find((j) => j.id === MP.miId);
-    $('mp-lista').innerHTML = [`<div class="${J.caido ? 'caido' : ''}"><i style="background:#fff"></i>${(yo && yo.nombre) || 'Tú'} (tú)<em>${Math.ceil(J.vida)}</em></div>`].concat(Array.from(MP.otros.values()).map((q) => `<div class="${q.caido ? 'caido' : ''}"><i style="background:${q.color}"></i>${q.nombre}<em>${q.en ? Math.ceil(q.vida) : '…'}</em></div>`)).join('');
+    $('mp-lista').innerHTML = [`<div class="${J.caido ? 'caido' : ''}"><i style="background:#fff"></i>${(yo && yo.nombre) || 'Tú'} (tú) · ${personajeDe(S.personaje).corto}<em>${Math.ceil(J.vida)}</em></div>`].concat(Array.from(MP.otros.values()).map((q) => `<div class="${q.caido ? 'caido' : ''}"><i style="background:${q.color}"></i>${q.nombre} · ${personajeDe(q.personaje).corto}<em>${q.en ? Math.ceil(q.vida) : '…'}</em></div>`)).join('');
   }
 }
 /* Los invitados solo siguen a los demonios que mueve el anfitrión */
@@ -3633,6 +3724,12 @@ function alMensajeMP(m, de) {
       JS.vibrar([30, 40, 60]);
       break;
     }
+    case 'cura':
+      if (estado === 'jugando' && !J.caido && J.vida < DON.vida) {
+        J.vida = Math.min(DON.vida, J.vida + (m.v || 3)); curaT = Math.max(curaT, 0.25); actualizarHud();
+        const q = MP.otros.get(de); if (q && (!q.avisoCura || performance.now() - q.avisoCura > 8000)) { q.avisoCura = performance.now(); aviso(q.nombre + ' te está curando'); }
+      }
+      break;
     case 'tinieblas': oscuridadT = 5.5; J.sacudida = Math.max(J.sacudida, 0.5); break;
     case 'aviso': if (estado === 'jugando') aviso(m.txt); break;
     case 'p': if (!MP.anfitrion) proyectiles.push(proyectilDeRed(m.b)); break;
@@ -3650,7 +3747,8 @@ function alMensajeMP(m, de) {
     case 'sala': if (!MP.anfitrion) volverSalaMP(); break;
   }
 }
-$('b-amigos').addEventListener('click', abrirAmigos);
+$('b-amigos').addEventListener('click', () => abrirElegirPersonaje(abrirAmigos));
+pintarPersonajeMenu();
 
 /* ---------- Controles táctiles: lugar y tamaño de cada botón ---------- */
 // Centro de cada botón medido desde la esquina inferior derecha, diámetro, letra e icono (en px, a escala 1)

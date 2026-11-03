@@ -3478,7 +3478,7 @@ function renderJuegosView() {
     <div class="lib-grid">
       <article class="lib-card">
         <div class="lib-cover con-img" style="--bk:#1F4FB0;background-image:url(juegos/portadas/camino.jpg)" role="img" aria-label="Portada de Camino del misionero"><b>Camino del misionero</b></div>
-        <div class="lib-info"><h2>Camino del misionero</h2><small>Aventura en 3D · ¡Nuevo!</small><p>Recorre un pueblo en 3D y conversa con ocho personas: un anciano viudo, una madre preocupada, un biólogo, un joven, una hermana de otra iglesia y más. Tus respuestas abren el camino: aprende a evangelizar escuchando, acompañando y anunciando a Jesús.</p>
+        <div class="lib-info"><h2>Camino del misionero</h2><small>Aventura en 3D · 4 rutas · ¡Nuevo!</small><p>Recorre en 3D el pueblo, la ciudad (colegio, hospital y parroquia), los campos y caseríos, y una comunidad indígena. Conversa con 32 personas sobre la vida de los jóvenes de hoy, el noviazgo, las tareas, la santidad sin presiones, el servicio en la Iglesia, las heridas causadas por malos sacerdotes y el diálogo con hermanos evangélicos. Tus respuestas abren el camino.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/camino-del-misionero.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
