@@ -3483,7 +3483,7 @@ function renderJuegosView() {
       </article>
       <article class="lib-card">
         <div class="lib-cover con-img" style="--bk:#6A3A10;background-image:url(juegos/portadas/sacristan.jpg)" role="img" aria-label="Portada de Sacristán"><b>Sacristán</b></div>
-        <div class="lib-info"><h2>Sacristán</h2><small>La Misa y la misión</small><p>Elige el color litúrgico, prepara el altar y sirve en cada momento de la Misa en una iglesia en 3D, mientras ves al sacerdote celebrar. Incluye la Misa de hoy según el calendario litúrgico, rangos de monaguillo a maestro de ceremonias y la misión al salir.</p>
+        <div class="lib-info"><h2>Sacristán</h2><small>La Misa y la misión · 20 Misas · rol de monaguillo</small><p>Elige el color litúrgico, prepara el altar y sirve en cada momento de la Misa en una iglesia en 3D. Hay 20 Misas: con el obispo (visita pastoral, Misa crismal, confirmaciones y la catedral), Semana Santa, Corpus Christi, la Consolata y San José Allamano. En el modo «Rol de monaguillo» tú decides qué hacer: procesión, incienso, mitra y báculo.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/sacristan.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
@@ -3508,7 +3508,7 @@ function renderJuegosView() {
       </article>
       <article class="lib-card">
         <div class="lib-cover con-img" style="--bk:#2A1640;background-image:url(juegos/portadas/luz.jpg)" role="img" aria-label="Portada de Luz contra el pecado"><b>Luz contra el pecado</b></div>
-        <div class="lib-info"><h2>Luz contra el pecado</h2><small>Acción en primera persona · San José Allamano · con amigos</small><p>Veintinueve lugares oscuros en dos partes, cuatro armas de la fe y los siete pecados capitales, hasta la batalla final contra Lucifer. Juega solo o con tus amigos en la misma wifi, en horizontal y con los controles a tu medida.</p>
+        <div class="lib-info"><h2>Luz contra el pecado</h2><small>Acción en primera persona · San José Allamano · con amigos</small><p>Veintinueve lugares oscuros en dos partes, cuatro armas de la fe y los siete pecados capitales, hasta la batalla final contra Lucifer. Elige tu personaje (Allamano, Leonella, Cafasso, Irene o el misionero), cada uno con su poder, y juega solo o con tus amigos, en horizontal y con los controles a tu medida.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/luz-contra-el-pecado.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
@@ -3523,7 +3523,7 @@ function renderJuegosView() {
       </article>
       <article class="lib-card">
         <div class="lib-cover con-img" style="--bk:#3A1F5A;background-image:url(juegos/portadas/granpremio.jpg)" role="img" aria-label="Portada de Gran Premio de la Fe"><b>Gran Premio de la Fe</b></div>
-        <div class="lib-info"><h2>Gran Premio de la Fe</h2><small>Carreras en 3D · poderes · santos al volante · con amigos · ¡Nuevo!</small><p>Corre con San José Allamano, Irene Stefani, Leonella, José Cafasso, Don Bosco, San Pablo, Francisco Javier o Teresa de Ávila en kart, papamóvil, furgoneta misionera o moto. Recoge las cajas de gracia y lanza agua bendita, la paloma o la campanilla; protégete con el rosario y brilla con la estrella de Belén. Gana las tres copas o corre con tus amigos en la misma wifi.</p>
+        <div class="lib-info"><h2>Gran Premio de la Fe</h2><small>Carreras en 3D · poderes · santos al volante · con amigos · ¡Nuevo!</small><p>Corre con San José Allamano, Irene Stefani, Leonella, José Cafasso, Don Bosco, San Pablo, Francisco Javier o Teresa de Ávila en kart, papamóvil, furgoneta misionera o moto. Recoge las cajas de gracia y lanza agua bendita, la paloma o la campanilla; protégete con el rosario y brilla con la estrella de Belén. En el teléfono, en horizontal, gira con el joystick y usa los botones de acelerar, frenar y lanzar poderes. Gana las tres copas o corre con tus amigos.</p>
         <button type="button" class="btn btn-primary btn-sm" data-jugar-juego="juegos/gran-premio-de-la-fe.html">${ic('gamepad')}Jugar</button></div>
       </article>
       <article class="lib-card">
@@ -3542,7 +3542,7 @@ function abrirJuego(url) {
   const r = document.createElement('div');
   r.id = 'lib-reader';
   r.setAttribute('role', 'dialog'); r.setAttribute('aria-modal', 'true'); r.setAttribute('aria-label', 'Juego');
-  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=123" allow="fullscreen; camera"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
+  r.innerHTML = `<iframe title="Juego" src="${esc(url)}?v=124" allow="fullscreen; camera"></iframe><button type="button" class="lib-salir" aria-label="Salir del juego">✕</button>`;
   document.body.appendChild(r);
   /* Botón Atrás del teléfono: cierra el juego en vez de salir de la app */
   try { history.pushState({ jumaJuego: 1 }, ''); } catch (e) {}

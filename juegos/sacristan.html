@@ -39,6 +39,16 @@
   .misa .color { width: 46px; height: 46px; border-radius: 12px; flex: 0 0 auto; box-shadow: inset 0 3px 0 rgba(255, 255, 255, .3), inset 0 -4px 0 rgba(0, 0, 0, .25); display: grid; place-items: center; }
   .misa b { display: block; font-size: 16px; }
   .misa small { display: block; font-size: 12.5px; opacity: .78; line-height: 1.3; }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(0, 0, 0, .3); border: 1px solid rgba(255, 255, 255, .14); }
+  .tabs button { height: 42px; border-radius: 999px; font-weight: 900; font-size: 14.5px; color: #fff; background: transparent; transition: background .2s, color .2s; }
+  .tabs button.on { background: linear-gradient(180deg, #ffe08a, #e8b830); color: #3a2000; box-shadow: 0 3px 0 #a87a10; }
+  .misa .color svg { width: 34px; height: 34px; }
+  .misa.rol .color { background: linear-gradient(160deg, #7a3a12, #3a1806); }
+  .rol-intro { font-size: 13.5px; line-height: 1.45; opacity: .9; text-align: center; margin: 2px 6px; }
+  .explica { margin-top: 10px; font-size: 14.5px; line-height: 1.45; max-width: 40ch; background: rgba(255, 246, 224, .96); color: var(--tinta); border-radius: 16px; padding: 10px 14px; font-weight: 600; animation: entra .35s var(--resorte); }
+  .explica b { color: #8a3a10; }
+  .seguir { margin-top: 10px; width: 100%; height: 50px; border-radius: 999px; font-size: 17px; font-weight: 900; color: #fff; background: linear-gradient(180deg, #62c943, #3a9a22); box-shadow: 0 4px 0 #2e7d20; }
+  .seguir:active { transform: translateY(3px); box-shadow: 0 1px 0 #2e7d20; }
   .misa .est { margin-left: auto; color: var(--oro); font-size: 16px; letter-spacing: 2px; white-space: nowrap; }
   @keyframes entra { from { transform: translateY(18px) scale(.95); opacity: 0; } }
   .btn-sec { height: 46px; border-radius: 999px; padding: 0 18px; font-weight: 800; background: rgba(255, 255, 255, .1); border: 2px solid rgba(255, 255, 255, .22); }
@@ -179,7 +189,7 @@
 
   <section class="vista" id="v-menu">
     <div class="titulo"><span class="a">Sacristán</span><span class="b">Sirve en la Misa · sal a la misión</span></div>
-    <p style="text-align:center;font-size:14px;line-height:1.45;margin:8px 6px 0;opacity:.9">Prepara el altar, ayuda al sacerdote en cada momento de la Misa y, al final, sal a la misión. Cada Misa es más rápida y difícil.</p>
+    <p style="text-align:center;font-size:14px;line-height:1.45;margin:8px 6px 0;opacity:.9">Prepara el altar, ayuda al sacerdote en cada momento de la Misa y, al final, sal a la misión. Hay 20 Misas, algunas con el obispo, y un modo para hacer de monaguillo.</p>
     <div class="rango" id="rango"></div>
     <div class="lista-misas" id="lista-misas"></div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:6px"><button class="btn-sec" id="btn-misal" type="button">Mi misal: lo aprendido</button></div>
@@ -240,6 +250,9 @@ const ICONO = {
   cirio: '<rect x="24" y="16" width="16" height="40" rx="2" fill="#fffbea" stroke="#d8d0b8"/><path d="M32 2c6 6 6 10 0 14-6-4-6-8 0-14z" fill="url(#gl)"/><path d="M32 24v16M26 30h12" stroke="#c0262f" stroke-width="2.4"/><text x="32" y="50" font-size="7" text-anchor="middle" fill="#c98f12" font-weight="900">A Ω</text>',
   baculo: '<path d="M30 20h4v42h-4z" fill="url(#go)"/><path d="M32 22c-10 0-14-6-14-11S22 2 30 2s10 6 10 10-4 6-8 5" fill="none" stroke="url(#go)" stroke-width="4" stroke-linecap="round"/>',
   mitra: '<path d="M14 54l4-34 14-16 14 16 4 34z" fill="#fff" stroke="#c9a040" stroke-width="1.6"/><path d="M32 4v50M20 30h24" stroke="url(#go)" stroke-width="3"/><path d="M24 54l-2 8M40 54l2 8" stroke="#c9a040" stroke-width="3"/>',
+  oleos: '<rect x="8" y="22" width="14" height="28" rx="4" fill="url(#gp)" stroke="#7a8090" stroke-width="1.3"/><rect x="25" y="16" width="14" height="34" rx="4" fill="url(#go)" stroke="#7a4a08" stroke-width="1.3"/><rect x="42" y="22" width="14" height="28" rx="4" fill="url(#gp)" stroke="#7a8090" stroke-width="1.3"/><rect x="10" y="18" width="10" height="5" rx="1" fill="url(#go)"/><rect x="27" y="11" width="10" height="6" rx="1" fill="url(#go)"/><rect x="44" y="18" width="10" height="5" rx="1" fill="url(#go)"/><text x="15" y="40" font-size="7" text-anchor="middle" fill="#3a3a4a" font-weight="900">OI</text><text x="32" y="38" font-size="7" text-anchor="middle" fill="#5a2a00" font-weight="900">SC</text><text x="49" y="40" font-size="7" text-anchor="middle" fill="#3a3a4a" font-weight="900">OC</text>',
+  acetre: '<path d="M10 26h28l-3 24H13z" fill="url(#gp)" stroke="#7a8090" stroke-width="1.4"/><path d="M10 26c0-10 28-10 28 0" fill="none" stroke="#7a8090" stroke-width="2"/><ellipse cx="24" cy="26" rx="14" ry="3" fill="#b8e0ff"/><path d="M42 52L54 14" stroke="url(#go)" stroke-width="3.2" stroke-linecap="round"/><circle cx="55" cy="12" r="5.5" fill="url(#gp)" stroke="#7a8090"/><path d="M48 7l-3-3M56 3l1-3M61 9l3-1" stroke="#7ac0ff" stroke-width="1.8" stroke-linecap="round"/>',
+  custodia: '<path d="M32.0 6.5L32.0 1.0M38.7 7.8L40.0 4.6M44.4 11.6L48.3 7.7M48.2 17.3L51.4 16.0M49.5 24.0L55.0 24.0M48.2 30.7L51.4 32.0M44.4 36.4L48.3 40.3M25.3 40.2L24.0 43.4M38.7 40.2L40.0 43.4M19.6 36.4L15.7 40.3M15.8 30.7L12.6 32.0M14.5 24.0L9.0 24.0M15.8 17.3L12.6 16.0M19.6 11.6L15.7 7.7M25.3 7.8L24.0 4.6" stroke="#e8b830" stroke-width="2.4" stroke-linecap="round"/><circle cx="32" cy="24" r="17" fill="url(#go)" stroke="#7a4a08" stroke-width="1.2"/><circle cx="32" cy="24" r="8.5" fill="#fffbea" stroke="#d8c890" stroke-width="1.4"/><path d="M32 20v8M28 24h8" stroke="#e0c890" stroke-width="1.2"/><path d="M30 41h4v10h-4z" fill="url(#go)"/><ellipse cx="32" cy="54" rx="12" ry="4" fill="url(#go)" stroke="#7a4a08"/>',
   // Objetos que NO van en el altar
   celular: '<rect x="20" y="6" width="24" height="50" rx="4" fill="#2a2a34" stroke="#0a0a10" stroke-width="1.4"/><rect x="23" y="11" width="18" height="36" rx="1" fill="#4ac0ff"/><circle cx="32" cy="52" r="2" fill="#666"/>',
   balon: '<circle cx="32" cy="32" r="22" fill="#fff" stroke="#222" stroke-width="1.5"/><path d="M32 20l8 6-3 10H27l-3-10z" fill="#222"/><path d="M32 20v-9M40 26l9-3M37 36l6 8M27 36l-6 8M24 26l-9-3" stroke="#222" stroke-width="1.5"/>',
@@ -253,7 +266,7 @@ const ICONO = {
   silencio: '<circle cx="32" cy="30" r="18" fill="#f0c8a0" stroke="#8a5a3a" stroke-width="1.4"/><path d="M32 36v20" stroke="#f0c8a0" stroke-width="8" stroke-linecap="round"/><path d="M26 26h4M34 26h4" stroke="#3a2010" stroke-width="2" stroke-linecap="round"/><path d="M29 36h6" stroke="#8a3a2a" stroke-width="2"/><path d="M32 30v14" stroke="#8a5a3a" stroke-width="3" stroke-linecap="round"/>'
 };
 const svg = (id) => '<svg viewBox="0 0 64 64">' + DEF + (ICONO[id] || '') + '</svg>';
-const NOMBRE = { caliz: 'Cáliz', patena: 'Patena', corporal: 'Corporal', purificador: 'Purificador', vinajeras: 'Vinajeras', misal: 'Misal', leccionario: 'Leccionario', velas: 'Velas', crucifijo: 'Crucifijo', campanilla: 'Campanilla', jarra: 'Jarra y toalla', incensario: 'Incensario', copon: 'Copón', cruzalta: 'Cruz alta', cirio: 'Cirio pascual', baculo: 'Báculo', mitra: 'Mitra', celular: 'Celular', balon: 'Balón', refresco: 'Refresco', gorra: 'Gorra', rezar: 'Rezar', cantar: 'Cantar', paz: 'Dar la paz', mision: 'Salir a la misión', silencio: 'Escuchar en silencio' };
+const NOMBRE = { caliz: 'Cáliz', patena: 'Patena', corporal: 'Corporal', purificador: 'Purificador', vinajeras: 'Vinajeras', misal: 'Misal', leccionario: 'Leccionario', velas: 'Velas', crucifijo: 'Crucifijo', campanilla: 'Campanilla', jarra: 'Jarra y toalla', incensario: 'Incensario', copon: 'Copón', cruzalta: 'Cruz alta', cirio: 'Cirio pascual', baculo: 'Báculo', mitra: 'Mitra', oleos: 'Santos óleos', acetre: 'Acetre e hisopo', custodia: 'Custodia', celular: 'Celular', balon: 'Balón', refresco: 'Refresco', gorra: 'Gorra', rezar: 'Rezar', cantar: 'Cantar', paz: 'Dar la paz', mision: 'Salir a la misión', silencio: 'Escuchar en silencio' };
 const SIGNIFICA = {
   caliz: 'Copa donde el vino se convierte en la Sangre de Cristo.', patena: 'Plato dorado donde se pone la hostia grande que el sacerdote consagra.', corporal: 'Lienzo blanco que se extiende sobre el altar; sobre él se ponen el cáliz y la patena.',
   purificador: 'Paño blanco para limpiar el cáliz después de la comunión.', vinajeras: 'Jarritas con el agua y el vino que se llevan al altar en el ofertorio.', misal: 'Libro con las oraciones que el sacerdote reza en el altar.',
@@ -261,10 +274,13 @@ const SIGNIFICA = {
   campanilla: 'Se toca en la consagración para que todos adoren a Jesús presente.', jarra: 'Para el lavatorio de las manos: el sacerdote pide a Dios un corazón limpio.', incensario: 'El humo del incienso es nuestra oración que sube a Dios.',
   copon: 'Recipiente con las hostias para la comunión de los fieles.', cruzalta: 'Abre la procesión: seguimos a Cristo.', cirio: 'El cirio pascual es Cristo resucitado, luz que vence la oscuridad.',
   baculo: 'Bastón del obispo: es pastor que guía al pueblo de Dios.', mitra: 'Sombrero del obispo, sucesor de los apóstoles.',
+  oleos: 'Óleo de los enfermos, de los catecúmenos y santo crisma. El obispo los bendice en la Misa crismal y se usan en los sacramentos.',
+  acetre: 'Recipiente con agua bendita y el hisopo para rociar al pueblo: nos recuerda nuestro bautismo.',
+  custodia: 'Pieza dorada donde se pone la Hostia consagrada para adorar a Jesús y llevarlo en procesión.',
   celular: 'En la Misa se apaga: es tiempo de estar con Dios.', balon: 'Para jugar después de Misa, no en el altar.', refresco: 'No va en el altar: antes de comulgar se guarda una hora de ayuno.', gorra: 'En el templo los hombres se quitan la gorra por respeto.'
 };
 // Dónde va cada objeto
-const LUGAR = { corporal: 'altar', caliz: 'altar', patena: 'altar', misal: 'altar', velas: 'altar', crucifijo: 'altar', leccionario: 'ambon', vinajeras: 'credencia', purificador: 'credencia', jarra: 'credencia', campanilla: 'credencia', copon: 'credencia', incensario: 'credencia', cirio: 'ambon', cruzalta: 'credencia', baculo: 'credencia', mitra: 'credencia' };
+const LUGAR = { corporal: 'altar', caliz: 'altar', patena: 'altar', misal: 'altar', velas: 'altar', crucifijo: 'altar', leccionario: 'ambon', vinajeras: 'credencia', purificador: 'credencia', jarra: 'credencia', campanilla: 'credencia', copon: 'credencia', incensario: 'credencia', cirio: 'ambon', cruzalta: 'credencia', baculo: 'credencia', mitra: 'credencia', oleos: 'credencia', acetre: 'credencia', custodia: 'credencia' };
 const DISTRACTORES = ['celular', 'balon', 'refresco', 'gorra'];
 
 /* ---------- Las Misas (niveles) ---------- */
@@ -279,38 +295,84 @@ const MISAS = [
   { n: 'Misa de Cuaresma', s: 'Tiempo de conversión', color: 'morado', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'copon'], dis: 3, t: 50, tm: 6, gloria: false, aleluya: false },
   { n: 'Domingo de Pascua', s: '¡Cristo resucitó!', color: 'blanco', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'cirio', 'vinajeras', 'jarra', 'campanilla', 'incensario', 'copon'], dis: 3, t: 52, tm: 5.5, gloria: true, aleluya: true, solemne: true, pascua: true },
   { n: 'Pentecostés', s: 'Ven, Espíritu Santo', color: 'rojo', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'incensario', 'copon', 'purificador'], dis: 4, t: 50, tm: 5, gloria: true, aleluya: true, solemne: true },
-  { n: 'Misa con el obispo', s: 'Confirmaciones', color: 'blanco', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'incensario', 'copon', 'purificador', 'baculo', 'mitra', 'cruzalta'], dis: 4, t: 55, tm: 4.6, gloria: true, aleluya: true, solemne: true, obispo: true },
-  { n: 'Misa de envío misionero', s: 'Id y anunciad', color: 'rojo', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'incensario', 'copon', 'purificador', 'cruzalta'], dis: 4, t: 46, tm: 4.2, gloria: true, aleluya: true, solemne: true, envio: true }
+  { n: 'Misa con el obispo', s: 'Confirmaciones', color: 'blanco', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'incensario', 'copon', 'purificador', 'baculo', 'mitra', 'cruzalta'], dis: 4, t: 55, tm: 4.6, gloria: true, aleluya: true, solemne: true, obispo: true, confirma: true },
+  { n: 'Misa de envío misionero', s: 'Id y anunciad', color: 'rojo', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'incensario', 'copon', 'purificador', 'cruzalta'], dis: 4, t: 46, tm: 4.2, gloria: true, aleluya: true, solemne: true, envio: true },
+  { n: 'Primeras Comuniones', s: 'Los niños reciben a Jesús', color: 'blanco', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'copon', 'purificador'], dis: 3, t: 50, tm: 4.3, gloria: true, aleluya: true, primera: true,
+    pq: [['¿A quién reciben los niños en su Primera Comunión?', ['A Jesús, en su Cuerpo y su Sangre', 'Un pan bendecido', 'Un regalo de la parroquia'], 1]] },
+  { n: 'Visita del obispo', s: 'Visita pastoral a la parroquia', color: 'verde', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'copon', 'purificador', 'incensario', 'cruzalta', 'baculo', 'mitra'], dis: 4, t: 54, tm: 4.2, gloria: true, aleluya: true, solemne: true, obispo: true },
+  { n: 'Jueves Santo', s: 'Misa de la Cena del Señor', color: 'blanco', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'copon', 'purificador', 'incensario'], dis: 4, t: 50, tm: 4.1, gloria: true, aleluya: false, solemne: true, jueves: true,
+    pq: [['¿Qué instituyó Jesús en la Última Cena?', ['La Eucaristía y el sacerdocio', 'El Bautismo', 'La Navidad'], 2]] },
+  { n: 'Misa crismal', s: 'El obispo bendice los santos óleos', color: 'blanco', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'copon', 'purificador', 'incensario', 'cruzalta', 'baculo', 'mitra', 'oleos'], dis: 4, t: 56, tm: 4.0, gloria: true, aleluya: false, solemne: true, obispo: true, crismal: true,
+    pq: [['¿En qué sacramentos se usa el santo crisma?', ['Bautismo, Confirmación y Orden sacerdotal', 'Solo en las bodas', 'En ninguno'], 2]] },
+  { n: 'Vigilia Pascual', s: 'La noche santa', color: 'blanco', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'copon', 'purificador', 'incensario', 'cirio', 'acetre'], dis: 4, t: 52, tm: 4.0, gloria: true, aleluya: true, solemne: true, pascua: true, vigilia: true,
+    pq: [['¿Cuál es la celebración más importante de todo el año?', ['La Vigilia Pascual', 'La Navidad', 'El cumpleaños del párroco'], 2]] },
+  { n: 'Confirmaciones en el campo', s: 'El obispo unge con el santo crisma', color: 'rojo', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'copon', 'purificador', 'incensario', 'cruzalta', 'baculo', 'mitra', 'oleos'], dis: 4, t: 54, tm: 3.9, gloria: true, aleluya: true, solemne: true, obispo: true, confirma: true, crisma: true },
+  { n: 'Misa de exequias', s: 'Rezamos por un difunto', color: 'morado', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'copon', 'purificador', 'incensario', 'cirio', 'acetre'], dis: 4, t: 50, tm: 3.9, gloria: false, aleluya: true, exequias: true,
+    pq: [['¿Qué recuerda el cirio pascual junto al féretro?', ['Que Cristo resucitado es nuestra esperanza de vida eterna', 'Que se fue la luz', 'Que es de noche'], 1]] },
+  { n: 'Solemnidad de la Consolata', s: '20 de junio · nuestra Madre', color: 'blanco', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'copon', 'purificador', 'incensario', 'cruzalta'], dis: 4, t: 50, tm: 3.8, gloria: true, aleluya: true, solemne: true,
+    pq: [['¿Qué significa «Consolata»?', ['La que consuela', 'La que corona', 'La que canta'], 1], ['¿En qué ciudad está el santuario de la Consolata?', ['Turín, en Italia', 'Roma', 'Madrid'], 2]] },
+  { n: 'San José Allamano', s: '16 de febrero · nuestro fundador', color: 'blanco', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'copon', 'purificador', 'incensario'], dis: 4, t: 48, tm: 3.8, gloria: true, aleluya: true,
+    pq: [['¿Qué fundó San José Allamano?', ['Los Misioneros y las Misioneras de la Consolata', 'Una escuela de música', 'Un equipo de fútbol'], 2], ['¿Cuál era su consejo más famoso?', ['Primero santos, luego misioneros', 'Rápido y sin pensar', 'Cada uno a lo suyo'], 1]] },
+  { n: 'Corpus Christi', s: 'Procesión con el Santísimo', color: 'blanco', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'copon', 'purificador', 'incensario', 'cruzalta', 'custodia'], dis: 4, t: 52, tm: 3.7, gloria: true, aleluya: true, solemne: true, corpus: true,
+    pq: [['¿Qué celebramos en el Corpus Christi?', ['Que Jesús está realmente presente en la Eucaristía', 'La creación del mundo', 'El nacimiento de María'], 1]] },
+  { n: 'Domund con el obispo', s: 'Envío de misioneros', color: 'verde', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'copon', 'purificador', 'incensario', 'cruzalta', 'baculo', 'mitra'], dis: 4, t: 50, tm: 3.6, gloria: true, aleluya: true, solemne: true, obispo: true, envio: true, domund: true,
+    pq: [['¿Qué es el Domund?', ['El Domingo Mundial de las Misiones', 'Un concurso de coros', 'Una fiesta del deporte'], 1]] },
+  { n: 'Misa pontifical en la catedral', s: 'El obispo preside desde su cátedra', color: 'blanco', obj: ['corporal', 'caliz', 'patena', 'misal', 'velas', 'crucifijo', 'leccionario', 'vinajeras', 'jarra', 'campanilla', 'copon', 'purificador', 'incensario', 'cruzalta', 'baculo', 'mitra', 'cirio', 'acetre'], dis: 4, t: 58, tm: 3.5, gloria: true, aleluya: true, solemne: true, obispo: true, catedral: true,
+    pq: [['¿Por qué se llama «catedral» la iglesia del obispo?', ['Porque allí está su cátedra, su sede', 'Porque es la más grande', 'Porque tiene campanas'], 2]] }
 ];
 // Momentos de la Misa: sección, nombre, qué significa y qué hace el acólito
 function momentosDe(M) {
   const L = [];
   const m = (sec, n, que, accion, extra) => L.push(Object.assign({ sec, n, que, accion }, extra || {}));
-  m(0, 'Procesión de entrada', 'El sacerdote y los acólitos entran al templo mientras cantamos. ' + (M.solemne ? 'Abre la procesión la cruz alta.' : 'El pueblo se pone de pie.'), M.solemne ? 'cruzalta' : 'cantar');
+  if (M.vigilia) {
+    m(0, 'Bendición del fuego', 'La iglesia está a oscuras. Se bendice el fuego nuevo y se enciende el cirio pascual: Cristo es la luz que vence la noche.', 'cirio');
+    m(0, 'Pregón pascual', 'Con las velas encendidas, se canta el gran anuncio de la Pascua. Lo escuchamos de pie y en silencio.', 'silencio');
+  } else if (M.exequias) {
+    m(0, 'Recibimiento del difunto', 'El sacerdote recibe el féretro a la entrada y lo rocía con agua bendita, recordando su bautismo.', 'acetre');
+  } else m(0, 'Procesión de entrada', 'El sacerdote y los acólitos entran al templo mientras cantamos. ' + (M.obispo ? 'Abre la procesión la cruz alta; al final camina el obispo con mitra y báculo.' : M.solemne ? 'Abre la procesión la cruz alta.' : 'El pueblo se pone de pie.'), M.solemne ? 'cruzalta' : 'cantar');
   m(0, 'Saludo', '«En el nombre del Padre, y del Hijo, y del Espíritu Santo.» Empezamos con la señal de la cruz.', 'rezar');
-  m(0, 'Acto penitencial', 'Pedimos perdón a Dios por nuestros pecados para celebrar con el corazón limpio: «Señor, ten piedad».', 'rezar');
-  if (M.gloria) m(0, 'Gloria', 'Himno de alabanza que cantaron los ángeles en Belén: «Gloria a Dios en el cielo».' + (M.pascua ? ' ¡En Pascua suenan todas las campanas!' : ''), M.pascua ? 'campanilla' : 'cantar');
+  if (!M.vigilia) m(0, 'Acto penitencial', 'Pedimos perdón a Dios por nuestros pecados para celebrar con el corazón limpio: «Señor, ten piedad».', 'rezar');
+  if (M.gloria) m(0, 'Gloria', 'Himno de alabanza que cantaron los ángeles en Belén: «Gloria a Dios en el cielo».' + (M.pascua ? ' ¡En Pascua suenan todas las campanas!' : M.jueves ? ' Suenan las campanas y luego callan hasta la Vigilia Pascual.' : ''), M.pascua || M.jueves ? 'campanilla' : 'cantar');
+  else if (M.exequias) L.push({ sec: 0, n: 'Después del perdón…', que: 'En una Misa de difuntos, ¿se canta el Gloria?', pregunta: ['No: en las exequias no se canta el Gloria', 'Sí, siempre se canta', 'Solo si hay coro'], bien: 0 });
   else L.push({ sec: 0, n: 'Después del perdón…', que: 'En ' + (M.color === 'morado' ? 'este tiempo' : 'esta Misa') + ' de conversión, ¿se canta el Gloria?', pregunta: ['No: en Adviento y Cuaresma se omite el Gloria', 'Sí, siempre se canta', 'Solo lo canta el sacerdote'], bien: 0 });
+  if (M.obispo) L.push({ sec: 0, n: 'El obispo deja la mitra', que: 'Para rezar, el obispo se quita la mitra. El acólito de la mitra la recibe con las manos cubiertas por un paño llamado vimpa.', accion: 'mitra' });
   m(0, 'Oración colecta', 'El sacerdote «recoge» las intenciones de todos en una oración. El acólito le sostiene el misal.', 'misal');
-  m(1, 'Primera lectura', 'Escuchamos la Palabra de Dios, casi siempre del Antiguo Testamento.', 'silencio');
+  m(1, 'Primera lectura', M.vigilia ? 'Esta noche se leen varias lecturas del Antiguo Testamento: la creación, Abrahán, el paso del mar Rojo y los profetas.' : 'Escuchamos la Palabra de Dios, casi siempre del Antiguo Testamento.', 'silencio');
   m(1, 'Salmo', 'Respondemos a Dios con un canto de los Salmos, la oración de Jesús y de su pueblo.', 'cantar');
-  if (M.aleluya) m(1, 'Aleluya', '«Aleluya» significa «¡Alaben a Dios!». Nos ponemos de pie para recibir el Evangelio.' + (M.solemne ? ' Se inciensa el libro.' : ''), M.solemne ? 'incensario' : 'cantar');
-  else L.push({ sec: 1, n: 'Antes del Evangelio', que: 'En Cuaresma, ¿qué se canta antes del Evangelio?', pregunta: ['Un versículo de alabanza, sin «Aleluya»', 'El Aleluya, como siempre', 'El Gloria'], bien: 0 });
+  if (M.aleluya) m(1, 'Aleluya', '«Aleluya» significa «¡Alaben a Dios!». Nos ponemos de pie para recibir el Evangelio.' + (M.vigilia ? ' ¡Esta noche vuelve a cantarse después de toda la Cuaresma!' : M.solemne ? ' Se inciensa el libro.' : ''), M.solemne ? 'incensario' : 'cantar');
+  else L.push({ sec: 1, n: 'Antes del Evangelio', que: (M.jueves ? 'El Jueves Santo' : M.crismal ? 'En la Misa crismal de Semana Santa' : 'En Cuaresma') + ', ¿qué se canta antes del Evangelio?', pregunta: ['Un versículo de alabanza, sin «Aleluya»', 'El Aleluya, como siempre', 'El Gloria'], bien: 0 });
+  if (M.obispo) L.push({ sec: 1, n: 'El obispo toma el báculo', que: 'El obispo escucha el Evangelio de pie y sin mitra, sosteniendo el báculo de pastor.', accion: 'baculo' });
   m(1, 'Evangelio', 'Jesús mismo nos habla. Lo escuchamos de pie y hacemos tres cruces: en la frente, la boca y el corazón.', 'silencio');
-  m(1, 'Homilía', 'El sacerdote explica la Palabra para vivirla en la semana.', 'silencio');
-  m(1, 'Credo', 'Proclamamos juntos lo que creemos: «Creo en un solo Dios…».', 'rezar');
+  m(1, 'Homilía', M.obispo ? 'El obispo, sucesor de los apóstoles, explica la Palabra. En la catedral suele predicar desde su cátedra.' : 'El sacerdote explica la Palabra para vivirla en la semana.', 'silencio');
+  if (M.jueves) m(1, 'Lavatorio de los pies', 'Como Jesús en la Última Cena, el sacerdote lava los pies a algunos fieles: amar es servir.', 'jarra');
+  if (M.vigilia) m(1, 'Liturgia bautismal', 'Renovamos las promesas del bautismo y el sacerdote rocía a todos con el agua bendecida esta noche.', 'acetre');
+  if (M.crismal) m(1, 'Renovación de las promesas sacerdotales', 'Los sacerdotes renuevan ante el obispo las promesas de su ordenación, y el pueblo reza por ellos.', 'rezar');
+  if (!M.vigilia && !M.jueves && !M.exequias && !M.crismal) m(1, 'Credo', 'Proclamamos juntos lo que creemos: «Creo en un solo Dios…».', 'rezar');
   m(1, 'Oración de los fieles', 'Pedimos por la Iglesia, el mundo, los enfermos y las misiones: «Te rogamos, óyenos».', 'rezar');
-  if (M.obispo) L.push({ sec: 1, n: 'Confirmación', que: 'El obispo confirma a los jóvenes. ¿Qué le lleva el acólito para guiar al pueblo como pastor?', accion: 'baculo' });
+  if (M.confirma) L.push(M.crisma
+    ? { sec: 1, n: 'Confirmación', que: 'El obispo unge la frente de cada joven con el santo crisma y le pide que reciba el don del Espíritu Santo. ¿Qué le acerca el acólito?', accion: 'oleos' }
+    : { sec: 1, n: 'Confirmación', que: 'El obispo confirma a los jóvenes. ¿Qué le lleva el acólito para guiar al pueblo como pastor?', accion: 'baculo' });
   m(2, 'Ofertorio', 'Se presentan el pan y el vino, fruto de la tierra y del trabajo. El acólito lleva las vinajeras al altar.', 'vinajeras');
   m(2, 'Lavatorio de manos', 'El sacerdote se lava las manos y reza: «Lava del todo mi delito, Señor».', 'jarra');
   m(2, 'Santo', 'Cantamos con los ángeles: «Santo, Santo, Santo es el Señor».', 'cantar');
-  m(2, 'Consagración', 'Por las palabras de Jesús y la fuerza del Espíritu, el pan y el vino se convierten en el Cuerpo y la Sangre de Cristo. ¡Es el momento más importante!', 'campanilla', { consagra: true });
+  m(2, 'Consagración', 'Por las palabras de Jesús y la fuerza del Espíritu, el pan y el vino se convierten en el Cuerpo y la Sangre de Cristo. ¡Es el momento más importante!' + (M.jueves ? ' Hoy las campanillas callan: adoramos en profundo silencio.' : ''), M.jueves ? 'silencio' : 'campanilla', { consagra: true });
   m(2, 'Padre nuestro', 'Rezamos juntos la oración que nos enseñó Jesús.', 'rezar');
   m(2, 'Rito de la paz', '«La paz del Señor esté siempre con ustedes.» Nos damos la paz como hermanos.', 'paz');
   m(2, 'Cordero de Dios', '«Cordero de Dios, que quitas el pecado del mundo, ten piedad de nosotros.»', 'rezar');
-  m(2, 'Comunión', 'Recibimos a Jesús. Se responde «Amén» al «El Cuerpo de Cristo». El acólito acerca el copón.', 'copon');
+  m(2, 'Comunión', M.primera ? 'Hoy muchos niños reciben a Jesús por primera vez. Responden «Amén» al «El Cuerpo de Cristo». El acólito acerca el copón.' : 'Recibimos a Jesús. Se responde «Amén» al «El Cuerpo de Cristo». El acólito acerca el copón.', 'copon');
   m(2, 'Purificación', 'El sacerdote purifica el cáliz con agua y lo seca con el purificador.', 'purificador');
-  m(3, 'Bendición final', 'Dios nos bendice para la semana: «La bendición de Dios todopoderoso…».', 'rezar');
+  if (M.crismal) m(2, 'Bendición de los santos óleos', 'El obispo bendice el óleo de los enfermos y el de los catecúmenos, y consagra el santo crisma. Se llevarán a todas las parroquias de la diócesis.', 'oleos');
+  if (M.corpus) {
+    m(2, 'Exposición del Santísimo', 'Se pone la Hostia consagrada en la custodia para llevar a Jesús en procesión.', 'custodia');
+    m(3, 'Procesión eucarística', 'Jesús sale a las calles. El turiferario va delante incensando y el pueblo canta y adora.', 'incensario');
+    m(3, 'Bendición con el Santísimo', 'Al final, el sacerdote bendice al pueblo con Jesús en la custodia. Suena la campanilla y todos adoran de rodillas.', 'campanilla');
+    return L;
+  }
+  if (M.jueves) { m(3, 'Traslado del Santísimo', 'Hoy no hay bendición final: el Santísimo se lleva en procesión, con incienso, al lugar de la reserva. Allí lo adoramos en silencio.', 'incensario'); return L; }
+  if (M.exequias) { m(3, 'Última recomendación', 'Despedimos al difunto con esperanza: el sacerdote lo inciensa y lo encomienda a Dios.', 'incensario'); return L; }
+  if (M.domund) m(3, 'Entrega de la cruz misionera', 'El obispo entrega una cruz a los misioneros que parten: llevarán a Jesús a otros pueblos.', 'cruzalta');
+  if (M.obispo) m(3, 'Bendición del obispo', 'El obispo recibe la mitra y el báculo y nos da la bendición solemne.', 'mitra');
+  else if (!M.corpus) m(3, 'Bendición final', 'Dios nos bendice para la semana: «La bendición de Dios todopoderoso…».', 'rezar');
   m(3, 'Envío', '«Pueden ir en paz.» La Misa no termina: ¡empieza la misión! Llevamos a Jesús a los demás.', 'mision');
   return L;
 }
@@ -356,6 +418,16 @@ const PREGUNTAS = [
   ['¿Cómo escuchamos el Evangelio?', ['De pie', 'Sentados', 'De rodillas'], 1],
   ['¿Cómo está la asamblea durante la consagración?', ['De rodillas, adorando', 'Sentada', 'Caminando'], 1],
   ['¿Cómo escuchamos la homilía y las primeras lecturas?', ['Sentados', 'De rodillas', 'Caminando'], 1]
+];
+// Preguntas cuando celebra el obispo
+const PREGUNTAS_OBISPO = [
+  ['¿De quién es sucesor el obispo?', ['De los apóstoles', 'De los reyes', 'De los profetas'], 1],
+  ['¿Qué es la cátedra?', ['La sede del obispo en su catedral: signo de que enseña y guía', 'Una clase del colegio', 'El lugar del coro'], 2],
+  ['¿Qué lleva el obispo colgado en el pecho?', ['Una cruz pectoral', 'Una medalla de fútbol', 'Un silbato'], 1],
+  ['¿Qué significa el anillo del obispo?', ['Su fidelidad a la Iglesia, a la que sirve como esposa de Cristo', 'Que es rico', 'Que ganó un concurso'], 2],
+  ['¿Quién puede ordenar a un nuevo sacerdote?', ['Solo un obispo', 'Cualquier sacerdote', 'El sacristán'], 2],
+  ['¿Cómo se llama el territorio que guía un obispo?', ['Diócesis', 'Parroquia', 'Municipio'], 1],
+  ['¿De qué color es el solideo de un obispo?', ['Morado', 'Blanco', 'Verde'], 2]
 ];
 // Rangos del servidor del altar
 const RANGOS = [{ n: 'Monaguillo', p: 0 }, { n: 'Acólito', p: 2500 }, { n: 'Turiferario', p: 7000 }, { n: 'Sacristán', p: 15000 }, { n: 'Maestro de ceremonias', p: 30000 }];
@@ -432,12 +504,25 @@ function pintarMenu() {
   const yaHoy = S.hoy === CLAVE_HOY;
   const fechaTxt = HOY.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' });
   const hoyHtml = `<button type="button" class="misa hoy" data-hoy="1" style="--d:0ms"><span class="etiqueta">${yaHoy ? 'HECHA' : 'PUNTOS ×2'}</span><span class="color" style="background:${COLORES[TL.color][0]}">⛪</span><span><b>Misa de hoy</b><small>${fechaTxt} · ${TL.n} · color ${COLORES[TL.color][1].toLowerCase()}${TL.domund != null ? (TL.domund === 0 ? ' · ¡Hoy es el Domund, día de las misiones!' : ' · El Domund es en ' + TL.domund + (TL.domund === 1 ? ' día' : ' días')) : ''}</small></span></button>`;
-  $('lista-misas').innerHTML = hoyHtml + MISAS.map((m, i) => {
+  const modo = S.modo === 'rol' ? 'rol' : 'misas';
+  const tabs = `<div class="tabs" role="tablist" aria-label="Modo de juego"><button type="button" role="tab" data-tab="misas" aria-selected="${modo === 'misas'}" class="${modo === 'misas' ? 'on' : ''}">⛪ Misas</button><button type="button" role="tab" data-tab="rol" aria-selected="${modo === 'rol'}" class="${modo === 'rol' ? 'on' : ''}">🙋 Rol de monaguillo</button></div>`;
+  if (modo === 'rol') {
+    $('lista-misas').innerHTML = tabs + '<p class="rol-intro">Tú eres el monaguillo: decide qué hacer en cada momento, desde que llegas a la parroquia hasta que todo queda en orden.</p>' + ROLES.map((r, i) => {
+      const est = (S.roles || {})[i] || 0, bloq = i > (S.maxRol || 0);
+      return `<button type="button" class="misa rol" data-rol="${i}" ${bloq ? 'disabled' : ''} style="--d:${i * 50}ms"><span class="color">${bloq ? '🔒' : svg(r.icono)}</span><span><b>${i + 1}. ${esc(r.n)}</b><small>${esc(r.s)} · ${r.escenas.length} momentos</small></span><span class="est">${est ? '★'.repeat(est) : ''}</span></button>`;
+    }).join('');
+    return;
+  }
+  $('lista-misas').innerHTML = tabs + hoyHtml + MISAS.map((m, i) => {
     const est = S.misas[i] || 0, bloq = i > S.max;
     return `<button type="button" class="misa" data-m="${i}" ${bloq ? 'disabled' : ''} style="--d:${i * 50}ms"><span class="color" style="background:${COLORES[m.color][0]}">${bloq ? '🔒' : ''}</span><span><b>${i + 1}. ${m.n}</b><small>${m.s} · color ${COLORES[m.color][1].toLowerCase()}</small></span><span class="est">${est ? '★'.repeat(est) : ''}</span></button>`;
   }).join('');
 }
 $('lista-misas').addEventListener('click', (e) => {
+  const tb = e.target.closest('[data-tab]');
+  if (tb) { S.modo = tb.dataset.tab; guardar(); JS.ctx(); SND.toque(); pintarMenu(); return; }
+  const rb = e.target.closest('[data-rol]');
+  if (rb) { if (rb.disabled) return; JS.ctx(); SND.toque(); empezarRol(Number(rb.dataset.rol)); return; }
   if (e.target.closest('[data-hoy]')) { JS.ctx(); SND.toque(); empezar(Math.min(TL.base, Math.max(S.max, 0)), true); return; }
   const b = e.target.closest('[data-m]'); if (!b || b.disabled) return; JS.ctx(); SND.toque(); empezar(Number(b.dataset.m));
 });
@@ -453,7 +538,7 @@ $('btn-misal').onclick = () => {
 /* ---------- Fase 1: preparar el altar ---------- */
 function empezar(i, hoy) {
   quitar3D();
-  nM = i; esHoy = !!hoy; M = MISAS[i];
+  nM = i; esHoy = !!hoy; M = MISAS[i]; modoRol = false;
   if (esHoy) M = Object.assign({}, MISAS[TL.base], { n: 'Misa de hoy', s: TL.n, color: TL.color, tm: Math.max(4.5, MISAS[TL.base].tm - 0.5) });
   puntos = 0; vidas = 3; racha = 0; aprendidos = new Set(); angel = false; $('angel').hidden = true; ayudas = 1 + Math.min(2, rangoDe(S.total || 0));
   pintarVidas(); $('p-puntos').textContent = '0';
@@ -504,7 +589,7 @@ function faseAltar() {
   if (window.Presb3D) {
     try {
       $('escena').innerHTML = '<div class="zona" data-zona="altar"><span class="rot">Altar</span></div><div class="zona" data-zona="ambon"><span class="rot">Ambón</span></div><div class="zona" data-zona="credencia"><span class="rot">Credencia</span></div>';
-      P3 = window.Presb3D.crear($('escena'), { vacio: true, cirio: !!M.pascua, color: COLORES[M.color][0], solemne: !!M.solemne, sotana: SOTANAS[rangoDe(S.total || 0)] });
+      P3 = window.Presb3D.crear($('escena'), { vacio: true, cirio: !!M.pascua, color: COLORES[M.color][0], solemne: !!M.solemne, sotana: SOTANAS[rangoDe(S.total || 0)], obispo: !!M.obispo });
       const zonas = () => { if (!P3 || $('v-altar').hidden) return; const z = P3.zonasPantalla(); for (const el of document.querySelectorAll('#escena .zona')) { const r = z[el.dataset.zona]; el.style.left = r.x + 'px'; el.style.top = r.y + 'px'; el.style.width = r.w + 'px'; el.style.height = r.h + 'px'; } requestAnimationFrame(zonas); };
       requestAnimationFrame(zonas);
     } catch (e) { P3 = null; }
@@ -561,7 +646,7 @@ const soltar = (e) => {
   const lugar = z.dataset.zona;
   if (LUGAR[d.k] === lugar) {
     racha++; SND.poner(); sumar(20 + racha * 5, z);
-    if (P3) P3.poner(d.k); else z.insertAdjacentHTML('beforeend', `<span class="puesto" title="${NOMBRE[d.k]}">${svg(d.k)}</span>`);
+    if (!(P3 && P3.poner(d.k))) z.insertAdjacentHTML('beforeend', `<span class="puesto" title="${NOMBRE[d.k]}">${svg(d.k)}</span>`);
     d.o.remove(); aprender(d.k); faltan--;
     if (faltan <= 0) { clearInterval(timer); const bono = Math.round(tAltar - (performance.now() / 1000) % 1); SND.bien(6); aviso('¡Altar listo!'); sumar(80, $('escena')); setTimeout(faseMisa, 1200); }
   } else {
@@ -578,7 +663,7 @@ function aviso(t) { $('a-sub').textContent = t; }
 
 /* ---------- Fase 2: servir durante la Misa ---------- */
 let momentos = [], iMom = 0, tIni = 0, tLim = 0, respondido = false, imprevistos = new Set();
-const ACCIONES = ['rezar', 'cantar', 'silencio', 'paz', 'campanilla', 'vinajeras', 'jarra', 'copon', 'misal', 'purificador', 'incensario', 'cruzalta', 'mision', 'baculo'];
+const ACCIONES = ['rezar', 'cantar', 'silencio', 'paz', 'campanilla', 'vinajeras', 'jarra', 'copon', 'misal', 'purificador', 'incensario', 'cruzalta', 'mision', 'baculo', 'mitra', 'oleos', 'acetre', 'custodia', 'cirio'];
 // Dibuja el presbiterio: retablo, Sagrario, altar con velas, ambón, el sacerdote y el acólito
 let P3 = null;
 const SOTANAS = ['#c0262f', '#c0262f', '#1a1a2a', '#6a2aa0', '#1a1a2a'];
@@ -588,7 +673,7 @@ function escenaMisa() {
   if (window.Presb3D) {
     try {
       $('presb').innerHTML = ''; $('presb').className = 'presb';
-      P3 = window.Presb3D.crear($('presb'), { color: COLORES[M.color][0], solemne: !!M.solemne, sotana: SOTANAS[rangoDe(S.total || 0)], cirio: !!M.pascua });
+      P3 = window.Presb3D.crear($('presb'), { color: COLORES[M.color][0], solemne: !!M.solemne, sotana: SOTANAS[rangoDe(S.total || 0)], cirio: !!M.pascua, obispo: !!M.obispo });
       return;
     } catch (e) { P3 = null; }
   }
@@ -693,7 +778,8 @@ function faseMisa() {
   else escenaMisa();
   momentos = momentosDe(M); iMom = 0;
   // Preguntas extra al azar (más en las Misas difíciles)
-  const extra = barajar(PREGUNTAS).slice(0, 1 + Math.min(3, Math.floor(nM / 2)));
+  const banco = M.obispo ? barajar(PREGUNTAS_OBISPO).slice(0, 2).concat(barajar(PREGUNTAS)) : barajar(PREGUNTAS);
+  const extra = (M.pq || []).concat(banco.slice(0, 1 + Math.min(3, Math.floor(nM / 2)) - Math.min(1, (M.pq || []).length)));
   for (const q of extra) { const pos = 2 + Math.floor(rnd() * (momentos.length - 4)); momentos.splice(pos, 0, { sec: momentos[pos].sec, n: 'Pregunta del sacristán', que: q[0], pregunta: q[1], bien: 0, extra: true }); }
   imprevistos = new Set(barajar(momentos.map((_, k) => k).filter((k) => k > 1)).slice(0, nM >= 2 ? 2 : 1));
   $('partes').innerHTML = SECCIONES.map((s, i) => `<i title="${s}"><b id="sec${i}"></b></i>`).join('');
@@ -804,6 +890,129 @@ $('opciones').addEventListener('click', (e) => {
   setTimeout(() => { iMis++; siguienteMision(); }, pausa(m.cita[0] + ' ' + m.cita[1], 2400));
 });
 
+/* ---------- Rol de monaguillo: tú eres el monaguillo y decides qué hacer en cada momento ---------- */
+const e_ = (sec, n, que, o, exp, extra) => Object.assign({ sec, n, que, o, exp }, extra || {});
+const ROLES = [
+  { n: 'Mi primera Misa de monaguillo', s: 'Domingo · aprende lo básico', color: 'verde', icono: 'velas', escenas: [
+    e_('Antes de la Misa', 'Llegar a la parroquia', 'La Misa es a las nueve. ¿A qué hora llegas?', ['Unos 15 o 20 minutos antes, para prepararme con calma', 'Justo a las nueve en punto', 'Cuando ya empezó el Evangelio'], 'Llegar con tiempo permite revestirse, preparar todo y rezar antes de empezar. El servicio empieza por la puntualidad.'),
+    e_('Antes de la Misa', 'Frente al Sagrario', 'Pasas frente al Sagrario, donde está Jesús. ¿Qué haces?', ['Una genuflexión: la rodilla derecha hasta el suelo', 'Saludo con la mano', 'Paso corriendo sin mirar'], 'La genuflexión ante el Sagrario es un gesto de adoración: reconocemos que Jesús está realmente presente.'),
+    e_('Antes de la Misa', 'En la sacristía', '¿Qué te pones para servir en el altar?', ['El alba, o la sotana y el roquete que me da la parroquia', 'Mi camiseta de fútbol', 'Una capa de superhéroe'], 'El alba blanca recuerda el vestido del bautismo. Revestirse ayuda a servir con dignidad y sin llamar la atención.'),
+    e_('Antes de la Misa', 'Antes de salir', 'El sacerdote reúne a los monaguillos en la sacristía. ¿Qué hacen?', ['Rezamos juntos una breve oración y guardamos silencio', 'Revisamos el celular', 'Hacemos una carrera hasta el altar'], 'Una oración antes de salir nos recuerda para quién servimos: para Dios y para su pueblo.'),
+    e_('Ritos iniciales', 'Procesión de entrada', 'Te toca llevar un cirial en la procesión. ¿Cómo caminas?', ['Despacio, derecho y al mismo paso que mi compañero', 'Rápido, para llegar primero', 'Saludando a mis amigos de las bancas'], 'La procesión es oración en movimiento: caminamos con calma porque vamos al encuentro del Señor.', { p: 'Procesión de entrada', lleva: 'velas' }),
+    e_('Ritos iniciales', 'Al llegar al altar', 'Llegas con el sacerdote frente al altar. ¿Qué gesto haces?', ['Una inclinación profunda; si el Sagrario está en el presbiterio, una genuflexión', 'Un aplauso', 'Nada: me siento enseguida'], 'El altar representa a Cristo. Por eso lo saludamos con una inclinación profunda, o con genuflexión si el Sagrario está ahí.', { p: 'Saludo' }),
+    e_('Liturgia de la Palabra', 'Durante las lecturas', '¿Cómo estás mientras se proclaman las lecturas?', ['Sentado en mi lugar, escuchando con atención', 'Jugando con el cíngulo', 'Dando vueltas por el presbiterio'], 'El monaguillo es ejemplo para todos: escucha la Palabra de Dios con atención.', { p: 'Primera lectura' }),
+    e_('Liturgia eucarística', 'Preparar el altar', 'Empieza el ofertorio. ¿Qué llevas primero al altar?', ['El corporal, el purificador, el cáliz y el misal', 'Las vinajeras y la campanilla', 'El cirio pascual'], 'Primero se prepara el altar con el corporal, el purificador, el cáliz y el misal. Después se presentan el pan y el vino.', { p: 'Ofertorio', lleva: 'caliz' }),
+    e_('Liturgia eucarística', 'Las vinajeras', 'El sacerdote prepara el cáliz. ¿Cómo le das las vinajeras?', ['Primero la del vino y luego la del agua, con una pequeña inclinación', 'Las dos a la vez, sin mirar', 'Solo la del agua'], 'El sacerdote vierte el vino y unas gotas de agua en el cáliz: es signo de la unión de Cristo con nosotros.', { p: 'Ofertorio', lleva: 'vinajeras' }),
+    e_('Liturgia eucarística', 'Lavatorio de las manos', 'El sacerdote se acerca a la credencia. ¿Qué haces?', ['Vierto un poco de agua sobre sus dedos y le doy la toalla', 'Le ofrezco un vaso de agua para beber', 'Me lavo yo las manos'], 'Mientras se lava las manos, el sacerdote pide a Dios un corazón limpio.', { p: 'Lavatorio de manos', lleva: 'jarra' }),
+    e_('Liturgia eucarística', 'La consagración', 'El sacerdote eleva la Hostia consagrada. ¿Qué haces?', ['De rodillas, toco la campanilla mientras todos adoran', 'Me levanto para ver mejor', 'Toco la campanilla durante toda la Misa'], 'La campanilla invita a todos a mirar y adorar a Jesús, realmente presente en el pan y el vino consagrados.', { p: 'Consagración', lleva: 'campanilla', consagra: true }),
+    e_('Liturgia eucarística', 'La comunión', 'Los fieles se acercan a comulgar y el sacerdote te pide ayuda. ¿Qué haces?', ['Sostengo con cuidado la bandeja de comunión bajo la mano de quien comulga', 'Reparto yo las hostias', 'Me voy a la sacristía'], 'La bandeja de comunión evita que alguna partícula consagrada caiga al suelo.', { p: 'Comunión' }),
+    e_('Ritos de conclusión', 'Después de la Misa', 'La Misa terminó. ¿Qué haces con las velas y los objetos?', ['Apago las velas, llevo todo a la sacristía y ayudo a ordenar', 'Dejo todo como está', 'Me llevo una vela a casa'], 'El servicio termina cuando todo queda en orden. ¡Y después, a vivir la misión!', { p: 'Envío' })
+  ] },
+  { n: 'Crucero y ceroferarios', s: 'Misa solemne · la cruz y los ciriales', color: 'blanco', solemne: true, icono: 'cruzalta', escenas: [
+    e_('Antes de la Misa', 'Hoy eres el crucero', 'Te toca llevar la cruz alta. ¿Cómo la llevas?', ['Bien derecha, con la imagen de Cristo mirando hacia adelante', 'Al hombro, como una escoba', 'Con Cristo mirando hacia mí'], 'La cruz abre la procesión: Cristo va delante y todos lo seguimos.', { lleva: 'cruzalta' }),
+    e_('Antes de la Misa', 'Los ceroferarios', '¿Dónde caminan los dos monaguillos con los ciriales?', ['A cada lado de la cruz alta', 'Al final de la procesión', 'Uno en cada puerta'], 'Los ciriales acompañan a la cruz: la luz de Cristo guía a su pueblo.', { lleva: 'velas' }),
+    e_('Ritos iniciales', 'Orden de la procesión', 'En una Misa solemne, ¿quién abre la procesión?', ['El turiferario con el incensario', 'El sacerdote', 'El coro'], 'Primero va el incienso; luego la cruz entre los ciriales; después los acólitos y el lector; al final, el sacerdote.', { p: 'Procesión de entrada', lleva: 'incensario' }),
+    e_('Ritos iniciales', 'Al llegar con la cruz', 'Llevas la cruz alta y llegas al altar. ¿Haces genuflexión?', ['No: quien lleva la cruz o los ciriales solo inclina la cabeza', 'Sí, aunque se me caiga la cruz', 'Me arrodillo y dejo la cruz en el suelo'], 'Quien lleva la cruz o las velas no hace genuflexión ni inclinación profunda: basta con inclinar la cabeza.', { p: 'Procesión de entrada', lleva: 'cruzalta' }),
+    e_('Ritos iniciales', 'La cruz en su lugar', 'Terminó la procesión. ¿Dónde pones la cruz alta?', ['Junto al altar, en su soporte, para que todos la vean', 'Acostada en el suelo', 'En la sacristía'], 'La cruz queda junto al altar durante toda la Misa: nos recuerda que la Misa hace presente el sacrificio de Jesús.', { p: 'Saludo' }),
+    e_('Liturgia de la Palabra', 'Procesión del Evangelio', 'Llega el Aleluya. ¿Qué hacen los ceroferarios?', ['Acompañan con los ciriales el libro de los Evangelios hasta el ambón', 'Se sientan a descansar', 'Apagan las velas'], 'La luz junto al Evangelio nos recuerda que Jesús es la luz del mundo y que es Él quien nos habla.', { p: 'Aleluya', lleva: 'velas' }),
+    e_('Liturgia de la Palabra', 'Durante el Evangelio', 'Estás junto al ambón con tu cirial. ¿Qué haces?', ['Me quedo de pie, quieto, mirando hacia quien proclama', 'Muevo el cirial al ritmo', 'Me siento en las gradas'], 'Escuchar el Evangelio de pie y en silencio es la mejor forma de honrar la Palabra de Jesús.', { p: 'Evangelio' }),
+    e_('Liturgia eucarística', 'La plegaria eucarística', 'En muchas Misas solemnes, ¿qué hacen los ceroferarios durante la consagración?', ['Se arrodillan ante el altar con los ciriales encendidos', 'Salen a buscar más velas', 'Apagan los ciriales'], 'Las luces encendidas ante el altar honran a Jesús, que se hace presente en la Eucaristía.', { p: 'Consagración', consagra: true }),
+    e_('Ritos de conclusión', 'Procesión de salida', 'La Misa termina. ¿Cómo salen?', ['Como al entrar: la cruz entre los ciriales va delante', 'Cada uno por su lado', 'El sacerdote primero, corriendo'], 'Salimos en orden y en oración, siguiendo a Cristo para llevarlo al mundo.', { p: 'Envío', lleva: 'cruzalta' }),
+    e_('Ritos de conclusión', 'Apagar las velas', '¿Cómo apagas las velas del altar?', ['Con el apagavelas, sin soplar y con calma', 'Soplando fuerte', 'Con los dedos mojados'], 'El apagavelas evita salpicar cera y hace que el gesto sea sereno y respetuoso.', { p: 'Envío' })
+  ] },
+  { n: 'Turiferario: el incienso', s: 'Aprende a servir con el incienso', color: 'rojo', solemne: true, icono: 'incensario', escenas: [
+    e_('Antes de la Misa', 'Preparar el incienso', '¿Qué necesitas para preparar el incienso?', ['El incensario con carbón encendido y la naveta con los granos de incienso', 'Un encendedor y papel', 'Velas aromáticas'], 'La naveta, con forma de barquito, guarda el incienso. El carbón debe estar bien encendido antes de empezar.', { lleva: 'incensario' }),
+    e_('Antes de la Misa', 'Cuidado con el fuego', 'El carbón está muy caliente. ¿Qué haces?', ['Lo manejo con pinzas y lejos de telas y papeles', 'Lo toco para ver si quema', 'Lo dejo sobre el mantel del altar'], 'Servir bien también es servir con prudencia: el fuego del incienso se maneja con cuidado.'),
+    e_('Ritos iniciales', 'En la procesión', '¿Dónde va el turiferario en la procesión de entrada?', ['Al frente, antes de la cruz alta', 'Al final', 'Detrás del sacerdote'], 'El incienso abre el camino: es la oración del pueblo que sube a Dios.', { p: 'Procesión de entrada', lleva: 'incensario' }),
+    e_('Ritos iniciales', 'Incensar el altar', 'El sacerdote llega al altar y va a incensarlo. ¿Qué le acercas?', ['El incensario abierto y la naveta, para que eche incienso y lo bendiga', 'La campanilla', 'Las vinajeras'], 'El sacerdote pone incienso en el carbón y lo bendice con la señal de la cruz antes de incensar el altar.', { p: 'Saludo', lleva: 'incensario' }),
+    e_('Liturgia de la Palabra', 'Antes del Evangelio', '¿Qué se inciensa antes de proclamar el Evangelio?', ['El libro de los Evangelios', 'Las bancas', 'El coro'], 'Incensamos el Evangeliario porque en el Evangelio es Cristo mismo quien nos habla.', { p: 'Evangelio', lleva: 'incensario' }),
+    e_('Liturgia eucarística', 'En el ofertorio', 'Ya están en el altar el pan y el vino. ¿Qué se inciensa ahora?', ['Las ofrendas, la cruz y el altar; luego al sacerdote y al pueblo', 'Solo las flores', 'Nada'], 'Con el incienso, ofrecemos a Dios los dones y a nosotros mismos, que también somos ofrenda.', { p: 'Ofertorio', lleva: 'incensario' }),
+    e_('Liturgia eucarística', 'Incensar al pueblo', 'Te toca incensar a la asamblea. ¿Qué haces?', ['Hago una inclinación antes y después, y el pueblo, de pie, también se inclina', 'Corro por el pasillo', 'Lo hago sentado'], 'Incensamos al pueblo porque cada bautizado es templo del Espíritu Santo.', { p: 'Ofertorio', lleva: 'incensario' }),
+    e_('Liturgia eucarística', 'En la consagración', 'Durante la elevación de la Hostia y del cáliz, ¿qué hace el turiferario?', ['De rodillas, inciensa al Santísimo con tres golpes dobles', 'Sale a cambiar el carbón', 'Inciensa al coro'], 'Incensar a Jesús presente es un acto de adoración.', { p: 'Consagración', consagra: true, lleva: 'incensario' }),
+    e_('Liturgia eucarística', '¿Qué significa?', '¿Qué significa el humo del incienso que sube?', ['Nuestra oración, que sube hasta Dios', 'Que hay un incendio', 'Que la Misa terminó'], '«Suba mi oración como incienso en tu presencia» (Sal 141,2).', { p: 'Santo' }),
+    e_('Ritos de conclusión', 'Al terminar', '¿Qué haces con el carbón al final?', ['Lo dejo apagar en un lugar seguro de la sacristía', 'Lo tiro a la basura encendido', 'Lo dejo en el incensario sobre la alfombra'], 'Un buen turiferario deja todo seguro y en orden.', { p: 'Envío' })
+  ] },
+  { n: 'Al servicio del obispo', s: 'Mitra, báculo y la Misa del obispo', color: 'blanco', solemne: true, obispo: true, icono: 'mitra', escenas: [
+    e_('Antes de la Misa', '¿Quién es el obispo?', 'Hoy celebra el obispo. ¿Quién es?', ['Un sucesor de los apóstoles y pastor de la diócesis', 'Un sacerdote que ganó un premio', 'El alcalde del pueblo'], 'El obispo es sucesor de los apóstoles: enseña, santifica y guía al pueblo de Dios en su diócesis.'),
+    e_('Antes de la Misa', 'Portador de la mitra', 'Te toca llevar la mitra. ¿Cómo la sostienes?', ['Con las manos cubiertas por la vimpa, un paño especial', 'Con las manos sucias del recreo', 'Me la pongo en la cabeza'], 'Los acólitos que llevan la mitra y el báculo se cubren las manos con la vimpa en señal de respeto.', { lleva: 'mitra' }),
+    e_('Antes de la Misa', 'El báculo', '¿Qué significa el báculo del obispo?', ['Que es pastor que guía y cuida al pueblo de Dios', 'Que le duelen los pies', 'Que es muy anciano'], 'El báculo tiene forma de cayado de pastor: el obispo cuida a su rebaño como el Buen Pastor.', { lleva: 'baculo' }),
+    e_('Ritos iniciales', 'Procesión con el obispo', 'En la procesión de entrada, ¿dónde va el obispo?', ['Al final, con mitra y báculo, bendiciendo al pueblo', 'Al principio, delante de la cruz', 'Ya está sentado antes de empezar'], 'El que preside va al final de la procesión. El obispo entra con mitra y báculo.', { p: 'Procesión de entrada', lleva: 'cruzalta' }),
+    e_('Ritos iniciales', 'La oración colecta', 'El obispo va a rezar la colecta. ¿Qué pasa con la mitra?', ['Se la quita y el portador de la mitra la recibe', 'Se la deja puesta', 'Se la entrega al coro'], 'Para rezar a Dios, el obispo se quita la mitra.', { p: 'Oración colecta', lleva: 'mitra' }),
+    e_('Liturgia de la Palabra', 'El Evangelio', 'Durante el Evangelio, ¿cómo está el obispo?', ['De pie, sin mitra, sosteniendo el báculo', 'Sentado y con la mitra', 'De rodillas'], 'El obispo escucha el Evangelio de pie y sin mitra, con el báculo de pastor en la mano.', { p: 'Evangelio', lleva: 'baculo' }),
+    e_('Liturgia de la Palabra', 'La homilía', 'En su catedral, ¿desde dónde suele predicar el obispo?', ['Desde la cátedra, su sede, o desde el ambón', 'Desde la puerta de la iglesia', 'Desde el coro'], 'La cátedra es la sede del obispo: de ella toma su nombre la catedral.', { p: 'Homilía' }),
+    e_('Liturgia eucarística', 'El solideo', 'El obispo lleva un pequeño gorro morado llamado solideo. ¿Cuándo se lo quita?', ['Desde el final del prefacio hasta después de la comunión', 'Nunca', 'Solo en el saludo'], 'Ante el Señor presente en la Eucaristía, el obispo se descubre la cabeza.', { p: 'Santo' }),
+    e_('Liturgia eucarística', 'La plegaria eucarística', 'Durante la plegaria eucarística, ¿lleva la mitra el obispo?', ['No: reza sin mitra, porque se dirige a Dios', 'Sí, siempre', 'Se pone dos mitras'], 'Durante la plegaria eucarística el obispo no lleva mitra: está ante Dios en nombre de todo el pueblo.', { p: 'Consagración', consagra: true }),
+    e_('Ritos de conclusión', 'La bendición del obispo', 'Para la bendición final, ¿qué le acercan al obispo?', ['La mitra y el báculo', 'El misal y la campanilla', 'El incensario'], 'El obispo recibe la mitra y el báculo y bendice solemnemente al pueblo.', { p: 'Bendición final', lleva: 'baculo' }),
+    e_('Ritos de conclusión', 'Al despedirse', 'El obispo agradece a los monaguillos. ¿Qué le respondes?', ['«Gracias, monseñor», con una sonrisa', 'Nada, y me voy', '«¡Por fin terminó!»'], 'La cortesía también es servicio. Y rezar por nuestro obispo es una forma de ayudarlo.', { p: 'Envío' })
+  ] },
+  { n: 'Semana Santa', s: 'Jueves Santo y Vigilia Pascual', color: 'blanco', solemne: true, pascua: true, icono: 'cirio', escenas: [
+    e_('Jueves Santo', 'Las campanas', 'Después del Gloria del Jueves Santo, ¿qué pasa con las campanas y la campanilla?', ['Callan hasta el Gloria de la Vigilia Pascual', 'Suenan más fuerte', 'Se tocan en cada lectura'], 'El silencio de las campanas nos ayuda a acompañar a Jesús en su pasión.', { p: 'Gloria' }),
+    e_('Jueves Santo', 'Lavatorio de los pies', 'El sacerdote va a lavar los pies a algunos fieles. ¿Qué preparas?', ['Una jarra con agua, una palangana y toallas', 'Zapatos nuevos', 'El cirio pascual'], 'Jesús lavó los pies a sus discípulos: amar es servir (Jn 13,14-15).', { p: 'Lavatorio de manos', lleva: 'jarra' }),
+    e_('Jueves Santo', 'El traslado del Santísimo', 'Al final, el Santísimo se lleva al lugar de la reserva. ¿Qué hace el turiferario?', ['Va delante incensando, mientras se canta y se adora', 'Apaga todas las luces', 'Se va a su casa'], 'Acompañamos a Jesús como los discípulos en la noche de la Última Cena, y luego velamos en adoración.', { p: 'Procesión de entrada', lleva: 'incensario' }),
+    e_('Jueves Santo', 'Desnudar el altar', 'Terminada la celebración, ¿qué se hace con el altar?', ['Se le quitan los manteles y adornos, en silencio', 'Se adorna con globos', 'Se cambia de lugar'], 'El altar desnudo nos recuerda a Jesús despojado en su pasión.'),
+    e_('Viernes Santo', 'Celebración de la Pasión', '¿Se celebra Misa el Viernes Santo?', ['No: se celebra la Pasión del Señor y se adora la cruz', 'Sí, dos Misas', 'Solo una boda'], 'El Viernes Santo es el único día del año en que no se celebra la Misa: contemplamos la cruz de Jesús.', { lleva: 'cruzalta' }),
+    e_('Vigilia Pascual', 'El fuego nuevo', '¿Cómo empieza la Vigilia Pascual?', ['Con la iglesia a oscuras y la bendición del fuego nuevo', 'Con todas las luces y aplausos', 'Con la comunión'], 'De la oscuridad a la luz: así pasamos con Cristo de la muerte a la vida.', { p: 'Bendición del fuego', lleva: 'cirio' }),
+    e_('Vigilia Pascual', 'Luz de Cristo', 'Entra el cirio pascual encendido. ¿Qué hacen los fieles?', ['Encienden sus velas con la luz del cirio', 'Apagan sus velas', 'Salen de la iglesia'], 'La luz del cirio se reparte y llena la iglesia: Cristo resucitado ilumina a todos.', { p: 'Procesión de entrada', lleva: 'cirio' }),
+    e_('Vigilia Pascual', 'El Gloria de Pascua', 'Llega el Gloria de la Vigilia. ¿Qué haces con la campanilla?', ['¡La toco con alegría, junto con las campanas!', 'La escondo', 'La toco solo al final'], '¡Cristo ha resucitado! Las campanas vuelven a sonar con toda su fuerza.', { p: 'Gloria', lleva: 'campanilla' }),
+    e_('Vigilia Pascual', 'El Aleluya', 'Después de toda la Cuaresma, ¿qué vuelve a cantarse con fuerza antes del Evangelio?', ['El Aleluya', 'El Credo', 'El Cordero de Dios'], '«Aleluya» significa «¡Alaben a Dios!»: es el canto de la Pascua.', { p: 'Aleluya' }),
+    e_('Vigilia Pascual', 'Liturgia bautismal', 'Se renuevan las promesas del bautismo. ¿Qué llevas al sacerdote?', ['El acetre con agua bendita y el hisopo para la aspersión', 'Las vinajeras', 'La mitra'], 'El agua bendita nos recuerda que por el bautismo resucitamos con Cristo a una vida nueva.', { lleva: 'acetre' })
+  ] }
+];
+let R = null, nR = 0, iEsc = 0, errores = 0, modoRol = false;
+function empezarRol(i) {
+  quitar3D();
+  nR = i; R = ROLES[i]; modoRol = true; nM = 0; esHoy = false;
+  M = { n: R.n, s: R.s, color: R.color, solemne: !!R.solemne, obispo: !!R.obispo, pascua: !!R.pascua, obj: [] };
+  puntos = 0; vidas = 3; racha = 0; errores = 0; aprendidos = new Set(); angel = false; $('angel').hidden = true;
+  pintarVidas(); $('p-puntos').textContent = '0';
+  enMisa = true; if (JS.ctx()) JS.musica('calma');
+  vista('misa'); escenaMisa();
+  iEsc = 0; mostrarEscena();
+}
+function mostrarEscena() {
+  if (vidas <= 0) return;
+  clearInterval(timer);
+  if (iEsc >= R.escenas.length) { terminarRol(); return; }
+  const x = R.escenas[iEsc], secs = [...new Set(R.escenas.map((y) => y.sec))];
+  $('partes').innerHTML = secs.map((sc) => { const tot = R.escenas.filter((y) => y.sec === sc).length, h = R.escenas.slice(0, iEsc).filter((y) => y.sec === sc).length; return `<i title="${esc(sc)}"><b style="transform:scaleX(${(h / tot).toFixed(2)})"></b></i>`; }).join('');
+  $('momento').innerHTML = `<div class="seccion">${esc(x.sec)} · ${iEsc + 1} de ${R.escenas.length} <span class="postura" id="postura"></span></div><h2>${esc(x.n)}</h2><div class="que">${esc(x.que)}</div><div class="pide">Tú eres el monaguillo: ¿qué haces?</div>`;
+  poseCura({ n: x.p || 'Saludo', consagra: !!x.consagra }); acolitoLleva(x.lleva || null);
+  const orden = barajar([0, 1, 2]);
+  $('opciones').innerHTML = '<div class="resp">' + orden.map((i, k) => `<button type="button" data-rolr="${i}" style="--d:${k * 60}ms">${esc(x.o[i])}</button>`).join('') + '</div>';
+}
+$('opciones').addEventListener('click', (e) => {
+  const sg = e.target.closest('[data-seguir]');
+  if (sg) { SND.toque(); iEsc++; mostrarEscena(); return; }
+  const b = e.target.closest('[data-rolr]'); if (!b || b.disabled || !modoRol) return;
+  const x = R.escenas[iEsc], ok = Number(b.dataset.rolr) === 0;
+  document.querySelectorAll('[data-rolr]').forEach((y) => { y.disabled = true; });
+  let perdio = false;
+  if (ok) {
+    b.classList.add('bien'); racha++; sumar(60 + racha * 5, b);
+    if (x.lleva === 'campanilla' || x.consagra) SND.campanilla(); else if (x.lleva === 'incensario') SND.incienso(); else SND.bien(racha);
+    if (x.lleva && ICONO[x.lleva]) aprender(x.lleva);
+  } else {
+    b.classList.add('mal'); errores++;
+    const c = document.querySelector('[data-rolr="0"]'); if (c) c.classList.add('bien');
+    perdio = fallar();
+  }
+  $('momento').querySelector('.pide').outerHTML = `<div class="explica">${ok ? '<b>¡Bien hecho!</b> ' : '<b>Lo correcto:</b> ' + esc(x.o[0]) + '. '}${esc(x.exp)}</div>`;
+  if (!perdio) $('opciones').insertAdjacentHTML('beforeend', `<button type="button" class="seguir" data-seguir>${iEsc + 1 < R.escenas.length ? 'Continuar' : 'Terminar el servicio'}</button>`);
+});
+function terminarRol() {
+  clearInterval(timer); enMisa = false; JS.pararMusica();
+  const est = errores === 0 ? 3 : errores <= 2 ? 2 : 1;
+  const rAntes = rangoDe(S.total || 0); S.total = (S.total || 0) + puntos; const rAhora = rangoDe(S.total);
+  const ganadas = Math.round(puntos / 40) + est * 5;
+  S.estrellas += ganadas; S.roles = S.roles || {}; S.roles[nR] = Math.max(S.roles[nR] || 0, est); S.maxRol = Math.max(S.maxRol || 0, Math.min(ROLES.length - 1, nR + 1)); S.mejor = Math.max(S.mejor, puntos);
+  guardar(); SND.fin();
+  abrirHoja(`<h3>¡Buen servicio, monaguillo!</h3><p class="estrellas">${[0, 1, 2].map((k) => `<span style="animation-delay:${0.2 + k * 0.18}s;${k < est ? '' : 'opacity:.25'}">★</span>`).join('')}</p>
+    <p>${esc(R.n)} · <b>${puntos.toLocaleString('es')}</b> puntos · <b>+${ganadas} ★</b>${errores ? ` · ${errores} ${errores === 1 ? 'error' : 'errores'}` : ' · ¡sin errores!'}</p>${rAhora > rAntes ? `<p style="font-weight:900;font-size:18px;color:#8a3a10">¡Subiste a ${RANGOS[rAhora].n}!</p>` : ''}
+    <div class="cita">«Sirvan al Señor con alegría.»<small>Salmo 100, 2</small></div>
+    ${nR < ROLES.length - 1 ? `<button class="boton" type="button" data-sigrol>Siguiente: ${esc(ROLES[nR + 1].n)}</button>` : '<p><b>¡Completaste todos los servicios! Ya eres un gran monaguillo.</b></p>'}
+    <button class="btn-sec" type="button" data-menu style="margin-top:10px;width:100%;color:#4a2600;border-color:#d8c090">Volver al menú</button>`);
+}
+
 /* ---------- Final ---------- */
 function terminar() {
   clearInterval(timer); enMisa = false; JS.pararMusica();
@@ -832,7 +1041,8 @@ function abrirHoja(h) { $('hoja').innerHTML = h; $('fondo-hoja').classList.add('
 $('fondo-hoja').addEventListener('click', (e) => {
   if (e.target.closest('[data-cerrar]')) { $('fondo-hoja').classList.remove('on'); return; }
   if (e.target.closest('[data-sig]')) { $('fondo-hoja').classList.remove('on'); empezar(nM + 1); return; }
-  if (e.target.closest('[data-otra]')) { $('fondo-hoja').classList.remove('on'); empezar(nM); return; }
+  if (e.target.closest('[data-otra]')) { $('fondo-hoja').classList.remove('on'); if (modoRol) empezarRol(nR); else empezar(nM); return; }
+  if (e.target.closest('[data-sigrol]')) { $('fondo-hoja').classList.remove('on'); empezarRol(nR + 1); return; }
   if (e.target.closest('[data-menu]')) { $('fondo-hoja').classList.remove('on'); pintarMenu(); }
 });
 

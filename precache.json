@@ -1,7 +1,7 @@
 {
- "version": "6cba6b5536fd",
+ "version": "816fc7ea4056",
  "recursos": "juma-recursos-v1",
- "tamano": 56991429,
+ "tamano": 58397724,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -746,12 +746,12 @@
   {
    "ruta": "index.html",
    "tamano": 149780,
-   "hash": "38fc6cb868be"
+   "hash": "e69b20e36ab2"
   },
   {
    "ruta": "js/app.js",
-   "tamano": 499664,
-   "hash": "5ca65b66048a"
+   "tamano": 500093,
+   "hash": "bad0894e26c5"
   },
   {
    "ruta": "js/fe.js",
@@ -790,8 +790,8 @@
   },
   {
    "ruta": "juegos/camino-del-misionero.html",
-   "tamano": 146213,
-   "hash": "025d6e4a100b"
+   "tamano": 251548,
+   "hash": "e76bd4840f21"
   },
   {
    "ruta": "juegos/cuadros/cap1-consolata.jpg",
@@ -817,6 +817,101 @@
    "ruta": "juegos/cuadros/cap5-leonella.jpg",
    "tamano": 33446,
    "hash": "e3d89da9c859"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-andres-phu-yen.jpg",
+   "tamano": 69907,
+   "hash": "be9e8857fdba"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-carlo-acutis.jpg",
+   "tamano": 68529,
+   "hash": "7ef37eb7a35b"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-ceferino-namuncura.jpg",
+   "tamano": 69057,
+   "hash": "733ed13a7ddb"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-chiara-badano.jpg",
+   "tamano": 69149,
+   "hash": "bc75a813df57"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-domingo-savio.jpg",
+   "tamano": 67964,
+   "hash": "3f34c6511dbe"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-eulalia-de-barcelona.jpg",
+   "tamano": 66717,
+   "hash": "706f461c1a4d"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-eulalia-de-merida.jpg",
+   "tamano": 68466,
+   "hash": "a66f51a7c47e"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-francisco-marto.jpg",
+   "tamano": 67188,
+   "hash": "77a6dfff3850"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-ines.jpg",
+   "tamano": 58134,
+   "hash": "d5840d7be6db"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-jacinta-marto.jpg",
+   "tamano": 66656,
+   "hash": "f56bf14c53c2"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-jose-sanchez-del-rio.jpg",
+   "tamano": 67235,
+   "hash": "6c9a850308c3"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-justo-y-pastor.jpg",
+   "tamano": 67487,
+   "hash": "9df61c08f916"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-laura-vicuna.jpg",
+   "tamano": 61989,
+   "hash": "487e14213c49"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-luis-gonzaga.jpg",
+   "tamano": 63472,
+   "hash": "d484907d2540"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-marcel-callo.jpg",
+   "tamano": 59113,
+   "hash": "cfa5b2eec293"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-maria-goretti.jpg",
+   "tamano": 63046,
+   "hash": "f893c83ed25f"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-pancracio.jpg",
+   "tamano": 60491,
+   "hash": "aaa210c427e3"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-pier-giorgio-frassati.jpg",
+   "tamano": 65497,
+   "hash": "d0c8f7f20b69"
+  },
+  {
+   "ruta": "juegos/cuadros/jov-tarsicio.jpg",
+   "tamano": 67352,
+   "hash": "561dc01e56c1"
   },
   {
    "ruta": "juegos/cuentas-de-gracia.html",
@@ -869,9 +964,9 @@
    "hash": "e4ea2f6f453c"
   },
   {
-   "ruta": "juegos/gran-premio/index-C7Phsc0e.js",
-   "tamano": 1163898,
-   "hash": "d0267e873e73"
+   "ruta": "juegos/gran-premio/index-UBTNpBcV.js",
+   "tamano": 1165352,
+   "hash": "102a25d1662a"
   },
   {
    "ruta": "juegos/gran-premio/kart_cruise_mid_loop-E9gzRWlQ.wav",
@@ -895,8 +990,8 @@
   },
   {
    "ruta": "juegos/gran-premio-de-la-fe.html",
-   "tamano": 54795,
-   "hash": "592414021301"
+   "tamano": 56469,
+   "hash": "66804b18657a"
   },
   {
    "ruta": "juegos/huyendo-del-pecado.html",
@@ -910,8 +1005,8 @@
   },
   {
    "ruta": "juegos/lib/presbiterio3d.js",
-   "tamano": 36454,
-   "hash": "3f7ec7d8ba4d"
+   "tamano": 37232,
+   "hash": "ddd591e389b8"
   },
   {
    "ruta": "juegos/lib/red.js",
@@ -945,8 +1040,8 @@
   },
   {
    "ruta": "juegos/luz-contra-el-pecado.html",
-   "tamano": 277172,
-   "hash": "764de7d48782"
+   "tamano": 286217,
+   "hash": "fed2d6751b9d"
   },
   {
    "ruta": "juegos/memoria-santos.html",
@@ -1145,8 +1240,8 @@
   },
   {
    "ruta": "juegos/sacristan.html",
-   "tamano": 86885,
-   "hash": "092a7050c2c4"
+   "tamano": 127016,
+   "hash": "38eef7d59ca1"
   },
   {
    "ruta": "manifest.webmanifest",

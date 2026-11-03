@@ -210,6 +210,14 @@ export function crear(contenedor, op) {
     return { raiz, cabeza, brazos, objetivo: { x: 0, z: 0, ry: 0, bi: [0, 0], bz: [-0.1, 0.1] } };
   }
   const cura = persona({ tunica: MAT.alba, capa: MAT.color, cruzCasulla: true });
+  if (op.obispo) {
+    // El obispo: mitra blanca con galones dorados y cruz pectoral
+    const blanco = est(0xfaf6ee, 0.55), mitra = new THREE.Group(); mitra.position.set(0, 0.12, -0.01); cura.cabeza.add(mitra);
+    for (const z of [-0.035, 0.035]) { const h = malla(new THREE.ConeGeometry(0.15, 0.36, 4, 1), blanco, 0, 0.17, z, mitra); h.rotation.y = Math.PI / 4; h.scale.set(1, 1, 0.32); }
+    malla(new THREE.BoxGeometry(0.035, 0.32, 0.12), MAT.oro, 0, 0.15, 0, mitra);
+    malla(new THREE.CylinderGeometry(0.155, 0.155, 0.04, 16), MAT.oro, 0, 0.0, 0, mitra).scale.z = 0.75;
+    malla(new THREE.BoxGeometry(0.03, 0.12, 0.012), MAT.oro, 0, 1.3, 0.33, cura.raiz); malla(new THREE.BoxGeometry(0.08, 0.025, 0.012), MAT.oro, 0, 1.33, 0.33, cura.raiz);
+  }
   const hostia = malla(new THREE.CylinderGeometry(0.13, 0.13, 0.012, 24), est(0xfffbea, 0.6, 0, { emissive: 0xfff0c0, emissiveIntensity: 0.6 }), 0, -0.62, 0.05, cura.brazos[1]);
   hostia.rotation.x = Math.PI / 2; hostia.visible = false;
   const rayos = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.rayos, color: 0xfff2c0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })); rayos.scale.setScalar(3.2); E.add(rayos);
@@ -338,10 +346,11 @@ export function crear(contenedor, op) {
   requestAnimationFrame(cuadro);
   const chispas = [];
   function poner(id) {
-    const g = OBJ[id]; if (!g) return;
+    const g = OBJ[id]; if (!g) return false;
     g.visible = true; g.userData.anim = 0; g.scale.setScalar(0.01);
     const p = new THREE.Vector3(); g.getWorldPosition(p);
     for (let i = 0; i < 18; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.chispa, color: 0xffe08a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); sp.scale.setScalar(0.12); sp.position.copy(p).add(new THREE.Vector3(0, 0.2, 0)); E.add(sp); const a = rnd() * 6.28; chispas.push({ sp, t: 0, v: new THREE.Vector3(Math.cos(a) * 0.8, 0.8 + rnd(), Math.sin(a) * 0.8) }); }
+    return true;
   }
   function todoListo() { for (const id in OBJ) if (id !== 'cirio' || op.cirio) OBJ[id].visible = true; }
   const ZONAS = { altar: [[0, piso + 1.15, -3.2], [1.45, 0.45, 0.65]], ambon: [[-3.3, piso + 1.0, -1.8], [0.55, 0.65, 0.45]], credencia: [[3.6, piso + 0.95, -2.2], [0.95, 0.6, 0.5]] };
