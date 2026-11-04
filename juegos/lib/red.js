@@ -45,7 +45,8 @@ const ESPERA_RESPUESTA = 40000; // ms esperando a que el anfitrión responda al 
 const ESPERA_CANAL = 15000;     // ms esperando a que se abra la conexión directa
 const ESPERA_DIRECTA = 6000;    // ms dándole una oportunidad a la conexión directa antes de usar el puente
 const ESPERA_PUENTE = 25000;    // ms esperando la bienvenida por el puente
-const TICK_PUENTE = 120;        // ms entre envíos de posiciones por el puente
+const TICK_PUENTE = 60;         // ms entre envíos de posiciones por el puente
+const EN_VUELO_PUENTE = 3;      // envíos de posiciones a la vez por el puente (no espera a que termine el anterior)
 const forzarPuente = () => /[?&]forzarPuente=1\b/.test(location.search); // pruebas: sin conexión directa
 
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -138,6 +139,13 @@ export function almacenPorDefecto() {
      r/<clave>    lo último de cada tipo de mensaje rápido (posiciones)
    El buzón se escucha con EventSource (eventos «put» y «patch»).
    --------------------------------------------------------------------- */
+/** Los latidos llevan la hora del momento en que de verdad salen (no la de cuando se pusieron en cola). */
+function sellar(env) {
+  if (env && env.s === 'ping') env.t = performance.now();
+  else if (env && env.s === 'pong') env.h = performance.now();
+  return env;
+}
+
 async function urlPuente() {
   const q = location.search.match(/[?&]puente=([^&]+)/);
   if (q) return decodeURIComponent(q[1]).replace(/\/$/, '');
@@ -213,16 +221,17 @@ function crearPuente(base, codigo) {
 
   /** Envío de `yo` al buzón de `a`: fiables numerados y rápidos agrupados (lo último de cada uno). */
   function enlace(yo, a) {
-    let seq = 0, n = 0, enCurso = false, cerrado = false, timer = null;
+    let seq = 0, n = 0, enCurso = 0, cerrado = false, timer = null;
     const pend = new Map();
     function vaciar() {
       timer = null;
-      if (cerrado || enCurso || !pend.size) return;
+      if (cerrado || enCurso >= EN_VUELO_PUENTE || !pend.size) return;
       const lote = {};
-      for (const [k, env] of pend) lote[k] = { n: ++n, e: JSON.stringify(env) };
+      for (const [k, env] of pend) { sellar(env); lote[k] = { n: ++n, e: JSON.stringify(env) }; }
       pend.clear();
-      enCurso = true;
-      pedir('PATCH', `a/${a}/${yo}/r`, lote, 1).finally(() => { enCurso = false; if (pend.size && !timer) timer = setTimeout(vaciar, TICK_PUENTE); });
+      enCurso++;
+      // Varios envíos a la vez: cada posición lleva su número y el receptor descarta las viejas
+      pedir('PATCH', `a/${a}/${yo}/r`, lote, 1).finally(() => { enCurso--; if (pend.size && !timer) timer = setTimeout(vaciar, TICK_PUENTE); });
     }
     return {
       fiable(env) {
@@ -235,7 +244,7 @@ function crearPuente(base, codigo) {
         const m = env.m || {};
         const clave = String((env.d || '') + '_' + (m.t || env.s || 'x') + (m.s != null ? '_' + m.s : '')).replace(/[.#$\[\]\/]/g, '_');
         pend.set(clave, env);
-        if (!timer && !enCurso) timer = setTimeout(vaciar, TICK_PUENTE);
+        if (!timer && enCurso < EN_VUELO_PUENTE) timer = setTimeout(vaciar, TICK_PUENTE);
       },
       cerrar() { cerrado = true; clearTimeout(timer); pend.clear(); }
     };
@@ -336,6 +345,17 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
   let buzon = null;         // mi buzón en el puente
   let miBuzon = null;       // id de mi buzón (anfitrión: 'h'; invitado: el id de su pedido)
   let diagnostico = '';
+  const muestrasReloj = [];  // muestras para sincronizar el reloj con el anfitrión
+  let desfase = 0;           // ms que hay que sumar a performance.now() para tener la hora del anfitrión
+  let retardo = 0;           // ms aproximados que tarda un mensaje en llegar al anfitrión
+  /** Hora común de la sala (ms, en el reloj del anfitrión). */
+  function reloj() { return performance.now() + (rol === 'invitado' ? desfase : 0); }
+  /** Unas cuantas medidas seguidas para afinar el reloj (antes de una carrera). */
+  function sincronizar() {
+    for (let i = 0; i < 8; i++) setTimeout(() => {
+      for (const p of peers.values()) if (unido(p)) sistema(p, 'ping', { t: performance.now() });
+    }, i * 140);
+  }
 
   function info(p) { return { id: p.id, nombre: p.nombre, datos: p.datos || {} }; }
   function listaJugadores() { return Array.from(jugadores.values()); }
@@ -347,9 +367,9 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
     // Por la conexión directa si está abierta; si no, por el puente de internet
     if (!directa(p) && p.puente) { if (rapido) p.puente.rapido(env); else p.puente.fiable(env); return; }
     const c = rapido ? p.rapido : p.fiable;
-    if (!c || c.readyState !== 'open') { if (rapido && p.fiable && p.fiable.readyState === 'open' && !p.rapido) p.fiable.send(JSON.stringify(env)); return; }
+    if (!c || c.readyState !== 'open') { if (rapido && p.fiable && p.fiable.readyState === 'open' && !p.rapido) p.fiable.send(JSON.stringify(sellar(env))); return; }
     if (rapido && c.bufferedAmount > 65536) return; // va atrasado: se descarta la posición vieja
-    try { c.send(JSON.stringify(env)); } catch (e) { /* se cerró */ }
+    try { c.send(JSON.stringify(sellar(env))); } catch (e) { /* se cerró */ }
   }
   function enviar(m, op = {}) {
     if (cerrada) return;
@@ -383,8 +403,26 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
   }
   function sistemaRecibido(p, env) {
     switch (env.s) {
-      case 'ping': sistema(p, 'pong', { t: env.t }); break;
-      case 'pong': p.rtt = performance.now() - env.t; break;
+      case 'ping': { const hr = performance.now(); sistema(p, 'pong', { t: env.t, hr, h: hr }); break; }
+      case 'pong': {
+        const ahora = performance.now();
+        // Como el NTP: se descuenta lo que el otro tardó en contestar
+        const espera = typeof env.hr === 'number' && typeof env.h === 'number' ? Math.max(0, env.h - env.hr) : 0;
+        p.rtt = Math.max(0, ahora - env.t - espera);
+        // Reloj compartido: el invitado calcula la diferencia con el reloj del anfitrión.
+        // Se queda con las muestras de menor ida y vuelta (las más exactas).
+        if (rol === 'invitado' && p.id === ID_ANFITRION && typeof env.h === 'number' && p.rtt >= 0 && p.rtt < 5000) {
+          const off = typeof env.hr === 'number' ? ((env.hr - env.t) + (env.h - ahora)) / 2 : env.h + p.rtt / 2 - ahora;
+          muestrasReloj.push({ rtt: p.rtt, off, t: ahora });
+          while (muestrasReloj.length > 12) muestrasReloj.shift();
+          let mejor = muestrasReloj[0];
+          for (const m of muestrasReloj) if (m.rtt < mejor.rtt) mejor = m;
+          // Cambios suaves para que el reloj no salte (salvo la primera vez)
+          desfase = muestrasReloj.length === 1 ? mejor.off : desfase + (mejor.off - desfase) * 0.5;
+          retardo = mejor.rtt / 2;
+        }
+        break;
+      }
       case 'hola': // el anfitrión da la bienvenida y el número del invitado
         miId = env.id; jugadores.clear();
         for (const j of env.jugadores) jugadores.set(j.id, j);
@@ -777,7 +815,9 @@ export function crearRed({ juego, nombre = 'Jugador', max = 6, almacen = null } 
     ping(id) { const p = peers.get(id || ID_ANFITRION); return p ? Math.round(p.rtt) : 0; },
     on(ev, f) { (oyentes[ev] = oyentes[ev] || []).push(f); return () => { oyentes[ev] = oyentes[ev].filter((x) => x !== f); }; },
     crearSala, crearSalaManual, responderCodigo, unirse, codigoInvitado, completarInvitado,
-    enviar, ponerDatos, ponerNombre, abrirEntrada, cerrar,
+    enviar, ponerDatos, ponerNombre, abrirEntrada, cerrar, reloj, sincronizar,
+    get retardo() { return retardo; },
+    get relojListo() { return rol !== "invitado" || muestrasReloj.length >= 3; },
     ID_ANFITRION
   };
 }

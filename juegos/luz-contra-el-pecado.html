@@ -3491,7 +3491,8 @@ function empezarMP(n, conservar) {
 }
 function iniciarNivelMP(m) {
   MP.sala.ocultar();
-  MP.enJuego = true; MP.superado = false; menuMP = false;
+  MP.enJuego = true; MP.superado = false; menuMP = false; MP.nE = null;
+  if (MP.red.sincronizar) MP.red.sincronizar();
   DIF = DIFICULTADES[m.dif] || DIFICULTADES.misionero;
   for (const q of MP.otros.values()) quitarFigura(q);
   MP.otros = new Map();
@@ -3580,8 +3581,9 @@ function levantarse() {
 function pasoRed(dt) {
   MP.envioT -= dt;
   if (MP.envioT <= 0) {
-    MP.envioT = 1 / 15;
-    MP.red.enviar({ t: 'J', x: r3(J.x), y: r3(J.y), a: r3(J.a), p: r3(J.pitch), v: Math.ceil(J.vida), en: estado === 'jugando', c: !!J.caido, fe: Math.round(J.fe), al: J.alzaK > 0.7, f: J.feT > 0 ? 1 : 0, ar: J.arma }, { rapido: true });
+    MP.envioT = 1 / 20;
+    MP.seqJ = (MP.seqJ || 0) + 1;
+    MP.red.enviar({ t: 'J', n: MP.seqJ, ts: MP.red.reloj ? Math.round(MP.red.reloj()) : 0, x: r3(J.x), y: r3(J.y), a: r3(J.a), p: r3(J.pitch), v: Math.ceil(J.vida), en: estado === 'jugando', c: !!J.caido, fe: Math.round(J.fe), al: J.alzaK > 0.7, f: J.feT > 0 ? 1 : 0, ar: J.arma }, { rapido: true });
   }
   if (J.caido) {
     J.caidoT -= dt;
@@ -3592,7 +3594,10 @@ function pasoRed(dt) {
   for (const q of MP.otros.values()) {
     if (q.en && ahora - q.visto > 2500) q.vivo = false; // sin noticias: los demonios no lo persiguen
     const k = Math.min(1, dt * 14);
-    if (Math.hypot(q.tx - q.x, q.ty - q.y) > 3) { q.x = q.tx; q.y = q.ty; } else { q.x += (q.tx - q.x) * k; q.y += (q.ty - q.y) * k; }
+    // Se prevé dónde está ahora con su velocidad (compensa lo que tarda la red), como mucho 0,25 s
+    const adel = q.en && q.vivo ? Math.min(0.25, (q.edad || 0) + (ahora - q.visto) / 1000) : 0;
+    const px = q.tx + (q.vx || 0) * adel, py = q.ty + (q.vy || 0) * adel;
+    if (Math.hypot(px - q.x, py - q.y) > 3) { q.x = px; q.y = py; } else { q.x += (px - q.x) * k; q.y += (py - q.y) * k; }
     let da = q.ta - q.a; da = Math.atan2(Math.sin(da), Math.cos(da)); q.a += da * k;
     if (MP.anfitrion && q.vivo && q.al) {
       // El rosario alzado por otro jugador también espanta a los demonios
@@ -3603,13 +3608,14 @@ function pasoRed(dt) {
   if (MP.anfitrion) {
     MP.enemT -= dt;
     if (MP.enemT <= 0) {
-      MP.enemT = 1 / 12;
+      MP.enemT = 1 / 15;
+      MP.seqE = (MP.seqE || 0) + 1;
       const l = [];
       for (const e of enemigos) {
         const f = (e.muerto ? 1 : 0) | (e.furia ? 2 : 0) | (e.mayor ? 4 : 0) | (e.flash > 0 ? 8 : 0) | (e.invisT > 0 ? 16 : 0) | ((e.rugido || 0) > 0 ? 32 : 0) | ((e.golpeT || 0) > 0 ? 64 : 0) | (e.ilusion ? 128 : 0);
         l.push(Math.round(e.x * 100), Math.round(e.y * 100), Math.max(0, ESTADOS_E.indexOf(e.estado)), f, Math.round(clamp(e.vida / e.vidaMax, 0, 1) * 100), Math.max(0, ESPECIALES_E.indexOf(e.especial || null)));
       }
-      MP.red.enviar({ t: 'E', s: sinPecados, tp: totalPecados, l }, { rapido: true });
+      MP.red.enviar({ t: 'E', n: MP.seqE, s: sinPecados, tp: totalPecados, l }, { rapido: true });
     }
     // Si todos caen a la vez, se pierde el nivel
     if (J.caido && MP.otros.size && Array.from(MP.otros.values()).every((q) => q.caido)) { MP.red.enviar({ t: 'derrota' }); perder(); }
@@ -3671,13 +3677,31 @@ function alMensajeMP(m, de) {
     case 'nivel': if (!MP.anfitrion) iniciarNivelMP(m); break;
     case 'J': {
       const q = MP.otros.get(de); if (!q) break;
+      // El canal rápido no garantiza el orden: un paquete viejo se descarta (si no, el jugador «salta» atrás)
+      if (m.n != null) { if (q.n != null && m.n <= q.n && q.n - m.n < 5000) break; q.n = m.n; }
       const nuevo = !q.en && m.en;
+      const ahoraJ = performance.now();
+      // Velocidad entre dos paquetes, medida con la hora del que los envía (por internet llegan a ráfagas)
+      const dms = m.ts && q.rts ? m.ts - q.rts : ahoraJ - (q.rT || 0);
+      if (nuevo || !q.rT || dms > 700) { q.vx = 0; q.vy = 0; }
+      else if (dms > 15) {
+        const dtp = dms / 1000;
+        const vx = (m.x - q.rx) / dtp, vy = (m.y - q.ry) / dtp;
+        // Velocidad suavizada; un salto grande (teletransporte, levantarse) no cuenta
+        if (Math.hypot(vx, vy) < 12) { q.vx = (q.vx || 0) * 0.4 + vx * 0.6; q.vy = (q.vy || 0) * 0.4 + vy * 0.6; } else { q.vx = 0; q.vy = 0; }
+      }
+      q.rx = m.x; q.ry = m.y; q.rT = ahoraJ; q.rts = m.ts || 0;
+      q.edad = m.ts && MP.red.reloj && MP.red.relojListo ? Math.min(0.5, Math.max(0, (MP.red.reloj() - m.ts) / 1000)) : 0;
       q.tx = m.x; q.ty = m.y; q.ta = m.a; q.pitch = m.p; q.vida = m.v; q.en = !!m.en; q.caido = !!m.c; q.vivo = q.en && !q.caido;
       q.fe = m.fe; q.al = !!m.al; q.feT = m.f ? 1 : 0; q.arma = m.ar; q.visto = performance.now();
       if (nuevo) { q.x = q.tx; q.y = q.ty; q.a = q.ta; }
       break;
     }
-    case 'E': if (!MP.anfitrion) aplicarEnemigos(m); break;
+    case 'E':
+      if (MP.anfitrion) break;
+      if (m.n != null) { if (MP.nE != null && m.n <= MP.nE && MP.nE - m.n < 5000) break; MP.nE = m.n; }
+      aplicarEnemigos(m);
+      break;
     case 'E+': if (!MP.anfitrion) { prepararDemonio(m.tipo); const n = crearEnemigo(m.tipo, m.x, m.y); n.ilusion = m.ilusion; n.mayor = m.mayor; n.vida = n.vidaMax = m.vida; n.ilusionT = m.ilusionT; n.estado = 'caza'; enemigos.push(n); } break;
     case 'P+': if (!MP.anfitrion) pickups[m.i] = { tipo: m.tipo, x: m.x, y: m.y, ya: false }; break;
     case 'P-': {
