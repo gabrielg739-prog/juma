@@ -1,7 +1,7 @@
 {
- "version": "8f62cebba272",
+ "version": "8c3679725b4c",
  "recursos": "juma-recursos-v1",
- "tamano": 59898885,
+ "tamano": 59901281,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -746,12 +746,12 @@
   {
    "ruta": "index.html",
    "tamano": 149780,
-   "hash": "be4f277848b3"
+   "hash": "9072f70b3061"
   },
   {
    "ruta": "js/app.js",
    "tamano": 500804,
-   "hash": "fe990830c209"
+   "hash": "1fc9bf4da584"
   },
   {
    "ruta": "js/fe.js",
@@ -785,8 +785,8 @@
   },
   {
    "ruta": "juegos/bloques-de-fe.html",
-   "tamano": 52610,
-   "hash": "e6c261e9cb70"
+   "tamano": 52608,
+   "hash": "006b825e9a6e"
   },
   {
    "ruta": "juegos/camino-del-misionero.html",
@@ -995,8 +995,8 @@
   },
   {
    "ruta": "juegos/huyendo-del-pecado.html",
-   "tamano": 167597,
-   "hash": "3384438532ae"
+   "tamano": 168122,
+   "hash": "7fdef520e2f7"
   },
   {
    "ruta": "juegos/lib/demonios3d.js",
@@ -1005,8 +1005,8 @@
   },
   {
    "ruta": "juegos/lib/presbiterio3d.js",
-   "tamano": 37232,
-   "hash": "ddd591e389b8"
+   "tamano": 37439,
+   "hash": "b1c8db6411c6"
   },
   {
    "ruta": "juegos/lib/red.js",
@@ -1030,8 +1030,8 @@
   },
   {
    "ruta": "juegos/lib/sonido.js",
-   "tamano": 21203,
-   "hash": "9da7de19ddb6"
+   "tamano": 22869,
+   "hash": "5968322bd7d3"
   },
   {
    "ruta": "juegos/lib/three.module.min.js",
@@ -1041,7 +1041,7 @@
   {
    "ruta": "juegos/luz-contra-el-pecado.html",
    "tamano": 286217,
-   "hash": "fed2d6751b9d"
+   "hash": "ddc587018dea"
   },
   {
    "ruta": "juegos/memoria-santos.html",

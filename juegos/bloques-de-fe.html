@@ -308,7 +308,7 @@ let parts = [], flotantes = [], borrando = [], sacudida = 0, pulsos = [], puesto
 const cv = $('c'), g = cv.getContext('2d');
 let W = 0, H = 0, DPR = 1, L = { bx: 0, by: 0, cs: 40, ty: 0, ts: 24 };
 function ajustar() {
-  DPR = Math.min(window.devicePixelRatio || 1, 2.5);
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
   W = innerWidth; H = innerHeight;
   cv.width = W * DPR; cv.height = H * DPR;
   const arriba = 178;

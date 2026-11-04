@@ -6,6 +6,24 @@
 (function () {
   'use strict';
   let A = null, salida, comp, sfx, mus, duck, envio, eco, ruidoB = null, rosaB = null;
+  // En teléfonos el audio tiene menos margen: menos voces a la vez y un eco más corto
+  const MOVIL = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && Math.min(innerWidth, innerHeight) < 820);
+  const LIMITE_VOCES = MOVIL ? 26 : 48;
+  let vivas = 0;
+  const ultimoSonido = {};
+  // Evita repetir el mismo efecto demasiado seguido (pasos, monedas…), que satura y hace chasquidos
+  function espaciar(clave, seg) {
+    const t = A ? A.currentTime : 0;
+    if (ultimoSonido[clave] && t - ultimoSonido[clave] < seg) return false;
+    ultimoSonido[clave] = t;
+    return true;
+  }
+  // Cuenta las voces que suenan; si hay demasiadas, los efectos menores se omiten (la música y lo importante no)
+  function hayLugar(o, n) {
+    if (o && (o.bus === mus || o.importante)) return true;
+    return vivas + n <= LIMITE_VOCES;
+  }
+  function contar(nodo) { vivas++; nodo.onended = () => { vivas = Math.max(0, vivas - 1); }; }
   const J = {
     permitido: () => true,          // cada juego dice si el sonido está encendido
     musicaPermitida: () => true,    // y si la música está encendida
@@ -14,7 +32,9 @@
   };
   function ctx() {
     if (!A) {
-      try { A = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
+      try { A = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: MOVIL ? 'balanced' : 'interactive' }); } catch (e) {
+        try { A = new (window.AudioContext || window.webkitAudioContext)(); } catch (e2) { return null; }
+      }
       salida = A.createGain(); salida.gain.value = 0.95; salida.connect(A.destination);
       comp = A.createDynamicsCompressor();
       comp.threshold.value = -20; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.004; comp.release.value = 0.2;
@@ -25,10 +45,10 @@
       sfx = A.createGain(); sfx.gain.value = 1.7; sfx.connect(comp);
       duck = A.createGain(); duck.connect(comp);
       mus = A.createGain(); mus.gain.value = J.volMusica * 1.6; mus.connect(duck);
-      eco = A.createConvolver(); eco.buffer = impulso(2.6, 2.4); eco.connect(comp);
+      eco = A.createConvolver(); eco.buffer = impulso(MOVIL ? 1.5 : 2.2, 2.6); eco.connect(comp);
       envio = A.createGain(); envio.gain.value = 1; envio.connect(eco);
     }
-    if (A.state === 'suspended') A.resume();
+    if (A.state === 'suspended' || A.state === 'interrupted') A.resume().catch(() => {});
     return A;
   }
   // Respuesta de una iglesia: ruido estéreo que se apaga poco a poco, con primeras reflexiones
@@ -70,6 +90,8 @@
   // Oscilador con envolvente (ataque, caída) y barrido de tono
   function osc(o) {
     if (!ctx() || !ok(o)) return;
+    const voces0 = (o.coro || [0]).length;
+    if (!hayLugar(o, voces0)) return;
     const t = A.currentTime + (o.ret || 0), dur = o.dur || 0.2, at = o.at || 0.006;
     const g = A.createGain();
     g.gain.setValueAtTime(0.0001, t);
@@ -85,13 +107,13 @@
       if (o.f2) s.frequency.exponentialRampToValueAtTime(o.f2, t + (o.tf || dur));
       if (o.vib) { const l = A.createOscillator(), lg = A.createGain(); l.frequency.value = o.vib[0]; lg.gain.value = o.vib[1]; l.connect(lg); lg.connect(s.detune); l.start(t); l.stop(t + dur + 0.05); }
       const gv = A.createGain(); gv.gain.value = 1 / Math.sqrt(voces.length);
-      s.connect(gv); gv.connect(g); s.start(t); s.stop(t + dur + 0.05);
+      s.connect(gv); gv.connect(g); s.start(t); s.stop(t + dur + 0.05); contar(s);
     }
     salidaVoz(dest, o);
   }
   // Ruido filtrado (soplos, golpes, viento, agua, grava)
   function ruido(o) {
-    if (!ctx() || !ok(o)) return;
+    if (!ctx() || !ok(o) || !hayLugar(o, 1)) return;
     const t = A.currentTime + (o.ret || 0), dur = o.dur || 0.2;
     const s = A.createBufferSource(); s.buffer = o.rosa ? rosa() : ruidoBuf(); s.loop = true;
     const f = A.createBiquadFilter(); f.type = o.tipo || 'lowpass'; f.Q.value = o.q || 0.9;
@@ -103,7 +125,7 @@
     if (o.sost) g.gain.setValueAtTime(o.vol || 0.1, t + dur * o.sost);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     s.connect(f); f.connect(g);
-    s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.05);
+    s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.05); contar(s);
     salidaVoz(g, o);
   }
   // Campana (síntesis FM con parciales inarmónicos)
@@ -181,8 +203,8 @@
     soplo(dur, vol, f1, f2, o) { ruido(Object.assign({ dur, vol, f: f1, f2, tipo: 'bandpass', q: 1.6, at: dur * 0.35, rosa: true }, o || {})); },
     vidrio(vol, o) { vol = vol || 1; o = o || {}; ruido(Object.assign({ dur: 0.5, vol: 0.25 * vol, f: 6000, tipo: 'highpass', eco: 0.4 }, o)); for (let i = 0; i < 9; i++) campana(2200 + Math.random() * 3800, 0.25 + Math.random() * 0.4, 0.04 * vol, Object.assign({ ret: (o.ret || 0) + Math.random() * 0.25, razon: 2.7 + Math.random(), indice: 1 }, o)); },
     magia(vol, o) { vol = vol || 1; o = o || {}; const base = [1046.5, 1318.5, 1568, 2093, 2637, 3136]; base.forEach((f, i) => campana(f, 0.9, 0.05 * vol, Object.assign({ ret: (o.ret || 0) + i * 0.045, razon: 2, indice: 0.6, eco: 0.6 }, o))); ruido(Object.assign({ dur: 0.7, vol: 0.05 * vol, f: 7000, tipo: 'highpass', at: 0.2, eco: 0.5 }, o)); },
-    moneda(paso, o) { const f = 1568 * Math.pow(1.0595, (paso || 0) % 12); campana(f, 0.5, 0.11, Object.assign({ razon: 2, indice: 0.9, eco: 0.25 }, o)); campana(f * 1.5, 0.4, 0.07, Object.assign({ ret: 0.06, razon: 2, indice: 0.7, eco: 0.25 }, o)); },
-    paso(vol, o) { vol = vol || 1; ruido(Object.assign({ dur: 0.09, vol: 0.12 * vol, f: 1800 + Math.random() * 1600, tipo: 'bandpass', q: 1.4, eco: 0.05 }, o || {})); osc(Object.assign({ f: 90, f2: 55, dur: 0.07, vol: 0.12 * vol, tipo: 'sine', eco: 0 }, o || {})); },
+    moneda(paso, o) { if (A && !espaciar('moneda', 0.045)) return; const f = 1568 * Math.pow(1.0595, (paso || 0) % 12); campana(f, 0.5, 0.11, Object.assign({ razon: 2, indice: 0.9, eco: 0.25 }, o)); campana(f * 1.5, 0.4, 0.07, Object.assign({ ret: 0.06, razon: 2, indice: 0.7, eco: 0.25 }, o)); },
+    paso(vol, o) { if (A && !espaciar('paso', 0.085)) return; vol = vol || 1; ruido(Object.assign({ dur: 0.09, vol: 0.12 * vol, f: 1800 + Math.random() * 1600, tipo: 'bandpass', q: 1.4, eco: 0.05 }, o || {})); osc(Object.assign({ f: 90, f2: 55, dur: 0.07, vol: 0.12 * vol, tipo: 'sine', eco: 0 }, o || {})); },
     clic(vol, o) { ruido(Object.assign({ dur: 0.025, vol: 0.18 * (vol || 1), f: 3500, tipo: 'bandpass', q: 2, eco: 0.1 }, o || {})); osc(Object.assign({ f: 1400, dur: 0.04, vol: 0.05 * (vol || 1), tipo: 'sine', eco: 0.1 }, o || {})); },
     carta(vol, o) { ruido(Object.assign({ dur: 0.08, vol: 0.2 * (vol || 1), f: 2500, f2: 7000, tipo: 'bandpass', q: 0.9, eco: 0.15 }, o || {})); ruido(Object.assign({ dur: 0.02, vol: 0.12 * (vol || 1), f: 5000, tipo: 'highpass', ret: ((o && o.ret) || 0) + 0.06, eco: 0.1 }, o || {})); },
     bonk(vol, o) { osc(Object.assign({ f: 220, f2: 140, dur: 0.22, vol: 0.18 * (vol || 1), tipo: 'triangle', eco: 0.2 }, o || {})); osc(Object.assign({ f: 233, f2: 148, dur: 0.22, vol: 0.12 * (vol || 1), tipo: 'triangle', eco: 0.2 }, o || {})); },
@@ -250,21 +272,23 @@
     if (!J.musicaPermitida()) { tSig = A.currentTime + 0.05; return; }
     const E2 = ESTILOS[estilo], dt = 60 / E2.bpm / 4;
     if (tSig < A.currentTime) tSig = A.currentTime + 0.05;
-    while (tSig < A.currentTime + 0.15) { E2.paso(paso, tSig - A.currentTime); tSig += dt; paso++; }
+    while (tSig < A.currentTime + 0.32) { E2.paso(paso, tSig - A.currentTime); tSig += dt; paso++; }
   }
   function musica(nombre) {
     if (!ctx()) return;
     if (estilo === nombre) return;
     estilo = nombre; paso = 0; tSig = A.currentTime + 0.1;
     mus.gain.cancelScheduledValues(A.currentTime); mus.gain.setValueAtTime(0.0001, A.currentTime); mus.gain.exponentialRampToValueAtTime(J.volMusica * 1.6, A.currentTime + 1.2);
-    if (!timer) timer = setInterval(programar, 30);
+    if (!timer) timer = setInterval(programar, 60);
   }
   function pararMusica() {
     if (!A || !estilo) return;
     estilo = null;
     mus.gain.cancelScheduledValues(A.currentTime); mus.gain.setValueAtTime(mus.gain.value, A.currentTime); mus.gain.linearRampToValueAtTime(0.0001, A.currentTime + 0.6);
   }
-  document.addEventListener('visibilitychange', () => { if (!A) return; if (document.hidden) A.suspend(); else if (estilo) A.resume(); });
+  document.addEventListener('visibilitychange', () => { if (!A) return; if (document.hidden) A.suspend(); else A.resume().catch(() => {}); });
+  // En iPhone y Android el audio se vuelve a despertar con el primer toque
+  for (const ev of ['pointerdown', 'touchend', 'keydown']) document.addEventListener(ev, () => { if (A && A.state !== 'running' && !document.hidden) A.resume().catch(() => {}); }, { passive: true });
 
   window.JumaSonido = Object.assign(J, {
     ctx, osc, ruido, campana, arpa, marimba, coro, organo, colchon, bombo, caja, platillo, palmas, timbal, bajo, acorde, E, m2f,

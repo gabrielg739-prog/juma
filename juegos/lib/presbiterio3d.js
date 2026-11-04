@@ -52,13 +52,14 @@ function texturas() {
   TEX.listo = true;
 }
 
+const MOVIL3D = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && Math.min(innerWidth, innerHeight) < 820);
 export function crear(contenedor, op) {
   op = op || {};
   texturas();
-  const R = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
-  R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+  const R = new THREE.WebGLRenderer({ antialias: !MOVIL3D, alpha: false, powerPreference: 'high-performance' });
+  R.setPixelRatio(Math.min(window.devicePixelRatio || 1, MOVIL3D ? 1.25 : 1.75));
   R.outputColorSpace = THREE.SRGBColorSpace; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.15;
-  R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
+  R.shadowMap.enabled = true; R.shadowMap.type = MOVIL3D ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
   contenedor.appendChild(R.domElement); R.domElement.style.cssText = 'width:100%;height:100%;display:block;touch-action:none';
   const E = new THREE.Scene(); E.background = new THREE.Color(0x120a06); E.fog = new THREE.Fog(0x120a06, 14, 30);
   const cam = new THREE.PerspectiveCamera(42, 2, 0.1, 60);

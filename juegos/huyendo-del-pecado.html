@@ -372,7 +372,8 @@ window.__SND = SND;
 const cv = $('c');
 const esMovil = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && Math.min(innerWidth, innerHeight) < 820);
 if (!['alta', 'media', 'baja'].includes(S.calidad)) S.calidad = esMovil ? 'media' : 'alta';
-const CAL = { alta: { pr: 1.75, sombras: 2048, aa: true }, media: { pr: 1.3, sombras: 1024, aa: true }, baja: { pr: 1, sombras: 0, aa: false } }[S.calidad];
+// En el teléfono se dibuja a menos resolución y sin suavizado de bordes (el ajuste automático la sube si sobra fuerza)
+const CAL = { alta: { pr: esMovil ? 1.5 : 1.75, sombras: 2048, aa: !esMovil }, media: { pr: esMovil ? 1.1 : 1.3, sombras: 1024, aa: !esMovil }, baja: { pr: 0.85, sombras: 0, aa: false } }[S.calidad];
 let renderer;
 try {
   renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: CAL.aa, powerPreference: 'high-performance' });
@@ -384,7 +385,7 @@ try {
 let prActual = Math.min(window.devicePixelRatio || 1, CAL.pr);
 renderer.setPixelRatio(prActual);
 renderer.shadowMap.enabled = CAL.sombras > 0;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = esMovil ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
 const MAX_ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 1);
 
 const scene = new THREE.Scene();
@@ -2781,9 +2782,14 @@ let rendT = 0, rendN = 0, rendSuma = 0;
 function medirRendimiento(dtReal) {
   if (estado !== 'jugando') return;
   rendSuma += dtReal; rendN++; rendT += dtReal;
-  if (rendT < 3) return;
+  if (rendT < 2) return;
   const prom = rendSuma / rendN;
-  if (prom > 0.024 && prActual > 0.75) { prActual = Math.max(0.75, prActual - 0.2); renderer.setPixelRatio(prActual); ajustar(); }
+  // Va lento (menos de ~48 cuadros por segundo): baja la resolución y, si ya está al mínimo, quita las sombras
+  if (prom > 0.021 && prActual > 0.6) { prActual = Math.max(0.6, prActual - 0.15); renderer.setPixelRatio(prActual); ajustar(); }
+  else if (prom > 0.021 && renderer.shadowMap.enabled) {
+    renderer.shadowMap.enabled = false;
+    scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { m.needsUpdate = true; }); });
+  }
   else if (prom < 0.0145 && prActual < Math.min(window.devicePixelRatio || 1, CAL.pr)) { prActual = Math.min(window.devicePixelRatio || 1, CAL.pr, prActual + 0.1); renderer.setPixelRatio(prActual); ajustar(); }
   rendT = 0; rendN = 0; rendSuma = 0;
 }

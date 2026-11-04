@@ -2931,7 +2931,7 @@ function bucle(t) {
     tiempos += dtReal; nTiempos++;
     if (nTiempos >= 90) {
       const prom = tiempos / nTiempos;
-      if (prom > 0.026 && prActual > 0.6) { prActual = Math.max(0.6, prActual - 0.15); renderer.setPixelRatio(prActual); ajustar(); }
+      if (prom > 0.021 && prActual > 0.6) { prActual = Math.max(0.6, prActual - 0.15); renderer.setPixelRatio(prActual); ajustar(); }
       else if (prom < 0.013 && prActual < Math.min(window.devicePixelRatio || 1, tactil ? 1.25 : 1.6)) { prActual += 0.1; renderer.setPixelRatio(prActual); ajustar(); }
       tiempos = 0; nTiempos = 0;
     }
