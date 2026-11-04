@@ -1,7 +1,7 @@
 {
- "version": "2fdeee488be9",
+ "version": "80825d9c40d4",
  "recursos": "juma-recursos-v1",
- "tamano": 59915187,
+ "tamano": 59931291,
  "archivos": [
   {
    "ruta": "audio/cumpleanos.mp3",
@@ -746,12 +746,12 @@
   {
    "ruta": "index.html",
    "tamano": 149780,
-   "hash": "f878a76ae0f3"
+   "hash": "3f155f6a373e"
   },
   {
    "ruta": "js/app.js",
    "tamano": 500804,
-   "hash": "ad0f2a528aa3"
+   "hash": "1f5754b56ff4"
   },
   {
    "ruta": "js/fe.js",
@@ -964,9 +964,9 @@
    "hash": "e4ea2f6f453c"
   },
   {
-   "ruta": "juegos/gran-premio/index-DzOp31AZ.js",
-   "tamano": 1227784,
-   "hash": "4afcbbdbfb70"
+   "ruta": "juegos/gran-premio/index-CBmBhdeD.js",
+   "tamano": 1243888,
+   "hash": "fc0fd6413048"
   },
   {
    "ruta": "juegos/gran-premio/kart_cruise_mid_loop-E9gzRWlQ.wav",
@@ -991,7 +991,7 @@
   {
    "ruta": "juegos/gran-premio-de-la-fe.html",
    "tamano": 63124,
-   "hash": "e788952da0aa"
+   "hash": "261894f9e4cc"
   },
   {
    "ruta": "juegos/huyendo-del-pecado.html",
