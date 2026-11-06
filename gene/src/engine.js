@@ -6,6 +6,7 @@ function sceneHtml(s){
  if(s.k==='t')return`<h1 class="big">${letters(s.big)}</h1><p class="lead">${s.lead}</p><svg class="spike" viewBox="0 0 760 90"><path d="${spikePath}" fill="none" stroke="var(--acc)" stroke-width="5" stroke-linejoin="round"/></svg>`;
  if(s.k==='q'){return`<div class="qgrid ${s.viz||s.eqh?'two':''}"><div class="qcol"><h2 class="q" style="font-size:clamp(22px,2.6vw,33px)">${s.q}</h2><button class="gauge s" data-s="1" id="gauge" aria-label="Ver la respuesta ya"><svg viewBox="0 0 120 70"><path d="M12 60A48 48 0 0 1 108 60" fill="none" stroke="var(--line)" stroke-width="7"/><path d="M88 21A48 48 0 0 1 108 60" fill="none" stroke="var(--red)" stroke-width="7"/><line id="needle" x1="60" y1="60" x2="60" y2="16" stroke="var(--red)" stroke-width="3"/><circle cx="60" cy="60" r="5" fill="var(--ink)"/></svg><span>Piénsalo. Toca para ver ya.</span></button><div class="ans">${s.ans.map((a,i)=>`<div class="s ${a[1]||''}" data-s="${i+2}">${a[0]}</div>`).join('')}</div><div class="score s" data-s="99">¿La acertaste? <button data-ok="1">Sí</button><button data-ok="0" class="no">No</button></div></div>${s.viz?'<div class="viz" data-v></div>':s.eqh?`<div class="eqp">${s.eqh.map((m,i)=>`<div class="eq s" data-s="${s.eq[i][1]}">${m}${s.eq[i][2]?`<small>${s.eq[i][2]}</small>`:''}</div>`).join('')}</div>`:''}</div>`}
  if(s.k==='end')return endHtml();
+ if(s.k==='c'){const st=ckStats();return`<div class="ckbadge">Pregunta de control</div><h2 class="q">${s.q}</h2><div class="opts">${s.o.map((o,i)=>`<button class="opt" data-i="${i}">${o}</button>`).join('')}</div><div class="fb" hidden></div><p class="hint">Responde para continuar. Llevas ${st.ok} correctas de ${st.n} respondidas.</p>`}
  const n=Math.max(0,...s.lines.map(l=>typeof l[1]==='number'?l[1]:0))+1;
  const who=s.who?`<div class="who ${s.big&&!s.viz?'big':''}">${s.who.map((w,k)=>personCard(w).replace('<figure class="pc"',`<figure class="pc" style="--k:${k}"`)).join('')}</div>`:'';
  const eq=s.eqh?`<div class="eqp ${!s.viz&&!s.bl?'big':''}">${s.eqh.map((m,i)=>`<div class="eq s" data-s="${s.eq[i][1]||0}">${m}${s.eq[i][2]?`<small>${s.eq[i][2]}</small>`:''}</div>`).join('')}</div>`:'';
@@ -25,7 +26,7 @@ let qc={},qt={};S.forEach(s=>{if(s.k==='q')qt[s.ch]=(qt[s.ch]||0)+1});S.forEach(
 
 $('#startSlot').innerHTML=geneSvg('startV');$('#hostSlot').innerHTML=geneSvg('gene');
 $('#startP').textContent='Te explico con detalle los capítulos 1, 2 y 4 de «Ingeniería de optimización»: la historia completa, cómo se plantea un problema y los métodos clásicos, con cada ejemplo y ecuación. Al final: resúmenes, puntos clave y todos los ejercicios resueltos.';
-let view='class',live=false,sampleFn=null,score={ok:0,no:0,streak:0};
+let ckWait=null,view='class',live=false,sampleFn=null,score={ok:0,no:0,streak:0};
 let idx=0,line=0,token=0,playing=false,rendered=-1,muted=false,rate=1,voice=null,hasVoice=false,skip=false,keep=null,ctrl=null,stepNow=-1,prog={},simT=0,marks={},neural=true;
 const body=document.body,dial=$('#dial'),cap=$('#cap'),vt=()=>document.getElementById('gene');
 const P=k=>prog[k]||0;
@@ -34,7 +35,7 @@ function snap(){for(let k=0;k<=12;k++)prog[k]=vizStep()>=k?1:0;SNAP=true;try{if(
 const vizStep=()=>view!=='class'?99:S[idx].k==='q'?(stepNow>=2?99:-1):stepNow;
 function endHtml(){const rows=Object.keys(CH).filter(k=>k.startsWith('quiz')).map(k=>{let a=0,t=0;S.forEach((s,i)=>{if(s.ch===k&&s.k==='q'&&marks[i]!==undefined){t++;if(marks[i])a++}});return`<button data-go="${k}"><span>${CH[k].split(': ')[1]}</span><b>${t?a+' de '+t+' acertadas':'Sin marcar'}</b></button>`}).join('');return`<h1 class="big">${letters('¡Listo!')}</h1><p class="lead">Toca un quiz para repetirlo.</p><div class="endgrid">${rows}</div>`}
 function render(i){const s=S[i],chg=rendered<0||S[rendered].ch!==s.ch;dial.innerHTML=`<canvas id="bgnet" aria-hidden="true"></canvas>${s.code?`<div class="where">${s.code}</div>`:''}<div class="scene">${sceneHtml(s)}</div>${chg&&rendered>=0?'<div class="wipe"></div>':''}`;dial.scrollTop=0;rendered=i;prog={};stepNow=-1;ctrl=null;const host=dial.querySelector('[data-v]');if(host&&s.viz&&V[s.viz])ctrl=V[s.viz](host);bgInit();
-const g=$('#gauge');if(g)g.onclick=()=>{skip=true};dial.querySelectorAll('.score button').forEach(b=>{if(marks[i]!==undefined&&(+b.dataset.ok===1)===marks[i])b.classList.add('sel');b.onclick=()=>{marks[i]=b.dataset.ok==='1';dial.querySelectorAll('.score button').forEach(x=>x.classList.toggle('sel',x===b))}});dial.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(S.findIndex(x=>x.ch===b.dataset.go),true));
+if(s.k==='c'){s.answered=false;dial.querySelectorAll('.opt').forEach(b=>b.onclick=()=>answerCheck(s,+b.dataset.i))}const g=$('#gauge');if(g)g.onclick=()=>{skip=true};dial.querySelectorAll('.score button').forEach(b=>{if(marks[i]!==undefined&&(+b.dataset.ok===1)===marks[i])b.classList.add('sel');b.onclick=()=>{marks[i]=b.dataset.ok==='1';dial.querySelectorAll('.score button').forEach(x=>x.classList.toggle('sel',x===b))}});dial.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(S.findIndex(x=>x.ch===b.dataset.go),true));
 const w=dial.querySelector('.wipe');if(w)setTimeout(()=>w.remove(),800);updateNav()}
 function updateNav(){[...$('#seg').children].forEach((b,i)=>{b.className=(b.dataset.g?'gap ':'')+(i<idx?'done':i==idx?'cur':'')});$('#chap').value=S[idx].ch;$('#pos').textContent=`${idx+1} / ${S.length}`;try{if(location.hash.slice(1)!==S[idx].ch&&S[idx].ch!=='inicio')history.replaceState(null,'','#'+S[idx].ch)}catch(e){}}
 let moodT=0;function mood(m,hold=0){const v=vt();if(!v)return;v.classList.remove('think','happy','warn','point','sad');if(m)v.classList.add(m);moodT=hold?performance.now()+hold:0}
@@ -50,7 +51,7 @@ function stopSpeech(){try{window.speechSynthesis&&speechSynthesis.cancel()}catch
 const wait=(ms,tok)=>new Promise(r=>{const t0=performance.now();(function f(){if(tok!==token||skip||performance.now()-t0>=ms)return r();setTimeout(f,50)})()});
 let sp=null;
 function chunks(t){const out=[];t.split(/(?<=[.!?:;])\s+/).forEach(x=>{if(x.length<190){out.push(x);return}let c='';x.split(/(?<=,)\s+/).forEach(p=>{if((c+p).length>180&&c){out.push(c);c=p}else c=c?c+' '+p:p});if(c)out.push(c)});return out.filter(x=>x.trim())}
-function playFile(src,tok,ontime){return new Promise(res=>{let done=false;const fin=r=>{if(done)return;done=true;segStop=null;AU.onended=AU.onerror=AU.ontimeupdate=null;res(r)};segStop=fin;AU.onended=()=>fin('ok');AU.onerror=()=>fin('err');AU.ontimeupdate=()=>{if(tok!==token){AU.pause();fin('stop');return}ontime&&ontime(AU.currentTime)};AU.src=src;AU.playbackRate=rate;try{AU.preservesPitch=true}catch(e){}const go=()=>{AU.play().catch(()=>fin('err'))};go()})}
+function playFile(src,tok,ontime){return new Promise(res=>{let done=false;const fin=r=>{if(done)return;done=true;segStop=null;AU.onended=AU.onerror=AU.ontimeupdate=null;res(r)};segStop=fin;AU.onended=()=>fin('ok');AU.onerror=()=>fin('err');AU.ontimeupdate=()=>{if(tok!==token){AU.pause();fin('stop');return}ontime&&ontime(AU.currentTime)};AU.src=resolveAud(src);AU.playbackRate=rate;try{AU.preservesPitch=true}catch(e){}const go=()=>{AU.play().catch(()=>fin('err'))};go()})}
 function speakTTS(text,tok){const est=Math.max(1200,text.length*66/rate);sp={on:1};const fin=()=>{sp=null};if(muted||!hasVoice)return wait(est,tok).then(fin);
 return new Promise(res=>{const ch=chunks(text);let n=0;const nx=()=>{if(tok!==token||n>=ch.length){fin();return res()}const part=ch[n++];const u=new SpeechSynthesisUtterance(part);keep=u;u.lang=voice?voice.lang:'es-MX';if(voice)u.voice=voice;u.rate=rate*.96;u.pitch=1.05;let done=false;const end=()=>{if(done)return;done=true;clearTimeout(wd);setTimeout(nx,70)};u.onend=end;u.onerror=end;const wd=setTimeout(end,part.length*66/rate*2.5+3000);speechSynthesis.speak(u)};nx()})}
 /* Frases sueltas (pestañas interactivas): clip pregrabado si existe */
@@ -77,7 +78,7 @@ async function playScene(s,tok){while(line<s.lines.length){if(tok!==token)return
  for(;line<end;line++){if(tok!==token)return;showLine(s,line);await speakTTS(spoken(s.lines[line][0]),tok)}}}
 async function play(){const tok=++token;playing=true;body.classList.remove('paused');$('#play').textContent='Pausar';ensureAnalyser();try{actx&&actx.resume()}catch(e){}
 while(idx<S.length){if(rendered!==idx){render(idx);mood(null)}const s=S[idx];await playScene(s,tok);if(tok!==token)return;
-if(s.k==='q'){reveal(99);await wait(1700,tok)}else await wait(s.k==='t'?300:800,tok);if(tok!==token)return;if(idx===S.length-1)break;idx++;line=0;mood(null)}
+if(s.k==='c'){if(!s.answered){mood('think');cap.textContent='Elige una respuesta para continuar…';await new Promise(r=>{ckWait=r;(function f(){if(tok!==token||s.answered)return r();setTimeout(f,120)})()})}if(tok!==token)return;mood(s.ok?'happy':'sad',3000);cap.textContent=s.fbt;await sayAudio(s.fbt,tok);if(tok!==token)return;await wait(500,tok)}else if(s.k==='q'){reveal(99);await wait(1700,tok)}else await wait(s.k==='t'?300:800,tok);if(tok!==token)return;if(idx===S.length-1)break;idx++;line=0;mood(null)}
 line=S[idx].lines.length-1;pause()}
 function pause(){token++;playing=false;stopSpeech();sp=null;body.classList.add('paused');$('#play').textContent='Reproducir';const n=$('#needle');if(n){const c=getComputedStyle(n).transform;n.style.transition='none';n.style.transform=c}}
 function go(i,auto=playing){token++;stopSpeech();sp=null;skip=false;idx=clamp(i,0,S.length-1);line=0;render(idx);mood(null);playing=false;reveal(-1);cap.textContent=S[idx].lines[0][0].think?'':S[idx].lines[0][0];if(auto)play();else{body.classList.add('paused');$('#play').textContent='Reproducir'}}
@@ -94,3 +95,16 @@ if(window.speechSynthesis){speechSynthesis.onvoiceschanged=loadVoices;loadVoices
 window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(CH[h]&&S[idx].ch!==h){const i=S.findIndex(s=>s.ch===h);if(i>=0)go(i)}});
 const hh=location.hash.slice(1);if(CH[hh])idx=Math.max(0,S.findIndex(s=>s.ch===hh));render(idx);reveal(-1);cap.textContent=S[idx].lines[0][0];
 $('#go').onclick=()=>{$('#start').classList.add('hide');ensureAnalyser();play()};
+
+/* Preguntas de control */
+let PR={ck:{},fc:{},exam:null};try{PR=Object.assign(PR,JSON.parse(localStorage.getItem('gene-progreso')||'{}'))}catch(e){}
+function savePR(){try{localStorage.setItem('gene-progreso',JSON.stringify(PR))}catch(e){}}
+function ckStats(){const v=Object.values(PR.ck);return{n:v.length,ok:v.filter(Boolean).length,total:S.filter(s=>s.k==='c').length}}
+function answerCheck(s,i){if(s.answered)return;s.answered=true;s.ok=i===s.a;if(!(s.id in PR.ck)){PR.ck[s.id]=s.ok;savePR()}
+ dial.querySelectorAll('.opt').forEach(b=>{b.disabled=true;if(+b.dataset.i===s.a)b.classList.add('good')});if(!s.ok)dial.querySelector(`.opt[data-i="${i}"]`).classList.add('bad');
+ s.fbt=s.ok?'¡Correcto! '+s.w:'No exactamente. La respuesta correcta es: '+s.o[s.a]+'. '+s.w;const fb=dial.querySelector('.fb');fb.hidden=false;fb.className='fb '+(s.ok?'okf':'nof');fb.textContent=s.fbt;
+ const st=ckStats();const h=dial.querySelector('.hint');if(h)h.textContent=`Llevas ${st.ok} correctas de ${st.n} respondidas (de ${st.total} preguntas de control).`;
+ if(!playing){mood(s.ok?'happy':'sad',3000);say(s.fbt,s.ok?'happy':'sad').then(()=>{})}}
+
+/* En el archivo descargable, los audios van incrustados (base64) y se convierten en blobs al usarse */
+const AUDC={};function resolveAud(src){if(!window.AUDB)return src;const m=src.match(/audio\/([^.#]+)\.mp3(#.*)?$/);if(!m||!AUDB[m[1]])return src;if(!AUDC[m[1]]){const b=atob(AUDB[m[1]]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);AUDC[m[1]]=URL.createObjectURL(new Blob([u],{type:'audio/webm'}))}return AUDC[m[1]]+(m[2]||'')}
