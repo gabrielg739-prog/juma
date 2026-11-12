@@ -27,7 +27,7 @@ let qc={},qt={};S.forEach(s=>{if(s.k==='q')qt[s.ch]=(qt[s.ch]||0)+1});S.forEach(
 $('#startSlot').innerHTML=geneSvg('startV');$('#hostSlot').innerHTML=geneSvg('gene');
 $('#startP').textContent='Te explico con detalle los capítulos 1, 2 y 4 de «Ingeniería de optimización»: la historia completa, cómo se plantea un problema y los métodos clásicos, con cada ejemplo y ecuación. Al final: resúmenes, puntos clave y todos los ejercicios resueltos.';
 let ckWait=null,view='class',live=false,sampleFn=null,score={ok:0,no:0,streak:0};
-let idx=0,line=0,token=0,playing=false,rendered=-1,muted=false,rate=1,voice=null,hasVoice=false,skip=false,keep=null,ctrl=null,stepNow=-1,prog={},simT=0,marks={},neural=true;
+let idx=0,line=0,token=0,playing=false,rendered=-1,muted=false,rate=1,voice=null,hasVoice=false,skip=false,keep=null,ctrl=null,stepNow=-1,prog={},simT=0,marks={},neural=!window.__LITE;
 const body=document.body,dial=$('#dial'),cap=$('#cap'),vt=()=>document.getElementById('gene');
 const P=k=>prog[k]||0;
 function reveal(n){stepNow=n;dial.querySelectorAll('[data-s]').forEach(e=>{const d=+e.dataset.s,on=d<=n;if(on&&!e.classList.contains('on')&&n<99&&dial.scrollHeight>dial.clientHeight)setTimeout(()=>e.scrollIntoView({block:'nearest',behavior:'smooth'}),60);e.classList.toggle('on',on);e.classList.toggle('act',d===n||(n>=99&&false))});if(!playing)snap()}

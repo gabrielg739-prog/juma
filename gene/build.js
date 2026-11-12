@@ -27,7 +27,7 @@ const views=R('src/views.js')+R('src/views2.js');for(const m of views.matchAll(/
 const clips=[...clipT].map(t=>{const sp=spoken(t);return{id:hsh(VOICE+'|clip|'+sp),key:hsh(sp),texts:[sp]}});clips.forEach(c=>jobs.push({id:c.id,texts:c.texts}));
 fs.mkdirSync(path.join(__dirname,'build'),{recursive:true});fs.writeFileSync(path.join(__dirname,'build/tts_jobs.json'),JSON.stringify(jobs));
 // Manifiesto de audio (lo genera tts.py)
-let man={};try{man=JSON.parse(R('audio/manifest.json'))}catch(e){}
+let man={};if(!process.env.LITE){try{man=JSON.parse(R('audio/manifest.json'))}catch(e){}}
 let have=0;DATA.forEach(s=>{const a=s._segs.map(id=>man[id]?{f:'audio/'+id+'.mp3',t:man[id]}:null);if(a.every(Boolean)){s.aud=a;have++}delete s._segs;delete s.eq_src});
 const CLIPS={};clips.forEach(c=>{if(man[c.id])CLIPS[c.key]='audio/'+c.id+'.mp3'});
 // Ensamblado
@@ -35,6 +35,7 @@ const data=`var DATA=${JSON.stringify(DATA)};var CH=${JSON.stringify(CH2)};var R
 const defsRuntime=R('src/defs.js').replace(/var DATA=\[\],CH=\{\},CLIPS_TXT=\[\];/,'var CLIPS_TXT=[];');
 const js=[R('src/helpers.js'),defsRuntime,data,R('src/viz.js'),R('src/viz2.js'),R('src/viz3.js'),R('src/avatar.js'),R('src/engine.js'),R('src/views.js'),R('src/views2.js')].join('\n');
 const body=R('src/shell.html').replace('/*CSS*/',()=>R('src/style.css')).replace('/*JS*/',()=>js);
+if(process.env.LITE){const lite=body.replace('<option value="neural" selected>Voz neuronal</option><option value="tts">Voz del navegador</option>','<option value="neural">Voz neuronal (no incluida)</option><option value="tts" selected>Voz del teléfono</option>').replace('let ckWait=null,view=','var __LITE=1;let ckWait=null,view=').replace('Voz neuronal pregrabada. Puedes cambiar a la voz del navegador abajo a la derecha.','Versión ligera: la voz es la de tu dispositivo. Si no oyes nada, activa una voz en español en los ajustes del sistema.');fs.writeFileSync(path.join(__dirname,'build/Gene-ligero.html'),'<!doctype html>\n<html lang="es"><head><meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n</head><body>\n'+lite+'\n</body></html>\n');console.log('ligero',(lite.length/1024).toFixed(0),'KB');process.exit(0)}
 fs.writeFileSync(path.join(__dirname,'build/body.html'),body);
 fs.writeFileSync(path.join(__dirname,'index.html'),'<!doctype html>\n<html lang="es"><head><meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n</head><body>\n'+body+'\n</body></html>\n');
 const words=jobs.reduce((n,j)=>n+j.texts.join(' ').split(/\s+/).length,0);
