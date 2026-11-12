@@ -107,7 +107,7 @@ function answerCheck(s,i){if(s.answered)return;s.answered=true;s.ok=i===s.a;if(!
  if(!playing){mood(s.ok?'happy':'sad',3000);say(s.fbt,s.ok?'happy':'sad').then(()=>{})}}
 
 /* En el archivo descargable, los audios van incrustados (base64) y se convierten en blobs al usarse */
-const AUDC={};function resolveAud(src){if(!window.AUDB)return src;const m=src.match(/audio\/([^.#]+)\.mp3(#.*)?$/);if(!m||!AUDB[m[1]])return src;if(!AUDC[m[1]]){const b=atob(AUDB[m[1]]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);AUDC[m[1]]=URL.createObjectURL(new Blob([u],{type:'audio/webm'}))}return AUDC[m[1]]+(m[2]||'')}
+const AUDC={};function resolveAud(src){if(!window.AUDB)return src;const m=src.match(/audio\/([^.#]+)\.mp3(#.*)?$/);if(!m||!AUDB[m[1]])return src;if(!AUDC[m[1]]){const b=atob(AUDB[m[1]]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);AUDC[m[1]]=URL.createObjectURL(new Blob([u],{type:window.AUDT||'audio/mpeg'}))}return AUDC[m[1]]+(m[2]||'')}
 
 /* En la página publicada, los audios vienen agrupados en paquetes (pNN.bin) */
 const PKC={};async function resolveAudAsync(src){if(!window.PACKS)return resolveAud(src);const m=src.match(/audio\/([^.#]+)\.mp3(#.*)?$/);const e=m&&PACKS.i[m[1]];if(!e)return src;if(!AUDC[m[1]]){if(!PKC[e[0]])PKC[e[0]]=fetch(PACKS.f[e[0]]).then(r=>{if(!r.ok)throw new Error('paquete');return r.arrayBuffer()});const buf=await PKC[e[0]];AUDC[m[1]]=URL.createObjectURL(new Blob([buf.slice(e[1],e[1]+e[2])],{type:'audio/mpeg'}))}return AUDC[m[1]]+(m[2]||'')}
