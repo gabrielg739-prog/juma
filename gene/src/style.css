@@ -109,7 +109,7 @@ textarea,.ask input{width:100%;background:var(--soft);border:1px solid var(--lin
 .eq.act{background:var(--soft);border-color:var(--acc)}
 .eq small{display:block;font-size:14px;color:var(--mut);margin-top:3px}
 .eqp.big .eq{font-size:clamp(19px,2.4vw,30px)}
-math{font-family:"Latin Modern Math","STIX Two Math","Cambria Math","Times New Roman",serif}
+math{font-family:"Noto Sans Math","Latin Modern Math","STIX Two Math","Cambria Math","Times New Roman",serif}
 .bl{list-style:none;margin:0;padding:0;display:grid;gap:8px;align-content:start;max-width:78ch}
 .bl li{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:clamp(16px,1.75vw,20px);line-height:1.35}
 .bl li:before{content:"";width:12px;height:12px;margin-top:6px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(--acc) 22%,transparent)}
